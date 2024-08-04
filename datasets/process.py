@@ -10,7 +10,8 @@ def read_json(filename):
 def save_jsonl(filename, data):
     with open(filename, "w") as f:
         for element in data:
-            f.write(f"{element}\n")
+            json.dump(element, f)
+            f.write("\n")
 
 
 def find_edit_position(target, start_sent_indexs):
@@ -97,4 +98,4 @@ if __name__ == '__main__':
     filename = './IteraTeR/human_doc_level/test.json'
     data = read_json(filename)
     processed_data = process_sent(data)
-    save_jsonl('./IteraTeR/human_doc_level/processed_test.json', processed_data)
+    save_jsonl('./IteraTeR/processed/processed_test.json', processed_data)
