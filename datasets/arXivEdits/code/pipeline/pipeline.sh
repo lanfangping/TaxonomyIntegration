@@ -7,17 +7,17 @@ STEP4="step4_edit_with_intention.json"
 
 # step 0, download all models.
 
-# echo "step 0: downloading all checkpoints."
+echo "step 0: downloading all checkpoints."
 
-# mkdir ../../checkpoints/
-# git lfs install
-# git clone https://huggingface.co/chaojiang06/arxiv-sentence-alignment ../../checkpoints/arxiv-sentence-alignment
+mkdir ../../checkpoints/
+git lfs install
+git clone https://huggingface.co/chaojiang06/arxiv-sentence-alignment ../../checkpoints/arxiv-sentence-alignment
 
-# mkdir ../../checkpoints/arxiv_crf_models
-# wget  -O ../../checkpoints/arxiv_crf_models/model_task2_epoch_2_state_dict_0910.pkl https://www.dropbox.com/s/vavnb20gc3qijpw/model_task2_epoch_2_state_dict_0910.pkl
-# wget  -O  ../../checkpoints/arxiv_crf_models/model_task2_epoch_2_state_dict_0910_reverse_direction.pkl  https://www.dropbox.com/scl/fi/g517vo83ibbsywm9ww6py/model_task2_epoch_2_state_dict_0910_reverse_direction.pkl?rlkey=rz5f1irvw1xlwa4tkcbuliwqp
+mkdir ../../checkpoints/arxiv_crf_models
+wget  -O ../../checkpoints/arxiv_crf_models/model_task2_epoch_2_state_dict_0910.pkl https://www.dropbox.com/s/vavnb20gc3qijpw/model_task2_epoch_2_state_dict_0910.pkl
+wget  -O  ../../checkpoints/arxiv_crf_models/model_task2_epoch_2_state_dict_0910_reverse_direction.pkl  https://www.dropbox.com/scl/fi/g517vo83ibbsywm9ww6py/model_task2_epoch_2_state_dict_0910_reverse_direction.pkl?rlkey=rz5f1irvw1xlwa4tkcbuliwqp
 
-# echo "step 0: downloading done."
+echo "step 0: downloading done."
 
 
 # step 1, load the raw input file and perform sentence alignment.
