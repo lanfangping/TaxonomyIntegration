@@ -95,7 +95,12 @@ def process_sent(data):
     return processed_data
 
 if __name__ == '__main__':
-    filename = './IteraTeR/human_doc_level/test.json'
-    data = read_json(filename)
-    processed_data = process_sent(data)
-    save_jsonl('./IteraTeR/processed/processed_test.json', processed_data)
+    names = ['test', 'train', 'dev']
+    processed_data = []
+    for name in names:
+        filename = f'./human_doc_level/{name}.json'
+        data = read_json(filename)
+        p_data = process_sent(data)
+        processed_data.extend(p_data)
+    
+    save_jsonl('./processed/processed_sent_level.json', processed_data)
