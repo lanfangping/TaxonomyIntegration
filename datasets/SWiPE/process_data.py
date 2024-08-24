@@ -54,8 +54,8 @@ def process(data):
             # print("===========================<<\n")
 
             processed_data.append({
-                "before_content": utils_diff.untokenize(r_tokens),
-                "after_content": utils_diff.untokenize(s_tokens),
+                "before_content": " ".join(r_tokens),
+                "after_content": " ".join(s_tokens),
                 "before": before,
                 "after": after,
                 "before_token_range": before_token_range,
