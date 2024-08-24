@@ -5,7 +5,7 @@ from tqdm import tqdm
 def process(data):
     processed_data = []
     for i in tqdm(range(len(data))):
-        sample = swipe_train[i]
+        sample = data[i]
         edits = utils_diff.get_edit_operations(sample["r_content"], sample["s_content"], split_replace=True, split_sentences=True)
         # for edit in edits:
         #     print(edit)
@@ -13,10 +13,9 @@ def process(data):
             category = edit_group['category']
             opis = edit_group['opis']
             min_opi, max_opi = min(opis), max(opis)
-            before_sentence, after_sentence = "", ""
             before, after = "", ""
             before_N_tokens, after_N_tokens = 0, 0
-
+            
             for opi in range(min_opi):
                 edit = edits[opi]
                 N_tokens = edit['N_words']
@@ -46,21 +45,22 @@ def process(data):
             # print("before:", before)
             # print(" after:", after)
             # print("before_token_range:", before_token_range)
-            # r_tokens = utils_diff.tokenize(sample['r_content'])
+            r_tokens = utils_diff.tokenize(sample['r_content'])
             # print(r_tokens[before_token_range[0]: before_token_range[1]])
-            # s_tokens = utils_diff.tokenize(sample['s_content'])
+            s_tokens = utils_diff.tokenize(sample['s_content'])
             # print("after_token_range:", after_token_range)
             # print(s_tokens[after_token_range[0]: after_token_range[1]])
-
+            # print("category:", category)
             # print("===========================<<\n")
 
             processed_data.append({
-                "before_content": sample['r_content'],
-                "after_content": sample['s_content'],
+                "before_content": utils_diff.untokenize(r_tokens),
+                "after_content": utils_diff.untokenize(s_tokens),
                 "before": before,
                 "after": after,
                 "before_token_range": before_token_range,
-                "after_token_range": after_token_range
+                "after_token_range": after_token_range,
+                "label": category
             })
     return processed_data
 
@@ -74,6 +74,11 @@ with open("data/swipe_val.json", "r") as f:
     swipe_val = json.load(f)
     data = process(swipe_val)
     processed_data.extend(data)
+
+# with open("data/sample.json", "r") as f:
+#     swipe_val = json.load(f)
+#     data = process(swipe_val)
+    # processed_data.extend(data)
     
 print("Number of edits:", len(processed_data))
 with open('processed_swipe_data.json', 'w') as json_file:
