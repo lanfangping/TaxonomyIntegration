@@ -11,7 +11,6 @@ def process(data):
         after_context = sample["s_content"]
         r_tokens = utils_diff.tokenize(sample['r_content'])
         s_tokens = utils_diff.tokenize(sample['s_content'])
-        before_sentence_mapping = {}
         # for edit in edits:
         #     print(edit)
         for edit_group in sample["annotations"]:
@@ -25,19 +24,10 @@ def process(data):
                 edit = edits[opi]
                 N_tokens = edit['N_words']
                 if edit['type'] == 'delete':
-                    if before_N_tokens is None:
-                        before_N_tokens = 0
                     before_N_tokens += N_tokens
-                    
                 elif edit['type'] == 'insert':
-                    if after_N_tokens is None:
-                        after_N_tokens = 0
                     after_N_tokens += N_tokens
                 else:
-                    if before_N_tokens is None:
-                        before_N_tokens = 0
-                    if after_N_tokens is None:
-                        after_N_tokens = 0
                     before_N_tokens += N_tokens
                     after_N_tokens += N_tokens
 
@@ -58,10 +48,8 @@ def process(data):
                 if is_end_of_sentence(idx, s_tokens):
                     after_start_pos = idx + 1
                     break
-
             # print("after_prior_subsentence", utils_diff.untokenize(s_tokens[:after_start_pos]))
             
-            before_sentence_token_range = [before_start_pos, 0]
             before_list, after_list = [], []
             for opi in range(min_opi, max_opi+1):
                 edit = edits[opi]
@@ -80,6 +68,8 @@ def process(data):
             before, after = utils_diff.untokenize(before_list), utils_diff.untokenize(after_list)
             # print("before_diff_span", before)
             # print("after_diff_span", after)
+
+            before_sentence_token_range, after_sentence_token_range = [before_start_pos, 0], [after_start_pos, 0]
             for idx in range(before_N_tokens-1, len(r_tokens)): # inverse order
                 # find the end position of the diff span
                 if is_end_of_sentence(idx, r_tokens):
@@ -92,6 +82,7 @@ def process(data):
                 if is_end_of_sentence(idx, s_tokens):
                     after_end_pos = idx + 1
                     break
+            after_sentence_token_range[1] = after_end_pos 
             # print("after_rear_subsentence", utils_diff.untokenize(r_tokens[after_start_pos:after_end_pos]))
             
             before_sentence = utils_diff.untokenize(r_tokens[before_start_pos: before_end_pos])
@@ -125,6 +116,7 @@ def process(data):
                 "before": before,
                 "after": after,
                 "before_sentence_token_range": before_sentence_token_range,
+                "after_sentence_token_range": after_sentence_token_range,
                 "label": category
             })
         # for key, value in before_sentence_mapping.items():
