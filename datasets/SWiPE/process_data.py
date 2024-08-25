@@ -50,6 +50,7 @@ def process(data):
                     break
             # print("after_prior_subsentence", utils_diff.untokenize(s_tokens[:after_start_pos]))
             
+            before_diff_span_range, after_diff_span_range = [before_N_tokens, before_N_tokens], [after_N_tokens, after_N_tokens]
             before_list, after_list = [], []
             for opi in range(min_opi, max_opi+1):
                 edit = edits[opi]
@@ -57,14 +58,19 @@ def process(data):
                 if edit['type'] == 'delete':
                     before_list.append(edit['delete'])
                     before_N_tokens += N_tokens
+                    before_diff_span_range[1] += N_tokens
                 elif edit['type'] == 'insert':
                     after_list.append(edit['insert'])
                     after_N_tokens += N_tokens
+                    after_diff_span_range[1] += N_tokens
                 else:
                     before_list.append(edit['text'])
                     after_list.append(edit['text'])
                     before_N_tokens += N_tokens
+                    before_diff_span_range[1] += N_tokens
                     after_N_tokens += N_tokens
+                    after_diff_span_range[1] += N_tokens
+
             before, after = utils_diff.untokenize(before_list), utils_diff.untokenize(after_list)
             # print("before_diff_span", before)
             # print("after_diff_span", after)
@@ -115,6 +121,8 @@ def process(data):
                 "after_sentence": after_sentence,
                 "before": before,
                 "after": after,
+                "before_diff_span_range": before_diff_span_range,
+                "after_diff_span_range": after_diff_span_range,
                 "before_sentence_token_range": before_sentence_token_range,
                 "after_sentence_token_range": after_sentence_token_range,
                 "label": category
