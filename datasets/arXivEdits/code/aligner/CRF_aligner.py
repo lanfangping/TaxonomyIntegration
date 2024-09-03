@@ -801,13 +801,21 @@ if __name__ == "__main__":
     if args.corpus == "arxiv":
         # print("loading arxiv BERT model")
         tokenizer = tokenizer_class.from_pretrained(
-            "../../checkpoints/arxiv-sentence-alignment",
+            "../arXivEdits/checkpoints/arxiv-sentence-alignment",
             do_lower_case=True,
         )
         bert_for_sent_seq_model = model_class.from_pretrained(
-            "../../checkpoints/arxiv-sentence-alignment",
+            "../arXivEdits/checkpoints/arxiv-sentence-alignment",
             output_hidden_states=True,
         )
+        # tokenizer = tokenizer_class.from_pretrained(
+        #     "../../checkpoints/arxiv-sentence-alignment",
+        #     do_lower_case=True,
+        # )
+        # bert_for_sent_seq_model = model_class.from_pretrained(
+        #     "../../checkpoints/arxiv-sentence-alignment",
+        #     output_hidden_states=True,
+        # )
 
     bert_for_sent_seq_model.to(device)
     bert_for_sent_seq_model.eval()
@@ -823,9 +831,14 @@ if __name__ == "__main__":
     if args.corpus == 'arxiv':
         model.load_state_dict(
             torch.load(
-                "../../checkpoints/arxiv_crf_models/model_task2_epoch_2_state_dict_0910.pkl"
+                "../arXivEdits/checkpoints/arxiv_crf_models/model_task2_epoch_2_state_dict_0910.pkl"
             )
         )
+        # model.load_state_dict(
+        #     torch.load(
+        #         "../../checkpoints/arxiv_crf_models/model_task2_epoch_2_state_dict_0910.pkl"
+        #     )
+        # )
 
     model = model.to(my_device)
     model.eval()
@@ -876,7 +889,7 @@ if __name__ == "__main__":
         )
         model.load_state_dict(
             torch.load(
-                "../../checkpoints/arxiv_crf_models/model_task2_epoch_2_state_dict_0910_reverse_direction.pkl"
+                "../arXivEdits/checkpoints/arxiv_crf_models/model_task2_epoch_2_state_dict_0910_reverse_direction.pkl"
             )
         )
 
