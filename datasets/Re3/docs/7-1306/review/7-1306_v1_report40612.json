@@ -1,0 +1,988 @@
+{
+    "nodes": [
+        {
+            "ix": "7-1306_v1_report40612_0",
+            "content": "Reviewer response for version 1",
+            "ntype": "article-title",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_report40612_1",
+            "content": "This manuscript describes a GenePattern Notebook implementing a standard analysis pipeline for single-cell RNA sequencing data. GenePattern notebooks allow a user to access python libraries for data analysis through a simple GUI--dropdown menus, text fields, and sliders are used to provide inputs to python functions that get run under the hood. This allows a user familiar with web interfaces to run a program without having to understand syntax.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_report40612_2",
+            "content": "In this case, that program is Scanpy, a package for scRNA-seq analysis. The order of the steps and the supporting guidelines for parameter choice and data exploration are taken from the Seurat PBMC3k tutorial.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_report40612_3",
+            "content": "Ideally, a naive user could upload their gene counts (say the output of CellRanger by 10X), tune just a few parameters according to the guidelines in the notebook, and find meaningful clusters in their data. Such an accessible analysis with guard-rails would be useful--had I been aware of the GenePattern system when organizing data analysis for the Tabula Muris project, I would certainly have used it, and so avoided many problems with people deleting code they shouldn't have, not changing file names to match their local directory structure, etc.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_report40612_4",
+            "content": "There are some significant usability issues with the notebook as it stands that will need to be remedied for it to be useful to a broad audience. Since people who cannot program will be unable to make even small changes to the workflow, it is important that the pipeline implemented here by scientifically sound, robust to different input formats and scales, and feature-complete.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_report40612_5",
+            "content": "- Data I/O. I attempted to use the web-hosted version of the notebook to upload a large csv (80 MB). After nothing happened, I switched to a smaller CSV. Since it was in gene x cell format instead of cell x gene, the analysis couldn't proceed. Finally I tried a 10X .mtx file, but as there was no way to upload the corresponding barcodes file, that didn't work. Finally I used an h5ad file from a previous scanpy analysis. That won't be possible for the typical user. (Given slow upload times, actually, you may want to accept zipped csvs as well.)",
+            "ntype": "list",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_report40612_6",
+            "content": "The author should make it possible to upload 10X files properly. They should also allow for the data to be gene x cell or cell x gene, by giving the user a chance to transpose the matrix if necessary.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_report40612_7",
+            "content": "- Interactive sliders are nice, much better than setting cutoffs by number, seeing how values change, and iterating. For the cutoffs on nGene and nCounts, the sliders are not aligned with the plot and lack numerical axes or numbers for current values. These should be displayed directly under the plots so that one can slide them to align with suggested cutoffs at various values of sigma, and should also display the numerical value currently selected.",
+            "ntype": "list",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_report40612_8",
+            "content": "(Also, the suggestion that 3\\sigma is an appropriate cutoff is based on the assumption of a normal distribution, which does not hold for this data, especially for 10X.)",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_report40612_9",
+            "content": "- The notebook bakes in certain analysis choices, such as regressing out % mito, which are not statistically sound. For the problems with regressing out, see this [blog post](http://ds.czbiohub.org/blog/Regression-Hazards/). I suggest that such \"corrections\" be removed. For a simple, sound analysis, see the workflow and language we used for Tabula Muris [Annotation Vignette](https://github.com/czbiohub/tabula-muris/blob/master/00_data_ingest/02_tissue_analysis_rmd/Organ_Annotation_Vignette.Rmd)\n- The notebook also includes some assumptions about the reference used. In particular, it assumes for % mito that genes be formatted in a certain case.\n- Users will likely have metadata they want to visualize, such as sample, batch, sex, stimulated vs unstimulated, etc. They should be able to upload a csv with that data, and visualize it on the tSNE plots. This is important for interpretation of the results.\n- The tSNE tab for visualizing gene expression did not load when clicked on.\n- \"Conversely, reads for multiple cells may be captured together, artificially inflating the number of reads for a single cell. \" Doublet detection is indeed a tricky problem. There are [methods](https://www.biorxiv.org/content/early/2018/07/19/352484) to address it, but this notebook does not implement them.\n- Depending on the size of the data, each step may take seconds to hours. For a naive user, they may not know how long to wait and at some point anyone would give up. It would be very useful if the author did some calibration for each step (running sample datasets of various sizes) so that an estimated time to completion could be displayed.",
+            "ntype": "list",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_report40612_10",
+            "content": "Final remarks:",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_report40612_11",
+            "content": "Single-cell sequencing analysis is evolving, and it is essential that we get the most sound methods in the hands of practitioners. Anchoring this notebook to Scanpy is great, since that library is actively being developed. I recommend that the author regularly update this template with methods as they become available in that library. For example, t-tests and the wilcox have problems with log-normalized data (they fail to be consistent when cells are sampled to different depths). I recommend the t-test_overestim_var from Scanpy for something fast and logreg for something more accurate, but all the options should be made available and the defaults from Scanpy should be the defaults for you.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_report40612_12",
+            "content": "This will need to be a living document to be useful. If it is a repository of best practices for simple single-cell analysis, then it may serve as a way in to single for people who don't yet know how to program.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_report40612_13",
+            "content": "Are the conclusions about the tool and its performance adequately supported by the findings presented in the article?",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_report40612_14",
+            "content": "Partly",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "7-1306_v1_report40612_0@0",
+            "content": "Reviewer response for version 1",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_0",
+            "start": 0,
+            "end": 30,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_1@0",
+            "content": "This manuscript describes a GenePattern Notebook implementing a standard analysis pipeline for single-cell RNA sequencing data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_1",
+            "start": 0,
+            "end": 126,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_1@1",
+            "content": "GenePattern notebooks allow a user to access python libraries for data analysis through a simple GUI--dropdown menus, text fields, and sliders are used to provide inputs to python functions that get run under the hood.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_1",
+            "start": 128,
+            "end": 345,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_1@2",
+            "content": "This allows a user familiar with web interfaces to run a program without having to understand syntax.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_1",
+            "start": 347,
+            "end": 447,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_2@0",
+            "content": "In this case, that program is Scanpy, a package for scRNA-seq analysis.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_2",
+            "start": 0,
+            "end": 70,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_2@1",
+            "content": "The order of the steps and the supporting guidelines for parameter choice and data exploration are taken from the Seurat PBMC3k tutorial.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_2",
+            "start": 72,
+            "end": 208,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_3@0",
+            "content": "Ideally, a naive user could upload their gene counts (say the output of CellRanger by 10X), tune just a few parameters according to the guidelines in the notebook, and find meaningful clusters in their data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_3",
+            "start": 0,
+            "end": 206,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_3@1",
+            "content": "Such an accessible analysis with guard-rails would be useful--had I been aware of the GenePattern system when organizing data analysis for the Tabula Muris project, I would certainly have used it, and so avoided many problems with people deleting code they shouldn't have, not changing file names to match their local directory structure, etc.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_3",
+            "start": 208,
+            "end": 550,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_4@0",
+            "content": "There are some significant usability issues with the notebook as it stands that will need to be remedied for it to be useful to a broad audience.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_4",
+            "start": 0,
+            "end": 144,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_4@1",
+            "content": "Since people who cannot program will be unable to make even small changes to the workflow, it is important that the pipeline implemented here by scientifically sound, robust to different input formats and scales, and feature-complete.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_4",
+            "start": 146,
+            "end": 379,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_5@0",
+            "content": "- Data I/O. I attempted to use the web-hosted version of the notebook to upload a large csv (80 MB). After nothing happened, I switched to a smaller CSV. Since it was in gene x cell format instead of cell x gene, the analysis couldn't proceed. Finally I tried a 10X .mtx file, but as there was no way to upload the corresponding barcodes file, that didn't work. Finally I used an h5ad file from a previous scanpy analysis. That won't be possible for the typical user. (Given slow upload times, actually, you may want to accept zipped csvs as well.)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_5",
+            "start": 0,
+            "end": 547,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_6@0",
+            "content": "The author should make it possible to upload 10X files properly.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_6",
+            "start": 0,
+            "end": 63,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_6@1",
+            "content": "They should also allow for the data to be gene x cell or cell x gene, by giving the user a chance to transpose the matrix if necessary.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_6",
+            "start": 65,
+            "end": 199,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_7@0",
+            "content": "- Interactive sliders are nice, much better than setting cutoffs by number, seeing how values change, and iterating. For the cutoffs on nGene and nCounts, the sliders are not aligned with the plot and lack numerical axes or numbers for current values. These should be displayed directly under the plots so that one can slide them to align with suggested cutoffs at various values of sigma, and should also display the numerical value currently selected.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_7",
+            "start": 0,
+            "end": 452,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_8@0",
+            "content": "(Also, the suggestion that 3\\sigma is an appropriate cutoff is based on the assumption of a normal distribution, which does not hold for this data, especially for 10X.)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_8",
+            "start": 0,
+            "end": 167,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_9@0",
+            "content": "- The notebook bakes in certain analysis choices, such as regressing out % mito, which are not statistically sound. For the problems with regressing out, see this [blog post](http://ds.czbiohub.org/blog/Regression-Hazards/). I suggest that such \"corrections\" be removed. For a simple, sound analysis, see the workflow and language we used for Tabula Muris [Annotation Vignette](https://github.com/czbiohub/tabula-muris/blob/master/00_data_ingest/02_tissue_analysis_rmd/Organ_Annotation_Vignette.Rmd)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_9",
+            "start": 0,
+            "end": 498,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_9@1",
+            "content": "- The notebook also includes some assumptions about the reference used. In particular, it assumes for % mito that genes be formatted in a certain case.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_9",
+            "start": 500,
+            "end": 650,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_9@2",
+            "content": "- Users will likely have metadata they want to visualize, such as sample, batch, sex, stimulated vs unstimulated, etc. They should be able to upload a csv with that data, and visualize it on the tSNE plots. This is important for interpretation of the results.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_9",
+            "start": 652,
+            "end": 910,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_9@3",
+            "content": "- The tSNE tab for visualizing gene expression did not load when clicked on.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_9",
+            "start": 912,
+            "end": 987,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_9@4",
+            "content": "- \"Conversely, reads for multiple cells may be captured together, artificially inflating the number of reads for a single cell. \" Doublet detection is indeed a tricky problem. There are [methods](https://www.biorxiv.org/content/early/2018/07/19/352484) to address it, but this notebook does not implement them.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_9",
+            "start": 989,
+            "end": 1298,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_9@5",
+            "content": "- Depending on the size of the data, each step may take seconds to hours. For a naive user, they may not know how long to wait and at some point anyone would give up. It would be very useful if the author did some calibration for each step (running sample datasets of various sizes) so that an estimated time to completion could be displayed.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_9",
+            "start": 1300,
+            "end": 1641,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_10@0",
+            "content": "Final remarks:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_10",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_11@0",
+            "content": "Single-cell sequencing analysis is evolving, and it is essential that we get the most sound methods in the hands of practitioners.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_11",
+            "start": 0,
+            "end": 129,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_11@1",
+            "content": "Anchoring this notebook to Scanpy is great, since that library is actively being developed.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_11",
+            "start": 131,
+            "end": 221,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_11@2",
+            "content": "I recommend that the author regularly update this template with methods as they become available in that library.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_11",
+            "start": 223,
+            "end": 335,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_11@3",
+            "content": "For example, t-tests and the wilcox have problems with log-normalized data (they fail to be consistent when cells are sampled to different depths).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_11",
+            "start": 337,
+            "end": 483,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_11@4",
+            "content": "I recommend the t-test_overestim_var from Scanpy for something fast and logreg for something more accurate, but all the options should be made available and the defaults from Scanpy should be the defaults for you.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_11",
+            "start": 485,
+            "end": 697,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_12@0",
+            "content": "This will need to be a living document to be useful.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_12",
+            "start": 0,
+            "end": 51,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_12@1",
+            "content": "If it is a repository of best practices for simple single-cell analysis, then it may serve as a way in to single for people who don't yet know how to program.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_12",
+            "start": 53,
+            "end": 210,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_13@0",
+            "content": "Are the conclusions about the tool and its performance adequately supported by the findings presented in the article?",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_13",
+            "start": 0,
+            "end": 116,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_report40612_14@0",
+            "content": "Partly",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_report40612_14",
+            "start": 0,
+            "end": 5,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_1",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_2",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_3",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_4",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_5",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_6",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_7",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_8",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_9",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_10",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_11",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_12",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_13",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_14",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_1",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_1",
+            "tgt_ix": "7-1306_v1_report40612_2",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_2",
+            "tgt_ix": "7-1306_v1_report40612_3",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_3",
+            "tgt_ix": "7-1306_v1_report40612_4",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_4",
+            "tgt_ix": "7-1306_v1_report40612_5",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_5",
+            "tgt_ix": "7-1306_v1_report40612_6",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_6",
+            "tgt_ix": "7-1306_v1_report40612_7",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_7",
+            "tgt_ix": "7-1306_v1_report40612_8",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_8",
+            "tgt_ix": "7-1306_v1_report40612_9",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_9",
+            "tgt_ix": "7-1306_v1_report40612_10",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_10",
+            "tgt_ix": "7-1306_v1_report40612_11",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_11",
+            "tgt_ix": "7-1306_v1_report40612_12",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_12",
+            "tgt_ix": "7-1306_v1_report40612_13",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_13",
+            "tgt_ix": "7-1306_v1_report40612_14",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_0",
+            "tgt_ix": "7-1306_v1_report40612_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_1",
+            "tgt_ix": "7-1306_v1_report40612_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_1",
+            "tgt_ix": "7-1306_v1_report40612_1@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_1",
+            "tgt_ix": "7-1306_v1_report40612_1@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_2",
+            "tgt_ix": "7-1306_v1_report40612_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_2",
+            "tgt_ix": "7-1306_v1_report40612_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_3",
+            "tgt_ix": "7-1306_v1_report40612_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_3",
+            "tgt_ix": "7-1306_v1_report40612_3@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_4",
+            "tgt_ix": "7-1306_v1_report40612_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_4",
+            "tgt_ix": "7-1306_v1_report40612_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_5",
+            "tgt_ix": "7-1306_v1_report40612_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_6",
+            "tgt_ix": "7-1306_v1_report40612_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_6",
+            "tgt_ix": "7-1306_v1_report40612_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_7",
+            "tgt_ix": "7-1306_v1_report40612_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_8",
+            "tgt_ix": "7-1306_v1_report40612_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_9",
+            "tgt_ix": "7-1306_v1_report40612_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_9",
+            "tgt_ix": "7-1306_v1_report40612_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_9",
+            "tgt_ix": "7-1306_v1_report40612_9@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_9",
+            "tgt_ix": "7-1306_v1_report40612_9@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_9",
+            "tgt_ix": "7-1306_v1_report40612_9@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_9",
+            "tgt_ix": "7-1306_v1_report40612_9@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_10",
+            "tgt_ix": "7-1306_v1_report40612_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_11",
+            "tgt_ix": "7-1306_v1_report40612_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_11",
+            "tgt_ix": "7-1306_v1_report40612_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_11",
+            "tgt_ix": "7-1306_v1_report40612_11@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_11",
+            "tgt_ix": "7-1306_v1_report40612_11@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_11",
+            "tgt_ix": "7-1306_v1_report40612_11@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_12",
+            "tgt_ix": "7-1306_v1_report40612_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_12",
+            "tgt_ix": "7-1306_v1_report40612_12@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_13",
+            "tgt_ix": "7-1306_v1_report40612_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_report40612_14",
+            "tgt_ix": "7-1306_v1_report40612_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "7-1306_v1_report40612",
+    "meta": {
+        "review_id": "7-1306_v1_report40612",
+        "license": "http://creativecommons.org/licenses/by/4.0/",
+        "recommendation": "approve-with-reservations",
+        "doi": "10.5256/f1000research.17278.r40612",
+        "contributors": [
+            {
+                "surname": "Batson",
+                "given-names": "Joshua"
+            }
+        ],
+        "ix_counter": 60,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy"
+    }
+}

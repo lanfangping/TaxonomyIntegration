@@ -1,0 +1,3131 @@
+{
+    "nodes": [
+        {
+            "ix": "8-530_v1_0",
+            "content": "RVDB-prot, a reference viral protein database and its HMM profiles",
+            "ntype": "article-title",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_2",
+            "content": "We present RVDB-prot, a database corresponding to the protein equivalent of the nucleic acid reference virus database RVDB. Protein databases can be helpful to perform more sensitive protein sequence comparisons. Similarly to its homologous public repository, RVDB-prot aims to provide reliable and accurately annotated unique entries, while including also an Hidden Markov Model (HMM) protein profiles database for distant protein searching.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1",
+                "sec-type": "intro",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_4",
+            "content": "Sequence assignation often uses similarity criteria to infer homology, and hence taxonomy and / or protein type. In order to search for this similarity, reliable, accurate and comprehensive databases are required. In the specific field of viruses, several solutions are available yet their ability to provide valid results is highly dependant on the goal of the study and on the available computer resources. Using a database with a high number of sequences, such as NCBI nr/nt may seem appropriate, but it implies an increased computation time and annotation quality is not always optimal. RefSeq on the other hand, is generally better curated, but it contains only full-length genomes and rarely includes the latest discoveries. Other specialized databases provide only specific groups of taxa for specific purposes, for instance, virus families responsible for infectious diseases like HIV or influenza.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_5",
+            "content": "Thus, the need for better, well-annotated and comprehensive public viral databases that can be used for the identification of viruses by high-throughput sequencing lead Goodacre et al. to propose their Reference Viral DataBase (RVDB) <REF-1> . This database consists of a collection of all currently known viral genomes and virus-related nucleic sequences retrieved from NCBI nr or RefSeq, which includes a specific, both manual and computational reviewing process, as well as four updates of the contents per year. These features make RVDB quite attractive for the virology research community and in fact, in February 2018, version 15.1 was released.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_6",
+            "content": "Since viral genomes mainly consist of coding sequences, the need for an equivalent reference database that provides the protein version of these sequences may prove quite advantageous.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_7",
+            "content": "Indeed, protein sequences are useful when searching for distant homologs: their substitution rates are much lower than nucleic sequences. Additionally, proteins can also be efficiently clustered according to their similarity, and the resulting clusters can then be used to build Hidden Markov Model (HMM) Profiles in order to identify more evolutionary distant proteins. In fact, programs like HMMER <REF-2> allow the building of a HMM profile from a multiple protein sequence alignment. This profile can then be able to recognize proteins based on complex positionspecific models of sequence conservation and evolution, and it does so in a more accurate way than if a classic sequence alignment is used.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_8",
+            "content": "Thus, we propose a protein sequence version of RVDB whose update will be synchronized with the original nucleotide RVDB release. Here we describe the conversion from the nucleotide version of RVDB to the protein version RVDB-prot, as well as the clustering process leading to the HMM profiles.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_9",
+            "content": "Methods",
+            "ntype": "title",
+            "meta": {
+                "section": "2",
+                "sec-type": "methods",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_10",
+            "content": "Conversion from RVDB nucleic database to RVDB-prot",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_11",
+            "content": "The current version of RVDB, v15.1 <REF-3> consists of a collection of 2 719 839 nucleic sequences <REF-1> . The accession numbers were extracted in order to gather the corresponding database entries in genbank format. From these entries, coding domain sequences and the description of these sequences were located and copied into the protein collection. The resulting protein file contains the nucleic sequence reference, for traceability purposes. The sequence names are formatted in the following way:",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_12",
+            "content": ">acc|<p_bank>|<p_acc>|<n_bank>|<n_acc>|<descr[sp]>, where:",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_13",
+            "content": "p_bank is the bank in which the protein can be found",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_14",
+            "content": "p_acc is the accession number corresponding to the protein sequence",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_15",
+            "content": "n_bank is the bank in which the original nucleotide sequence was found",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_16",
+            "content": "n_acc is the original information found in the nucleic database",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_17",
+            "content": "descr is the description of the protein sequence as found in the database entry",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_18",
+            "content": "sp is the species name.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_19",
+            "content": "This process produces a 3 899 699 protein sequence file.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_20",
+            "content": "Generation of HMM profiles",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_21",
+            "content": "The HMM generation rationale was inspired from VFam (the database of profile HMM built from all the viral proteins present in RefSeq, discontinued from 2014) <REF-4> , but was entirely re-coded as a Snakemake pipeline <REF-5> , using different tools for some key steps (clustering, alignment). The proteins sequences were clustered with a 100% identity criteria to duplicates, using CDHit 4.7.0 <REF-6> . Then, the sequences were processed using Blast 2.2.26 <REF-7> performing an all-against-all comparison. These comparisons allow Silix 1.2.6 <REF-8> to define clusters of sequences according to the sequence similarity. This step produces a file text in which each sequence is associated to one cluster. The information of each cluster containing at least four sequences was transformed into a fasta file containing all of its sequences. Then, we performed multiple alignment using Mafft 7.023 <REF-9> in auto mode. The multiple sequence alignments were processed by HMMER 3.2.1 <REF-2> in order to obtain the HMM profiles. The HMM profiles were then put together in a single file.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_22",
+            "content": "Annotation of HMM profiles",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_23",
+            "content": "In our pipeline, a cluster consists in a set of sequences, where each sequence belongs to a species, and each sequence is associated with a description. In order to characterize the clusters, these pieces of information and other indicators (such as cluster length and sequence number) are combined into an annotation database, in SQLite format. The schema of this database is shown in Figure 1 .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_24",
+            "content": "Figure 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "f1",
+                "caption": "Schema of the annotation database.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/20570/4ec8038a-3243-4a04-a0f9-178ca583e7a6_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_25",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f1\" position=\"float\"> <caption> <title>Schema of the annotation database.</title> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/20570/4ec8038a-3243-4a04-a0f9-178ca583e7a6_figure1.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f1",
+                "caption": "Schema of the annotation database.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/20570/4ec8038a-3243-4a04-a0f9-178ca583e7a6_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_26",
+            "content": "The first type of data associated to a cluster is a set of keywords. These keywords correspond to the union of all the set of sequence names belonging to the cluster, weighted according to their frequencies, and excluding trivial words. For instance, for the cluster number 1, containing 588 sequences, the keywords and their frequencies, are: parvovirus(441), protein(423), Canine(359), capsid(345), VP2(233), virus(89), VP1(83), disease(48), Aleutian(48), mink(48) allowing to describe a cluster composed of Canine parvovirus capsid protein sequences. The database stores all these taxa, using NCBI TaxIDs. For each cluster, the taxonomic information is summarized by a Last Common Ancestor (LCA) that corresponds to the taxon in the tree of life to which all the sequence taxa belong. Finally, the database also provides the length (number of amino acids of the multiple sequences alignment) and the number of sequences in each cluster.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_27",
+            "content": "This database is available in SQLite format, and to provide more direct access, flat text files are proposed. A text file for each cluster, identified with its cluster number contains all the information related to it.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_28",
+            "content": "Software availability",
+            "ntype": "title",
+            "meta": {
+                "section": "2.4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_29",
+            "content": "The different steps explained above are performed using a Snakemake pipeline <REF-5> , available at Institut Pasteur\u2019s Gitlab.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_30",
+            "content": "- Pipeline available from https://gitlab.pasteur.fr/tbigot/rvdb-prot/ .\n- Archived source code at time of publication: http://doi.org/10.5281/zenodo.2630593 <REF-10>\n- Licence: GNU GPL v3.0",
+            "ntype": "list",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_31",
+            "content": "Several tools are needed to run the pipeline, including: Python, Mafft, Golden, Hmmer, Snakemake, Silix, Blast+. The versions of these tools compatible with the pipeline are listed in the README file.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_32",
+            "content": "Data availability",
+            "ntype": "title",
+            "meta": {
+                "section": "3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_33",
+            "content": "Underlying data",
+            "ntype": "title",
+            "meta": {
+                "section": "3.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_34",
+            "content": "Database files are available at https://rvdb-prot.pasteur.fr/ . Release 15.1 described in this manuscript is also available from Figshare.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_35",
+            "content": "Figshare: U-RVDBv15.1 https://dx.doi.org/10.6084/m9.figshare.7745969 <REF-3> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_36",
+            "content": "This project contains the following underlying data:",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_37",
+            "content": "- U-RVDBv15.1-prot.fasta (fasta file containing protein features of the original database: -prot.fasta)\n- U-RVDBv15.1-prot.fasta-prot.hmm (the HMM profiles, generated with and for hmmer 3.2.1 (from 2019, 3.1b2 before))\n- U-RVDBv15.1-prot.fasta-prot-hmm.sqlite (SQLite db containing annotations (please find a documentation below))\n- U-RVDBv15.1-prot.fasta-annot.txt (a directory of annotations with plain text files (one per protein family))",
+            "ntype": "list",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_38",
+            "content": "Data are available under the terms of the Creative Commons Attribution 4.0 International license (CC-BY 4.0).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_39",
+            "content": "Table 1 shows some summary metrics for the entries of this release and the different resources.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_40",
+            "content": "Table 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "T1",
+                "caption": "Metrics for release 15.1.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_41",
+            "content": "<table-wrap xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"T1\" position=\"anchor\"> <caption> <title>Metrics for release 15.1.</title> </caption> <table content-type=\"article-table\" frame=\"hsides\"> <tbody> <tr> <td align=\"left\">Nucleic sequences</td> <td align=\"center\">RVDB</td> <td align=\"right\">2 719 839</td> </tr> <tr> <td align=\"left\">Proteins</td> <td align=\"center\">RVDB-prot</td> <td align=\"right\">3 899 699</td> </tr> <tr> <td align=\"left\">Unique proteins</td> <td align=\"center\">RVDB-prot</td> <td align=\"right\">489 207</td> </tr> <tr> <td align=\"left\">Clusters</td> <td align=\"center\">RVDB-prot HMM</td> <td align=\"right\">86 482</td> </tr> </tbody> </table> </table-wrap>",
+            "ntype": "table-wrap",
+            "meta": {
+                "id": "T1",
+                "caption": "Metrics for release 15.1.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_42",
+            "content": "Updates are manually curated each time a new release of the main database (nucleic RVDB) is announced, i.e., four times a year. The following older versions are also available online: 14.0 (2018-09), 13.0 (2018-06), 12.2(2018-03), 11.5 (2017-10), 10.2 (2017-04).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_43",
+            "content": "Usage HMMER can be used to search for all profiles in a fasta sequence file (sequences.fasta): hmmsearch U-RVDBv15.1-prot.fasta-prot.hmm sequences.fasta > result.out. Additional options are available in HMMER User\u2019s Guide.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_44",
+            "content": "<REF-1> Goodacre N Aljanahi A Nandakumar S : A Reference Viral Database (RVDB) To Enhance Bioinformatics Analysis of High-Throughput Sequencing for Novel Virus Detection. mSphere. 2018 ; 3 ( 2 ): pii: e00069-18. 29564396 10.1128/mSphereDirect.00069-18 5853486",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_45",
+            "content": "<REF-2> Eddy SR : Accelerated Profile HMM Searches. PLoS Comput Biol. 2011 ; 7 ( 10 ): e1002195 . 22039361 10.1371/journal.pcbi.1002195 3197634",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_46",
+            "content": "<REF-3> Bigot T Temmam S P\u00e9rot P : U-RVDBv15.1. figshare. Fileset. 2019 . http://www.doi.org/10.6084/m9.figshare.7745969.v1",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_47",
+            "content": "<REF-4> Skewes-Cox P Sharpton TJ Pollard KS : Profile hidden Markov models for the detection of viruses within metagenomic sequence data. PLoS One. 2014 ; 9 ( 8 ): e105067 . 25140992 10.1371/journal.pone.0105067 4139300",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_48",
+            "content": "<REF-5> K\u00f6ster J Rahmann S : Snakemake--a scalable bioinformatics workflow engine. Bioinformatics. 2012 ; 28 ( 19 ): 2520 \u2013 2522 . 22908215 10.1093/bioinformatics/bts480",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_49",
+            "content": "<REF-6> Li W Godzik A : Cd-hit: a fast program for clustering and comparing large sets of protein or nucleotide sequences. Bioinformatics. 2006 ; 22 ( 13 ): 1658 \u2013 1659 . 16731699 10.1093/bioinformatics/btl158",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_50",
+            "content": "<REF-7> Altschul SF Gish W Miller W : Basic local alignment search tool. J Mol Biol. 1990 ; 215 ( 3 ): 403 \u2013 410 . 2231712 10.1016/S0022-2836(05)80360-2",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-7",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_51",
+            "content": "<REF-8> Miele V Penel S Duret L : Ultra-fast sequence clustering from similarity networks with SiLiX. BMC Bioinformatics. 2011 ; 12 ( 1 ): 116 . 21513511 10.1186/1471-2105-12-116 3095554",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-8",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-530_v1_52",
+            "content": "<REF-9> Katoh K Misawa K Kuma K : MAFFT: a novel method for rapid multiple sequence alignment based on fast Fourier transform. Nucleic Acids Res. 2002 ; 30 ( 14 ): 3059 \u2013 3066 . 12136088 10.1093/nar/gkf436 135756",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-9",
+                "created_by": "F1000XMLParser"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "8-530_v1_0@0",
+            "content": "RVDB-prot, a reference viral protein database and its HMM profiles",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_0",
+            "start": 0,
+            "end": 65,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_2@0",
+            "content": "We present RVDB-prot, a database corresponding to the protein equivalent of the nucleic acid reference virus database RVDB.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_2",
+            "start": 0,
+            "end": 122,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_2@1",
+            "content": "Protein databases can be helpful to perform more sensitive protein sequence comparisons.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_2",
+            "start": 124,
+            "end": 211,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_2@2",
+            "content": "Similarly to its homologous public repository, RVDB-prot aims to provide reliable and accurately annotated unique entries, while including also an Hidden Markov Model (HMM) protein profiles database for distant protein searching.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_2",
+            "start": 213,
+            "end": 441,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_4@0",
+            "content": "Sequence assignation often uses similarity criteria to infer homology, and hence taxonomy and / or protein type.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_4",
+            "start": 0,
+            "end": 111,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_4@1",
+            "content": "In order to search for this similarity, reliable, accurate and comprehensive databases are required.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_4",
+            "start": 113,
+            "end": 212,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_4@2",
+            "content": "In the specific field of viruses, several solutions are available yet their ability to provide valid results is highly dependant on the goal of the study and on the available computer resources.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_4",
+            "start": 214,
+            "end": 407,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_4@3",
+            "content": "Using a database with a high number of sequences, such as NCBI nr/nt may seem appropriate, but it implies an increased computation time and annotation quality is not always optimal.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_4",
+            "start": 409,
+            "end": 589,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_4@4",
+            "content": "RefSeq on the other hand, is generally better curated, but it contains only full-length genomes and rarely includes the latest discoveries.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_4",
+            "start": 591,
+            "end": 729,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_4@5",
+            "content": "Other specialized databases provide only specific groups of taxa for specific purposes, for instance, virus families responsible for infectious diseases like HIV or influenza.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_4",
+            "start": 731,
+            "end": 905,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_5@0",
+            "content": "Thus, the need for better, well-annotated and comprehensive public viral databases that can be used for the identification of viruses by high-throughput sequencing lead Goodacre et al. to propose their Reference Viral DataBase (RVDB) <REF-1> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_5",
+            "start": 0,
+            "end": 242,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_5@1",
+            "content": "This database consists of a collection of all currently known viral genomes and virus-related nucleic sequences retrieved from NCBI nr or RefSeq, which includes a specific, both manual and computational reviewing process, as well as four updates of the contents per year.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_5",
+            "start": 244,
+            "end": 514,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_5@2",
+            "content": "These features make RVDB quite attractive for the virology research community and in fact, in February 2018, version 15.1 was released.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_5",
+            "start": 516,
+            "end": 650,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_6@0",
+            "content": "Since viral genomes mainly consist of coding sequences, the need for an equivalent reference database that provides the protein version of these sequences may prove quite advantageous.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_6",
+            "start": 0,
+            "end": 183,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_7@0",
+            "content": "Indeed, protein sequences are useful when searching for distant homologs: their substitution rates are much lower than nucleic sequences.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_7",
+            "start": 0,
+            "end": 136,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_7@1",
+            "content": "Additionally, proteins can also be efficiently clustered according to their similarity, and the resulting clusters can then be used to build Hidden Markov Model (HMM) Profiles in order to identify more evolutionary distant proteins.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_7",
+            "start": 138,
+            "end": 369,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_7@2",
+            "content": "In fact, programs like HMMER <REF-2> allow the building of a HMM profile from a multiple protein sequence alignment.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_7",
+            "start": 371,
+            "end": 486,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_7@3",
+            "content": "This profile can then be able to recognize proteins based on complex positionspecific models of sequence conservation and evolution, and it does so in a more accurate way than if a classic sequence alignment is used.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_7",
+            "start": 488,
+            "end": 703,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_8@0",
+            "content": "Thus, we propose a protein sequence version of RVDB whose update will be synchronized with the original nucleotide RVDB release.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_8",
+            "start": 0,
+            "end": 127,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_8@1",
+            "content": "Here we describe the conversion from the nucleotide version of RVDB to the protein version RVDB-prot, as well as the clustering process leading to the HMM profiles.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_8",
+            "start": 129,
+            "end": 292,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_9@0",
+            "content": "Methods",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_9",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_10@0",
+            "content": "Conversion from RVDB nucleic database to RVDB-prot",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_10",
+            "start": 0,
+            "end": 49,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_11@0",
+            "content": "The current version of RVDB, v15.1 <REF-3> consists of a collection of 2 719 839 nucleic sequences <REF-1> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_11",
+            "start": 0,
+            "end": 107,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_11@1",
+            "content": "The accession numbers were extracted in order to gather the corresponding database entries in genbank format.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_11",
+            "start": 109,
+            "end": 217,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_11@2",
+            "content": "From these entries, coding domain sequences and the description of these sequences were located and copied into the protein collection.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_11",
+            "start": 219,
+            "end": 353,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_11@3",
+            "content": "The resulting protein file contains the nucleic sequence reference, for traceability purposes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_11",
+            "start": 355,
+            "end": 448,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_11@4",
+            "content": "The sequence names are formatted in the following way:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_11",
+            "start": 450,
+            "end": 503,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_12@0",
+            "content": ">acc|<p_bank>|<p_acc>|<n_bank>|<n_acc>|<descr[sp]>, where:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_12",
+            "start": 0,
+            "end": 57,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_13@0",
+            "content": "p_bank is the bank in which the protein can be found",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_13",
+            "start": 0,
+            "end": 51,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_14@0",
+            "content": "p_acc is the accession number corresponding to the protein sequence",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_14",
+            "start": 0,
+            "end": 66,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_15@0",
+            "content": "n_bank is the bank in which the original nucleotide sequence was found",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_15",
+            "start": 0,
+            "end": 69,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_16@0",
+            "content": "n_acc is the original information found in the nucleic database",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_16",
+            "start": 0,
+            "end": 62,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_17@0",
+            "content": "descr is the description of the protein sequence as found in the database entry",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_17",
+            "start": 0,
+            "end": 78,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_18@0",
+            "content": "sp is the species name.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_18",
+            "start": 0,
+            "end": 22,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_19@0",
+            "content": "This process produces a 3 899 699 protein sequence file.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_19",
+            "start": 0,
+            "end": 55,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_20@0",
+            "content": "Generation of HMM profiles",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_20",
+            "start": 0,
+            "end": 25,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_21@0",
+            "content": "The HMM generation rationale was inspired from VFam (the database of profile HMM built from all the viral proteins present in RefSeq, discontinued from 2014) <REF-4> , but was entirely re-coded as a Snakemake pipeline <REF-5> , using different tools for some key steps (clustering, alignment).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_21",
+            "start": 0,
+            "end": 292,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_21@1",
+            "content": "The proteins sequences were clustered with a 100% identity criteria to duplicates, using CDHit 4.7.0 <REF-6> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_21",
+            "start": 294,
+            "end": 403,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_21@2",
+            "content": "Then, the sequences were processed using Blast 2.2.26 <REF-7> performing an all-against-all comparison.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_21",
+            "start": 405,
+            "end": 507,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_21@3",
+            "content": "These comparisons allow Silix 1.2.6 <REF-8> to define clusters of sequences according to the sequence similarity.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_21",
+            "start": 509,
+            "end": 621,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_21@4",
+            "content": "This step produces a file text in which each sequence is associated to one cluster.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_21",
+            "start": 623,
+            "end": 705,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_21@5",
+            "content": "The information of each cluster containing at least four sequences was transformed into a fasta file containing all of its sequences.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_21",
+            "start": 707,
+            "end": 839,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_21@6",
+            "content": "Then, we performed multiple alignment using Mafft 7.023 <REF-9> in auto mode.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_21",
+            "start": 841,
+            "end": 917,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_21@7",
+            "content": "The multiple sequence alignments were processed by HMMER 3.2.1 <REF-2> in order to obtain the HMM profiles.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_21",
+            "start": 919,
+            "end": 1025,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_21@8",
+            "content": "The HMM profiles were then put together in a single file.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_21",
+            "start": 1027,
+            "end": 1083,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_22@0",
+            "content": "Annotation of HMM profiles",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_22",
+            "start": 0,
+            "end": 25,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_23@0",
+            "content": "In our pipeline, a cluster consists in a set of sequences, where each sequence belongs to a species, and each sequence is associated with a description.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_23",
+            "start": 0,
+            "end": 151,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_23@1",
+            "content": "In order to characterize the clusters, these pieces of information and other indicators (such as cluster length and sequence number) are combined into an annotation database, in SQLite format.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_23",
+            "start": 153,
+            "end": 344,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_23@2",
+            "content": "The schema of this database is shown in Figure 1 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_23",
+            "start": 346,
+            "end": 395,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_24@0",
+            "content": "Figure 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_24",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_26@0",
+            "content": "The first type of data associated to a cluster is a set of keywords.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_26",
+            "start": 0,
+            "end": 67,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_26@1",
+            "content": "These keywords correspond to the union of all the set of sequence names belonging to the cluster, weighted according to their frequencies, and excluding trivial words.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_26",
+            "start": 69,
+            "end": 235,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_26@2",
+            "content": "For instance, for the cluster number 1, containing 588 sequences, the keywords and their frequencies, are: parvovirus(441), protein(423), Canine(359), capsid(345), VP2(233), virus(89), VP1(83), disease(48), Aleutian(48), mink(48) allowing to describe a cluster composed of Canine parvovirus capsid protein sequences.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_26",
+            "start": 237,
+            "end": 552,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_26@3",
+            "content": "The database stores all these taxa, using NCBI TaxIDs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_26",
+            "start": 554,
+            "end": 607,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_26@4",
+            "content": "For each cluster, the taxonomic information is summarized by a Last Common Ancestor (LCA) that corresponds to the taxon in the tree of life to which all the sequence taxa belong.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_26",
+            "start": 609,
+            "end": 786,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_26@5",
+            "content": "Finally, the database also provides the length (number of amino acids of the multiple sequences alignment) and the number of sequences in each cluster.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_26",
+            "start": 788,
+            "end": 938,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_27@0",
+            "content": "This database is available in SQLite format, and to provide more direct access, flat text files are proposed.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_27",
+            "start": 0,
+            "end": 108,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_27@1",
+            "content": "A text file for each cluster, identified with its cluster number contains all the information related to it.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_27",
+            "start": 110,
+            "end": 217,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_28@0",
+            "content": "Software availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_28",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_29@0",
+            "content": "The different steps explained above are performed using a Snakemake pipeline <REF-5> , available at Institut Pasteur\u2019s Gitlab.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_29",
+            "start": 0,
+            "end": 125,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_30@0",
+            "content": "- Pipeline available from https://gitlab.pasteur.fr/tbigot/rvdb-prot/ .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_30",
+            "start": 0,
+            "end": 70,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_30@1",
+            "content": "- Archived source code at time of publication: http://doi.org/10.5281/zenodo.2630593 <REF-10>",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_30",
+            "start": 72,
+            "end": 164,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_30@2",
+            "content": "- Licence: GNU GPL v3.0",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_30",
+            "start": 166,
+            "end": 188,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_31@0",
+            "content": "Several tools are needed to run the pipeline, including: Python, Mafft, Golden, Hmmer, Snakemake, Silix, Blast+.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_31",
+            "start": 0,
+            "end": 111,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_31@1",
+            "content": "The versions of these tools compatible with the pipeline are listed in the README file.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_31",
+            "start": 113,
+            "end": 199,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_32@0",
+            "content": "Data availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_32",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_33@0",
+            "content": "Underlying data",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_33",
+            "start": 0,
+            "end": 14,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_34@0",
+            "content": "Database files are available at https://rvdb-prot.pasteur.fr/ .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_34",
+            "start": 0,
+            "end": 62,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_34@1",
+            "content": "Release 15.1 described in this manuscript is also available from Figshare.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_34",
+            "start": 64,
+            "end": 137,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_35@0",
+            "content": "Figshare: U-RVDBv15.1 https://dx.doi.org/10.6084/m9.figshare.7745969 <REF-3> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_35",
+            "start": 0,
+            "end": 77,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_36@0",
+            "content": "This project contains the following underlying data:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_36",
+            "start": 0,
+            "end": 51,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_37@0",
+            "content": "- U-RVDBv15.1-prot.fasta (fasta file containing protein features of the original database: -prot.fasta)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_37",
+            "start": 0,
+            "end": 102,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_37@1",
+            "content": "- U-RVDBv15.1-prot.fasta-prot.hmm (the HMM profiles, generated with and for hmmer 3.2.1 (from 2019, 3.1b2 before))",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_37",
+            "start": 104,
+            "end": 217,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_37@2",
+            "content": "- U-RVDBv15.1-prot.fasta-prot-hmm.sqlite (SQLite db containing annotations (please find a documentation below))",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_37",
+            "start": 219,
+            "end": 329,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_37@3",
+            "content": "- U-RVDBv15.1-prot.fasta-annot.txt (a directory of annotations with plain text files (one per protein family))",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_37",
+            "start": 331,
+            "end": 440,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_38@0",
+            "content": "Data are available under the terms of the Creative Commons Attribution 4.0 International license (CC-BY 4.0).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_38",
+            "start": 0,
+            "end": 108,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_39@0",
+            "content": "Table 1 shows some summary metrics for the entries of this release and the different resources.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_39",
+            "start": 0,
+            "end": 94,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_40@0",
+            "content": "Table 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_40",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_42@0",
+            "content": "Updates are manually curated each time a new release of the main database (nucleic RVDB) is announced, i.e., four times a year.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_42",
+            "start": 0,
+            "end": 126,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_42@1",
+            "content": "The following older versions are also available online: 14.0 (2018-09), 13.0 (2018-06), 12.2(2018-03), 11.5 (2017-10), 10.2 (2017-04).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_42",
+            "start": 128,
+            "end": 261,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_43@0",
+            "content": "Usage HMMER can be used to search for all profiles in a fasta sequence file (sequences.fasta): hmmsearch U-RVDBv15.1-prot.fasta-prot.hmm sequences.fasta > result.out.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_43",
+            "start": 0,
+            "end": 165,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_43@1",
+            "content": "Additional options are available in HMMER User\u2019s Guide.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_43",
+            "start": 167,
+            "end": 221,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_44@0",
+            "content": "<REF-1> Goodacre N Aljanahi A Nandakumar S : A Reference Viral Database (RVDB) To Enhance Bioinformatics Analysis of High-Throughput Sequencing for Novel Virus Detection. mSphere. 2018 ; 3 ( 2 ): pii: e00069-18. 29564396 10.1128/mSphereDirect.00069-18 5853486",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_44",
+            "start": 0,
+            "end": 258,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_45@0",
+            "content": "<REF-2> Eddy SR : Accelerated Profile HMM Searches. PLoS Comput Biol. 2011 ; 7 ( 10 ): e1002195 . 22039361 10.1371/journal.pcbi.1002195 3197634",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_45",
+            "start": 0,
+            "end": 142,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_46@0",
+            "content": "<REF-3> Bigot T Temmam S P\u00e9rot P : U-RVDBv15.1. figshare. Fileset. 2019 . http://www.doi.org/10.6084/m9.figshare.7745969.v1",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_46",
+            "start": 0,
+            "end": 122,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_47@0",
+            "content": "<REF-4> Skewes-Cox P Sharpton TJ Pollard KS : Profile hidden Markov models for the detection of viruses within metagenomic sequence data. PLoS One. 2014 ; 9 ( 8 ): e105067 . 25140992 10.1371/journal.pone.0105067 4139300",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_47",
+            "start": 0,
+            "end": 218,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_48@0",
+            "content": "<REF-5> K\u00f6ster J Rahmann S : Snakemake--a scalable bioinformatics workflow engine. Bioinformatics. 2012 ; 28 ( 19 ): 2520 \u2013 2522 . 22908215 10.1093/bioinformatics/bts480",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_48",
+            "start": 0,
+            "end": 168,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_49@0",
+            "content": "<REF-6> Li W Godzik A : Cd-hit: a fast program for clustering and comparing large sets of protein or nucleotide sequences. Bioinformatics. 2006 ; 22 ( 13 ): 1658 \u2013 1659 . 16731699 10.1093/bioinformatics/btl158",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_49",
+            "start": 0,
+            "end": 208,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_50@0",
+            "content": "<REF-7> Altschul SF Gish W Miller W : Basic local alignment search tool. J Mol Biol. 1990 ; 215 ( 3 ): 403 \u2013 410 . 2231712 10.1016/S0022-2836(05)80360-2",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_50",
+            "start": 0,
+            "end": 151,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_51@0",
+            "content": "<REF-8> Miele V Penel S Duret L : Ultra-fast sequence clustering from similarity networks with SiLiX. BMC Bioinformatics. 2011 ; 12 ( 1 ): 116 . 21513511 10.1186/1471-2105-12-116 3095554",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_51",
+            "start": 0,
+            "end": 185,
+            "label": {}
+        },
+        {
+            "ix": "8-530_v1_52@0",
+            "content": "<REF-9> Katoh K Misawa K Kuma K : MAFFT: a novel method for rapid multiple sequence alignment based on fast Fourier transform. Nucleic Acids Res. 2002 ; 30 ( 14 ): 3059 \u2013 3066 . 12136088 10.1093/nar/gkf436 135756",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-530_v1_52",
+            "start": 0,
+            "end": 211,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "8-530_v1_0",
+            "tgt_ix": "8-530_v1_1",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_1",
+            "tgt_ix": "8-530_v1_2",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_0",
+            "tgt_ix": "8-530_v1_3",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_3",
+            "tgt_ix": "8-530_v1_4",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_3",
+            "tgt_ix": "8-530_v1_5",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_3",
+            "tgt_ix": "8-530_v1_6",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_3",
+            "tgt_ix": "8-530_v1_7",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_3",
+            "tgt_ix": "8-530_v1_8",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_0",
+            "tgt_ix": "8-530_v1_9",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_9",
+            "tgt_ix": "8-530_v1_10",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_10",
+            "tgt_ix": "8-530_v1_11",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_10",
+            "tgt_ix": "8-530_v1_12",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_10",
+            "tgt_ix": "8-530_v1_13",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_10",
+            "tgt_ix": "8-530_v1_14",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_10",
+            "tgt_ix": "8-530_v1_15",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_10",
+            "tgt_ix": "8-530_v1_16",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_10",
+            "tgt_ix": "8-530_v1_17",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_10",
+            "tgt_ix": "8-530_v1_18",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_10",
+            "tgt_ix": "8-530_v1_19",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_9",
+            "tgt_ix": "8-530_v1_20",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_20",
+            "tgt_ix": "8-530_v1_21",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_9",
+            "tgt_ix": "8-530_v1_22",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_22",
+            "tgt_ix": "8-530_v1_23",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_22",
+            "tgt_ix": "8-530_v1_24",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_24",
+            "tgt_ix": "8-530_v1_25",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_22",
+            "tgt_ix": "8-530_v1_26",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_22",
+            "tgt_ix": "8-530_v1_27",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_9",
+            "tgt_ix": "8-530_v1_28",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_28",
+            "tgt_ix": "8-530_v1_29",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_28",
+            "tgt_ix": "8-530_v1_30",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_28",
+            "tgt_ix": "8-530_v1_31",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_0",
+            "tgt_ix": "8-530_v1_32",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_32",
+            "tgt_ix": "8-530_v1_33",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_33",
+            "tgt_ix": "8-530_v1_34",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_33",
+            "tgt_ix": "8-530_v1_35",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_33",
+            "tgt_ix": "8-530_v1_36",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_33",
+            "tgt_ix": "8-530_v1_37",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_33",
+            "tgt_ix": "8-530_v1_38",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_33",
+            "tgt_ix": "8-530_v1_39",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_33",
+            "tgt_ix": "8-530_v1_40",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_40",
+            "tgt_ix": "8-530_v1_41",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_33",
+            "tgt_ix": "8-530_v1_42",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_33",
+            "tgt_ix": "8-530_v1_43",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_0",
+            "tgt_ix": "8-530_v1_1",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_1",
+            "tgt_ix": "8-530_v1_2",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_2",
+            "tgt_ix": "8-530_v1_3",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_3",
+            "tgt_ix": "8-530_v1_4",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_4",
+            "tgt_ix": "8-530_v1_5",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_5",
+            "tgt_ix": "8-530_v1_6",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_6",
+            "tgt_ix": "8-530_v1_7",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_7",
+            "tgt_ix": "8-530_v1_8",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_8",
+            "tgt_ix": "8-530_v1_9",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_9",
+            "tgt_ix": "8-530_v1_10",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_10",
+            "tgt_ix": "8-530_v1_11",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_11",
+            "tgt_ix": "8-530_v1_12",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_12",
+            "tgt_ix": "8-530_v1_13",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_13",
+            "tgt_ix": "8-530_v1_14",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_14",
+            "tgt_ix": "8-530_v1_15",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_15",
+            "tgt_ix": "8-530_v1_16",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_16",
+            "tgt_ix": "8-530_v1_17",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_17",
+            "tgt_ix": "8-530_v1_18",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_18",
+            "tgt_ix": "8-530_v1_19",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_19",
+            "tgt_ix": "8-530_v1_20",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_20",
+            "tgt_ix": "8-530_v1_21",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_22",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_22",
+            "tgt_ix": "8-530_v1_23",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_23",
+            "tgt_ix": "8-530_v1_24",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_24",
+            "tgt_ix": "8-530_v1_25",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_25",
+            "tgt_ix": "8-530_v1_26",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_26",
+            "tgt_ix": "8-530_v1_27",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_27",
+            "tgt_ix": "8-530_v1_28",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_28",
+            "tgt_ix": "8-530_v1_29",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_29",
+            "tgt_ix": "8-530_v1_30",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_30",
+            "tgt_ix": "8-530_v1_31",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_31",
+            "tgt_ix": "8-530_v1_32",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_32",
+            "tgt_ix": "8-530_v1_33",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_33",
+            "tgt_ix": "8-530_v1_34",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_34",
+            "tgt_ix": "8-530_v1_35",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_35",
+            "tgt_ix": "8-530_v1_36",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_36",
+            "tgt_ix": "8-530_v1_37",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_37",
+            "tgt_ix": "8-530_v1_38",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_38",
+            "tgt_ix": "8-530_v1_39",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_39",
+            "tgt_ix": "8-530_v1_40",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_40",
+            "tgt_ix": "8-530_v1_41",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_41",
+            "tgt_ix": "8-530_v1_42",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_42",
+            "tgt_ix": "8-530_v1_43",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_5",
+            "tgt_ix": "8-530_v1_44",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_7",
+            "tgt_ix": "8-530_v1_45",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_11",
+            "tgt_ix": "8-530_v1_46",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_47",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_48",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_49",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_50",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_51",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_52",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_23",
+            "tgt_ix": "8-530_v1_25",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_39",
+            "tgt_ix": "8-530_v1_41",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_0",
+            "tgt_ix": "8-530_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_1",
+            "tgt_ix": "8-530_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_2",
+            "tgt_ix": "8-530_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_2",
+            "tgt_ix": "8-530_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_2",
+            "tgt_ix": "8-530_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_3",
+            "tgt_ix": "8-530_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_4",
+            "tgt_ix": "8-530_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_4",
+            "tgt_ix": "8-530_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_4",
+            "tgt_ix": "8-530_v1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_4",
+            "tgt_ix": "8-530_v1_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_4",
+            "tgt_ix": "8-530_v1_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_4",
+            "tgt_ix": "8-530_v1_4@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_5",
+            "tgt_ix": "8-530_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_5",
+            "tgt_ix": "8-530_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_5",
+            "tgt_ix": "8-530_v1_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_6",
+            "tgt_ix": "8-530_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_7",
+            "tgt_ix": "8-530_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_7",
+            "tgt_ix": "8-530_v1_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_7",
+            "tgt_ix": "8-530_v1_7@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_7",
+            "tgt_ix": "8-530_v1_7@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_8",
+            "tgt_ix": "8-530_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_8",
+            "tgt_ix": "8-530_v1_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_9",
+            "tgt_ix": "8-530_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_10",
+            "tgt_ix": "8-530_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_11",
+            "tgt_ix": "8-530_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_11",
+            "tgt_ix": "8-530_v1_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_11",
+            "tgt_ix": "8-530_v1_11@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_11",
+            "tgt_ix": "8-530_v1_11@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_11",
+            "tgt_ix": "8-530_v1_11@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_12",
+            "tgt_ix": "8-530_v1_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_13",
+            "tgt_ix": "8-530_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_14",
+            "tgt_ix": "8-530_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_15",
+            "tgt_ix": "8-530_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_16",
+            "tgt_ix": "8-530_v1_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_17",
+            "tgt_ix": "8-530_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_18",
+            "tgt_ix": "8-530_v1_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_19",
+            "tgt_ix": "8-530_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_20",
+            "tgt_ix": "8-530_v1_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_21@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_21@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_21@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_21@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_21@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_21@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_21@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_21",
+            "tgt_ix": "8-530_v1_21@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_22",
+            "tgt_ix": "8-530_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_23",
+            "tgt_ix": "8-530_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_23",
+            "tgt_ix": "8-530_v1_23@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_23",
+            "tgt_ix": "8-530_v1_23@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_24",
+            "tgt_ix": "8-530_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_26",
+            "tgt_ix": "8-530_v1_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_26",
+            "tgt_ix": "8-530_v1_26@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_26",
+            "tgt_ix": "8-530_v1_26@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_26",
+            "tgt_ix": "8-530_v1_26@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_26",
+            "tgt_ix": "8-530_v1_26@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_26",
+            "tgt_ix": "8-530_v1_26@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_27",
+            "tgt_ix": "8-530_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_27",
+            "tgt_ix": "8-530_v1_27@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_28",
+            "tgt_ix": "8-530_v1_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_29",
+            "tgt_ix": "8-530_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_30",
+            "tgt_ix": "8-530_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_30",
+            "tgt_ix": "8-530_v1_30@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_30",
+            "tgt_ix": "8-530_v1_30@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_31",
+            "tgt_ix": "8-530_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_31",
+            "tgt_ix": "8-530_v1_31@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_32",
+            "tgt_ix": "8-530_v1_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_33",
+            "tgt_ix": "8-530_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_34",
+            "tgt_ix": "8-530_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_34",
+            "tgt_ix": "8-530_v1_34@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_35",
+            "tgt_ix": "8-530_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_36",
+            "tgt_ix": "8-530_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_37",
+            "tgt_ix": "8-530_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_37",
+            "tgt_ix": "8-530_v1_37@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_37",
+            "tgt_ix": "8-530_v1_37@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_37",
+            "tgt_ix": "8-530_v1_37@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_38",
+            "tgt_ix": "8-530_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_39",
+            "tgt_ix": "8-530_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_40",
+            "tgt_ix": "8-530_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_42",
+            "tgt_ix": "8-530_v1_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_42",
+            "tgt_ix": "8-530_v1_42@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_43",
+            "tgt_ix": "8-530_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_43",
+            "tgt_ix": "8-530_v1_43@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_44",
+            "tgt_ix": "8-530_v1_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_45",
+            "tgt_ix": "8-530_v1_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_46",
+            "tgt_ix": "8-530_v1_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_47",
+            "tgt_ix": "8-530_v1_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_48",
+            "tgt_ix": "8-530_v1_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_49",
+            "tgt_ix": "8-530_v1_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_50",
+            "tgt_ix": "8-530_v1_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_51",
+            "tgt_ix": "8-530_v1_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-530_v1_52",
+            "tgt_ix": "8-530_v1_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "8-530_v1",
+    "meta": {
+        "parser": "F1000XMLParser",
+        "intertext-graph": "N/A",
+        "doi": "10.12688/f1000research.18776.1",
+        "atype": "data-note",
+        "license": "http://creativecommons.org/licenses/by/4.0/",
+        "title": "RVDB-prot, a reference viral protein database and its HMM profiles",
+        "abstract": "We present RVDB-prot, a database corresponding to the protein equivalent of the nucleic acid reference virus database RVDB. Protein databases can be helpful to perform more sensitive protein sequence comparisons. Similarly to its homologous public repository, RVDB-prot aims to provide reliable and accurately annotated unique entries, while including also an Hidden Markov Model (HMM) protein profiles database for distant protein searching.",
+        "contributors": [
+            {
+                "surname": "Bigot",
+                "given-names": "Thomas"
+            },
+            {
+                "surname": "Temmam",
+                "given-names": "Sarah"
+            },
+            {
+                "surname": "P\u00e9rot",
+                "given-names": "Philippe"
+            },
+            {
+                "surname": "Eloit",
+                "given-names": "Marc"
+            }
+        ],
+        "url": "https://f1000research.com/articles/8-530/v1/",
+        "doc_id": "8-530",
+        "version": 1,
+        "ix_counter": 198,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy"
+    }
+}

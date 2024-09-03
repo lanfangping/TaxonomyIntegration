@@ -1,0 +1,4739 @@
+{
+    "nodes": [
+        {
+            "ix": "326-ARR_v2_0",
+            "content": "Attention Mechanism with Energy-Friendly Operations",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_2",
+            "content": "Attention mechanism has become the dominant module in natural language processing models. It is computationally intensive and depends on massive power-hungry multiplications. In this paper, we rethink variants of attention mechanism from the energy consumption aspects. After reaching the conclusion that the energy costs of several energyfriendly operations are far less than their multiplication counterparts, we build a novel attention model by replacing multiplications with either selective operations or additions. Empirical results on three machine translation tasks demonstrate that the proposed model, against the vanilla one, achieves competitable accuracy while saving 99% and 66% energy during alignment calculation and the whole attention procedure.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_4",
+            "content": "Attention mechanism (ATT, Bahdanau et al., 2015;Vaswani et al., 2017; has demonstrated huge success in a variety of natural language processing tasks (Su et al., 2018;Kitaev and Klein, 2018;Tan et al., 2018;Yang et al., 2019a;Devlin et al., 2019;Zhang et al., 2020). The module learns hidden representations of a sequence by serving each word as a query to attend to all keys in the target sentence, then softly assembling their values. It is a de-facto standard to achieve this via performing linear projections and dot products on representations of queries and keys (Vaswani et al., 2017), resulting in large amount of multiplications. In spite of its promising quality, such kind of paradigm may be not the preferred solution from the energy consumption aspect (Horowitz, 2014;Raffel et al., Operation (FP32) ASIC FPGA Addition 0.9 0.4 Multiplication 3.7 18.8",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_5",
+            "content": "Table 1: Energy cost (10 \u221212 Joule) of addition and multiplication on ASIC/FPGA chips (You et al., 2020). The representative of ASIC chip is Google's TPU, while Microsoft cloud employs FPGA chips.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_6",
+            "content": "). How to build a high energy-efficient ATT still remains a great challenge.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_7",
+            "content": "Our work starts from in-depth investigations on approaches in ATT context with respect to model compression (Hinton et al., 2015;Jiao et al., 2020) and complexity optimization (Yang et al., 2019b;Raganato et al., 2020;Beltagy et al., 2020;Tay et al., 2021). These approaches can potentially alleviate the problem of high energy consumption in ATT. Nevertheless, intentions of all these methods are not exactly from the energy-friendly perspective, thus overlooking the origin of energy consumed, i.e., basic arithmetic operations in electric equipments. Massive multiplications still remain, consuming far more energy than its additive counterpart on modern devices (Table 1, .",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_8",
+            "content": "To this end, we propose to approach this problem from a new direction -replacing massive multiplications in ATT with cheaper operations. Concretely, we propose a novel energy-efficient attention mechanism (E-ATT). It equips binarized selective operations instead of linear projections over input hidden states, and measures attentive scores using L 1 distance rather than dot-product. Consequently, E-ATT abandons most of multiplications to reach the goal of energy cost reduction.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_9",
+            "content": "We examine our method with TRANSFORMER model (Vaswani et al., 2017), and conduct experiments on three machine translation tasks. Compared with conventional ATT, our E-ATT can save more than 99% energy of the vanilla alignment calculation and around 66% energy of the whole attention model. In the meanwhile, our models yield acceptable translation qualities across language pairs. Extensive analyses also demonstrate that E-ATT can functionally model semantic alignments without using multiplications.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_10",
+            "content": "Preliminary",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_11",
+            "content": "Conventional Attention Mechanism Given input representations X \u2208 R l 1 \u00d7d and Y \u2208 R l 2 \u00d7d with l 1 , l 2 being sequence length, and d is the input dimensionality. Note l 1 and l 2 may be equal for self-attention pattern, and represent lengths of target and source sequence in cross-attention. ATT first projects the inputs into three representations 1 :",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_12",
+            "content": "Q = XW Q , [K; V] = Y[W K ; W V ], (1) where {W Q , W K , W V } \u2208 R d\u00d7d are trainable pa- rameters. Q \u2208 R l 1 \u00d7d , {K, V} \u2208 R l 2 \u00d7d",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_13",
+            "content": "are query, key and value representations, respectively. The attention alignment is calculated with dot-product multiplication and softmax activation:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_14",
+            "content": "M ij \u221d exp( Q i K j \u221a d ) \u2208 R l 1 \u00d7l 2 . (2)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_15",
+            "content": "Then, the output is derived by multiplying attention weights with value representation V:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_16",
+            "content": "O = MV \u2208 R l 1 \u00d7d .",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_17",
+            "content": "(3)",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_18",
+            "content": "As seen, matrix multiplications are massively exploited into conventional ATT.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_19",
+            "content": "Related Work Several related approaches potentially alleviate the power-hungry drawback of ATT. One direction relies on model compression by pruning redundant parameters (Denton et al., 2014;Wang et al., 2016;Zhuang et al., 2018) or distilling the learned knowledge from a large model to a smaller one (Hinton et al., 2015;Yim et al., 2017), which still maintains multiplicative operations. Another direction aims at reducing the computational complexity of attention module, e.g. linearly projecting input (Dense, Tay et al., 2021), or randomly initializing and training attention weights (Ran-dInit, Tay et al., 2021). To give a full comparison of energy consumption of these approaches, we conduct the number of multiplicative operations and energy costs across modules in Table 2. As seen, vanilla ATT (Vaswani et al., 2017) involves",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_20",
+            "content": "Energy-Efficient Attention Mechanism",
+            "ntype": "title",
+            "meta": {
+                "section": "3"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_21",
+            "content": "In this section, we describe E-ATT by pertinently reducing the multiplicative operations of ATT, including selective operation and L 1 distance.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_22",
+            "content": "Feature Selection with Discreteness",
+            "ntype": "title",
+            "meta": {
+                "section": "3.1"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_23",
+            "content": "Since the linear transitions of queries and keys (Equation 1) involve massive multiplications within conventional ATT, we propose to modify them with binarized quantization Qin et al., 2020). Concretely, the inputs X and Y are turned into discrete value with a threshold function f (\u2022):",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_24",
+            "content": "f (x) = 1 x > \u03c4, 0 otherwise,(4)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_25",
+            "content": "where \u03c4 and d are threshold and hidden size, respectively. The derived representations X = f (X) and \u1ef8 = f (Y) contain discrete features composing of zeros and ones. Since this procedure is undifferentiable, we need to predefine a pattern of gradient calculation for X when receiving back-propagated gradient Z. Wu et al. (2018) pointed out that, when simulating the back-propagated progress across discrete activations, those patterns which peak at the medium of domain reveal better training stabilization and model performance. We thus use a modified Gaussian function during back-propagation following Wu et al. (2018):",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_26",
+            "content": "\u2207X = 2 \u03c0 e \u22122(Z\u2212\u03c4 ) 2 ,(5)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_27",
+            "content": "and the same procedure is applied for Y. Then given parameters W Q , W K \u2208 R d\u00d7d , we derive query and key representations Q, K by applying masked selection function:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_28",
+            "content": "Q = g( X, WQ ) \u2208 R l 1 \u00d7d\u00d7d , (6) K = g( \u1ef8, WK ) \u2208 R l 2 \u00d7d\u00d7d ,(7)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_29",
+            "content": "Q = d i=1 Q\u2022,i,\u2022 ; K = d i=1 K\u2022,i,\u2022 ,(8)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_30",
+            "content": "where WQ \u2208 R l 1 \u00d7d\u00d7d and WK \u2208 R l 2 \u00d7d\u00d7d are derived by tiling W Q , W K with l 1 and l 2 times, respectively. g(\u2022, \u2022) represents indexed feature selection defined as follows:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_31",
+            "content": "g(U, P) = U i,j,\u2022 P i,j = 1, 0 otherwise. (9",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_32",
+            "content": ")",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_33",
+            "content": "Pairwise L 1 Distance",
+            "ntype": "title",
+            "meta": {
+                "section": "3.2"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_34",
+            "content": "As the dot-product multiplication can be viewed as similarity calculation between Q and K, we argue that other similarity estimation methods can play this role as well. Accordingly, we further propose to use pairwise L 1 distance instead, which does not require any multiplication. Attention score calculation in Equation 2 is then modified as:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_35",
+            "content": "M ij \u221d exp(\u2212 ||Q i \u2212 K j || 1 \u221a d ),(10)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_36",
+            "content": "where || \u2022 || 1 denotes the L 1 norm of inputted vector.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_37",
+            "content": "Here we use negative L 1 value to ensure that larger distance contributes lower attention score.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_38",
+            "content": "Experiments",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_39",
+            "content": "Dataset Preprocessing",
+            "ntype": "title",
+            "meta": {
+                "section": "4.1"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_40",
+            "content": "In this paper we evaluate our approach with three widely used machine translation datasets: IWSLT'15 English -Vietnamese (En-Vi), WMT'14 English -German (En-De) and WMT'17 Chinese -English (Zh-En). All datasets are segmented into subwords by byte-pair encoding (BPE, Sennrich et al., 2016) with 32k merge operations. Specially, for the former two tasks, we apply joint BPE for both source and target languages.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_41",
+            "content": "En-Vi 13.3K 1,553 1,268 En-De 4.50M 3,000 3,003 Zh-En 20.6M 2,002 2,001",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_42",
+            "content": "Experimental Setting",
+            "ntype": "title",
+            "meta": {
+                "section": "4.2"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_43",
+            "content": "We apply TRANSFORMER-Base (Vaswani et al., 2017) setting for all experiments. The model dimensionality is 512, and 6 layers are engaged in both encoder and decoder side. The innerconnection dimensionality for feedforward block is 2,048, and the number of heads in multi-head attention networks is 8. We share the source embedding, target embedding and target softmax projection weight for En-Vi task, and share the latter two matrices for En-De. We modify the learning rate schedule as: lr = 0.001\u2022min t 8000 , 1, ( 20000 t ) 0.5 , where t denotes the current step. Across all tasks, we determine the threshold \u03c4 as 1.0.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_44",
+            "content": "For both baseline and our model, En-Vi, En-De and Zh-En tasks take 50k, 150k and 200k updates, and each batch contains 4,096, 32,768 and 32,768 source tokens. The dropout ratio is determined as 0.3, 0.1 and 0.1, respectively. All experiments are conducted over 4 NVIDIA V100 GPUs. For each task, we choose the best model over dev set, defining beam size as 4, 4, 10 and decoding alpha as 1.5, 0.6 and 1.5, respectively.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_45",
+            "content": "Experimental Results",
+            "ntype": "title",
+            "meta": {
+                "section": "4.3"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_46",
+            "content": "As shown in Table 4, vanilla model achieves best performance over all translation tasks. However, replacing conventional attention networks with E-ATT does not lead to significant performance drop, with small decrease of 0.15\u223c0.78 BLEU score. Besides, after referring the statistics from Table 1 and 2, our E-ATT module takes 34.10%/33.83% energy of conventional ATT. These results reveal that, E-ATT can achieve competitive translation quality, and more importantly, significantly reduce the energy consumption of attention.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_47",
+            "content": "Ablation Study",
+            "ntype": "title",
+            "meta": {
+                "section": "4.4"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_48",
+            "content": "We further conduct ablation experiments on En-Vi task. As seen in Table 5, using discrete feature selection instead of linear transition slightly harms performance, with 0.61 BLEU score de- crease. Besides, replacing dot-product attention with L 1 distance does not significantly affect model performance. We can conclude that: 1) the performance gap between E-ATT and vanilla model mainly stems from the usage of discrete feature selection; and 2) L 1 distance can measure the similarity of vectorized representations and give modest performance compared to baseline.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_49",
+            "content": "Analyses",
+            "ntype": "title",
+            "meta": {
+                "section": "5"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_50",
+            "content": "Hybrid Attention Networks",
+            "ntype": "title",
+            "meta": {
+                "section": "5.1"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_51",
+            "content": "We conduct a series of experiments involving hybrids of attention networks among vanilla ATT, Dense, RandInit, and E-ATT module in Table 6.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_52",
+            "content": "As shown, the conventional attention network performs the best among all models. Our module performs well when served as either self-attention or cross-attention modules. Besides, for all cases applying Dense/RandInit as cross-attention mod- ules, models perform significantly worse, identical with the findings in Tay et al. (2021). On the contrary, E-ATT module can give better performance with marginal performance drop comparing with baseline, indicating that E-ATT module is capable of providing adequate semantic alignments across languages for translation. Besides, it is encouraging to see that our method works compatibly with other modules with marginal performance drop.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_53",
+            "content": "Knowledge Distillation",
+            "ntype": "title",
+            "meta": {
+                "section": "5.2"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_54",
+            "content": "Knowledge distillation is a representative of model compression approach (Hinton et al., 2015;Tang et al., 2019). We further conduct experiments on ATT models with various dimensionalities compressed by knowledge distillation. Figure 1 shows the energy consumption and performance of different models with modified dimensionality d. As seen, by accumulatively halving d from 512, both ATT and E-ATT progressively loses the quality. However, E-ATT can give a better trade-off between model performance and energy consumption than knowledge distillation methods.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_55",
+            "content": "Case Study",
+            "ntype": "title",
+            "meta": {
+                "section": "5.3"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_56",
+            "content": "We visualize the averaged attention values over one case from WMT'17 Zh-En dev set. As seen, our model can give good aligned information, where preposition phrase \"around 50 years ago\" is arranged at the end of sentence in English, while its aligned phrase is at front in Chinese. This reveals that, our E-ATT can perform well on modeling the cross-lingual alignments.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_57",
+            "content": "Binarization Statistics",
+            "ntype": "title",
+            "meta": {
+                "section": "5.4"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_58",
+            "content": "We further collect the ratio of nonzero values \u03c1 for each attention module in Figure 3, we can see that it increases with the number of encoder layers, denoting that more information is arranged into attentive calculation at higher layer of source side. However, for decoder E-ATT, the ratio meets its peak at middle layers, revealing that decoder E-ATT are most active at the middle term of semantic processing. Interestingly, ratio in the query of cross-attention modules, which align source and target semantics, is higher for the layer closer to output. As the binarized key representation of each cross-attention module is equivalent, higher ratio of nonzero values in query representation means that, E-ATT at higher decoder layer provides more information for cross-lingual alignments, thus enrich the information for translation.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_59",
+            "content": "Discussion and Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "6"
+            }
+        },
+        {
+            "ix": "326-ARR_v2_60",
+            "content": "In this paper, we empirically investigate the high energy-consumption problem in ATT. We argue that the alignment modeling procedure can be achieved with additions other than multiplications, thus reducing the energy costs. Extensive analyses suggest that: 1) Binarized representations marginally harm the feature extraction procedure; and 2) L 1 distance can be efficiently exploited to measure alignment among queries and keys. Compared to baseline, our approach can yield considerable quality of translations, and significantly save energy in attention mechanism. Although we have shown the superiority of E-ATT, considering the whole TRANSFORMER block 2 , the use of E-ATT brings 17% energy reduction. We hope this work can attract more researches on energy-efficient models. It is worth to further design techniques that reduce the energy cost of other modules in TRANSFORMER.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_61",
+            "content": "\u2206A = 0.9(ld 2 + 2ld + 2l 2 d) + 3.7(ld 2 + l 2 d) 0.9(3ld 2 + 2l 2 d) + 3.7(3ld 2 + 2l 2 d)",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_62",
+            "content": "Similarly, that on FPGA chip is:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_63",
+            "content": "\u2206F = 0.",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "326-ARR_v2_64",
+            "content": "Dzmitry Bahdanau, Kyunghyun Cho, Yoshua Bengio, Neural Machine Translation by Jointly Learning to Align and Translate, 2015, International Conference on Learning Representations (ICLR), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": [
+                    "Dzmitry Bahdanau",
+                    "Kyunghyun Cho",
+                    "Yoshua Bengio"
+                ],
+                "title": "Neural Machine Translation by Jointly Learning to Align and Translate",
+                "pub_date": "2015",
+                "pub_title": "International Conference on Learning Representations (ICLR)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_65",
+            "content": "UNKNOWN, None, 2020, Longformer: The Long-Document Transformer, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": null,
+                "title": null,
+                "pub_date": "2020",
+                "pub_title": "Longformer: The Long-Document Transformer",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_66",
+            "content": "Hanting Chen, Yunhe Wang, Chunjing Xu, Boxin Shi, Chao Xu, Qi Tian, Chang Xu, AdderNet: Do We Really Need Multiplications in Deep Learning?, 2020, IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": [
+                    "Hanting Chen",
+                    "Yunhe Wang",
+                    "Chunjing Xu",
+                    "Boxin Shi",
+                    "Chao Xu",
+                    "Qi Tian",
+                    "Chang Xu"
+                ],
+                "title": "AdderNet: Do We Really Need Multiplications in Deep Learning?",
+                "pub_date": "2020",
+                "pub_title": "IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_67",
+            "content": "Emily Denton, Wojciech Zaremba, Joan Bruna, Yann Lecun, Rob Fergus, Exploiting Linear Structure within Convolutional Networks for Efficient Evaluation, 2014, Neural Information Processing Systems (NIPS), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": [
+                    "Emily Denton",
+                    "Wojciech Zaremba",
+                    "Joan Bruna",
+                    "Yann Lecun",
+                    "Rob Fergus"
+                ],
+                "title": "Exploiting Linear Structure within Convolutional Networks for Efficient Evaluation",
+                "pub_date": "2014",
+                "pub_title": "Neural Information Processing Systems (NIPS)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_68",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding, 2019, North American Chapter of the Association for Computational Linguistics: Human Language Technologies (NAACL-HLT), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": [
+                    "Jacob Devlin",
+                    "Ming-Wei Chang",
+                    "Kenton Lee",
+                    "Kristina Toutanova"
+                ],
+                "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+                "pub_date": "2019",
+                "pub_title": "North American Chapter of the Association for Computational Linguistics: Human Language Technologies (NAACL-HLT)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_69",
+            "content": "UNKNOWN, None, 2015, Distilling The Knowledge in A Neural Network, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": null,
+                "title": null,
+                "pub_date": "2015",
+                "pub_title": "Distilling The Knowledge in A Neural Network",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_70",
+            "content": "Mark, Computing's Energy Problem (and What We Can Do About It), , IEEE International Solid-State Circuits Conference Digest of Technical Papers (ISSCC), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": [
+                    " Mark"
+                ],
+                "title": "Computing's Energy Problem (and What We Can Do About It)",
+                "pub_date": null,
+                "pub_title": "IEEE International Solid-State Circuits Conference Digest of Technical Papers (ISSCC)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_71",
+            "content": "Xiaoqi Jiao, Yichun Yin, Lifeng Shang, Xin Jiang, Xiao Chen, Linlin Li, Fang Wang, Qun Liu, TinyBERT: Distilling BERT for Natural Language Understanding, 2020, Empirical Methods in Natural Language Processing (EMNLP): Findings, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": [
+                    "Xiaoqi Jiao",
+                    "Yichun Yin",
+                    "Lifeng Shang",
+                    "Xin Jiang",
+                    "Xiao Chen",
+                    "Linlin Li",
+                    "Fang Wang",
+                    "Qun Liu"
+                ],
+                "title": "TinyBERT: Distilling BERT for Natural Language Understanding",
+                "pub_date": "2020",
+                "pub_title": "Empirical Methods in Natural Language Processing (EMNLP): Findings",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_72",
+            "content": "Nikita Kitaev, Dan Klein, Constituency Parsing with A Self-Attentive Encoder, 2018, Association for Computational Linguistics (ACL), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": [
+                    "Nikita Kitaev",
+                    "Dan Klein"
+                ],
+                "title": "Constituency Parsing with A Self-Attentive Encoder",
+                "pub_date": "2018",
+                "pub_title": "Association for Computational Linguistics (ACL)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_73",
+            "content": "Zhengjie Li, Yufan Zhang, Jian Wang, Jinmei Lai, A Survey of FPGA Design for AI Era, 2020, Journal of Semiconductors, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    "Zhengjie Li",
+                    "Yufan Zhang",
+                    "Jian Wang",
+                    "Jinmei Lai"
+                ],
+                "title": "A Survey of FPGA Design for AI Era",
+                "pub_date": "2020",
+                "pub_title": "Journal of Semiconductors",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_74",
+            "content": "Xuan Liu, Di Cao, Kai Yu, Binarized LSTM Language Model, 2018, North American Chapter of the Association for Computational Linguistics: Human Language Technologies (NAACL-HLT), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": [
+                    "Xuan Liu",
+                    "Di Cao",
+                    "Kai Yu"
+                ],
+                "title": "Binarized LSTM Language Model",
+                "pub_date": "2018",
+                "pub_title": "North American Chapter of the Association for Computational Linguistics: Human Language Technologies (NAACL-HLT)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_75",
+            "content": "UNKNOWN, None, , Jingkuan Song, and Nicu Sebe. 2020. Binary Neural Networks: A Survey. Pattern Recognition, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": "Jingkuan Song, and Nicu Sebe. 2020. Binary Neural Networks: A Survey. Pattern Recognition",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_76",
+            "content": "Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, Peter Liu, Exploring the Limits of Transfer Learning with a Unified Textto-Text Transformer, 2020, Journal of Machine Learning Research, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": [
+                    "Colin Raffel",
+                    "Noam Shazeer",
+                    "Adam Roberts",
+                    "Katherine Lee",
+                    "Sharan Narang",
+                    "Michael Matena",
+                    "Yanqi Zhou",
+                    "Wei Li",
+                    "Peter Liu"
+                ],
+                "title": "Exploring the Limits of Transfer Learning with a Unified Textto-Text Transformer",
+                "pub_date": "2020",
+                "pub_title": "Journal of Machine Learning Research",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_77",
+            "content": "Alessandro Raganato, Yves Scherrer, J\u00f6rg Tiedemann, Fixed Encoder Self-Attention Patterns in Transformer-Based Machine Translation, 2020, Empirical Methods in Natural Language Processing (EMNLP): Findings, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": [
+                    "Alessandro Raganato",
+                    "Yves Scherrer",
+                    "J\u00f6rg Tiedemann"
+                ],
+                "title": "Fixed Encoder Self-Attention Patterns in Transformer-Based Machine Translation",
+                "pub_date": "2020",
+                "pub_title": "Empirical Methods in Natural Language Processing (EMNLP): Findings",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_78",
+            "content": "Rico Sennrich, Barry Haddow, Alexandra Birch, Neural Machine Translation of Rare Words with Subword Units, 2016, Association for Computational Linguistics (ACL), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": [
+                    "Rico Sennrich",
+                    "Barry Haddow",
+                    "Alexandra Birch"
+                ],
+                "title": "Neural Machine Translation of Rare Words with Subword Units",
+                "pub_date": "2016",
+                "pub_title": "Association for Computational Linguistics (ACL)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_79",
+            "content": "Dehua Song, Yunhe Wang, Hanting Chen, Chang Xu, Chunjing Xu, Dacheng Tao, AdderSR: Towards Energy Efficient Image Super-Resolution, 2021, Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b15",
+                "authors": [
+                    "Dehua Song",
+                    "Yunhe Wang",
+                    "Hanting Chen",
+                    "Chang Xu",
+                    "Chunjing Xu",
+                    "Dacheng Tao"
+                ],
+                "title": "AdderSR: Towards Energy Efficient Image Super-Resolution",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_80",
+            "content": "Jinsong Su, Jiali Zeng, Deyi Xiong, Yang Liu, Mingxuan Wang, Jun Xie, A Hierarchy-to-Sequence Attentional Neural Machine Translation Model, 2018, IEEE/ACM Transactions on Audio, Speech, and Language Processing, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b16",
+                "authors": [
+                    "Jinsong Su",
+                    "Jiali Zeng",
+                    "Deyi Xiong",
+                    "Yang Liu",
+                    "Mingxuan Wang",
+                    "Jun Xie"
+                ],
+                "title": "A Hierarchy-to-Sequence Attentional Neural Machine Translation Model",
+                "pub_date": "2018",
+                "pub_title": "IEEE/ACM Transactions on Audio, Speech, and Language Processing",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_81",
+            "content": "Zhixing Tan, Mingxuan Wang, Jun Xie, Yidong Chen, Xiaodong Shi, Deep Semantic Role Labeling with Self-attention, 2018, Proceedings of the Thirty-Second AAAI Conference on Artificial Intelligence (AAAI), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b17",
+                "authors": [
+                    "Zhixing Tan",
+                    "Mingxuan Wang",
+                    "Jun Xie",
+                    "Yidong Chen",
+                    "Xiaodong Shi"
+                ],
+                "title": "Deep Semantic Role Labeling with Self-attention",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the Thirty-Second AAAI Conference on Artificial Intelligence (AAAI)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_82",
+            "content": "UNKNOWN, None, 2019, Distilling Task-Specific Knowledge from BERT into Simple Neural Networks, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b18",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "Distilling Task-Specific Knowledge from BERT into Simple Neural Networks",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_83",
+            "content": "Yi Tay, Dara Bahri, Donald Metzler, Da-Cheng Juan, Zhe Zhao, Che Zheng, Synthesizer: Rethinking Self-Attention for Transformer Models, 2021, Proceedings of the 38th International Conference on Machine Learning (ICML), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b19",
+                "authors": [
+                    "Yi Tay",
+                    "Dara Bahri",
+                    "Donald Metzler",
+                    "Da-Cheng Juan",
+                    "Zhe Zhao",
+                    "Che Zheng"
+                ],
+                "title": "Synthesizer: Rethinking Self-Attention for Transformer Models",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 38th International Conference on Machine Learning (ICML)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_84",
+            "content": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan Gomez, \u0141ukasz Kaiser, Illia Polosukhin, Attention Is All You Need, 2017, Advances in Neural Information Processing Systems (NIPS), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b20",
+                "authors": [
+                    "Ashish Vaswani",
+                    "Noam Shazeer",
+                    "Niki Parmar",
+                    "Jakob Uszkoreit",
+                    "Llion Jones",
+                    "Aidan Gomez",
+                    "\u0141ukasz Kaiser",
+                    "Illia Polosukhin"
+                ],
+                "title": "Attention Is All You Need",
+                "pub_date": "2017",
+                "pub_title": "Advances in Neural Information Processing Systems (NIPS)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_85",
+            "content": "Yunhe Wang, Chang Xu, Shan You, Dacheng Tao, Chao Xu, CNNpack: Packing Convolutional Neural Networks in the Frequency Domain, 2016, Advances in Neural Information Processing Systems (NIPS), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b21",
+                "authors": [
+                    "Yunhe Wang",
+                    "Chang Xu",
+                    "Shan You",
+                    "Dacheng Tao",
+                    "Chao Xu"
+                ],
+                "title": "CNNpack: Packing Convolutional Neural Networks in the Frequency Domain",
+                "pub_date": "2016",
+                "pub_title": "Advances in Neural Information Processing Systems (NIPS)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_86",
+            "content": "Yujie Wu, Lei Deng, Guoqi Li, Jun Zhu, Luping Shi, Spatio-Temporal Backpropagation for Training High-performance Spiking Neural Networks, 2018, Frontiers in Neuroscience, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b22",
+                "authors": [
+                    "Yujie Wu",
+                    "Lei Deng",
+                    "Guoqi Li",
+                    "Jun Zhu",
+                    "Luping Shi"
+                ],
+                "title": "Spatio-Temporal Backpropagation for Training High-performance Spiking Neural Networks",
+                "pub_date": "2018",
+                "pub_title": "Frontiers in Neuroscience",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_87",
+            "content": "Baosong Yang, Jian Li, Derek Wong, Lidia Chao, Xing Wang, Zhaopeng Tu, Contextaware self-attention networks, 2019, Proceedings of the AAAI conference on artificial intelligence (AAAI), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b23",
+                "authors": [
+                    "Baosong Yang",
+                    "Jian Li",
+                    "Derek Wong",
+                    "Lidia Chao",
+                    "Xing Wang",
+                    "Zhaopeng Tu"
+                ],
+                "title": "Contextaware self-attention networks",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the AAAI conference on artificial intelligence (AAAI)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "326-ARR_v2_88",
+            "content": "Baosong Yang, Zhaopeng Tu, Derek Wong, Fandong Meng, Lidia Chao, Tong Zhang, Modeling localness for self-attention networks, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b24",
+                "authors": [
+                    "Baosong Yang",
+                    "Zhaopeng Tu",
+                    "Derek Wong",
+                    "Fandong Meng",
+                    "Lidia Chao",
+                    "Tong Zhang"
+                ],
+                "title": "Modeling localness for self-attention networks",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing",
+                "pub": null
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "326-ARR_v2_0@0",
+            "content": "Attention Mechanism with Energy-Friendly Operations",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_0",
+            "start": 0,
+            "end": 50,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_2@0",
+            "content": "Attention mechanism has become the dominant module in natural language processing models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_2",
+            "start": 0,
+            "end": 88,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_2@1",
+            "content": "It is computationally intensive and depends on massive power-hungry multiplications.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_2",
+            "start": 90,
+            "end": 173,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_2@2",
+            "content": "In this paper, we rethink variants of attention mechanism from the energy consumption aspects.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_2",
+            "start": 175,
+            "end": 268,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_2@3",
+            "content": "After reaching the conclusion that the energy costs of several energyfriendly operations are far less than their multiplication counterparts, we build a novel attention model by replacing multiplications with either selective operations or additions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_2",
+            "start": 270,
+            "end": 519,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_2@4",
+            "content": "Empirical results on three machine translation tasks demonstrate that the proposed model, against the vanilla one, achieves competitable accuracy while saving 99% and 66% energy during alignment calculation and the whole attention procedure.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_2",
+            "start": 521,
+            "end": 761,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_4@0",
+            "content": "Attention mechanism (ATT, Bahdanau et al., 2015;Vaswani et al., 2017; has demonstrated huge success in a variety of natural language processing tasks (Su et al., 2018;Kitaev and Klein, 2018;Tan et al., 2018;Yang et al., 2019a;Devlin et al., 2019;Zhang et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_4",
+            "start": 0,
+            "end": 265,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_4@1",
+            "content": "The module learns hidden representations of a sequence by serving each word as a query to attend to all keys in the target sentence, then softly assembling their values.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_4",
+            "start": 267,
+            "end": 435,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_4@2",
+            "content": "It is a de-facto standard to achieve this via performing linear projections and dot products on representations of queries and keys (Vaswani et al., 2017), resulting in large amount of multiplications.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_4",
+            "start": 437,
+            "end": 637,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_4@3",
+            "content": "In spite of its promising quality, such kind of paradigm may be not the preferred solution from the energy consumption aspect (Horowitz, 2014;Raffel et al., Operation (FP32) ASIC FPGA Addition 0.9 0.4 Multiplication 3.7 18.8",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_4",
+            "start": 639,
+            "end": 862,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_5@0",
+            "content": "Table 1: Energy cost (10 \u221212 Joule) of addition and multiplication on ASIC/FPGA chips (You et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_5",
+            "start": 0,
+            "end": 104,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_5@1",
+            "content": "The representative of ASIC chip is Google's TPU, while Microsoft cloud employs FPGA chips.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_5",
+            "start": 106,
+            "end": 195,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_6@0",
+            "content": ").",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_6",
+            "start": 0,
+            "end": 1,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_6@1",
+            "content": "How to build a high energy-efficient ATT still remains a great challenge.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_6",
+            "start": 3,
+            "end": 75,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_7@0",
+            "content": "Our work starts from in-depth investigations on approaches in ATT context with respect to model compression (Hinton et al., 2015;Jiao et al., 2020) and complexity optimization (Yang et al., 2019b;Raganato et al., 2020;Beltagy et al., 2020;Tay et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_7",
+            "start": 0,
+            "end": 256,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_7@1",
+            "content": "These approaches can potentially alleviate the problem of high energy consumption in ATT.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_7",
+            "start": 258,
+            "end": 346,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_7@2",
+            "content": "Nevertheless, intentions of all these methods are not exactly from the energy-friendly perspective, thus overlooking the origin of energy consumed, i.e., basic arithmetic operations in electric equipments.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_7",
+            "start": 348,
+            "end": 552,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_7@3",
+            "content": "Massive multiplications still remain, consuming far more energy than its additive counterpart on modern devices (Table 1, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_7",
+            "start": 554,
+            "end": 676,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_8@0",
+            "content": "To this end, we propose to approach this problem from a new direction -replacing massive multiplications in ATT with cheaper operations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_8",
+            "start": 0,
+            "end": 135,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_8@1",
+            "content": "Concretely, we propose a novel energy-efficient attention mechanism (E-ATT).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_8",
+            "start": 137,
+            "end": 212,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_8@2",
+            "content": "It equips binarized selective operations instead of linear projections over input hidden states, and measures attentive scores using L 1 distance rather than dot-product.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_8",
+            "start": 214,
+            "end": 383,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_8@3",
+            "content": "Consequently, E-ATT abandons most of multiplications to reach the goal of energy cost reduction.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_8",
+            "start": 385,
+            "end": 480,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_9@0",
+            "content": "We examine our method with TRANSFORMER model (Vaswani et al., 2017), and conduct experiments on three machine translation tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_9",
+            "start": 0,
+            "end": 127,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_9@1",
+            "content": "Compared with conventional ATT, our E-ATT can save more than 99% energy of the vanilla alignment calculation and around 66% energy of the whole attention model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_9",
+            "start": 129,
+            "end": 288,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_9@2",
+            "content": "In the meanwhile, our models yield acceptable translation qualities across language pairs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_9",
+            "start": 290,
+            "end": 379,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_9@3",
+            "content": "Extensive analyses also demonstrate that E-ATT can functionally model semantic alignments without using multiplications.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_9",
+            "start": 381,
+            "end": 500,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_10@0",
+            "content": "Preliminary",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_10",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_11@0",
+            "content": "Conventional Attention Mechanism Given input representations X \u2208 R l 1 \u00d7d and Y \u2208 R l 2 \u00d7d with l 1 , l 2 being sequence length, and d is the input dimensionality.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_11",
+            "start": 0,
+            "end": 162,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_11@1",
+            "content": "Note l 1 and l 2 may be equal for self-attention pattern, and represent lengths of target and source sequence in cross-attention.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_11",
+            "start": 164,
+            "end": 292,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_11@2",
+            "content": "ATT first projects the inputs into three representations 1 :",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_11",
+            "start": 294,
+            "end": 353,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_12@0",
+            "content": "Q = XW Q , [K; V] = Y[W K ; W V ], (1) where {W Q , W K , W V } \u2208 R d\u00d7d are trainable pa- rameters. Q \u2208 R l 1 \u00d7d , {K, V} \u2208 R l 2 \u00d7d",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_12",
+            "start": 0,
+            "end": 131,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_13@0",
+            "content": "are query, key and value representations, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_13",
+            "start": 0,
+            "end": 54,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_13@1",
+            "content": "The attention alignment is calculated with dot-product multiplication and softmax activation:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_13",
+            "start": 56,
+            "end": 148,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_14@0",
+            "content": "M ij \u221d exp( Q i K j \u221a d ) \u2208 R l 1 \u00d7l 2 . (2)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_14",
+            "start": 0,
+            "end": 43,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_15@0",
+            "content": "Then, the output is derived by multiplying attention weights with value representation V:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_15",
+            "start": 0,
+            "end": 88,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_16@0",
+            "content": "O = MV \u2208 R l 1 \u00d7d .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_16",
+            "start": 0,
+            "end": 18,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_17@0",
+            "content": "(3)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_17",
+            "start": 0,
+            "end": 2,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_18@0",
+            "content": "As seen, matrix multiplications are massively exploited into conventional ATT.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_18",
+            "start": 0,
+            "end": 77,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_19@0",
+            "content": "Related Work Several related approaches potentially alleviate the power-hungry drawback of ATT.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_19",
+            "start": 0,
+            "end": 94,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_19@1",
+            "content": "One direction relies on model compression by pruning redundant parameters (Denton et al., 2014;Wang et al., 2016;Zhuang et al., 2018) or distilling the learned knowledge from a large model to a smaller one (Hinton et al., 2015;Yim et al., 2017), which still maintains multiplicative operations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_19",
+            "start": 96,
+            "end": 389,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_19@2",
+            "content": "Another direction aims at reducing the computational complexity of attention module, e.g. linearly projecting input (Dense, Tay et al., 2021), or randomly initializing and training attention weights (Ran-dInit, Tay et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_19",
+            "start": 391,
+            "end": 619,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_19@3",
+            "content": "To give a full comparison of energy consumption of these approaches, we conduct the number of multiplicative operations and energy costs across modules in Table 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_19",
+            "start": 621,
+            "end": 783,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_19@4",
+            "content": "As seen, vanilla ATT (Vaswani et al., 2017) involves",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_19",
+            "start": 785,
+            "end": 836,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_20@0",
+            "content": "Energy-Efficient Attention Mechanism",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_20",
+            "start": 0,
+            "end": 35,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_21@0",
+            "content": "In this section, we describe E-ATT by pertinently reducing the multiplicative operations of ATT, including selective operation and L 1 distance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_21",
+            "start": 0,
+            "end": 143,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_22@0",
+            "content": "Feature Selection with Discreteness",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_22",
+            "start": 0,
+            "end": 34,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_23@0",
+            "content": "Since the linear transitions of queries and keys (Equation 1) involve massive multiplications within conventional ATT, we propose to modify them with binarized quantization Qin et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_23",
+            "start": 0,
+            "end": 190,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_23@1",
+            "content": "Concretely, the inputs X and Y are turned into discrete value with a threshold function f (\u2022):",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_23",
+            "start": 192,
+            "end": 285,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_24@0",
+            "content": "f (x) = 1 x > \u03c4, 0 otherwise,(4)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_24",
+            "start": 0,
+            "end": 31,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_25@0",
+            "content": "where \u03c4 and d are threshold and hidden size, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_25",
+            "start": 0,
+            "end": 57,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_25@1",
+            "content": "The derived representations X = f (X) and \u1ef8 = f (Y) contain discrete features composing of zeros and ones.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_25",
+            "start": 59,
+            "end": 164,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_25@2",
+            "content": "Since this procedure is undifferentiable, we need to predefine a pattern of gradient calculation for X when receiving back-propagated gradient Z. Wu et al. (2018) pointed out that, when simulating the back-propagated progress across discrete activations, those patterns which peak at the medium of domain reveal better training stabilization and model performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_25",
+            "start": 166,
+            "end": 529,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_25@3",
+            "content": "We thus use a modified Gaussian function during back-propagation following Wu et al. (2018):",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_25",
+            "start": 531,
+            "end": 622,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_26@0",
+            "content": "\u2207X = 2 \u03c0 e \u22122(Z\u2212\u03c4 ) 2 ,(5)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_26",
+            "start": 0,
+            "end": 25,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_27@0",
+            "content": "and the same procedure is applied for Y. Then given parameters W Q , W K \u2208 R d\u00d7d , we derive query and key representations Q, K by applying masked selection function:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_27",
+            "start": 0,
+            "end": 165,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_28@0",
+            "content": "Q = g( X, WQ ) \u2208 R l 1 \u00d7d\u00d7d , (6) K = g( \u1ef8, WK ) \u2208 R l 2 \u00d7d\u00d7d ,(7)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_28",
+            "start": 0,
+            "end": 65,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_29@0",
+            "content": "Q = d i=1 Q\u2022,i,\u2022 ; K = d i=1 K\u2022,i,\u2022 ,(8)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_29",
+            "start": 0,
+            "end": 39,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_30@0",
+            "content": "where WQ \u2208 R l 1 \u00d7d\u00d7d and WK \u2208 R l 2 \u00d7d\u00d7d are derived by tiling W Q , W K with l 1 and l 2 times, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_30",
+            "start": 0,
+            "end": 110,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_30@1",
+            "content": "g(\u2022, \u2022) represents indexed feature selection defined as follows:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_30",
+            "start": 112,
+            "end": 175,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_31@0",
+            "content": "g(U, P) = U i,j,\u2022 P i,j = 1, 0 otherwise. (9",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_31",
+            "start": 0,
+            "end": 43,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_32@0",
+            "content": ")",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_32",
+            "start": 0,
+            "end": 0,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_33@0",
+            "content": "Pairwise L 1 Distance",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_33",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_34@0",
+            "content": "As the dot-product multiplication can be viewed as similarity calculation between Q and K, we argue that other similarity estimation methods can play this role as well.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_34",
+            "start": 0,
+            "end": 167,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_34@1",
+            "content": "Accordingly, we further propose to use pairwise L 1 distance instead, which does not require any multiplication.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_34",
+            "start": 169,
+            "end": 280,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_34@2",
+            "content": "Attention score calculation in Equation 2 is then modified as:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_34",
+            "start": 282,
+            "end": 343,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_35@0",
+            "content": "M ij \u221d exp(\u2212 ||Q i \u2212 K j || 1 \u221a d ),(10)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_35",
+            "start": 0,
+            "end": 39,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_36@0",
+            "content": "where || \u2022 || 1 denotes the L 1 norm of inputted vector.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_36",
+            "start": 0,
+            "end": 55,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_37@0",
+            "content": "Here we use negative L 1 value to ensure that larger distance contributes lower attention score.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_37",
+            "start": 0,
+            "end": 95,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_38@0",
+            "content": "Experiments",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_38",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_39@0",
+            "content": "Dataset Preprocessing",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_39",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_40@0",
+            "content": "In this paper we evaluate our approach with three widely used machine translation datasets: IWSLT'15 English -Vietnamese (En-Vi), WMT'14 English -German (En-De) and WMT'17 Chinese -English (Zh-En).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_40",
+            "start": 0,
+            "end": 196,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_40@1",
+            "content": "All datasets are segmented into subwords by byte-pair encoding (BPE, Sennrich et al., 2016) with 32k merge operations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_40",
+            "start": 198,
+            "end": 315,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_40@2",
+            "content": "Specially, for the former two tasks, we apply joint BPE for both source and target languages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_40",
+            "start": 317,
+            "end": 409,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_41@0",
+            "content": "En-Vi 13.3K 1,553 1,268 En-De 4.50M 3,000 3,003 Zh-En 20.6M 2,002 2,001",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_41",
+            "start": 0,
+            "end": 70,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_42@0",
+            "content": "Experimental Setting",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_42",
+            "start": 0,
+            "end": 19,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_43@0",
+            "content": "We apply TRANSFORMER-Base (Vaswani et al., 2017) setting for all experiments.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_43",
+            "start": 0,
+            "end": 76,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_43@1",
+            "content": "The model dimensionality is 512, and 6 layers are engaged in both encoder and decoder side.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_43",
+            "start": 78,
+            "end": 168,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_43@2",
+            "content": "The innerconnection dimensionality for feedforward block is 2,048, and the number of heads in multi-head attention networks is 8.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_43",
+            "start": 170,
+            "end": 298,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_43@3",
+            "content": "We share the source embedding, target embedding and target softmax projection weight for En-Vi task, and share the latter two matrices for En-De.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_43",
+            "start": 300,
+            "end": 444,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_43@4",
+            "content": "We modify the learning rate schedule as: lr = 0.001\u2022min t 8000 , 1, ( 20000 t ) 0.5 , where t denotes the current step.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_43",
+            "start": 446,
+            "end": 564,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_43@5",
+            "content": "Across all tasks, we determine the threshold \u03c4 as 1.0.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_43",
+            "start": 566,
+            "end": 619,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_44@0",
+            "content": "For both baseline and our model, En-Vi, En-De and Zh-En tasks take 50k, 150k and 200k updates, and each batch contains 4,096, 32,768 and 32,768 source tokens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_44",
+            "start": 0,
+            "end": 157,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_44@1",
+            "content": "The dropout ratio is determined as 0.3, 0.1 and 0.1, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_44",
+            "start": 159,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_44@2",
+            "content": "All experiments are conducted over 4 NVIDIA V100 GPUs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_44",
+            "start": 226,
+            "end": 279,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_44@3",
+            "content": "For each task, we choose the best model over dev set, defining beam size as 4, 4, 10 and decoding alpha as 1.5, 0.6 and 1.5, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_44",
+            "start": 281,
+            "end": 418,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_45@0",
+            "content": "Experimental Results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_45",
+            "start": 0,
+            "end": 19,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_46@0",
+            "content": "As shown in Table 4, vanilla model achieves best performance over all translation tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_46",
+            "start": 0,
+            "end": 87,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_46@1",
+            "content": "However, replacing conventional attention networks with E-ATT does not lead to significant performance drop, with small decrease of 0.15\u223c0.78 BLEU score.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_46",
+            "start": 89,
+            "end": 241,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_46@2",
+            "content": "Besides, after referring the statistics from Table 1 and 2, our E-ATT module takes 34.10%/33.83% energy of conventional ATT.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_46",
+            "start": 243,
+            "end": 366,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_46@3",
+            "content": "These results reveal that, E-ATT can achieve competitive translation quality, and more importantly, significantly reduce the energy consumption of attention.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_46",
+            "start": 368,
+            "end": 524,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_47@0",
+            "content": "Ablation Study",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_47",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_48@0",
+            "content": "We further conduct ablation experiments on En-Vi task.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_48",
+            "start": 0,
+            "end": 53,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_48@1",
+            "content": "As seen in Table 5, using discrete feature selection instead of linear transition slightly harms performance, with 0.61 BLEU score de- crease.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_48",
+            "start": 55,
+            "end": 196,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_48@2",
+            "content": "Besides, replacing dot-product attention with L 1 distance does not significantly affect model performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_48",
+            "start": 198,
+            "end": 304,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_48@3",
+            "content": "We can conclude that: 1) the performance gap between E-ATT and vanilla model mainly stems from the usage of discrete feature selection; and 2) L 1 distance can measure the similarity of vectorized representations and give modest performance compared to baseline.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_48",
+            "start": 306,
+            "end": 567,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_49@0",
+            "content": "Analyses",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_49",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_50@0",
+            "content": "Hybrid Attention Networks",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_50",
+            "start": 0,
+            "end": 24,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_51@0",
+            "content": "We conduct a series of experiments involving hybrids of attention networks among vanilla ATT, Dense, RandInit, and E-ATT module in Table 6.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_51",
+            "start": 0,
+            "end": 138,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_52@0",
+            "content": "As shown, the conventional attention network performs the best among all models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_52",
+            "start": 0,
+            "end": 79,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_52@1",
+            "content": "Our module performs well when served as either self-attention or cross-attention modules.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_52",
+            "start": 81,
+            "end": 169,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_52@2",
+            "content": "Besides, for all cases applying Dense/RandInit as cross-attention mod- ules, models perform significantly worse, identical with the findings in Tay et al. (2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_52",
+            "start": 171,
+            "end": 332,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_52@3",
+            "content": "On the contrary, E-ATT module can give better performance with marginal performance drop comparing with baseline, indicating that E-ATT module is capable of providing adequate semantic alignments across languages for translation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_52",
+            "start": 334,
+            "end": 562,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_52@4",
+            "content": "Besides, it is encouraging to see that our method works compatibly with other modules with marginal performance drop.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_52",
+            "start": 564,
+            "end": 680,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_53@0",
+            "content": "Knowledge Distillation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_53",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_54@0",
+            "content": "Knowledge distillation is a representative of model compression approach (Hinton et al., 2015;Tang et al., 2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_54",
+            "start": 0,
+            "end": 112,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_54@1",
+            "content": "We further conduct experiments on ATT models with various dimensionalities compressed by knowledge distillation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_54",
+            "start": 114,
+            "end": 225,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_54@2",
+            "content": "Figure 1 shows the energy consumption and performance of different models with modified dimensionality d. As seen, by accumulatively halving d from 512, both ATT and E-ATT progressively loses the quality.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_54",
+            "start": 227,
+            "end": 430,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_54@3",
+            "content": "However, E-ATT can give a better trade-off between model performance and energy consumption than knowledge distillation methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_54",
+            "start": 432,
+            "end": 559,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_55@0",
+            "content": "Case Study",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_55",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_56@0",
+            "content": "We visualize the averaged attention values over one case from WMT'17 Zh-En dev set.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_56",
+            "start": 0,
+            "end": 82,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_56@1",
+            "content": "As seen, our model can give good aligned information, where preposition phrase \"around 50 years ago\" is arranged at the end of sentence in English, while its aligned phrase is at front in Chinese.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_56",
+            "start": 84,
+            "end": 279,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_56@2",
+            "content": "This reveals that, our E-ATT can perform well on modeling the cross-lingual alignments.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_56",
+            "start": 281,
+            "end": 367,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_57@0",
+            "content": "Binarization Statistics",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_57",
+            "start": 0,
+            "end": 22,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_58@0",
+            "content": "We further collect the ratio of nonzero values \u03c1 for each attention module in Figure 3, we can see that it increases with the number of encoder layers, denoting that more information is arranged into attentive calculation at higher layer of source side.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_58",
+            "start": 0,
+            "end": 252,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_58@1",
+            "content": "However, for decoder E-ATT, the ratio meets its peak at middle layers, revealing that decoder E-ATT are most active at the middle term of semantic processing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_58",
+            "start": 254,
+            "end": 411,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_58@2",
+            "content": "Interestingly, ratio in the query of cross-attention modules, which align source and target semantics, is higher for the layer closer to output.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_58",
+            "start": 413,
+            "end": 556,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_58@3",
+            "content": "As the binarized key representation of each cross-attention module is equivalent, higher ratio of nonzero values in query representation means that, E-ATT at higher decoder layer provides more information for cross-lingual alignments, thus enrich the information for translation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_58",
+            "start": 558,
+            "end": 836,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_59@0",
+            "content": "Discussion and Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_59",
+            "start": 0,
+            "end": 24,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_60@0",
+            "content": "In this paper, we empirically investigate the high energy-consumption problem in ATT.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_60",
+            "start": 0,
+            "end": 84,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_60@1",
+            "content": "We argue that the alignment modeling procedure can be achieved with additions other than multiplications, thus reducing the energy costs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_60",
+            "start": 86,
+            "end": 222,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_60@2",
+            "content": "Extensive analyses suggest that: 1) Binarized representations marginally harm the feature extraction procedure; and 2) L 1 distance can be efficiently exploited to measure alignment among queries and keys.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_60",
+            "start": 224,
+            "end": 428,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_60@3",
+            "content": "Compared to baseline, our approach can yield considerable quality of translations, and significantly save energy in attention mechanism.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_60",
+            "start": 430,
+            "end": 565,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_60@4",
+            "content": "Although we have shown the superiority of E-ATT, considering the whole TRANSFORMER block 2 , the use of E-ATT brings 17% energy reduction.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_60",
+            "start": 567,
+            "end": 704,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_60@5",
+            "content": "We hope this work can attract more researches on energy-efficient models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_60",
+            "start": 706,
+            "end": 778,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_60@6",
+            "content": "It is worth to further design techniques that reduce the energy cost of other modules in TRANSFORMER.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_60",
+            "start": 780,
+            "end": 880,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_61@0",
+            "content": "\u2206A = 0.9(ld 2 + 2ld + 2l 2 d) + 3.7(ld 2 + l 2 d) 0.9(3ld 2 + 2l 2 d) + 3.7(3ld 2 + 2l 2 d)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_61",
+            "start": 0,
+            "end": 90,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_62@0",
+            "content": "Similarly, that on FPGA chip is:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_62",
+            "start": 0,
+            "end": 31,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_63@0",
+            "content": "\u2206F = 0.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_63",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_64@0",
+            "content": "Dzmitry Bahdanau, Kyunghyun Cho, Yoshua Bengio, Neural Machine Translation by Jointly Learning to Align and Translate, 2015, International Conference on Learning Representations (ICLR), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_64",
+            "start": 0,
+            "end": 186,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_65@0",
+            "content": "UNKNOWN, None, 2020, Longformer: The Long-Document Transformer, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_65",
+            "start": 0,
+            "end": 64,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_66@0",
+            "content": "Hanting Chen, Yunhe Wang, Chunjing Xu, Boxin Shi, Chao Xu, Qi Tian, Chang Xu, AdderNet: Do We Really Need Multiplications in Deep Learning?, 2020, IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_66",
+            "start": 0,
+            "end": 218,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_67@0",
+            "content": "Emily Denton, Wojciech Zaremba, Joan Bruna, Yann Lecun, Rob Fergus, Exploiting Linear Structure within Convolutional Networks for Efficient Evaluation, 2014, Neural Information Processing Systems (NIPS), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_67",
+            "start": 0,
+            "end": 204,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_68@0",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding, 2019, North American Chapter of the Association for Computational Linguistics: Human Language Technologies (NAACL-HLT), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_68",
+            "start": 0,
+            "end": 264,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_69@0",
+            "content": "UNKNOWN, None, 2015, Distilling The Knowledge in A Neural Network, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_69",
+            "start": 0,
+            "end": 67,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_70@0",
+            "content": "Mark, Computing's Energy Problem (and What We Can Do About It), , IEEE International Solid-State Circuits Conference Digest of Technical Papers (ISSCC), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_70",
+            "start": 0,
+            "end": 153,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_71@0",
+            "content": "Xiaoqi Jiao, Yichun Yin, Lifeng Shang, Xin Jiang, Xiao Chen, Linlin Li, Fang Wang, Qun Liu, TinyBERT: Distilling BERT for Natural Language Understanding, 2020, Empirical Methods in Natural Language Processing (EMNLP): Findings, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_71",
+            "start": 0,
+            "end": 228,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_72@0",
+            "content": "Nikita Kitaev, Dan Klein, Constituency Parsing with A Self-Attentive Encoder, 2018, Association for Computational Linguistics (ACL), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_72",
+            "start": 0,
+            "end": 133,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_73@0",
+            "content": "Zhengjie Li, Yufan Zhang, Jian Wang, Jinmei Lai, A Survey of FPGA Design for AI Era, 2020, Journal of Semiconductors, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_73",
+            "start": 0,
+            "end": 118,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_74@0",
+            "content": "Xuan Liu, Di Cao, Kai Yu, Binarized LSTM Language Model, 2018, North American Chapter of the Association for Computational Linguistics: Human Language Technologies (NAACL-HLT), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_74",
+            "start": 0,
+            "end": 177,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_75@0",
+            "content": "UNKNOWN, None, , Jingkuan Song, and Nicu Sebe. 2020. Binary Neural Networks: A Survey. Pattern Recognition, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_75",
+            "start": 0,
+            "end": 108,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_76@0",
+            "content": "Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, Peter Liu, Exploring the Limits of Transfer Learning with a Unified Textto-Text Transformer, 2020, Journal of Machine Learning Research, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_76",
+            "start": 0,
+            "end": 245,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_77@0",
+            "content": "Alessandro Raganato, Yves Scherrer, J\u00f6rg Tiedemann, Fixed Encoder Self-Attention Patterns in Transformer-Based Machine Translation, 2020, Empirical Methods in Natural Language Processing (EMNLP): Findings, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_77",
+            "start": 0,
+            "end": 206,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_78@0",
+            "content": "Rico Sennrich, Barry Haddow, Alexandra Birch, Neural Machine Translation of Rare Words with Subword Units, 2016, Association for Computational Linguistics (ACL), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_78",
+            "start": 0,
+            "end": 162,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_79@0",
+            "content": "Dehua Song, Yunhe Wang, Hanting Chen, Chang Xu, Chunjing Xu, Dacheng Tao, AdderSR: Towards Energy Efficient Image Super-Resolution, 2021, Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_79",
+            "start": 0,
+            "end": 228,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_80@0",
+            "content": "Jinsong Su, Jiali Zeng, Deyi Xiong, Yang Liu, Mingxuan Wang, Jun Xie, A Hierarchy-to-Sequence Attentional Neural Machine Translation Model, 2018, IEEE/ACM Transactions on Audio, Speech, and Language Processing, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_80",
+            "start": 0,
+            "end": 211,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_81@0",
+            "content": "Zhixing Tan, Mingxuan Wang, Jun Xie, Yidong Chen, Xiaodong Shi, Deep Semantic Role Labeling with Self-attention, 2018, Proceedings of the Thirty-Second AAAI Conference on Artificial Intelligence (AAAI), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_81",
+            "start": 0,
+            "end": 203,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_82@0",
+            "content": "UNKNOWN, None, 2019, Distilling Task-Specific Knowledge from BERT into Simple Neural Networks, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_82",
+            "start": 0,
+            "end": 95,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_83@0",
+            "content": "Yi Tay, Dara Bahri, Donald Metzler, Da-Cheng Juan, Zhe Zhao, Che Zheng, Synthesizer: Rethinking Self-Attention for Transformer Models, 2021, Proceedings of the 38th International Conference on Machine Learning (ICML), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_83",
+            "start": 0,
+            "end": 218,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_84@0",
+            "content": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan Gomez, \u0141ukasz Kaiser, Illia Polosukhin, Attention Is All You Need, 2017, Advances in Neural Information Processing Systems (NIPS), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_84",
+            "start": 0,
+            "end": 210,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_85@0",
+            "content": "Yunhe Wang, Chang Xu, Shan You, Dacheng Tao, Chao Xu, CNNpack: Packing Convolutional Neural Networks in the Frequency Domain, 2016, Advances in Neural Information Processing Systems (NIPS), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_85",
+            "start": 0,
+            "end": 190,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_86@0",
+            "content": "Yujie Wu, Lei Deng, Guoqi Li, Jun Zhu, Luping Shi, Spatio-Temporal Backpropagation for Training High-performance Spiking Neural Networks, 2018, Frontiers in Neuroscience, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_86",
+            "start": 0,
+            "end": 171,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_87@0",
+            "content": "Baosong Yang, Jian Li, Derek Wong, Lidia Chao, Xing Wang, Zhaopeng Tu, Contextaware self-attention networks, 2019, Proceedings of the AAAI conference on artificial intelligence (AAAI), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_87",
+            "start": 0,
+            "end": 185,
+            "label": {}
+        },
+        {
+            "ix": "326-ARR_v2_88@0",
+            "content": "Baosong Yang, Zhaopeng Tu, Derek Wong, Fandong Meng, Lidia Chao, Tong Zhang, Modeling localness for self-attention networks, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "326-ARR_v2_88",
+            "start": 0,
+            "end": 219,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "326-ARR_v2_0",
+            "tgt_ix": "326-ARR_v2_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_0",
+            "tgt_ix": "326-ARR_v2_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_1",
+            "tgt_ix": "326-ARR_v2_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_1",
+            "tgt_ix": "326-ARR_v2_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_0",
+            "tgt_ix": "326-ARR_v2_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_2",
+            "tgt_ix": "326-ARR_v2_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_4",
+            "tgt_ix": "326-ARR_v2_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_3",
+            "tgt_ix": "326-ARR_v2_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_3",
+            "tgt_ix": "326-ARR_v2_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_3",
+            "tgt_ix": "326-ARR_v2_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_6",
+            "tgt_ix": "326-ARR_v2_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_7",
+            "tgt_ix": "326-ARR_v2_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_8",
+            "tgt_ix": "326-ARR_v2_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_3",
+            "tgt_ix": "326-ARR_v2_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_3",
+            "tgt_ix": "326-ARR_v2_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_3",
+            "tgt_ix": "326-ARR_v2_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_3",
+            "tgt_ix": "326-ARR_v2_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_5",
+            "tgt_ix": "326-ARR_v2_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_0",
+            "tgt_ix": "326-ARR_v2_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_9",
+            "tgt_ix": "326-ARR_v2_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_11",
+            "tgt_ix": "326-ARR_v2_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_12",
+            "tgt_ix": "326-ARR_v2_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_13",
+            "tgt_ix": "326-ARR_v2_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_14",
+            "tgt_ix": "326-ARR_v2_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_15",
+            "tgt_ix": "326-ARR_v2_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_16",
+            "tgt_ix": "326-ARR_v2_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_17",
+            "tgt_ix": "326-ARR_v2_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_18",
+            "tgt_ix": "326-ARR_v2_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_10",
+            "tgt_ix": "326-ARR_v2_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_10",
+            "tgt_ix": "326-ARR_v2_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_10",
+            "tgt_ix": "326-ARR_v2_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_10",
+            "tgt_ix": "326-ARR_v2_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_10",
+            "tgt_ix": "326-ARR_v2_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_10",
+            "tgt_ix": "326-ARR_v2_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_10",
+            "tgt_ix": "326-ARR_v2_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_10",
+            "tgt_ix": "326-ARR_v2_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_10",
+            "tgt_ix": "326-ARR_v2_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_10",
+            "tgt_ix": "326-ARR_v2_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_0",
+            "tgt_ix": "326-ARR_v2_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_19",
+            "tgt_ix": "326-ARR_v2_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_20",
+            "tgt_ix": "326-ARR_v2_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_20",
+            "tgt_ix": "326-ARR_v2_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_20",
+            "tgt_ix": "326-ARR_v2_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_21",
+            "tgt_ix": "326-ARR_v2_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_23",
+            "tgt_ix": "326-ARR_v2_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_24",
+            "tgt_ix": "326-ARR_v2_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_25",
+            "tgt_ix": "326-ARR_v2_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_26",
+            "tgt_ix": "326-ARR_v2_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_27",
+            "tgt_ix": "326-ARR_v2_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_28",
+            "tgt_ix": "326-ARR_v2_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_29",
+            "tgt_ix": "326-ARR_v2_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_30",
+            "tgt_ix": "326-ARR_v2_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_31",
+            "tgt_ix": "326-ARR_v2_32",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_22",
+            "tgt_ix": "326-ARR_v2_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_22",
+            "tgt_ix": "326-ARR_v2_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_22",
+            "tgt_ix": "326-ARR_v2_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_22",
+            "tgt_ix": "326-ARR_v2_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_22",
+            "tgt_ix": "326-ARR_v2_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_22",
+            "tgt_ix": "326-ARR_v2_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_22",
+            "tgt_ix": "326-ARR_v2_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_22",
+            "tgt_ix": "326-ARR_v2_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_22",
+            "tgt_ix": "326-ARR_v2_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_22",
+            "tgt_ix": "326-ARR_v2_32",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_22",
+            "tgt_ix": "326-ARR_v2_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_20",
+            "tgt_ix": "326-ARR_v2_33",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_32",
+            "tgt_ix": "326-ARR_v2_33",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_34",
+            "tgt_ix": "326-ARR_v2_35",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_35",
+            "tgt_ix": "326-ARR_v2_36",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_36",
+            "tgt_ix": "326-ARR_v2_37",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_33",
+            "tgt_ix": "326-ARR_v2_34",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_33",
+            "tgt_ix": "326-ARR_v2_35",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_33",
+            "tgt_ix": "326-ARR_v2_36",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_33",
+            "tgt_ix": "326-ARR_v2_37",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_33",
+            "tgt_ix": "326-ARR_v2_34",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_0",
+            "tgt_ix": "326-ARR_v2_38",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_37",
+            "tgt_ix": "326-ARR_v2_38",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_38",
+            "tgt_ix": "326-ARR_v2_39",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_38",
+            "tgt_ix": "326-ARR_v2_39",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_39",
+            "tgt_ix": "326-ARR_v2_40",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_39",
+            "tgt_ix": "326-ARR_v2_40",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_39",
+            "tgt_ix": "326-ARR_v2_41",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_40",
+            "tgt_ix": "326-ARR_v2_41",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_38",
+            "tgt_ix": "326-ARR_v2_42",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_41",
+            "tgt_ix": "326-ARR_v2_42",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_43",
+            "tgt_ix": "326-ARR_v2_44",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_42",
+            "tgt_ix": "326-ARR_v2_43",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_42",
+            "tgt_ix": "326-ARR_v2_44",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_42",
+            "tgt_ix": "326-ARR_v2_43",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_38",
+            "tgt_ix": "326-ARR_v2_45",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_44",
+            "tgt_ix": "326-ARR_v2_45",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_45",
+            "tgt_ix": "326-ARR_v2_46",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_45",
+            "tgt_ix": "326-ARR_v2_46",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_38",
+            "tgt_ix": "326-ARR_v2_47",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_46",
+            "tgt_ix": "326-ARR_v2_47",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_47",
+            "tgt_ix": "326-ARR_v2_48",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_47",
+            "tgt_ix": "326-ARR_v2_48",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_0",
+            "tgt_ix": "326-ARR_v2_49",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_48",
+            "tgt_ix": "326-ARR_v2_49",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_49",
+            "tgt_ix": "326-ARR_v2_50",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_49",
+            "tgt_ix": "326-ARR_v2_50",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_51",
+            "tgt_ix": "326-ARR_v2_52",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_50",
+            "tgt_ix": "326-ARR_v2_51",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_50",
+            "tgt_ix": "326-ARR_v2_52",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_50",
+            "tgt_ix": "326-ARR_v2_51",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_49",
+            "tgt_ix": "326-ARR_v2_53",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_52",
+            "tgt_ix": "326-ARR_v2_53",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_53",
+            "tgt_ix": "326-ARR_v2_54",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_53",
+            "tgt_ix": "326-ARR_v2_54",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_49",
+            "tgt_ix": "326-ARR_v2_55",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_54",
+            "tgt_ix": "326-ARR_v2_55",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_55",
+            "tgt_ix": "326-ARR_v2_56",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_55",
+            "tgt_ix": "326-ARR_v2_56",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_49",
+            "tgt_ix": "326-ARR_v2_57",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_56",
+            "tgt_ix": "326-ARR_v2_57",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_57",
+            "tgt_ix": "326-ARR_v2_58",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_57",
+            "tgt_ix": "326-ARR_v2_58",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_0",
+            "tgt_ix": "326-ARR_v2_59",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_58",
+            "tgt_ix": "326-ARR_v2_59",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_60",
+            "tgt_ix": "326-ARR_v2_61",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_61",
+            "tgt_ix": "326-ARR_v2_62",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_62",
+            "tgt_ix": "326-ARR_v2_63",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_59",
+            "tgt_ix": "326-ARR_v2_60",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_59",
+            "tgt_ix": "326-ARR_v2_61",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_59",
+            "tgt_ix": "326-ARR_v2_62",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_59",
+            "tgt_ix": "326-ARR_v2_63",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_59",
+            "tgt_ix": "326-ARR_v2_60",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "326-ARR_v2_0",
+            "tgt_ix": "326-ARR_v2_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_1",
+            "tgt_ix": "326-ARR_v2_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_2",
+            "tgt_ix": "326-ARR_v2_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_2",
+            "tgt_ix": "326-ARR_v2_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_2",
+            "tgt_ix": "326-ARR_v2_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_2",
+            "tgt_ix": "326-ARR_v2_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_2",
+            "tgt_ix": "326-ARR_v2_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_3",
+            "tgt_ix": "326-ARR_v2_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_4",
+            "tgt_ix": "326-ARR_v2_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_4",
+            "tgt_ix": "326-ARR_v2_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_4",
+            "tgt_ix": "326-ARR_v2_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_4",
+            "tgt_ix": "326-ARR_v2_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_5",
+            "tgt_ix": "326-ARR_v2_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_5",
+            "tgt_ix": "326-ARR_v2_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_6",
+            "tgt_ix": "326-ARR_v2_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_6",
+            "tgt_ix": "326-ARR_v2_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_7",
+            "tgt_ix": "326-ARR_v2_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_7",
+            "tgt_ix": "326-ARR_v2_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_7",
+            "tgt_ix": "326-ARR_v2_7@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_7",
+            "tgt_ix": "326-ARR_v2_7@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_8",
+            "tgt_ix": "326-ARR_v2_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_8",
+            "tgt_ix": "326-ARR_v2_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_8",
+            "tgt_ix": "326-ARR_v2_8@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_8",
+            "tgt_ix": "326-ARR_v2_8@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_9",
+            "tgt_ix": "326-ARR_v2_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_9",
+            "tgt_ix": "326-ARR_v2_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_9",
+            "tgt_ix": "326-ARR_v2_9@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_9",
+            "tgt_ix": "326-ARR_v2_9@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_10",
+            "tgt_ix": "326-ARR_v2_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_11",
+            "tgt_ix": "326-ARR_v2_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_11",
+            "tgt_ix": "326-ARR_v2_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_11",
+            "tgt_ix": "326-ARR_v2_11@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_12",
+            "tgt_ix": "326-ARR_v2_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_13",
+            "tgt_ix": "326-ARR_v2_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_13",
+            "tgt_ix": "326-ARR_v2_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_14",
+            "tgt_ix": "326-ARR_v2_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_15",
+            "tgt_ix": "326-ARR_v2_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_16",
+            "tgt_ix": "326-ARR_v2_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_17",
+            "tgt_ix": "326-ARR_v2_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_18",
+            "tgt_ix": "326-ARR_v2_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_19",
+            "tgt_ix": "326-ARR_v2_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_19",
+            "tgt_ix": "326-ARR_v2_19@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_19",
+            "tgt_ix": "326-ARR_v2_19@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_19",
+            "tgt_ix": "326-ARR_v2_19@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_19",
+            "tgt_ix": "326-ARR_v2_19@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_20",
+            "tgt_ix": "326-ARR_v2_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_21",
+            "tgt_ix": "326-ARR_v2_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_22",
+            "tgt_ix": "326-ARR_v2_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_23",
+            "tgt_ix": "326-ARR_v2_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_23",
+            "tgt_ix": "326-ARR_v2_23@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_24",
+            "tgt_ix": "326-ARR_v2_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_25",
+            "tgt_ix": "326-ARR_v2_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_25",
+            "tgt_ix": "326-ARR_v2_25@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_25",
+            "tgt_ix": "326-ARR_v2_25@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_25",
+            "tgt_ix": "326-ARR_v2_25@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_26",
+            "tgt_ix": "326-ARR_v2_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_27",
+            "tgt_ix": "326-ARR_v2_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_28",
+            "tgt_ix": "326-ARR_v2_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_29",
+            "tgt_ix": "326-ARR_v2_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_30",
+            "tgt_ix": "326-ARR_v2_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_30",
+            "tgt_ix": "326-ARR_v2_30@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_31",
+            "tgt_ix": "326-ARR_v2_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_32",
+            "tgt_ix": "326-ARR_v2_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_33",
+            "tgt_ix": "326-ARR_v2_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_34",
+            "tgt_ix": "326-ARR_v2_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_34",
+            "tgt_ix": "326-ARR_v2_34@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_34",
+            "tgt_ix": "326-ARR_v2_34@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_35",
+            "tgt_ix": "326-ARR_v2_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_36",
+            "tgt_ix": "326-ARR_v2_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_37",
+            "tgt_ix": "326-ARR_v2_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_38",
+            "tgt_ix": "326-ARR_v2_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_39",
+            "tgt_ix": "326-ARR_v2_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_40",
+            "tgt_ix": "326-ARR_v2_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_40",
+            "tgt_ix": "326-ARR_v2_40@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_40",
+            "tgt_ix": "326-ARR_v2_40@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_41",
+            "tgt_ix": "326-ARR_v2_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_42",
+            "tgt_ix": "326-ARR_v2_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_43",
+            "tgt_ix": "326-ARR_v2_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_43",
+            "tgt_ix": "326-ARR_v2_43@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_43",
+            "tgt_ix": "326-ARR_v2_43@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_43",
+            "tgt_ix": "326-ARR_v2_43@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_43",
+            "tgt_ix": "326-ARR_v2_43@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_43",
+            "tgt_ix": "326-ARR_v2_43@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_44",
+            "tgt_ix": "326-ARR_v2_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_44",
+            "tgt_ix": "326-ARR_v2_44@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_44",
+            "tgt_ix": "326-ARR_v2_44@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_44",
+            "tgt_ix": "326-ARR_v2_44@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_45",
+            "tgt_ix": "326-ARR_v2_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_46",
+            "tgt_ix": "326-ARR_v2_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_46",
+            "tgt_ix": "326-ARR_v2_46@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_46",
+            "tgt_ix": "326-ARR_v2_46@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_46",
+            "tgt_ix": "326-ARR_v2_46@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_47",
+            "tgt_ix": "326-ARR_v2_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_48",
+            "tgt_ix": "326-ARR_v2_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_48",
+            "tgt_ix": "326-ARR_v2_48@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_48",
+            "tgt_ix": "326-ARR_v2_48@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_48",
+            "tgt_ix": "326-ARR_v2_48@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_49",
+            "tgt_ix": "326-ARR_v2_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_50",
+            "tgt_ix": "326-ARR_v2_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_51",
+            "tgt_ix": "326-ARR_v2_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_52",
+            "tgt_ix": "326-ARR_v2_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_52",
+            "tgt_ix": "326-ARR_v2_52@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_52",
+            "tgt_ix": "326-ARR_v2_52@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_52",
+            "tgt_ix": "326-ARR_v2_52@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_52",
+            "tgt_ix": "326-ARR_v2_52@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_53",
+            "tgt_ix": "326-ARR_v2_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_54",
+            "tgt_ix": "326-ARR_v2_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_54",
+            "tgt_ix": "326-ARR_v2_54@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_54",
+            "tgt_ix": "326-ARR_v2_54@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_54",
+            "tgt_ix": "326-ARR_v2_54@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_55",
+            "tgt_ix": "326-ARR_v2_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_56",
+            "tgt_ix": "326-ARR_v2_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_56",
+            "tgt_ix": "326-ARR_v2_56@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_56",
+            "tgt_ix": "326-ARR_v2_56@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_57",
+            "tgt_ix": "326-ARR_v2_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_58",
+            "tgt_ix": "326-ARR_v2_58@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_58",
+            "tgt_ix": "326-ARR_v2_58@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_58",
+            "tgt_ix": "326-ARR_v2_58@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_58",
+            "tgt_ix": "326-ARR_v2_58@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_59",
+            "tgt_ix": "326-ARR_v2_59@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_60",
+            "tgt_ix": "326-ARR_v2_60@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_60",
+            "tgt_ix": "326-ARR_v2_60@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_60",
+            "tgt_ix": "326-ARR_v2_60@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_60",
+            "tgt_ix": "326-ARR_v2_60@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_60",
+            "tgt_ix": "326-ARR_v2_60@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_60",
+            "tgt_ix": "326-ARR_v2_60@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_60",
+            "tgt_ix": "326-ARR_v2_60@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_61",
+            "tgt_ix": "326-ARR_v2_61@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_62",
+            "tgt_ix": "326-ARR_v2_62@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_63",
+            "tgt_ix": "326-ARR_v2_63@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_64",
+            "tgt_ix": "326-ARR_v2_64@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_65",
+            "tgt_ix": "326-ARR_v2_65@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_66",
+            "tgt_ix": "326-ARR_v2_66@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_67",
+            "tgt_ix": "326-ARR_v2_67@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_68",
+            "tgt_ix": "326-ARR_v2_68@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_69",
+            "tgt_ix": "326-ARR_v2_69@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_70",
+            "tgt_ix": "326-ARR_v2_70@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_71",
+            "tgt_ix": "326-ARR_v2_71@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_72",
+            "tgt_ix": "326-ARR_v2_72@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_73",
+            "tgt_ix": "326-ARR_v2_73@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_74",
+            "tgt_ix": "326-ARR_v2_74@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_75",
+            "tgt_ix": "326-ARR_v2_75@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_76",
+            "tgt_ix": "326-ARR_v2_76@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_77",
+            "tgt_ix": "326-ARR_v2_77@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_78",
+            "tgt_ix": "326-ARR_v2_78@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_79",
+            "tgt_ix": "326-ARR_v2_79@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_80",
+            "tgt_ix": "326-ARR_v2_80@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_81",
+            "tgt_ix": "326-ARR_v2_81@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_82",
+            "tgt_ix": "326-ARR_v2_82@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_83",
+            "tgt_ix": "326-ARR_v2_83@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_84",
+            "tgt_ix": "326-ARR_v2_84@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_85",
+            "tgt_ix": "326-ARR_v2_85@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_86",
+            "tgt_ix": "326-ARR_v2_86@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_87",
+            "tgt_ix": "326-ARR_v2_87@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "326-ARR_v2_88",
+            "tgt_ix": "326-ARR_v2_88@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 516,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "doc_id": "326-ARR",
+        "version": 2
+    }
+}

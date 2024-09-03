@@ -1,0 +1,3584 @@
+{
+    "nodes": [
+        {
+            "ix": "3-145_v2_0",
+            "content": "CyKEGGParser: tailoring KEGG pathways to fit into systems biology analysis workflows",
+            "ntype": "article-title",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_2",
+            "content": "The KEGG pathway database is a widely accepted source for biomolecular pathway maps. In this paper we present the CyKEGGParser app ( http://apps.cytoscape.org/apps/cykeggparser ) for Cytoscape 3 that allows manipulation with KEGG pathway maps. Along with basic functionalities for pathway retrieval, visualization and export in KGML and BioPAX formats, the app provides unique features for computer-assisted adjustment of inconsistencies in KEGG pathway KGML files and generation of tissue- and protein-protein interaction specific pathways. We demonstrate that using biological context-specific KEGG pathways created with CyKEGGParser makes systems biology analysis more sensitive and appropriate compared to original pathways.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1",
+                "sec-type": "intro",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_4",
+            "content": "The KEGG pathway database is a widely accepted source for biomolecular pathway maps and has long been considered as the gold standard for pathway-based analyses due to well-formatted human-readable maps supplemented with machine-readable XML files (KGML), quality of curation and comprehensiveness <REF-1> . However, the KEGG pathway database suffers from a number of limitations that reduce the adaptability of the pathways for automated analysis. These include inconsistencies in KGML files supplied with each pathway image, such as absence of event or entity labels (e.g., links to other pathways or biological process labels), reversed directions for some associations, absence of some interactions, and inconsistent representation of compound interactions <REF-2> . Additionally, some features of KEGG pathways such as protein complex nodes and node duplication, enhance graphical representation, but reduce their machine-readability. Another limitation concerns abstractions (generalizations) used in pathway construction: (1) paralogous genes, not always occurring together in the same biological context, are grouped into single nodes, and (2) all the genes are assumed to be expressed and present in the same pathway. Additionally, the sources of information on interactions depicted in pathways differ in quality and the nature of interactions (indirect, physical, regulatory, etc.). Even accounting for these bottlenecks, the KEGG pathway database is still a highly valued resource, and we aimed to develop a tool that would make the best use of the information collected in it.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_5",
+            "content": "There is a wide variety of software that manipulate on KEGG pathways, both standalone and Cytoscape 3 apps, such as KEGGscape ( http://apps.cytoscape.org/apps/keggscape ) for KEGG pathways visualization and data integration, and others. However, none of the available apps addresses inconsistencies in KGML files, and nor do they neither deal with abstractions of KEGG pathways. Herein, we describe CyKEGGParser app for Cytoscape 3 for KEGG pathway retrieval, visualization, adjustment for inconsistencies in computer-assisted manner, context-specific pathway generation, and exporting the pathways in KGML and BioPAX formats. CyKEGGParser is best suited for KEGG signaling pathways.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_6",
+            "content": "Implementation",
+            "ntype": "title",
+            "meta": {
+                "section": "2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_7",
+            "content": "The software is implemented in Java and is available as an app for Cytoscape 3. The general workflow of CyKEGGParser is presented in Figure 1 .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_8",
+            "content": "Figure 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "f1",
+                "caption": "Graphical representation of CyKEGGParser use case.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/5389/bdc1663c-d88b-4693-a7cf-7f57ff05ea9c_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_9",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f1\" position=\"float\"> <caption> <title>Graphical representation of CyKEGGParser use case.</title> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/5389/bdc1663c-d88b-4693-a7cf-7f57ff05ea9c_figure1.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f1",
+                "caption": "Graphical representation of CyKEGGParser use case.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/5389/bdc1663c-d88b-4693-a7cf-7f57ff05ea9c_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_10",
+            "content": "Pathway parsing and corrections",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_11",
+            "content": "The input for parsing is KGML formatted files, either stored locally or downloaded from the web via REST-based KEGG API. The KEGG API can be used for individual downloads for academic use only; bulk download and non-academic usage requires a KEGG FTP subscription and license agreement ( http://www.kegg.jp/kegg/legal.html ). The pathway selection dialogue provides a list of all KEGG pathways and organisms, however, if pathway KGML does not exist in the database the user will receive a warning message.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_12",
+            "content": "Each KGML file contains entries <pathway>, <entry> and <relation>, which are parsed using Java SAXParser API for reading XML files. The information contained in these entries is kept in Java objects which are instances of Graph, KeggNode and KeggRelation classes. These classes are implemented in CyKEGGParser and are independent of Cytoscape API. All the modifications applied by inconsistency correction algorithms are performed on these objects. Implementation of semi-automatic correction in CyKEGGParser is inherited from KEGGParser and described in detail by Arakelyan and Nersisyan <REF-2> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_13",
+            "content": "Once the final Graph with its nodes and edges is created, it is converted into CyNetwork, CyNode and CyEdge objects using CyKEGGParser\u2019s KeggNetworkCreator class. During the conversion, all the attributes contained in Graph, KeggNode and KeggEdge objects are set in respective Cytoscape attribute tables. More specifically, we use default CyTables for network, nodes and edges, populating them by creating a new CyColumn for each of the attributes and setting the values in CyRows during iteration over nodes and edges. After CyNetwork, CyNode and CyEdge objects are created, the algorithm iterates through each CyNode, creating a separate view for it and assigning coordinates from respective attributes for X and Y positions. Finally, CyKEGGParser creates attribute-based \u201ckegg_vs\u201d visual style, which is applied on the network with VisualMappingManager of Cytoscape API. However, any Cytoscape visual style may be applied depending on the user\u2019s choice.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_14",
+            "content": "All the corrections performed on the network, as well as tuning and saving steps (described below) are tracked in separate log files (see the User Manual provided in the Cytoscape Help menu and at http://molbiol.sci.am/big/apps/cy_kp/jar/CyKEGGParser_User_Manual.pdf ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_15",
+            "content": "Limitations for use of KEGG metabolic pathways",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_16",
+            "content": "KEGG metabolic pathways, along with <relation/> entries, which characterize protein-protein interaction networks (enzyme interactions, in this case), also contain <reaction/> entries, characterizing compound interactions (chemical networks, http://www.kegg.jp/kegg/xml/docs/ ). Since CyKEGGParser relies on protein-protein interactions (PPI), parsing of metabolic pathways is not always as accurate as it is for signaling pathways. However, if only protein-protein interactions are of concern and if the KGML file contains respective <relation/> entries, CyKEGGParser will parse metabolic pathways similar to signaling ones.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_17",
+            "content": "Pathway tuning",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_18",
+            "content": "Along with the ability to modify the pathways by adding and deleting nodes and edges using Cytoscape-inherent tools, the user may as well customize (or \u201ctune\u201d) pathways according to specific biological context: particular tissue or cell type, and experimentally confirmed physical interactions.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_19",
+            "content": "Tissue-specific tuning . Tissue-specific tuning is aimed at providing the user with the ability to modify the networks based on genes expressed in a chosen cell/tissue type. Gene expression data for tuning is derived from BioGPS ( http://biogps.org/ ) experiments for human normal and cancer tissues, provided by GeneCards ( www.genecards.org ), or may be supplied by the user (refer to User Manual for details). Along with specifying the source of data, the user chooses the tissue and specifies gene expression threshold.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_20",
+            "content": "The algorithm firstly clones the network preserving all the attributes, except for node and edge identifiers (those should be unique). Then it iterates over all the genes contained in the cloned network nodes, and removes the genes with expression values less than the specified threshold. If a node contains at least one gene that is expressed in current tissue, it remains in the network, otherwise it is removed. Nodes other than of type \u201cgene\u201d are preserved in the network.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_21",
+            "content": "PPI based drill-down . In KEGG pathways, node entries represent groups of paralogous genes that have similar functions or interaction profiles <REF-1> . The main incentive of PPI based pathway drill-down is to expand each node into its component genes and connect only those pairs of genes that have been shown to have true physical interactions. Together with tissue-specific tuning, this leads to generation of a \u201cfine-tuned\u201d network, in which all the components occur in the same biological context.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_22",
+            "content": "PPI data, retrieved from the String database ( http://string-db.org/ ), have been loaded in an internal MySQL database, located at the server of Bioinformatics Group of the Institute of Molecular Biology NAS RA ( http://molbiol.sci.am/big/ ). The user can choose the source of interactions from the list of databases (GRID, DIP, KEGG, MINT and PDB), as well as set interaction confidence score threshold, which is computed based on various evidence channels, adjusted for probability of randomly observing an interaction <REF-3> . The interactions are manually updated in the local My-SQL database and the version of String used is mentioned on the Tuning dialogue.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_23",
+            "content": "The algorithm initially creates a new network, copying all the nodes and node attributes from the former one. Afterwards, it drills down the new network through expanding each node of \u201cgene\u201d type into separate nodes for each member gene. Furthermore, the algorithm iterates over all the pairs of interacting nodes, and connects those members for which there is physical interaction in the corresponding PPI database. Attributes of newly assigned edges are copied from the former network table. After the drill down, duplicated nodes are combined into single ones, and isolated nodes are removed from the network.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_24",
+            "content": "Saving",
+            "ntype": "title",
+            "meta": {
+                "section": "2.4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_25",
+            "content": "CyKEGGParser provides the functionality of saving the processed pathways back in valid KGML format, so that the modified pathways may be used outside of Cytoscape. All the modifications done to the network are saved in the attributes specific to KGML format. In addition, CyKEGGParser uses KEGGTranslator <REF-4> binary file, embedded in the app package, for KGML conversion to BioPAX2 and BioPAX3 formats (see User Manual for details).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_26",
+            "content": "Results and discussion",
+            "ntype": "title",
+            "meta": {
+                "section": "3",
+                "sec-type": "results | discussion",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_27",
+            "content": "Parsing and tuning of B Cell Receptor Signaling Pathway with CyKEGGParser",
+            "ntype": "title",
+            "meta": {
+                "section": "3.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_28",
+            "content": "We have taken KEGG B Cell Receptor Signaling Pathway as an example to demonstrate CyKEGGParser functionality and its applicability in pathway-based biology research. B cells are important players in humoral immunity, and their main function is dependent on the B Cell Receptor Signaling Pathway, which is initiated by antigen binding to B cell receptor. We have tuned the B Cell Receptor Signaling Pathway based on BioGPS tissue-specific gene expression data in CD19 B and CD4 T cells (see Implementation:, Pathway tuning section), and compared pathway topologies in each case.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_29",
+            "content": "Parsing and corrections . Figure 2 shows the pathway parsed with CyKEGGParser with automatic correction options applied. These include three cases of protein-compound-protein (PCP) interaction processing, reversing binding interaction directions of seven edges and processing of two group nodes.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_30",
+            "content": "Figure 2.",
+            "ntype": "label",
+            "meta": {
+                "id": "f2",
+                "caption": "Visualization of KEGG B Cell Receptor Signaling Pathway after parsing and automatic correction. Red arrows indicate edges created by PCP corrections, blue double arrows indicate reversed interactions, and violet dashed rectangles indicate processed group nodes.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/5389/bdc1663c-d88b-4693-a7cf-7f57ff05ea9c_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_31",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f2\" position=\"float\"> <caption> <title>Visualization of KEGG B Cell Receptor Signaling Pathway after parsing and automatic correction.</title> <p>Red arrows indicate edges created by PCP corrections, blue double arrows indicate reversed interactions, and violet dashed rectangles indicate processed group nodes.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/5389/bdc1663c-d88b-4693-a7cf-7f57ff05ea9c_figure2.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f2",
+                "caption": "Visualization of KEGG B Cell Receptor Signaling Pathway after parsing and automatic correction. Red arrows indicate edges created by PCP corrections, blue double arrows indicate reversed interactions, and violet dashed rectangles indicate processed group nodes.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/5389/bdc1663c-d88b-4693-a7cf-7f57ff05ea9c_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_32",
+            "content": "Tissue-specific tuning . We performed B Cell Receptor Signaling Pathway tuning in CD19 B cells and CD4 T cells. Gene expression threshold was set to 25 percentile of gene expression values in the dataset. After tuning, from the 57 nodes available in the original pathway, 54 nodes remained in B cells and 52 nodes remained in T cells. Two nodes, namely, LYN, and CD19 are missing in the B Cell Receptor Signaling Pathway tuned in T cells ( Figure 3 ). Due to their topological importance in signal propagation from the receptors to the target nodes, absence of these two nodes leads to almost complete deactivation of the entire pathway in T cells.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_33",
+            "content": "Figure 3.",
+            "ntype": "label",
+            "meta": {
+                "id": "f3",
+                "caption": "KEGG B cell signaling pathway tuned in CD19 B cells and CD4 T cells. Tuning was performed with 25 percentile threshold of gene expression values for each tissue. Highlighted in yellow are the nodes (\u201cLYN\u201d and \u201cCD19\u201d) not present in the pathway tuned in CD4 T cells.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/5389/bdc1663c-d88b-4693-a7cf-7f57ff05ea9c_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_34",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f3\" position=\"float\"> <caption> <title>KEGG B cell signaling pathway tuned in CD19 B cells and CD4 T cells.</title> <p>Tuning was performed with 25 percentile threshold of gene expression values for each tissue. Highlighted in yellow are the nodes (&#8220;LYN&#8221; and &#8220;CD19&#8221;) not present in the pathway tuned in CD4 T cells.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/5389/bdc1663c-d88b-4693-a7cf-7f57ff05ea9c_figure3.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f3",
+                "caption": "KEGG B cell signaling pathway tuned in CD19 B cells and CD4 T cells. Tuning was performed with 25 percentile threshold of gene expression values for each tissue. Highlighted in yellow are the nodes (\u201cLYN\u201d and \u201cCD19\u201d) not present in the pathway tuned in CD4 T cells.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/5389/bdc1663c-d88b-4693-a7cf-7f57ff05ea9c_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_35",
+            "content": "Protein-protein interaction based tuning . The CD19 B cell tissue-specific version of the pathway was further tuned based on PPI. All the database sources (GRID, MINT, KEGG, DIP, PDB) were chosen and 0.8 confidence score threshold was set. Comparison of the PPI-tuned and the original networks showed that the node \u201cVAV3\u2026\u201d, which contains three genes, VAV1, VAV2 and VAV3, was duplicated in the original pathway, but remained only in one place in the tuned network ( Figure 4 ). Moreover, of the three VAV member genes only VAV1 interacts with CD19 and BLNK, transducing the signal to rac1 and rac2 nodes. This observation is in accordance with a previously published study indicating VAV1 as the only player in B Cell Receptor Signaling Pathway <REF-5> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_36",
+            "content": "Figure 4.",
+            "ntype": "label",
+            "meta": {
+                "id": "f4",
+                "caption": "KEGG B cell signaling pathway after tissue specific and PPI-based tuning in CD19 B cells. Tissue-based tuning was performed with 25 percentile gene expression threshold. The confidence score for PPI-based tuning was set to 0.8 and all database sources were included.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/5389/bdc1663c-d88b-4693-a7cf-7f57ff05ea9c_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_37",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f4\" position=\"float\"> <caption> <title>KEGG B cell signaling pathway after tissue specific and PPI-based tuning in CD19 B cells.</title> <p>Tissue-based tuning was performed with 25 percentile gene expression threshold. The confidence score for PPI-based tuning was set to 0.8 and all database sources were included.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/5389/bdc1663c-d88b-4693-a7cf-7f57ff05ea9c_figure4.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f4",
+                "caption": "KEGG B cell signaling pathway after tissue specific and PPI-based tuning in CD19 B cells. Tissue-based tuning was performed with 25 percentile gene expression threshold. The confidence score for PPI-based tuning was set to 0.8 and all database sources were included.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/5389/bdc1663c-d88b-4693-a7cf-7f57ff05ea9c_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_38",
+            "content": "Effects of tissue-specific tuning on activity of cell signaling pathways",
+            "ntype": "title",
+            "meta": {
+                "section": "3.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_39",
+            "content": "To further demonstrate necessity of tissue-specific tuning for assessment of pathway activity changes, we compared pathway flows in original and tuned KEGG Calcium Signaling Pathways with three gene expression datasets (norm vs B05 and B01) in CD14 monocytes, Adipocytes, and Cardiac myocytes (see Supplementary Material for details). For calculations, we have used the Pathway Scoring Application for Cytoscape <REF-6> . The simulations show that pathway tuning increases the sensitivity of the pathway for signal flow analysis and thus the ability of the method to detect differentially expressed gene-related changes ( Figure 5 ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_40",
+            "content": "Figure 5.",
+            "ntype": "label",
+            "meta": {
+                "id": "f5",
+                "caption": "PSA score ratios of Calcium Signaling Pathway computed with simulated data. Target nodes are: M-\u201cMAPK signaling pathway\u201d, P-\u201cPhosphatidylinositol signaling system\u201d, A-\u201cApoptosis\u201d. Tissues are: \u201cCD14_mo\u201d-CD14 monocytes, \u201cAdip\u201d-Adipocytes, \u201cCard\u201d-Cardiac myocytes.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/5389/bdc1663c-d88b-4693-a7cf-7f57ff05ea9c_figure5.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_41",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f5\" position=\"float\"> <caption> <title>PSA score ratios of Calcium Signaling Pathway computed with simulated data.</title> <p>Target nodes are: M-&#8220;MAPK signaling pathway&#8221;, P-&#8220;Phosphatidylinositol signaling system&#8221;, A-&#8220;Apoptosis&#8221;. Tissues are: &#8220;CD14_mo&#8221;-CD14 monocytes, &#8220;Adip&#8221;-Adipocytes, &#8220;Card&#8221;-Cardiac myocytes.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/5389/bdc1663c-d88b-4693-a7cf-7f57ff05ea9c_figure5.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f5",
+                "caption": "PSA score ratios of Calcium Signaling Pathway computed with simulated data. Target nodes are: M-\u201cMAPK signaling pathway\u201d, P-\u201cPhosphatidylinositol signaling system\u201d, A-\u201cApoptosis\u201d. Tissues are: \u201cCD14_mo\u201d-CD14 monocytes, \u201cAdip\u201d-Adipocytes, \u201cCard\u201d-Cardiac myocytes.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/5389/bdc1663c-d88b-4693-a7cf-7f57ff05ea9c_figure5.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_42",
+            "content": "<supplementary-material xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" id=\"DS0\" xlink:href=\"https://f1000researchdata.s3.amazonaws.com/datasets/4410/b9f01495-781e-4eb9-8143-9773888bba18_Simulation_Data_Sets_for_CyKEGGParser.zip\"> <label>Simulation Data Sets for CyKEGGParser</label> <caption> <p> <bold>Dataset 1. PSA_scores_for_CalciumSignalingPathway.csv</bold>. Description: Pathway scoring application scores for human Calcium signaling pathway, computed with gene expression data for CD14 Monocytes, Adipocytes and Cardiac myocytes with normal BioGPS gene expression data, and simulated B01 and B05 datasets. These data is presented in Figure 5 of the manuscript. <bold>Dataset 2. CalciumSignalingPathway_gene_expression_data.csv</bold>. Description: Gene expression data for genes belonging to KEGG Calcium signaling pathway from BioGPS experiments for normal human CD14 Monocytes, Adipocytes and Cardiac Mycocytes, and from two simulated datasets (B01 and B05). B05 and B01 datasets were generated from the normal tissue gene expression data, and by randomly assigning two-fold changes to genes based on Bernoulli distribution with probabilities 0.5 (B05) and 0.1 (B01), respectively.</p> </caption> </supplementary-material>",
+            "ntype": "supplementary-material",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_43",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "4",
+                "sec-type": "conclusions",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_44",
+            "content": "We have developed CyKEGGParser app for Cytoscape 3 that allows for import, correction, visualization, and tuning of KEGG pathways. Although KGML-based pathway import in Cytoscape has also been addressed by KGMLReader ( http://apps.cytoscape.org/apps/kgmlreader ) and KEGGscape ( http://apps.cytoscape.org/apps/keggscape ), semi-automatic correction and tuning-based enhancement of pathway specificity are unique and valuable features of CyKEGGParser. With this functionality we aim to maximize the effectiveness and sensitivity of gene expression-based systems biology analyses based on KEGG pathways.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_45",
+            "content": "Software availability",
+            "ntype": "title",
+            "meta": {
+                "section": "5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_46",
+            "content": "App website: http://apps.cytoscape.org/apps/cykeggparser",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_47",
+            "content": "Source code: https://github.com/lilit-nersisyan/cykeggparser",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_48",
+            "content": "License: GNU Public License 3.0: https://www.gnu.org/licenses/lgpl.html",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_49",
+            "content": "<REF-1> Kanehisa M Goto S Furumichi M : KEGG for representation and analysis of molecular networks involving diseases and drugs. Nucleic Acids Res. 2010 ; 38 ( Database issue ): D355 \u2013 60 . 19880382 10.1093/nar/gkp896 2808910",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_50",
+            "content": "<REF-2> Arakelyan A Nersisyan L : KEGGParser: parsing and editing KEGG pathway maps in Matlab. Bioinformatics. 2013 ; 29 ( 4 ): 518 \u2013 9 . 23292739 10.1093/bioinformatics/bts730",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_51",
+            "content": "<REF-3> von Mering C Jensen LJ Snel B : STRING: known and predicted protein-protein associations, integrated and transferred across organisms. Nucleic Acids Res. 2005 ; 33 ( Database Issue ): D433 \u2013 7 . 15608232 10.1093/nar/gki005 539959",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_52",
+            "content": "<REF-4> Wrzodek C Dr\u00e4ger A Zell A : KEGGtranslator: visualizing and converting the KEGG PATHWAY database to various formats. Bioinformatics. 2011 ; 27 ( 16 ): 2314 \u2013 5 . 21700675 10.1093/bioinformatics/btr377 3150042",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_53",
+            "content": "<REF-5> Packard TA Cambier JC : B lymphocyte antigen receptor signaling: initiation, amplification, and regulation. F1000Prime Rep. 2013 ; 5 : 40 . 24167721 10.12703/P5-40 3790562",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "3-145_v2_54",
+            "content": "<REF-6> Isik Z Ersahin T Atalay V : A signal transduction score flow algorithm for cyclic cellular pathway analysis, which combines transcriptome and ChIP-seq data. Mol Biosyst. 2012 ; 8 ( 12 ): 3224 \u2013 31 . 23042589 10.1039/c2mb25215e",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-6",
+                "created_by": "F1000XMLParser"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "3-145_v2_0@0",
+            "content": "CyKEGGParser: tailoring KEGG pathways to fit into systems biology analysis workflows",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_0",
+            "start": 0,
+            "end": 83,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_2@0",
+            "content": "The KEGG pathway database is a widely accepted source for biomolecular pathway maps.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_2",
+            "start": 0,
+            "end": 83,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_2@1",
+            "content": "In this paper we present the CyKEGGParser app ( http://apps.cytoscape.org/apps/cykeggparser ) for Cytoscape 3 that allows manipulation with KEGG pathway maps.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_2",
+            "start": 85,
+            "end": 242,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_2@2",
+            "content": "Along with basic functionalities for pathway retrieval, visualization and export in KGML and BioPAX formats, the app provides unique features for computer-assisted adjustment of inconsistencies in KEGG pathway KGML files and generation of tissue- and protein-protein interaction specific pathways.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_2",
+            "start": 244,
+            "end": 540,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_2@3",
+            "content": "We demonstrate that using biological context-specific KEGG pathways created with CyKEGGParser makes systems biology analysis more sensitive and appropriate compared to original pathways.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_2",
+            "start": 542,
+            "end": 727,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_4@0",
+            "content": "The KEGG pathway database is a widely accepted source for biomolecular pathway maps and has long been considered as the gold standard for pathway-based analyses due to well-formatted human-readable maps supplemented with machine-readable XML files (KGML), quality of curation and comprehensiveness <REF-1> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_4",
+            "start": 0,
+            "end": 306,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_4@1",
+            "content": "However, the KEGG pathway database suffers from a number of limitations that reduce the adaptability of the pathways for automated analysis.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_4",
+            "start": 308,
+            "end": 447,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_4@2",
+            "content": "These include inconsistencies in KGML files supplied with each pathway image, such as absence of event or entity labels (e.g., links to other pathways or biological process labels), reversed directions for some associations, absence of some interactions, and inconsistent representation of compound interactions <REF-2> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_4",
+            "start": 449,
+            "end": 769,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_4@3",
+            "content": "Additionally, some features of KEGG pathways such as protein complex nodes and node duplication, enhance graphical representation, but reduce their machine-readability.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_4",
+            "start": 771,
+            "end": 938,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_4@4",
+            "content": "Another limitation concerns abstractions (generalizations) used in pathway construction: (1) paralogous genes, not always occurring together in the same biological context, are grouped into single nodes, and (2) all the genes are assumed to be expressed and present in the same pathway.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_4",
+            "start": 940,
+            "end": 1225,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_4@5",
+            "content": "Additionally, the sources of information on interactions depicted in pathways differ in quality and the nature of interactions (indirect, physical, regulatory, etc.).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_4",
+            "start": 1227,
+            "end": 1392,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_4@6",
+            "content": "Even accounting for these bottlenecks, the KEGG pathway database is still a highly valued resource, and we aimed to develop a tool that would make the best use of the information collected in it.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_4",
+            "start": 1394,
+            "end": 1588,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_5@0",
+            "content": "There is a wide variety of software that manipulate on KEGG pathways, both standalone and Cytoscape 3 apps, such as KEGGscape ( http://apps.cytoscape.org/apps/keggscape ) for KEGG pathways visualization and data integration, and others.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_5",
+            "start": 0,
+            "end": 235,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_5@1",
+            "content": "However, none of the available apps addresses inconsistencies in KGML files, and nor do they neither deal with abstractions of KEGG pathways.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_5",
+            "start": 237,
+            "end": 377,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_5@2",
+            "content": "Herein, we describe CyKEGGParser app for Cytoscape 3 for KEGG pathway retrieval, visualization, adjustment for inconsistencies in computer-assisted manner, context-specific pathway generation, and exporting the pathways in KGML and BioPAX formats.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_5",
+            "start": 379,
+            "end": 625,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_5@3",
+            "content": "CyKEGGParser is best suited for KEGG signaling pathways.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_5",
+            "start": 627,
+            "end": 682,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_6@0",
+            "content": "Implementation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_6",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_7@0",
+            "content": "The software is implemented in Java and is available as an app for Cytoscape 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_7",
+            "start": 0,
+            "end": 78,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_7@1",
+            "content": "The general workflow of CyKEGGParser is presented in Figure 1 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_7",
+            "start": 80,
+            "end": 142,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_8@0",
+            "content": "Figure 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_8",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_10@0",
+            "content": "Pathway parsing and corrections",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_10",
+            "start": 0,
+            "end": 30,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_11@0",
+            "content": "The input for parsing is KGML formatted files, either stored locally or downloaded from the web via REST-based KEGG API.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_11",
+            "start": 0,
+            "end": 119,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_11@1",
+            "content": "The KEGG API can be used for individual downloads for academic use only; bulk download and non-academic usage requires a KEGG FTP subscription and license agreement ( http://www.kegg.jp/kegg/legal.html ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_11",
+            "start": 121,
+            "end": 324,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_11@2",
+            "content": "The pathway selection dialogue provides a list of all KEGG pathways and organisms, however, if pathway KGML does not exist in the database the user will receive a warning message.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_11",
+            "start": 326,
+            "end": 504,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_12@0",
+            "content": "Each KGML file contains entries <pathway>, <entry> and <relation>, which are parsed using Java SAXParser API for reading XML files.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_12",
+            "start": 0,
+            "end": 130,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_12@1",
+            "content": "The information contained in these entries is kept in Java objects which are instances of Graph, KeggNode and KeggRelation classes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_12",
+            "start": 132,
+            "end": 262,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_12@2",
+            "content": "These classes are implemented in CyKEGGParser and are independent of Cytoscape API.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_12",
+            "start": 264,
+            "end": 346,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_12@3",
+            "content": "All the modifications applied by inconsistency correction algorithms are performed on these objects.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_12",
+            "start": 348,
+            "end": 447,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_12@4",
+            "content": "Implementation of semi-automatic correction in CyKEGGParser is inherited from KEGGParser and described in detail by Arakelyan and Nersisyan <REF-2> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_12",
+            "start": 449,
+            "end": 597,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_13@0",
+            "content": "Once the final Graph with its nodes and edges is created, it is converted into CyNetwork, CyNode and CyEdge objects using CyKEGGParser\u2019s KeggNetworkCreator class.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_13",
+            "start": 0,
+            "end": 161,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_13@1",
+            "content": "During the conversion, all the attributes contained in Graph, KeggNode and KeggEdge objects are set in respective Cytoscape attribute tables.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_13",
+            "start": 163,
+            "end": 303,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_13@2",
+            "content": "More specifically, we use default CyTables for network, nodes and edges, populating them by creating a new CyColumn for each of the attributes and setting the values in CyRows during iteration over nodes and edges.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_13",
+            "start": 305,
+            "end": 518,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_13@3",
+            "content": "After CyNetwork, CyNode and CyEdge objects are created, the algorithm iterates through each CyNode, creating a separate view for it and assigning coordinates from respective attributes for X and Y positions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_13",
+            "start": 520,
+            "end": 726,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_13@4",
+            "content": "Finally, CyKEGGParser creates attribute-based \u201ckegg_vs\u201d visual style, which is applied on the network with VisualMappingManager of Cytoscape API.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_13",
+            "start": 728,
+            "end": 872,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_13@5",
+            "content": "However, any Cytoscape visual style may be applied depending on the user\u2019s choice.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_13",
+            "start": 874,
+            "end": 955,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_14@0",
+            "content": "All the corrections performed on the network, as well as tuning and saving steps (described below) are tracked in separate log files (see the User Manual provided in the Cytoscape Help menu and at http://molbiol.sci.am/big/apps/cy_kp/jar/CyKEGGParser_User_Manual.pdf ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_14",
+            "start": 0,
+            "end": 268,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_15@0",
+            "content": "Limitations for use of KEGG metabolic pathways",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_15",
+            "start": 0,
+            "end": 45,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_16@0",
+            "content": "KEGG metabolic pathways, along with <relation/> entries, which characterize protein-protein interaction networks (enzyme interactions, in this case), also contain <reaction/> entries, characterizing compound interactions (chemical networks, http://www.kegg.jp/kegg/xml/docs/ ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_16",
+            "start": 0,
+            "end": 276,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_16@1",
+            "content": "Since CyKEGGParser relies on protein-protein interactions (PPI), parsing of metabolic pathways is not always as accurate as it is for signaling pathways.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_16",
+            "start": 278,
+            "end": 430,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_16@2",
+            "content": "However, if only protein-protein interactions are of concern and if the KGML file contains respective <relation/> entries, CyKEGGParser will parse metabolic pathways similar to signaling ones.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_16",
+            "start": 432,
+            "end": 623,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_17@0",
+            "content": "Pathway tuning",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_17",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_18@0",
+            "content": "Along with the ability to modify the pathways by adding and deleting nodes and edges using Cytoscape-inherent tools, the user may as well customize (or \u201ctune\u201d) pathways according to specific biological context: particular tissue or cell type, and experimentally confirmed physical interactions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_18",
+            "start": 0,
+            "end": 293,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_19@0",
+            "content": "Tissue-specific tuning .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_19",
+            "start": 0,
+            "end": 23,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_19@1",
+            "content": "Tissue-specific tuning is aimed at providing the user with the ability to modify the networks based on genes expressed in a chosen cell/tissue type.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_19",
+            "start": 25,
+            "end": 172,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_19@2",
+            "content": "Gene expression data for tuning is derived from BioGPS ( http://biogps.org/ ) experiments for human normal and cancer tissues, provided by GeneCards ( www.genecards.org ), or may be supplied by the user (refer to User Manual for details).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_19",
+            "start": 174,
+            "end": 411,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_19@3",
+            "content": "Along with specifying the source of data, the user chooses the tissue and specifies gene expression threshold.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_19",
+            "start": 413,
+            "end": 522,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_20@0",
+            "content": "The algorithm firstly clones the network preserving all the attributes, except for node and edge identifiers (those should be unique).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_20",
+            "start": 0,
+            "end": 133,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_20@1",
+            "content": "Then it iterates over all the genes contained in the cloned network nodes, and removes the genes with expression values less than the specified threshold.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_20",
+            "start": 135,
+            "end": 288,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_20@2",
+            "content": "If a node contains at least one gene that is expressed in current tissue, it remains in the network, otherwise it is removed.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_20",
+            "start": 290,
+            "end": 414,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_20@3",
+            "content": "Nodes other than of type \u201cgene\u201d are preserved in the network.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_20",
+            "start": 416,
+            "end": 476,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_21@0",
+            "content": "PPI based drill-down .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_21",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_21@1",
+            "content": "In KEGG pathways, node entries represent groups of paralogous genes that have similar functions or interaction profiles <REF-1> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_21",
+            "start": 23,
+            "end": 151,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_21@2",
+            "content": "The main incentive of PPI based pathway drill-down is to expand each node into its component genes and connect only those pairs of genes that have been shown to have true physical interactions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_21",
+            "start": 153,
+            "end": 345,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_21@3",
+            "content": "Together with tissue-specific tuning, this leads to generation of a \u201cfine-tuned\u201d network, in which all the components occur in the same biological context.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_21",
+            "start": 347,
+            "end": 501,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_22@0",
+            "content": "PPI data, retrieved from the String database ( http://string-db.org/ ), have been loaded in an internal MySQL database, located at the server of Bioinformatics Group of the Institute of Molecular Biology NAS RA ( http://molbiol.sci.am/big/ ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_22",
+            "start": 0,
+            "end": 241,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_22@1",
+            "content": "The user can choose the source of interactions from the list of databases (GRID, DIP, KEGG, MINT and PDB), as well as set interaction confidence score threshold, which is computed based on various evidence channels, adjusted for probability of randomly observing an interaction <REF-3> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_22",
+            "start": 243,
+            "end": 529,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_22@2",
+            "content": "The interactions are manually updated in the local My-SQL database and the version of String used is mentioned on the Tuning dialogue.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_22",
+            "start": 531,
+            "end": 664,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_23@0",
+            "content": "The algorithm initially creates a new network, copying all the nodes and node attributes from the former one.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_23",
+            "start": 0,
+            "end": 108,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_23@1",
+            "content": "Afterwards, it drills down the new network through expanding each node of \u201cgene\u201d type into separate nodes for each member gene.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_23",
+            "start": 110,
+            "end": 236,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_23@2",
+            "content": "Furthermore, the algorithm iterates over all the pairs of interacting nodes, and connects those members for which there is physical interaction in the corresponding PPI database.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_23",
+            "start": 238,
+            "end": 415,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_23@3",
+            "content": "Attributes of newly assigned edges are copied from the former network table.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_23",
+            "start": 417,
+            "end": 492,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_23@4",
+            "content": "After the drill down, duplicated nodes are combined into single ones, and isolated nodes are removed from the network.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_23",
+            "start": 494,
+            "end": 611,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_24@0",
+            "content": "Saving",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_24",
+            "start": 0,
+            "end": 5,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_25@0",
+            "content": "CyKEGGParser provides the functionality of saving the processed pathways back in valid KGML format, so that the modified pathways may be used outside of Cytoscape.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_25",
+            "start": 0,
+            "end": 162,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_25@1",
+            "content": "All the modifications done to the network are saved in the attributes specific to KGML format.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_25",
+            "start": 164,
+            "end": 257,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_25@2",
+            "content": "In addition, CyKEGGParser uses KEGGTranslator <REF-4> binary file, embedded in the app package, for KGML conversion to BioPAX2 and BioPAX3 formats (see User Manual for details).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_25",
+            "start": 259,
+            "end": 435,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_26@0",
+            "content": "Results and discussion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_26",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_27@0",
+            "content": "Parsing and tuning of B Cell Receptor Signaling Pathway with CyKEGGParser",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_27",
+            "start": 0,
+            "end": 72,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_28@0",
+            "content": "We have taken KEGG B Cell Receptor Signaling Pathway as an example to demonstrate CyKEGGParser functionality and its applicability in pathway-based biology research.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_28",
+            "start": 0,
+            "end": 164,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_28@1",
+            "content": "B cells are important players in humoral immunity, and their main function is dependent on the B Cell Receptor Signaling Pathway, which is initiated by antigen binding to B cell receptor.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_28",
+            "start": 166,
+            "end": 352,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_28@2",
+            "content": "We have tuned the B Cell Receptor Signaling Pathway based on BioGPS tissue-specific gene expression data in CD19 B and CD4 T cells (see Implementation:, Pathway tuning section), and compared pathway topologies in each case.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_28",
+            "start": 354,
+            "end": 576,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_29@0",
+            "content": "Parsing and corrections .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_29",
+            "start": 0,
+            "end": 24,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_29@1",
+            "content": "Figure 2 shows the pathway parsed with CyKEGGParser with automatic correction options applied.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_29",
+            "start": 26,
+            "end": 119,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_29@2",
+            "content": "These include three cases of protein-compound-protein (PCP) interaction processing, reversing binding interaction directions of seven edges and processing of two group nodes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_29",
+            "start": 121,
+            "end": 294,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_30@0",
+            "content": "Figure 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_30",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_32@0",
+            "content": "Tissue-specific tuning .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_32",
+            "start": 0,
+            "end": 23,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_32@1",
+            "content": "We performed B Cell Receptor Signaling Pathway tuning in CD19 B cells and CD4 T cells.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_32",
+            "start": 25,
+            "end": 110,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_32@2",
+            "content": "Gene expression threshold was set to 25 percentile of gene expression values in the dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_32",
+            "start": 112,
+            "end": 203,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_32@3",
+            "content": "After tuning, from the 57 nodes available in the original pathway, 54 nodes remained in B cells and 52 nodes remained in T cells.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_32",
+            "start": 205,
+            "end": 333,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_32@4",
+            "content": "Two nodes, namely, LYN, and CD19 are missing in the B Cell Receptor Signaling Pathway tuned in T cells ( Figure 3 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_32",
+            "start": 335,
+            "end": 450,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_32@5",
+            "content": "Due to their topological importance in signal propagation from the receptors to the target nodes, absence of these two nodes leads to almost complete deactivation of the entire pathway in T cells.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_32",
+            "start": 452,
+            "end": 647,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_33@0",
+            "content": "Figure 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_33",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_35@0",
+            "content": "Protein-protein interaction based tuning .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_35",
+            "start": 0,
+            "end": 41,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_35@1",
+            "content": "The CD19 B cell tissue-specific version of the pathway was further tuned based on PPI.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_35",
+            "start": 43,
+            "end": 128,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_35@2",
+            "content": "All the database sources (GRID, MINT, KEGG, DIP, PDB) were chosen and 0.8 confidence score threshold was set.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_35",
+            "start": 130,
+            "end": 238,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_35@3",
+            "content": "Comparison of the PPI-tuned and the original networks showed that the node \u201cVAV3\u2026\u201d, which contains three genes, VAV1, VAV2 and VAV3, was duplicated in the original pathway, but remained only in one place in the tuned network ( Figure 4 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_35",
+            "start": 240,
+            "end": 477,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_35@4",
+            "content": "Moreover, of the three VAV member genes only VAV1 interacts with CD19 and BLNK, transducing the signal to rac1 and rac2 nodes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_35",
+            "start": 479,
+            "end": 604,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_35@5",
+            "content": "This observation is in accordance with a previously published study indicating VAV1 as the only player in B Cell Receptor Signaling Pathway <REF-5> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_35",
+            "start": 606,
+            "end": 754,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_36@0",
+            "content": "Figure 4.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_36",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_38@0",
+            "content": "Effects of tissue-specific tuning on activity of cell signaling pathways",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_38",
+            "start": 0,
+            "end": 71,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_39@0",
+            "content": "To further demonstrate necessity of tissue-specific tuning for assessment of pathway activity changes, we compared pathway flows in original and tuned KEGG Calcium Signaling Pathways with three gene expression datasets (norm vs B05 and B01) in CD14 monocytes, Adipocytes, and Cardiac myocytes (see Supplementary Material for details).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_39",
+            "start": 0,
+            "end": 333,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_39@1",
+            "content": "For calculations, we have used the Pathway Scoring Application for Cytoscape <REF-6> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_39",
+            "start": 335,
+            "end": 420,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_39@2",
+            "content": "The simulations show that pathway tuning increases the sensitivity of the pathway for signal flow analysis and thus the ability of the method to detect differentially expressed gene-related changes ( Figure 5 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_39",
+            "start": 422,
+            "end": 632,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_40@0",
+            "content": "Figure 5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_40",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_43@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_43",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_44@0",
+            "content": "We have developed CyKEGGParser app for Cytoscape 3 that allows for import, correction, visualization, and tuning of KEGG pathways.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_44",
+            "start": 0,
+            "end": 129,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_44@1",
+            "content": "Although KGML-based pathway import in Cytoscape has also been addressed by KGMLReader ( http://apps.cytoscape.org/apps/kgmlreader ) and KEGGscape ( http://apps.cytoscape.org/apps/keggscape ), semi-automatic correction and tuning-based enhancement of pathway specificity are unique and valuable features of CyKEGGParser.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_44",
+            "start": 131,
+            "end": 449,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_44@2",
+            "content": "With this functionality we aim to maximize the effectiveness and sensitivity of gene expression-based systems biology analyses based on KEGG pathways.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_44",
+            "start": 451,
+            "end": 600,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_45@0",
+            "content": "Software availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_45",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_46@0",
+            "content": "App website: http://apps.cytoscape.org/apps/cykeggparser",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_46",
+            "start": 0,
+            "end": 55,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_47@0",
+            "content": "Source code: https://github.com/lilit-nersisyan/cykeggparser",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_47",
+            "start": 0,
+            "end": 59,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_48@0",
+            "content": "License: GNU Public License 3.0: https://www.gnu.org/licenses/lgpl.html",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_48",
+            "start": 0,
+            "end": 70,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_49@0",
+            "content": "<REF-1> Kanehisa M Goto S Furumichi M : KEGG for representation and analysis of molecular networks involving diseases and drugs. Nucleic Acids Res. 2010 ; 38 ( Database issue ): D355 \u2013 60 . 19880382 10.1093/nar/gkp896 2808910",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_49",
+            "start": 0,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_50@0",
+            "content": "<REF-2> Arakelyan A Nersisyan L : KEGGParser: parsing and editing KEGG pathway maps in Matlab. Bioinformatics. 2013 ; 29 ( 4 ): 518 \u2013 9 . 23292739 10.1093/bioinformatics/bts730",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_50",
+            "start": 0,
+            "end": 175,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_51@0",
+            "content": "<REF-3> von Mering C Jensen LJ Snel B : STRING: known and predicted protein-protein associations, integrated and transferred across organisms. Nucleic Acids Res. 2005 ; 33 ( Database Issue ): D433 \u2013 7 . 15608232 10.1093/nar/gki005 539959",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_51",
+            "start": 0,
+            "end": 236,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_52@0",
+            "content": "<REF-4> Wrzodek C Dr\u00e4ger A Zell A : KEGGtranslator: visualizing and converting the KEGG PATHWAY database to various formats. Bioinformatics. 2011 ; 27 ( 16 ): 2314 \u2013 5 . 21700675 10.1093/bioinformatics/btr377 3150042",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_52",
+            "start": 0,
+            "end": 215,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_53@0",
+            "content": "<REF-5> Packard TA Cambier JC : B lymphocyte antigen receptor signaling: initiation, amplification, and regulation. F1000Prime Rep. 2013 ; 5 : 40 . 24167721 10.12703/P5-40 3790562",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_53",
+            "start": 0,
+            "end": 178,
+            "label": {}
+        },
+        {
+            "ix": "3-145_v2_54@0",
+            "content": "<REF-6> Isik Z Ersahin T Atalay V : A signal transduction score flow algorithm for cyclic cellular pathway analysis, which combines transcriptome and ChIP-seq data. Mol Biosyst. 2012 ; 8 ( 12 ): 3224 \u2013 31 . 23042589 10.1039/c2mb25215e",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "3-145_v2_54",
+            "start": 0,
+            "end": 233,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "3-145_v2_0",
+            "tgt_ix": "3-145_v2_1",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_1",
+            "tgt_ix": "3-145_v2_2",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_0",
+            "tgt_ix": "3-145_v2_3",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_3",
+            "tgt_ix": "3-145_v2_4",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_3",
+            "tgt_ix": "3-145_v2_5",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_0",
+            "tgt_ix": "3-145_v2_6",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_6",
+            "tgt_ix": "3-145_v2_7",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_6",
+            "tgt_ix": "3-145_v2_8",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_8",
+            "tgt_ix": "3-145_v2_9",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_6",
+            "tgt_ix": "3-145_v2_10",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_10",
+            "tgt_ix": "3-145_v2_11",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_10",
+            "tgt_ix": "3-145_v2_12",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_10",
+            "tgt_ix": "3-145_v2_13",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_10",
+            "tgt_ix": "3-145_v2_14",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_6",
+            "tgt_ix": "3-145_v2_15",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_15",
+            "tgt_ix": "3-145_v2_16",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_6",
+            "tgt_ix": "3-145_v2_17",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_17",
+            "tgt_ix": "3-145_v2_18",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_17",
+            "tgt_ix": "3-145_v2_19",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_17",
+            "tgt_ix": "3-145_v2_20",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_17",
+            "tgt_ix": "3-145_v2_21",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_17",
+            "tgt_ix": "3-145_v2_22",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_17",
+            "tgt_ix": "3-145_v2_23",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_6",
+            "tgt_ix": "3-145_v2_24",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_24",
+            "tgt_ix": "3-145_v2_25",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_0",
+            "tgt_ix": "3-145_v2_26",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_26",
+            "tgt_ix": "3-145_v2_27",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_27",
+            "tgt_ix": "3-145_v2_28",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_27",
+            "tgt_ix": "3-145_v2_29",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_27",
+            "tgt_ix": "3-145_v2_30",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_30",
+            "tgt_ix": "3-145_v2_31",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_27",
+            "tgt_ix": "3-145_v2_32",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_27",
+            "tgt_ix": "3-145_v2_33",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_33",
+            "tgt_ix": "3-145_v2_34",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_27",
+            "tgt_ix": "3-145_v2_35",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_27",
+            "tgt_ix": "3-145_v2_36",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_36",
+            "tgt_ix": "3-145_v2_37",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_26",
+            "tgt_ix": "3-145_v2_38",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_38",
+            "tgt_ix": "3-145_v2_39",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_38",
+            "tgt_ix": "3-145_v2_40",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_40",
+            "tgt_ix": "3-145_v2_41",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_38",
+            "tgt_ix": "3-145_v2_42",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_0",
+            "tgt_ix": "3-145_v2_43",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_43",
+            "tgt_ix": "3-145_v2_44",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_0",
+            "tgt_ix": "3-145_v2_45",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_45",
+            "tgt_ix": "3-145_v2_46",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_45",
+            "tgt_ix": "3-145_v2_47",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_45",
+            "tgt_ix": "3-145_v2_48",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_0",
+            "tgt_ix": "3-145_v2_1",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_1",
+            "tgt_ix": "3-145_v2_2",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_2",
+            "tgt_ix": "3-145_v2_3",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_3",
+            "tgt_ix": "3-145_v2_4",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_4",
+            "tgt_ix": "3-145_v2_5",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_5",
+            "tgt_ix": "3-145_v2_6",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_6",
+            "tgt_ix": "3-145_v2_7",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_7",
+            "tgt_ix": "3-145_v2_8",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_8",
+            "tgt_ix": "3-145_v2_9",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_9",
+            "tgt_ix": "3-145_v2_10",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_10",
+            "tgt_ix": "3-145_v2_11",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_11",
+            "tgt_ix": "3-145_v2_12",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_12",
+            "tgt_ix": "3-145_v2_13",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_13",
+            "tgt_ix": "3-145_v2_14",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_14",
+            "tgt_ix": "3-145_v2_15",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_15",
+            "tgt_ix": "3-145_v2_16",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_16",
+            "tgt_ix": "3-145_v2_17",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_17",
+            "tgt_ix": "3-145_v2_18",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_18",
+            "tgt_ix": "3-145_v2_19",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_19",
+            "tgt_ix": "3-145_v2_20",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_20",
+            "tgt_ix": "3-145_v2_21",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_21",
+            "tgt_ix": "3-145_v2_22",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_22",
+            "tgt_ix": "3-145_v2_23",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_23",
+            "tgt_ix": "3-145_v2_24",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_24",
+            "tgt_ix": "3-145_v2_25",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_25",
+            "tgt_ix": "3-145_v2_26",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_26",
+            "tgt_ix": "3-145_v2_27",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_27",
+            "tgt_ix": "3-145_v2_28",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_28",
+            "tgt_ix": "3-145_v2_29",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_29",
+            "tgt_ix": "3-145_v2_30",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_30",
+            "tgt_ix": "3-145_v2_31",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_31",
+            "tgt_ix": "3-145_v2_32",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_32",
+            "tgt_ix": "3-145_v2_33",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_33",
+            "tgt_ix": "3-145_v2_34",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_34",
+            "tgt_ix": "3-145_v2_35",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_35",
+            "tgt_ix": "3-145_v2_36",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_36",
+            "tgt_ix": "3-145_v2_37",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_37",
+            "tgt_ix": "3-145_v2_38",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_38",
+            "tgt_ix": "3-145_v2_39",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_39",
+            "tgt_ix": "3-145_v2_40",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_40",
+            "tgt_ix": "3-145_v2_41",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_41",
+            "tgt_ix": "3-145_v2_42",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_42",
+            "tgt_ix": "3-145_v2_43",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_43",
+            "tgt_ix": "3-145_v2_44",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_44",
+            "tgt_ix": "3-145_v2_45",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_45",
+            "tgt_ix": "3-145_v2_46",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_46",
+            "tgt_ix": "3-145_v2_47",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_47",
+            "tgt_ix": "3-145_v2_48",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_4",
+            "tgt_ix": "3-145_v2_49",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_4",
+            "tgt_ix": "3-145_v2_50",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_22",
+            "tgt_ix": "3-145_v2_51",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_25",
+            "tgt_ix": "3-145_v2_52",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_35",
+            "tgt_ix": "3-145_v2_53",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_39",
+            "tgt_ix": "3-145_v2_54",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_7",
+            "tgt_ix": "3-145_v2_9",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_29",
+            "tgt_ix": "3-145_v2_31",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_32",
+            "tgt_ix": "3-145_v2_34",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_35",
+            "tgt_ix": "3-145_v2_37",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_39",
+            "tgt_ix": "3-145_v2_41",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_0",
+            "tgt_ix": "3-145_v2_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_1",
+            "tgt_ix": "3-145_v2_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_2",
+            "tgt_ix": "3-145_v2_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_2",
+            "tgt_ix": "3-145_v2_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_2",
+            "tgt_ix": "3-145_v2_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_2",
+            "tgt_ix": "3-145_v2_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_3",
+            "tgt_ix": "3-145_v2_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_4",
+            "tgt_ix": "3-145_v2_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_4",
+            "tgt_ix": "3-145_v2_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_4",
+            "tgt_ix": "3-145_v2_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_4",
+            "tgt_ix": "3-145_v2_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_4",
+            "tgt_ix": "3-145_v2_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_4",
+            "tgt_ix": "3-145_v2_4@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_4",
+            "tgt_ix": "3-145_v2_4@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_5",
+            "tgt_ix": "3-145_v2_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_5",
+            "tgt_ix": "3-145_v2_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_5",
+            "tgt_ix": "3-145_v2_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_5",
+            "tgt_ix": "3-145_v2_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_6",
+            "tgt_ix": "3-145_v2_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_7",
+            "tgt_ix": "3-145_v2_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_7",
+            "tgt_ix": "3-145_v2_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_8",
+            "tgt_ix": "3-145_v2_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_10",
+            "tgt_ix": "3-145_v2_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_11",
+            "tgt_ix": "3-145_v2_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_11",
+            "tgt_ix": "3-145_v2_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_11",
+            "tgt_ix": "3-145_v2_11@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_12",
+            "tgt_ix": "3-145_v2_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_12",
+            "tgt_ix": "3-145_v2_12@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_12",
+            "tgt_ix": "3-145_v2_12@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_12",
+            "tgt_ix": "3-145_v2_12@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_12",
+            "tgt_ix": "3-145_v2_12@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_13",
+            "tgt_ix": "3-145_v2_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_13",
+            "tgt_ix": "3-145_v2_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_13",
+            "tgt_ix": "3-145_v2_13@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_13",
+            "tgt_ix": "3-145_v2_13@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_13",
+            "tgt_ix": "3-145_v2_13@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_13",
+            "tgt_ix": "3-145_v2_13@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_14",
+            "tgt_ix": "3-145_v2_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_15",
+            "tgt_ix": "3-145_v2_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_16",
+            "tgt_ix": "3-145_v2_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_16",
+            "tgt_ix": "3-145_v2_16@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_16",
+            "tgt_ix": "3-145_v2_16@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_17",
+            "tgt_ix": "3-145_v2_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_18",
+            "tgt_ix": "3-145_v2_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_19",
+            "tgt_ix": "3-145_v2_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_19",
+            "tgt_ix": "3-145_v2_19@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_19",
+            "tgt_ix": "3-145_v2_19@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_19",
+            "tgt_ix": "3-145_v2_19@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_20",
+            "tgt_ix": "3-145_v2_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_20",
+            "tgt_ix": "3-145_v2_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_20",
+            "tgt_ix": "3-145_v2_20@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_20",
+            "tgt_ix": "3-145_v2_20@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_21",
+            "tgt_ix": "3-145_v2_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_21",
+            "tgt_ix": "3-145_v2_21@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_21",
+            "tgt_ix": "3-145_v2_21@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_21",
+            "tgt_ix": "3-145_v2_21@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_22",
+            "tgt_ix": "3-145_v2_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_22",
+            "tgt_ix": "3-145_v2_22@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_22",
+            "tgt_ix": "3-145_v2_22@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_23",
+            "tgt_ix": "3-145_v2_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_23",
+            "tgt_ix": "3-145_v2_23@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_23",
+            "tgt_ix": "3-145_v2_23@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_23",
+            "tgt_ix": "3-145_v2_23@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_23",
+            "tgt_ix": "3-145_v2_23@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_24",
+            "tgt_ix": "3-145_v2_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_25",
+            "tgt_ix": "3-145_v2_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_25",
+            "tgt_ix": "3-145_v2_25@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_25",
+            "tgt_ix": "3-145_v2_25@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_26",
+            "tgt_ix": "3-145_v2_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_27",
+            "tgt_ix": "3-145_v2_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_28",
+            "tgt_ix": "3-145_v2_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_28",
+            "tgt_ix": "3-145_v2_28@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_28",
+            "tgt_ix": "3-145_v2_28@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_29",
+            "tgt_ix": "3-145_v2_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_29",
+            "tgt_ix": "3-145_v2_29@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_29",
+            "tgt_ix": "3-145_v2_29@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_30",
+            "tgt_ix": "3-145_v2_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_32",
+            "tgt_ix": "3-145_v2_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_32",
+            "tgt_ix": "3-145_v2_32@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_32",
+            "tgt_ix": "3-145_v2_32@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_32",
+            "tgt_ix": "3-145_v2_32@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_32",
+            "tgt_ix": "3-145_v2_32@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_32",
+            "tgt_ix": "3-145_v2_32@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_33",
+            "tgt_ix": "3-145_v2_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_35",
+            "tgt_ix": "3-145_v2_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_35",
+            "tgt_ix": "3-145_v2_35@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_35",
+            "tgt_ix": "3-145_v2_35@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_35",
+            "tgt_ix": "3-145_v2_35@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_35",
+            "tgt_ix": "3-145_v2_35@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_35",
+            "tgt_ix": "3-145_v2_35@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_36",
+            "tgt_ix": "3-145_v2_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_38",
+            "tgt_ix": "3-145_v2_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_39",
+            "tgt_ix": "3-145_v2_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_39",
+            "tgt_ix": "3-145_v2_39@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_39",
+            "tgt_ix": "3-145_v2_39@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_40",
+            "tgt_ix": "3-145_v2_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_43",
+            "tgt_ix": "3-145_v2_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_44",
+            "tgt_ix": "3-145_v2_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_44",
+            "tgt_ix": "3-145_v2_44@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_44",
+            "tgt_ix": "3-145_v2_44@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_45",
+            "tgt_ix": "3-145_v2_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_46",
+            "tgt_ix": "3-145_v2_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_47",
+            "tgt_ix": "3-145_v2_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_48",
+            "tgt_ix": "3-145_v2_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_49",
+            "tgt_ix": "3-145_v2_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_50",
+            "tgt_ix": "3-145_v2_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_51",
+            "tgt_ix": "3-145_v2_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_52",
+            "tgt_ix": "3-145_v2_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_53",
+            "tgt_ix": "3-145_v2_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "3-145_v2_54",
+            "tgt_ix": "3-145_v2_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "3-145_v2",
+    "meta": {
+        "parser": "F1000XMLParser",
+        "intertext-graph": "N/A",
+        "doi": "10.12688/f1000research.4410.2",
+        "atype": "software-tool",
+        "license": "http://creativecommons.org/licenses/by/4.0/",
+        "title": "CyKEGGParser: tailoring KEGG pathways to fit into systems biology analysis workflows",
+        "abstract": "The KEGG pathway database is a widely accepted source for biomolecular pathway maps. In this paper we present the CyKEGGParser app ( http://apps.cytoscape.org/apps/cykeggparser ) for Cytoscape 3 that allows manipulation with KEGG pathway maps. Along with basic functionalities for pathway retrieval, visualization and export in KGML and BioPAX formats, the app provides unique features for computer-assisted adjustment of inconsistencies in KEGG pathway KGML files and generation of tissue- and protein-protein interaction specific pathways. We demonstrate that using biological context-specific KEGG pathways created with CyKEGGParser makes systems biology analysis more sensitive and appropriate compared to original pathways.",
+        "contributors": [
+            {
+                "surname": "Nersisyan",
+                "given-names": "Lilit"
+            },
+            {
+                "surname": "Samsonyan",
+                "given-names": "Ruben"
+            },
+            {
+                "surname": "Arakelyan",
+                "given-names": "Arsen"
+            }
+        ],
+        "url": "https://f1000research.com/articles/3-145/v2/",
+        "doc_id": "3-145",
+        "version": 2,
+        "ix_counter": 219,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy"
+    }
+}

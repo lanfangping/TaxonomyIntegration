@@ -1,0 +1,3376 @@
+{
+    "nodes": [
+        {
+            "ix": "9-581_v2_0",
+            "content": "Seqpare : a novel metric of similarity between genomic interval sets",
+            "ntype": "article-title",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_2",
+            "content": "Searching genomic interval sets produced by sequencing methods has been widely and routinely performed; however, existing metrics for quantifying similarities among interval sets are inconsistent. Here we introduce Seqpare, a self-consistent and effective metric of similarity and tool for comparing sequences based on their interval sets. With this metric, the similarity of two interval sets is quantified by a single index, the ratio of their effective overlap over the union: an index of zero indicates unrelated interval sets, and an index of one means that the interval sets are identical. Analysis and tests confirm the effectiveness and self-consistency of the Seqpare metric.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1",
+                "sec-type": "intro",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_4",
+            "content": "Functional genomic data are often summarized as interval sets and deposited in public repositories (e.g., UCSC, ENCODE, Roadmap, GEO, SRA etc.). Identifying relationships among sequences and searching through widely available sequence data are routine tasks in genomic research. A fundamental operation in genomic/epigenomic analysis is comparing two interval sets, and many algorithms and tools have been developed for this purpose ( Alekseyenko & Lee, 2007 ; Cormen et al. , 2001 ; Feng et al. , 2019 ; Giardine et al. , 2005 ; Jalili et al. , 2019 ; Kent et al. , 2002 ; Li, 2011 ; Neph et al. , 2012 ; Quinlan & Hall, 2010 ; Richardson, 2006 ). These methods are based on computing the total number of intersections (overlaps) between the two interval sets. To compare a query interval set with multiple interval sets in a genomic sequence database, searching tools LOLA ( Sheffield & Bock, 2016 ) and GIGGLE ( Layer et al. , 2018 ) calculate two values \u2014 Fisher\u2019s exact p -value and the odds-ratio based on the total number of intersections \u2014 and use them as the similarity score to rank the search results. These similarity metrics have proven useful for determining relationships among interval sets, but also have some flaws. First, calculating the Fisher\u2019s exact test results requires building a contingency table, but determining its values is not straightforward. The p -value and odds-ratio for two intervals sets (with number of intervals N <REF-1> and N <REF-2> ) are calculated from four numbers, namely, the number of intersections between the two sets, n , the number of intervals in set 1 that do not overlap an interval in set 2, N <REF-1> - n , the number of intervals in set 2 that do not overlap an interval in set 1, N <REF-2> - n , and the number of intervals that are not present in either set, m . Determining the value of the fourth number m is not straightforward; in LOLA, it depends on the definition of a \u201cuniverse set\u201d that is not objectively defined, whereas GIGGLE estimates m from the two interval sets. Second, the total number of overlaps n does not necessarily reflect similarity since intervals can have very different lengths (often in the range of 1 to 10 <REF-5> base pairs) and two very different intervals may intersect by only a few base pairs. This can result in inconsistency of the metrics: a comparison between two identical interval sets may have a larger p -value or smaller odds-ratio than a comparison between two different interval sets (see example cases and analysis in the next section). More strikingly, since one interval may contain or cover other intervals in an interval set, depending on how the overlaps are computed, n can be larger than N <REF-1> and/or N <REF-2> , i.e., N <REF-1> - n and/or N <REF-2> - n can be negative, which leads to both the p -value and odds-ratio being undefined\u2014another potential source of inconsistency. Third, the Fisher\u2019s exact-based metrics require two values ( p -value and odds-ratio) but neither is a direct measurement of the similarity: p -values are sensitive to the total number of regions and can range as low as 10 -200 for large genomic interval sets, and odds-ratios are sensitive to small numbers; and neither metric directly informs on how similar the two sets are. Last, the p -value calculation is computationally expensive for genomic interval sets, particularly when the number of intervals is large (up to 10 <REF-9> ). To overcome these weaknesses of the Fisher\u2019s exact-based metrics, we developed Seqpare , a self-consistent metric for quantifying the similarity among genomic interval sets.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_5",
+            "content": "Methods",
+            "ntype": "title",
+            "meta": {
+                "section": "2",
+                "sec-type": "methods",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_6",
+            "content": "Seqpare metric",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_7",
+            "content": "The Seqpare metric uses a single index to quantify the degree of similarity S of two interval sets with number of intervals N 1 and N 2 . Similar to the Jaccard index, the S eqpare metric is directly defined as the ratio of the total effective overlap O of the two interval sets over the union N 1 +N 2 - O:",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_8",
+            "content": "S = O / ( N 1 + N 2 - O ) ( 1 )",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_9",
+            "content": "For two intervals v 1 in set 1 and v 2 in set 2, the similarity s is defined as:",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_10",
+            "content": "s = o / ( l 1 + l 2 - o ) ( 2 )",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_11",
+            "content": "where o is the length of the intersection and l 1 and l 2 are the lengths of v 1 and v 2 respectively. Definition 2 is the Jaccard index for individual intervals: o represents the effective overlap of the two intervals and s takes values in the range of [0, 1]: s = 0 indicates that there is no overlap between the two intervals, and s = 1 means that the union equals the overlap so v 1 and v 2 are identical. Then the total effective overlap O for the two interval sets can be calculated by adding up the similarities of all mutual best matching (MBM) pairs:",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_12",
+            "content": "O = \u2211 s M B M ( 3 )",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_13",
+            "content": "A MBM pair is defined as a pair of intervals v 1 and v 2 that fulfill the following conditions: among all intervals in set 2 that intersect v 1 , v 2 matches v 1 the best, i.e., the similarity s between v 1 and v 2 is the highest among those intersections; and among all intervals in set 1 that intersect v 2 , v 1 matches v 2 the best. Clearly, if two intervals only intersect each other, then they form an MBM pair. In Figure 1a , the two long intervals (the 1st in set 1 and the 1st in set 2) only intersect each other (intersection pair ip 1,1 ), so they form an MBM pair; similarly, the two short intervals ip 2,2 form another MBM pair. For intervals that involve multiple intersections, we define a relatively simple and strict rule to find the MBM pairs: find and choose the first MBM pair that has the highest s among all involved intersection pairs, then find and choose the next MBM pair that has the highest s from the rest of the intersection pairs (excluding all pairs that involve the intervals that are already chosen), and so on until there are no more intersection pairs. In Figure 1b , there are 3 intersection pairs: ip 1,2 with s =1/5, ip 1,3 with s=1/9, and ip 2,3 with s=1/5. So the first MBM pair is either ip 1,2 or ip 2 ,3 depending on which one is found first. If ip 1,2 is chosen as the first MBM pair, then ip 1,3 will not be considered since interval 1 in set 1 is already chosen, and then we have only ip 2,3 left, which is the second MBM pair. We get the same result if ip 2,3 is chosen as the first MBM pair. In Figure 1d , there are 6 intersection pairs and two MBM pairs: ip 1,1 and ip 3,2 both with s =1, where interval 2 in set 1 ( i 2,1 ) does not have a match. Note that interval i 2,1 matches best with interval i 1,2 , but i 1,2 does not match best with i 2,1 , so they are not the mutual best matching pair.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_14",
+            "content": "Figure 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "f1",
+                "caption": "Example cases for illustrating the Seqpare similarity metric. The length ratio of the short interval to the longer intervals are 1: 5 in a ), 1: 3: 5 in b ), and 2: 3 :4 in d ). The total number of overlaps n is 2 for a ), 3 for b ) (interval 1 in Set 1 intersects two intervals in Set 2), 4 for c ) and 6 for d ). The p-value in case b is smaller than that in case a . N 1 - n and N 2 - n are both negative in cases c and d .",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/31408/05cb5eba-5db7-45d2-8344-270687b9d4cb_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_15",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f1\" position=\"float\"> <caption> <title>Example cases for illustrating the Seqpare similarity metric.</title> <p>The length ratio of the short interval to the longer intervals are 1: 5 in <bold>a</bold>), 1: 3: 5 in <bold>b</bold>), and 2: 3 :4 in <bold>d</bold>). The total number of overlaps n is 2 for <bold>a</bold>), 3 for <bold>b</bold>) (interval 1 in Set 1 intersects two intervals in Set 2), 4 for <bold>c</bold>) and 6 for <bold>d</bold>). The p-value in case <bold>b</bold> is smaller than that in case <bold>a</bold>. N <sub>1</sub> - n and N <sub>2</sub> - n are both negative in cases <bold>c</bold> and <bold>d</bold>.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/31408/05cb5eba-5db7-45d2-8344-270687b9d4cb_figure1.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f1",
+                "caption": "Example cases for illustrating the Seqpare similarity metric. The length ratio of the short interval to the longer intervals are 1: 5 in a ), 1: 3: 5 in b ), and 2: 3 :4 in d ). The total number of overlaps n is 2 for a ), 3 for b ) (interval 1 in Set 1 intersects two intervals in Set 2), 4 for c ) and 6 for d ). The p-value in case b is smaller than that in case a . N 1 - n and N 2 - n are both negative in cases c and d .",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/31408/05cb5eba-5db7-45d2-8344-270687b9d4cb_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_16",
+            "content": "Since the number of total matching pairs \u2264 Min( N 1 , N 2 ) \u2014 the minimum of N 1 and N 2 \u2014 and s is in range of [0, 1], we obtain O \u2264 Min( N 1 , N 2 ), and S takes a value in the range of [0, 1]. If S is zero, then there is no matching pair, and vice versa; if S = 1, then N 1 = N 2 = O (the two sets are equivalent), and vice versa. And, because each s is the mutual best match, O is symmetric (the amount of overlap between set 1 and set 2 is the same as that between set 2 to set 1) and so is S.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_17",
+            "content": "In Figure 1a , O a =2 and S a =1, which is correct because the two sets are identical. In Figure 1b , O b =2/5 and S b =1/14, which is expected since the two sets are very different. The Fisher\u2019s exact approach is inconsistent here: the p -value in 1 b is smaller than that in 1 a although the two sets in 1 b are very different while those in 1 a are equivalent. Assuming that the number of intervals N in the \u2018universe set\u2019 is 100, then Fisher\u2019s exact test contingency table is [(2, 0), (0, 98)] in 1 a and [(3, 0), (0, 97)] in 1 b , which gives p a = 2.02\u00d710 -4 and p b = 6.18\u00d710 -6 respectively. The odds-ratio is \u221e in both cases. In Figure 1c and Figure 1d , N 1 - n and N 2 - n are all negative, so it is not conceptually appropriate to use Fisher\u2019s exact test to calculate the p -value and odds-ratio.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_18",
+            "content": "Implementation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_19",
+            "content": "The implementation of the Seqpare metric is simple. The searching for MBM pairs is deterministic and it can be implemented by directly following the description in the above section. The Seqpare code is built on top of the AIList v0.0.1 ( Feng et al. , 2019 ) software written in C.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_20",
+            "content": "Operation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_21",
+            "content": "The Seqpare software ( Feng & Feng, 2020 ) was tested on Linux machines and the minimum required memory is 8GB. The interval set file should be in the format of bed or bed.gz.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_22",
+            "content": "Results",
+            "ntype": "title",
+            "meta": {
+                "section": "3",
+                "sec-type": "results",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_23",
+            "content": "A test with real genomic interval sets",
+            "ntype": "title",
+            "meta": {
+                "section": "3.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_24",
+            "content": "To test Seqpare and compare it with the Fisher\u2019s exact-based metrics, we took 100 interval sets from a UCSC database and used one interval set, affyGnf1h, as a query to search over the database. Because the database contains the query set, affyGnf1h should have the highest similarity score. Table 1 ( Feng & Feng, 2020 ) shows part of the result. Interval set affyGnf1h indeed ranks first with maximum similarity 1 when using Seqpare , but it ranks 94 th out of 100 when using the p -value and ranks last when using the odds-ratio. This happens because N 1 - n and N 2 - n are both negative (n=16686, N 1 = N 2 =12158). Given this inconsistency, GIGGLE sets negative N 1 -n and N 2 -n to zero to calculate the p -value, and to one to calculate the odds-ratio. The Seqpar e indices for other interval sets are all small (<0.03) because the average effective overlap of an intersection pair in those sets is about 0.1 or less, i.e., they are very different from the query set affyGnf1h; however, all of the p -values are so small (e -200 ), which suggests that the p -value is not a meaningful similarity index for these genomic interval sets. This search takes 6m30s for Seqpare and 15m32s for GIGGLE. All computations were carried out on a computer with a 2.8GHz CPU, 16GB memory, and an external SSD hard disk. The complete results can be found at the same site as the software.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_25",
+            "content": "Table 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "T1",
+                "caption": "Comparison of Seqpare and GIGGLE similarity metrics: partial list of the search results from a collection of 100 interval sets, which contains the query set affyGnf1h.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_26",
+            "content": "<table-wrap xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"T1\" position=\"anchor\"> <caption> <title>Comparison of Seqpare and GIGGLE similarity metrics: partial list of the search results from a collection of 100 interval sets, which contains the query set affyGnf1h.</title> </caption> <table content-type=\"article-table\" frame=\"hsides\"> <thead> <tr> <th align=\"center\" colspan=\"2\" valign=\"top\"> <italic>Seqpare</italic> metric</th> <th align=\"center\" colspan=\"4\" valign=\"top\"> <italic>p</italic>-value and odds-ratio</th> <th align=\"center\" rowspan=\"2\" valign=\"top\">Interval dataset <break/>file name</th> </tr> <tr> <th align=\"center\">rank</th> <th align=\"center\">similarity</th> <th align=\"center\">rank_p</th> <th> <italic>p</italic>-value</th> <th align=\"center\">rank_or</th> <th align=\"center\">odds-ratio</th> </tr> </thead> <tbody> <tr> <td align=\"center\">1</td> <td align=\"center\">1.0</td> <td align=\"center\">94</td> <td align=\"center\">1.543 e <sup>-197</sup> </td> <td align=\"center\">100</td> <td align=\"center\">9.046 e <sup>-16</sup> </td> <td align=\"center\">affyGnf1h</td> </tr> <tr> <td align=\"center\">2</td> <td align=\"center\">0.029</td> <td align=\"center\">19</td> <td align=\"center\">8.328 e <sup>-201</sup> </td> <td align=\"center\">1</td> <td align=\"center\">25.25</td> <td align=\"center\">ccdsGene</td> </tr> <tr> <td align=\"center\">3</td> <td align=\"center\">0.026</td> <td align=\"center\">35</td> <td align=\"center\">2.743 e <sup>-200</sup> </td> <td align=\"center\">3</td> <td align=\"center\">4.425</td> <td align=\"center\">allenBrainAli</td> </tr> <tr> <td align=\"center\">4</td> <td align=\"center\">0.022</td> <td align=\"center\">39</td> <td align=\"center\">3.372 e <sup>-200</sup> </td> <td align=\"center\">32</td> <td align=\"center\">7.972 e <sup>-11</sup> </td> <td align=\"center\">affyU133Plus2</td> </tr> <tr> <td align=\"center\">5</td> <td align=\"center\">0.021</td> <td align=\"center\">4</td> <td align=\"center\">5.403 e <sup>-202</sup> </td> <td align=\"center\">2</td> <td align=\"center\">17.24</td> <td align=\"center\">affyU133</td> </tr> </tbody> </table> </table-wrap>",
+            "ntype": "table-wrap",
+            "meta": {
+                "id": "T1",
+                "caption": "Comparison of Seqpare and GIGGLE similarity metrics: partial list of the search results from a collection of 100 interval sets, which contains the query set affyGnf1h.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_27",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "4",
+                "sec-type": "conclusions",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_28",
+            "content": "We have shown that the Fisher\u2019s exact test approach may be not the most appropriate test statistic for comparing similarity among interval sets. While the approach has been shown to be successful for many questions, we have demonstrated how it can break down for a variety of reasons, such as very similar interval sets, within-set containment, widely varying interval lengths among sets, or small effective overlaps. In contrast, Seqpare is a self-consistent metric for quantifying the similarity of two interval sets that addresses these concerns. Seqpare is the first rigorously defined metric for comparing two sequences based on their interval sets. In addition to the metric itself, our Seqpare software tool provides functions for both searching and mapping large-scale interval datasets. We anticipate that this approach will contribute to novel results for interval set searching.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_29",
+            "content": "Data availability",
+            "ntype": "title",
+            "meta": {
+                "section": "5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_30",
+            "content": "Source data",
+            "ntype": "title",
+            "meta": {
+                "section": "5.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_31",
+            "content": "Test data of interval sets are from http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_32",
+            "content": "A small subset of the test data and instructions are provided for verifying the result: https://github.com/deepstanding/seqpare/ucsc_30",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_33",
+            "content": "Underlying data",
+            "ntype": "title",
+            "meta": {
+                "section": "5.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_34",
+            "content": "Zenodo: deepstanding/seqpare: First release of Seqpare. http://doi.org/10.5281/zenodo.3840051 ( Feng & Feng, 2020 )",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_35",
+            "content": "This project contains the following underlying data:",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_36",
+            "content": "- - AffyGnf1h_ucsc100_seqpare (Seqpare similarity result)\n- - AffyGnf1h_ucsc100_giggle (GIGGLE p-value and odds-ratio result)",
+            "ntype": "list",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_37",
+            "content": "Data is available alongside the source code under the terms of the MIT license.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_38",
+            "content": "Software availability",
+            "ntype": "title",
+            "meta": {
+                "section": "6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_39",
+            "content": "Source code available from: https://github.com/deepstanding/seqpare",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_40",
+            "content": "Archived source code at time of publication: http://doi.org/10.5281/zenodo.3840051 ( Feng & Feng, 2020 )",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_41",
+            "content": "License: MIT",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_42",
+            "content": "Alekseyenko AV Lee CJ : Nested containment list (NCList): A new algorithm for accelerating interval query of genome alignment and interval databases. Bioinformatics. 2007 ; 23 ( 11 ): 1386 \u2013 93 . 17234640 10.1093/bioinformatics/btl647",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_43",
+            "content": "Cormen TH Leiserson CE Rivest RL : Introduction to algorithms second edition . 2001 . Reference Source",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_44",
+            "content": "Feng S Feng J : deepstanding/seqpare: First release of Seqpare (Version v1.0.0). Zenodo. 2020 . http://www.doi.org/10.5281/zenodo.3840051",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-12",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_45",
+            "content": "Feng J Ratan A Sheffield NC : Augmented interval list: A novel data structure for efficient genomic interval search. Bioinfomatics. 2019 ; 35 ( 23 ): 4907 \u2013 4911 . 10.1093/bioinformatics/btz407",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_46",
+            "content": "Jalili V Matteucci M Goecks J : Next generation indexing for genomic intervals. IEEE Transactions on Knowledge and Data Engineering. 2019 ; 31 ( 10 ): 2008 \u2013 2021 . 10.1109/TKDE.2018.2871031",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_47",
+            "content": "Kent WJ Sugnet CW Furey TS : The human genome browser at ucsc. Genome Res. 2002 ; 12 ( 6 ): 996 \u2013 1006 . 12045153 10.1101/gr.229102 186604",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_48",
+            "content": "Layer RM Pedersen BS DiSera T : GIGGLE: A Search Engine for Large-Scale Integrated Genome Analysis. Nat Methods. 2018 ; 15 ( 2 ): 123 \u2013 126 . 29309061 10.1038/nmeth.4556 5872823",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-7",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_49",
+            "content": "Li H : Tabix: Fast Retrieval of Sequence Features From Generic TAB-delimited Files. Bioinformatics. 2011 ; 27 ( 5 ): 718 \u2013 9 . 21208982 10.1093/bioinformatics/btq671 3042176",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-8",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_50",
+            "content": "Neph S Kuehn MS Reynolds AP : BEDOPS: high-performance genomic feature operations. Bioinformatics. 2012 ; 28 ( 14 ): 1919 \u2013 1920 . 22576172 10.1093/bioinformatics/bts277 3389768",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-9",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_51",
+            "content": "Quinlan AR Hall IM : BEDTools: A flexible suite of utilities for comparing genomic features. Bioinformatics. 2010 ; 26 ( 6 ): 841 \u2013 842 . 20110278 10.1093/bioinformatics/btq033 2832824",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-10",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_52",
+            "content": "Richardson JE : Fjoin: Simple and efficient computation of feature overlaps. J Comput Biol. 2006 ; 13 ( 8 ): 1457 \u2013 1464 . 17061921 10.1089/cmb.2006.13.1457",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-11",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-581_v2_53",
+            "content": "Sheffield NC Bock C : LOLA: Enrichment analysis for genomic region sets and regulatory elements in R and bioconductor. Bioinformatics. 2016 ; 32 ( 4 ): 587 \u2013 589 . 26508757 10.1093/bioinformatics/btv612 4743627",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-13",
+                "created_by": "F1000XMLParser"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "9-581_v2_0@0",
+            "content": "Seqpare : a novel metric of similarity between genomic interval sets",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_0",
+            "start": 0,
+            "end": 67,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_2@0",
+            "content": "Searching genomic interval sets produced by sequencing methods has been widely and routinely performed; however, existing metrics for quantifying similarities among interval sets are inconsistent.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_2",
+            "start": 0,
+            "end": 195,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_2@1",
+            "content": "Here we introduce Seqpare, a self-consistent and effective metric of similarity and tool for comparing sequences based on their interval sets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_2",
+            "start": 197,
+            "end": 338,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_2@2",
+            "content": "With this metric, the similarity of two interval sets is quantified by a single index, the ratio of their effective overlap over the union: an index of zero indicates unrelated interval sets, and an index of one means that the interval sets are identical.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_2",
+            "start": 340,
+            "end": 594,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_2@3",
+            "content": "Analysis and tests confirm the effectiveness and self-consistency of the Seqpare metric.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_2",
+            "start": 596,
+            "end": 683,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_4@0",
+            "content": "Functional genomic data are often summarized as interval sets and deposited in public repositories (e.g., UCSC, ENCODE, Roadmap, GEO, SRA etc.).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_4",
+            "start": 0,
+            "end": 143,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_4@1",
+            "content": "Identifying relationships among sequences and searching through widely available sequence data are routine tasks in genomic research.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_4",
+            "start": 145,
+            "end": 277,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_4@2",
+            "content": "A fundamental operation in genomic/epigenomic analysis is comparing two interval sets, and many algorithms and tools have been developed for this purpose ( Alekseyenko & Lee, 2007 ; Cormen et al. , 2001 ; Feng et al. , 2019 ; Giardine et al. , 2005 ; Jalili et al. , 2019 ; Kent et al. , 2002 ; Li, 2011 ; Neph et al. , 2012 ; Quinlan & Hall, 2010 ; Richardson, 2006 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_4",
+            "start": 279,
+            "end": 647,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_4@3",
+            "content": "These methods are based on computing the total number of intersections (overlaps) between the two interval sets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_4",
+            "start": 649,
+            "end": 760,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_4@4",
+            "content": "To compare a query interval set with multiple interval sets in a genomic sequence database, searching tools LOLA ( Sheffield & Bock, 2016 ) and GIGGLE ( Layer et al. , 2018 ) calculate two values \u2014 Fisher\u2019s exact p -value and the odds-ratio based on the total number of intersections \u2014 and use them as the similarity score to rank the search results.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_4",
+            "start": 762,
+            "end": 1111,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_4@5",
+            "content": "These similarity metrics have proven useful for determining relationships among interval sets, but also have some flaws.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_4",
+            "start": 1113,
+            "end": 1232,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_4@6",
+            "content": "First, calculating the Fisher\u2019s exact test results requires building a contingency table, but determining its values is not straightforward.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_4",
+            "start": 1234,
+            "end": 1373,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_4@7",
+            "content": "The p -value and odds-ratio for two intervals sets (with number of intervals N <REF-1> and N <REF-2> ) are calculated from four numbers, namely, the number of intersections between the two sets, n , the number of intervals in set 1 that do not overlap an interval in set 2, N <REF-1> - n , the number of intervals in set 2 that do not overlap an interval in set 1, N <REF-2> - n , and the number of intervals that are not present in either set, m .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_4",
+            "start": 1375,
+            "end": 1822,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_4@8",
+            "content": "Determining the value of the fourth number m is not straightforward; in LOLA, it depends on the definition of a \u201cuniverse set\u201d that is not objectively defined, whereas GIGGLE estimates m from the two interval sets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_4",
+            "start": 1824,
+            "end": 2037,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_4@9",
+            "content": "Second, the total number of overlaps n does not necessarily reflect similarity since intervals can have very different lengths (often in the range of 1 to 10 <REF-5> base pairs) and two very different intervals may intersect by only a few base pairs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_4",
+            "start": 2039,
+            "end": 2288,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_4@10",
+            "content": "This can result in inconsistency of the metrics: a comparison between two identical interval sets may have a larger p -value or smaller odds-ratio than a comparison between two different interval sets (see example cases and analysis in the next section).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_4",
+            "start": 2290,
+            "end": 2543,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_4@11",
+            "content": "More strikingly, since one interval may contain or cover other intervals in an interval set, depending on how the overlaps are computed, n can be larger than N <REF-1> and/or N <REF-2> , i.e., N <REF-1> - n and/or N <REF-2> - n can be negative, which leads to both the p -value and odds-ratio being undefined\u2014another potential source of inconsistency.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_4",
+            "start": 2545,
+            "end": 2895,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_4@12",
+            "content": "Third, the Fisher\u2019s exact-based metrics require two values ( p -value and odds-ratio) but neither is a direct measurement of the similarity: p -values are sensitive to the total number of regions and can range as low as 10 -200 for large genomic interval sets, and odds-ratios are sensitive to small numbers; and neither metric directly informs on how similar the two sets are.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_4",
+            "start": 2897,
+            "end": 3273,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_4@13",
+            "content": "Last, the p -value calculation is computationally expensive for genomic interval sets, particularly when the number of intervals is large (up to 10 <REF-9> ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_4",
+            "start": 3275,
+            "end": 3432,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_4@14",
+            "content": "To overcome these weaknesses of the Fisher\u2019s exact-based metrics, we developed Seqpare , a self-consistent metric for quantifying the similarity among genomic interval sets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_4",
+            "start": 3434,
+            "end": 3606,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_5@0",
+            "content": "Methods",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_5",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_6@0",
+            "content": "Seqpare metric",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_6",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_7@0",
+            "content": "The Seqpare metric uses a single index to quantify the degree of similarity S of two interval sets with number of intervals N 1 and N 2 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_7",
+            "start": 0,
+            "end": 136,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_7@1",
+            "content": "Similar to the Jaccard index, the S eqpare metric is directly defined as the ratio of the total effective overlap O of the two interval sets over the union N 1 +N 2 - O:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_7",
+            "start": 138,
+            "end": 306,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_8@0",
+            "content": "S = O / ( N 1 + N 2 - O ) ( 1 )",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_8",
+            "start": 0,
+            "end": 30,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_9@0",
+            "content": "For two intervals v 1 in set 1 and v 2 in set 2, the similarity s is defined as:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_9",
+            "start": 0,
+            "end": 79,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_10@0",
+            "content": "s = o / ( l 1 + l 2 - o ) ( 2 )",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_10",
+            "start": 0,
+            "end": 30,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_11@0",
+            "content": "where o is the length of the intersection and l 1 and l 2 are the lengths of v 1 and v 2 respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_11",
+            "start": 0,
+            "end": 101,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_11@1",
+            "content": "Definition 2 is the Jaccard index for individual intervals: o represents the effective overlap of the two intervals and s takes values in the range of [0, 1]: s = 0 indicates that there is no overlap between the two intervals, and s = 1 means that the union equals the overlap so v 1 and v 2 are identical.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_11",
+            "start": 103,
+            "end": 408,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_11@2",
+            "content": "Then the total effective overlap O for the two interval sets can be calculated by adding up the similarities of all mutual best matching (MBM) pairs:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_11",
+            "start": 410,
+            "end": 558,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_12@0",
+            "content": "O = \u2211 s M B M ( 3 )",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_12",
+            "start": 0,
+            "end": 18,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_13@0",
+            "content": "A MBM pair is defined as a pair of intervals v 1 and v 2 that fulfill the following conditions: among all intervals in set 2 that intersect v 1 , v 2 matches v 1 the best, i.e., the similarity s between v 1 and v 2 is the highest among those intersections; and among all intervals in set 1 that intersect v 2 , v 1 matches v 2 the best.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_13",
+            "start": 0,
+            "end": 335,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_13@1",
+            "content": "Clearly, if two intervals only intersect each other, then they form an MBM pair.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_13",
+            "start": 337,
+            "end": 416,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_13@2",
+            "content": "In Figure 1a , the two long intervals (the 1st in set 1 and the 1st in set 2) only intersect each other (intersection pair ip 1,1 ), so they form an MBM pair; similarly, the two short intervals ip 2,2 form another MBM pair.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_13",
+            "start": 418,
+            "end": 640,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_13@3",
+            "content": "For intervals that involve multiple intersections, we define a relatively simple and strict rule to find the MBM pairs: find and choose the first MBM pair that has the highest s among all involved intersection pairs, then find and choose the next MBM pair that has the highest s from the rest of the intersection pairs (excluding all pairs that involve the intervals that are already chosen), and so on until there are no more intersection pairs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_13",
+            "start": 642,
+            "end": 1087,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_13@4",
+            "content": "In Figure 1b , there are 3 intersection pairs: ip 1,2 with s =1/5, ip 1,3 with s=1/9, and ip 2,3 with s=1/5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_13",
+            "start": 1089,
+            "end": 1196,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_13@5",
+            "content": "So the first MBM pair is either ip 1,2 or ip 2 ,3 depending on which one is found first.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_13",
+            "start": 1198,
+            "end": 1285,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_13@6",
+            "content": "If ip 1,2 is chosen as the first MBM pair, then ip 1,3 will not be considered since interval 1 in set 1 is already chosen, and then we have only ip 2,3 left, which is the second MBM pair.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_13",
+            "start": 1287,
+            "end": 1473,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_13@7",
+            "content": "We get the same result if ip 2,3 is chosen as the first MBM pair.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_13",
+            "start": 1475,
+            "end": 1539,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_13@8",
+            "content": "In Figure 1d , there are 6 intersection pairs and two MBM pairs: ip 1,1 and ip 3,2 both with s =1, where interval 2 in set 1 ( i 2,1 ) does not have a match.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_13",
+            "start": 1541,
+            "end": 1697,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_13@9",
+            "content": "Note that interval i 2,1 matches best with interval i 1,2 , but i 1,2 does not match best with i 2,1 , so they are not the mutual best matching pair.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_13",
+            "start": 1699,
+            "end": 1847,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_14@0",
+            "content": "Figure 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_14",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_16@0",
+            "content": "Since the number of total matching pairs \u2264 Min( N 1 , N 2 ) \u2014 the minimum of N 1 and N 2 \u2014 and s is in range of [0, 1], we obtain O \u2264 Min( N 1 , N 2 ), and S takes a value in the range of [0, 1].",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_16",
+            "start": 0,
+            "end": 194,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_16@1",
+            "content": "If S is zero, then there is no matching pair, and vice versa; if S = 1, then N 1 = N 2 = O (the two sets are equivalent), and vice versa. And, because each s is the mutual best match, O is symmetric (the amount of overlap between set 1 and set 2 is the same as that between set 2 to set 1) and so is S.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_16",
+            "start": 196,
+            "end": 497,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_17@0",
+            "content": "In Figure 1a , O a =2 and S a =1, which is correct because the two sets are identical.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_17",
+            "start": 0,
+            "end": 85,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_17@1",
+            "content": "In Figure 1b , O b =2/5 and S b =1/14, which is expected since the two sets are very different.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_17",
+            "start": 87,
+            "end": 181,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_17@2",
+            "content": "The Fisher\u2019s exact approach is inconsistent here: the p -value in 1 b is smaller than that in 1 a although the two sets in 1 b are very different while those in 1 a are equivalent.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_17",
+            "start": 183,
+            "end": 362,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_17@3",
+            "content": "Assuming that the number of intervals N in the \u2018universe set\u2019 is 100, then Fisher\u2019s exact test contingency table is [(2, 0), (0, 98)] in 1 a and [(3, 0), (0, 97)] in 1 b , which gives p a = 2.02\u00d710 -4 and p b = 6.18\u00d710 -6 respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_17",
+            "start": 364,
+            "end": 598,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_17@4",
+            "content": "The odds-ratio is \u221e in both cases.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_17",
+            "start": 600,
+            "end": 633,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_17@5",
+            "content": "In Figure 1c and Figure 1d , N 1 - n and N 2 - n are all negative, so it is not conceptually appropriate to use Fisher\u2019s exact test to calculate the p -value and odds-ratio.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_17",
+            "start": 635,
+            "end": 807,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_18@0",
+            "content": "Implementation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_18",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_19@0",
+            "content": "The implementation of the Seqpare metric is simple.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_19",
+            "start": 0,
+            "end": 50,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_19@1",
+            "content": "The searching for MBM pairs is deterministic and it can be implemented by directly following the description in the above section.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_19",
+            "start": 52,
+            "end": 181,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_19@2",
+            "content": "The Seqpare code is built on top of the AIList v0.0.1 ( Feng et al. , 2019 ) software written in C.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_19",
+            "start": 183,
+            "end": 281,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_20@0",
+            "content": "Operation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_20",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_21@0",
+            "content": "The Seqpare software ( Feng & Feng, 2020 ) was tested on Linux machines and the minimum required memory is 8GB.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_21",
+            "start": 0,
+            "end": 110,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_21@1",
+            "content": "The interval set file should be in the format of bed or bed.gz.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_21",
+            "start": 112,
+            "end": 174,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_22@0",
+            "content": "Results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_22",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_23@0",
+            "content": "A test with real genomic interval sets",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_23",
+            "start": 0,
+            "end": 37,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_24@0",
+            "content": "To test Seqpare and compare it with the Fisher\u2019s exact-based metrics, we took 100 interval sets from a UCSC database and used one interval set, affyGnf1h, as a query to search over the database.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_24",
+            "start": 0,
+            "end": 193,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_24@1",
+            "content": "Because the database contains the query set, affyGnf1h should have the highest similarity score.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_24",
+            "start": 195,
+            "end": 290,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_24@2",
+            "content": "Table 1 ( Feng & Feng, 2020 ) shows part of the result.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_24",
+            "start": 292,
+            "end": 346,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_24@3",
+            "content": "Interval set affyGnf1h indeed ranks first with maximum similarity 1 when using Seqpare , but it ranks 94 th out of 100 when using the p -value and ranks last when using the odds-ratio.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_24",
+            "start": 348,
+            "end": 531,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_24@4",
+            "content": "This happens because N 1 - n and N 2 - n are both negative (n=16686, N 1 = N 2 =12158).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_24",
+            "start": 533,
+            "end": 619,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_24@5",
+            "content": "Given this inconsistency, GIGGLE sets negative N 1 -n and N 2 -n to zero to calculate the p -value, and to one to calculate the odds-ratio.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_24",
+            "start": 621,
+            "end": 759,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_24@6",
+            "content": "The Seqpar e indices for other interval sets are all small (<0.03) because the average effective overlap of an intersection pair in those sets is about 0.1 or less, i.e., they are very different from the query set affyGnf1h; however, all of the p -values are so small (e -200 ), which suggests that the p -value is not a meaningful similarity index for these genomic interval sets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_24",
+            "start": 761,
+            "end": 1141,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_24@7",
+            "content": "This search takes 6m30s for Seqpare and 15m32s for GIGGLE.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_24",
+            "start": 1143,
+            "end": 1200,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_24@8",
+            "content": "All computations were carried out on a computer with a 2.8GHz CPU, 16GB memory, and an external SSD hard disk.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_24",
+            "start": 1202,
+            "end": 1311,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_24@9",
+            "content": "The complete results can be found at the same site as the software.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_24",
+            "start": 1313,
+            "end": 1379,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_25@0",
+            "content": "Table 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_25",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_27@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_27",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_28@0",
+            "content": "We have shown that the Fisher\u2019s exact test approach may be not the most appropriate test statistic for comparing similarity among interval sets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_28",
+            "start": 0,
+            "end": 143,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_28@1",
+            "content": "While the approach has been shown to be successful for many questions, we have demonstrated how it can break down for a variety of reasons, such as very similar interval sets, within-set containment, widely varying interval lengths among sets, or small effective overlaps.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_28",
+            "start": 145,
+            "end": 416,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_28@2",
+            "content": "In contrast, Seqpare is a self-consistent metric for quantifying the similarity of two interval sets that addresses these concerns.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_28",
+            "start": 418,
+            "end": 548,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_28@3",
+            "content": "Seqpare is the first rigorously defined metric for comparing two sequences based on their interval sets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_28",
+            "start": 550,
+            "end": 653,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_28@4",
+            "content": "In addition to the metric itself, our Seqpare software tool provides functions for both searching and mapping large-scale interval datasets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_28",
+            "start": 655,
+            "end": 794,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_28@5",
+            "content": "We anticipate that this approach will contribute to novel results for interval set searching.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_28",
+            "start": 796,
+            "end": 888,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_29@0",
+            "content": "Data availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_29",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_30@0",
+            "content": "Source data",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_30",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_31@0",
+            "content": "Test data of interval sets are from http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_31",
+            "start": 0,
+            "end": 90,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_32@0",
+            "content": "A small subset of the test data and instructions are provided for verifying the result: https://github.com/deepstanding/seqpare/ucsc_30",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_32",
+            "start": 0,
+            "end": 134,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_33@0",
+            "content": "Underlying data",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_33",
+            "start": 0,
+            "end": 14,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_34@0",
+            "content": "Zenodo: deepstanding/seqpare: First release of Seqpare. http://doi.org/10.5281/zenodo.3840051 ( Feng & Feng, 2020 )",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_34",
+            "start": 0,
+            "end": 114,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_35@0",
+            "content": "This project contains the following underlying data:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_35",
+            "start": 0,
+            "end": 51,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_36@0",
+            "content": "- - AffyGnf1h_ucsc100_seqpare (Seqpare similarity result)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_36",
+            "start": 0,
+            "end": 56,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_36@1",
+            "content": "- - AffyGnf1h_ucsc100_giggle (GIGGLE p-value and odds-ratio result)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_36",
+            "start": 58,
+            "end": 124,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_37@0",
+            "content": "Data is available alongside the source code under the terms of the MIT license.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_37",
+            "start": 0,
+            "end": 78,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_38@0",
+            "content": "Software availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_38",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_39@0",
+            "content": "Source code available from: https://github.com/deepstanding/seqpare",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_39",
+            "start": 0,
+            "end": 66,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_40@0",
+            "content": "Archived source code at time of publication: http://doi.org/10.5281/zenodo.3840051 ( Feng & Feng, 2020 )",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_40",
+            "start": 0,
+            "end": 103,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_41@0",
+            "content": "License: MIT",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_41",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_42@0",
+            "content": "Alekseyenko AV Lee CJ : Nested containment list (NCList): A new algorithm for accelerating interval query of genome alignment and interval databases. Bioinformatics. 2007 ; 23 ( 11 ): 1386 \u2013 93 . 17234640 10.1093/bioinformatics/btl647",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_42",
+            "start": 0,
+            "end": 233,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_43@0",
+            "content": "Cormen TH Leiserson CE Rivest RL : Introduction to algorithms second edition . 2001 . Reference Source",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_43",
+            "start": 0,
+            "end": 101,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_44@0",
+            "content": "Feng S Feng J : deepstanding/seqpare: First release of Seqpare (Version v1.0.0). Zenodo. 2020 . http://www.doi.org/10.5281/zenodo.3840051",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_44",
+            "start": 0,
+            "end": 136,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_45@0",
+            "content": "Feng J Ratan A Sheffield NC : Augmented interval list: A novel data structure for efficient genomic interval search. Bioinfomatics. 2019 ; 35 ( 23 ): 4907 \u2013 4911 . 10.1093/bioinformatics/btz407",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_45",
+            "start": 0,
+            "end": 192,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_46@0",
+            "content": "Jalili V Matteucci M Goecks J : Next generation indexing for genomic intervals. IEEE Transactions on Knowledge and Data Engineering. 2019 ; 31 ( 10 ): 2008 \u2013 2021 . 10.1109/TKDE.2018.2871031",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_46",
+            "start": 0,
+            "end": 189,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_47@0",
+            "content": "Kent WJ Sugnet CW Furey TS : The human genome browser at ucsc. Genome Res. 2002 ; 12 ( 6 ): 996 \u2013 1006 . 12045153 10.1101/gr.229102 186604",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_47",
+            "start": 0,
+            "end": 137,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_48@0",
+            "content": "Layer RM Pedersen BS DiSera T : GIGGLE: A Search Engine for Large-Scale Integrated Genome Analysis. Nat Methods. 2018 ; 15 ( 2 ): 123 \u2013 126 . 29309061 10.1038/nmeth.4556 5872823",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_48",
+            "start": 0,
+            "end": 176,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_49@0",
+            "content": "Li H : Tabix: Fast Retrieval of Sequence Features From Generic TAB-delimited Files. Bioinformatics. 2011 ; 27 ( 5 ): 718 \u2013 9 . 21208982 10.1093/bioinformatics/btq671 3042176",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_49",
+            "start": 0,
+            "end": 172,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_50@0",
+            "content": "Neph S Kuehn MS Reynolds AP : BEDOPS: high-performance genomic feature operations. Bioinformatics. 2012 ; 28 ( 14 ): 1919 \u2013 1920 . 22576172 10.1093/bioinformatics/bts277 3389768",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_50",
+            "start": 0,
+            "end": 176,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_51@0",
+            "content": "Quinlan AR Hall IM : BEDTools: A flexible suite of utilities for comparing genomic features. Bioinformatics. 2010 ; 26 ( 6 ): 841 \u2013 842 . 20110278 10.1093/bioinformatics/btq033 2832824",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_51",
+            "start": 0,
+            "end": 183,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_52@0",
+            "content": "Richardson JE : Fjoin: Simple and efficient computation of feature overlaps. J Comput Biol. 2006 ; 13 ( 8 ): 1457 \u2013 1464 . 17061921 10.1089/cmb.2006.13.1457",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_52",
+            "start": 0,
+            "end": 155,
+            "label": {}
+        },
+        {
+            "ix": "9-581_v2_53@0",
+            "content": "Sheffield NC Bock C : LOLA: Enrichment analysis for genomic region sets and regulatory elements in R and bioconductor. Bioinformatics. 2016 ; 32 ( 4 ): 587 \u2013 589 . 26508757 10.1093/bioinformatics/btv612 4743627",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-581_v2_53",
+            "start": 0,
+            "end": 209,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "9-581_v2_0",
+            "tgt_ix": "9-581_v2_1",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_1",
+            "tgt_ix": "9-581_v2_2",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_0",
+            "tgt_ix": "9-581_v2_3",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_3",
+            "tgt_ix": "9-581_v2_4",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_0",
+            "tgt_ix": "9-581_v2_5",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_5",
+            "tgt_ix": "9-581_v2_6",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_6",
+            "tgt_ix": "9-581_v2_7",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_6",
+            "tgt_ix": "9-581_v2_8",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_6",
+            "tgt_ix": "9-581_v2_9",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_6",
+            "tgt_ix": "9-581_v2_10",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_6",
+            "tgt_ix": "9-581_v2_11",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_6",
+            "tgt_ix": "9-581_v2_12",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_6",
+            "tgt_ix": "9-581_v2_13",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_6",
+            "tgt_ix": "9-581_v2_14",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_14",
+            "tgt_ix": "9-581_v2_15",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_6",
+            "tgt_ix": "9-581_v2_16",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_6",
+            "tgt_ix": "9-581_v2_17",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_5",
+            "tgt_ix": "9-581_v2_18",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_18",
+            "tgt_ix": "9-581_v2_19",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_5",
+            "tgt_ix": "9-581_v2_20",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_20",
+            "tgt_ix": "9-581_v2_21",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_0",
+            "tgt_ix": "9-581_v2_22",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_22",
+            "tgt_ix": "9-581_v2_23",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_23",
+            "tgt_ix": "9-581_v2_24",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_23",
+            "tgt_ix": "9-581_v2_25",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_25",
+            "tgt_ix": "9-581_v2_26",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_0",
+            "tgt_ix": "9-581_v2_27",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_27",
+            "tgt_ix": "9-581_v2_28",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_0",
+            "tgt_ix": "9-581_v2_29",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_29",
+            "tgt_ix": "9-581_v2_30",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_30",
+            "tgt_ix": "9-581_v2_31",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_30",
+            "tgt_ix": "9-581_v2_32",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_29",
+            "tgt_ix": "9-581_v2_33",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_33",
+            "tgt_ix": "9-581_v2_34",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_33",
+            "tgt_ix": "9-581_v2_35",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_33",
+            "tgt_ix": "9-581_v2_36",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_33",
+            "tgt_ix": "9-581_v2_37",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_0",
+            "tgt_ix": "9-581_v2_38",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_38",
+            "tgt_ix": "9-581_v2_39",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_38",
+            "tgt_ix": "9-581_v2_40",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_38",
+            "tgt_ix": "9-581_v2_41",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_0",
+            "tgt_ix": "9-581_v2_1",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_1",
+            "tgt_ix": "9-581_v2_2",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_2",
+            "tgt_ix": "9-581_v2_3",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_3",
+            "tgt_ix": "9-581_v2_4",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_5",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_5",
+            "tgt_ix": "9-581_v2_6",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_6",
+            "tgt_ix": "9-581_v2_7",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_7",
+            "tgt_ix": "9-581_v2_8",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_8",
+            "tgt_ix": "9-581_v2_9",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_9",
+            "tgt_ix": "9-581_v2_10",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_10",
+            "tgt_ix": "9-581_v2_11",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_11",
+            "tgt_ix": "9-581_v2_12",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_12",
+            "tgt_ix": "9-581_v2_13",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_13",
+            "tgt_ix": "9-581_v2_14",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_14",
+            "tgt_ix": "9-581_v2_15",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_15",
+            "tgt_ix": "9-581_v2_16",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_16",
+            "tgt_ix": "9-581_v2_17",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_17",
+            "tgt_ix": "9-581_v2_18",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_18",
+            "tgt_ix": "9-581_v2_19",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_19",
+            "tgt_ix": "9-581_v2_20",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_20",
+            "tgt_ix": "9-581_v2_21",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_21",
+            "tgt_ix": "9-581_v2_22",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_22",
+            "tgt_ix": "9-581_v2_23",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_23",
+            "tgt_ix": "9-581_v2_24",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_24",
+            "tgt_ix": "9-581_v2_25",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_25",
+            "tgt_ix": "9-581_v2_26",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_26",
+            "tgt_ix": "9-581_v2_27",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_27",
+            "tgt_ix": "9-581_v2_28",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_28",
+            "tgt_ix": "9-581_v2_29",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_29",
+            "tgt_ix": "9-581_v2_30",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_30",
+            "tgt_ix": "9-581_v2_31",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_31",
+            "tgt_ix": "9-581_v2_32",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_32",
+            "tgt_ix": "9-581_v2_33",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_33",
+            "tgt_ix": "9-581_v2_34",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_34",
+            "tgt_ix": "9-581_v2_35",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_35",
+            "tgt_ix": "9-581_v2_36",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_36",
+            "tgt_ix": "9-581_v2_37",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_37",
+            "tgt_ix": "9-581_v2_38",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_38",
+            "tgt_ix": "9-581_v2_39",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_39",
+            "tgt_ix": "9-581_v2_40",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_40",
+            "tgt_ix": "9-581_v2_41",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_42",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_43",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_21",
+            "tgt_ix": "9-581_v2_44",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_45",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_46",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_47",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_48",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_49",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_50",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_51",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_52",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_53",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_13",
+            "tgt_ix": "9-581_v2_15",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_24",
+            "tgt_ix": "9-581_v2_26",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_0",
+            "tgt_ix": "9-581_v2_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_1",
+            "tgt_ix": "9-581_v2_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_2",
+            "tgt_ix": "9-581_v2_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_2",
+            "tgt_ix": "9-581_v2_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_2",
+            "tgt_ix": "9-581_v2_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_2",
+            "tgt_ix": "9-581_v2_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_3",
+            "tgt_ix": "9-581_v2_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_4@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_4@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_4@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_4@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_4@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_4@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_4@11",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_4@12",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_4@13",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_4",
+            "tgt_ix": "9-581_v2_4@14",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_5",
+            "tgt_ix": "9-581_v2_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_6",
+            "tgt_ix": "9-581_v2_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_7",
+            "tgt_ix": "9-581_v2_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_7",
+            "tgt_ix": "9-581_v2_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_8",
+            "tgt_ix": "9-581_v2_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_9",
+            "tgt_ix": "9-581_v2_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_10",
+            "tgt_ix": "9-581_v2_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_11",
+            "tgt_ix": "9-581_v2_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_11",
+            "tgt_ix": "9-581_v2_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_11",
+            "tgt_ix": "9-581_v2_11@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_12",
+            "tgt_ix": "9-581_v2_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_13",
+            "tgt_ix": "9-581_v2_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_13",
+            "tgt_ix": "9-581_v2_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_13",
+            "tgt_ix": "9-581_v2_13@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_13",
+            "tgt_ix": "9-581_v2_13@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_13",
+            "tgt_ix": "9-581_v2_13@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_13",
+            "tgt_ix": "9-581_v2_13@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_13",
+            "tgt_ix": "9-581_v2_13@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_13",
+            "tgt_ix": "9-581_v2_13@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_13",
+            "tgt_ix": "9-581_v2_13@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_13",
+            "tgt_ix": "9-581_v2_13@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_14",
+            "tgt_ix": "9-581_v2_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_16",
+            "tgt_ix": "9-581_v2_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_16",
+            "tgt_ix": "9-581_v2_16@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_17",
+            "tgt_ix": "9-581_v2_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_17",
+            "tgt_ix": "9-581_v2_17@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_17",
+            "tgt_ix": "9-581_v2_17@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_17",
+            "tgt_ix": "9-581_v2_17@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_17",
+            "tgt_ix": "9-581_v2_17@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_17",
+            "tgt_ix": "9-581_v2_17@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_18",
+            "tgt_ix": "9-581_v2_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_19",
+            "tgt_ix": "9-581_v2_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_19",
+            "tgt_ix": "9-581_v2_19@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_19",
+            "tgt_ix": "9-581_v2_19@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_20",
+            "tgt_ix": "9-581_v2_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_21",
+            "tgt_ix": "9-581_v2_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_21",
+            "tgt_ix": "9-581_v2_21@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_22",
+            "tgt_ix": "9-581_v2_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_23",
+            "tgt_ix": "9-581_v2_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_24",
+            "tgt_ix": "9-581_v2_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_24",
+            "tgt_ix": "9-581_v2_24@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_24",
+            "tgt_ix": "9-581_v2_24@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_24",
+            "tgt_ix": "9-581_v2_24@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_24",
+            "tgt_ix": "9-581_v2_24@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_24",
+            "tgt_ix": "9-581_v2_24@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_24",
+            "tgt_ix": "9-581_v2_24@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_24",
+            "tgt_ix": "9-581_v2_24@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_24",
+            "tgt_ix": "9-581_v2_24@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_24",
+            "tgt_ix": "9-581_v2_24@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_25",
+            "tgt_ix": "9-581_v2_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_27",
+            "tgt_ix": "9-581_v2_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_28",
+            "tgt_ix": "9-581_v2_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_28",
+            "tgt_ix": "9-581_v2_28@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_28",
+            "tgt_ix": "9-581_v2_28@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_28",
+            "tgt_ix": "9-581_v2_28@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_28",
+            "tgt_ix": "9-581_v2_28@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_28",
+            "tgt_ix": "9-581_v2_28@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_29",
+            "tgt_ix": "9-581_v2_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_30",
+            "tgt_ix": "9-581_v2_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_31",
+            "tgt_ix": "9-581_v2_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_32",
+            "tgt_ix": "9-581_v2_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_33",
+            "tgt_ix": "9-581_v2_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_34",
+            "tgt_ix": "9-581_v2_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_35",
+            "tgt_ix": "9-581_v2_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_36",
+            "tgt_ix": "9-581_v2_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_36",
+            "tgt_ix": "9-581_v2_36@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_37",
+            "tgt_ix": "9-581_v2_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_38",
+            "tgt_ix": "9-581_v2_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_39",
+            "tgt_ix": "9-581_v2_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_40",
+            "tgt_ix": "9-581_v2_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_41",
+            "tgt_ix": "9-581_v2_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_42",
+            "tgt_ix": "9-581_v2_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_43",
+            "tgt_ix": "9-581_v2_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_44",
+            "tgt_ix": "9-581_v2_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_45",
+            "tgt_ix": "9-581_v2_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_46",
+            "tgt_ix": "9-581_v2_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_47",
+            "tgt_ix": "9-581_v2_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_48",
+            "tgt_ix": "9-581_v2_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_49",
+            "tgt_ix": "9-581_v2_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_50",
+            "tgt_ix": "9-581_v2_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_51",
+            "tgt_ix": "9-581_v2_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_52",
+            "tgt_ix": "9-581_v2_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-581_v2_53",
+            "tgt_ix": "9-581_v2_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "9-581_v2",
+    "meta": {
+        "parser": "F1000XMLParser",
+        "intertext-graph": "N/A",
+        "doi": "10.12688/f1000research.23390.2",
+        "atype": "software-tool",
+        "license": "http://creativecommons.org/licenses/by/4.0/",
+        "title": "Seqpare : a novel metric of similarity between genomic interval sets",
+        "abstract": "Searching genomic interval sets produced by sequencing methods has been widely and routinely performed; however, existing metrics for quantifying similarities among interval sets are inconsistent. Here we introduce Seqpare, a self-consistent and effective metric of similarity and tool for comparing sequences based on their interval sets. With this metric, the similarity of two interval sets is quantified by a single index, the ratio of their effective overlap over the union: an index of zero indicates unrelated interval sets, and an index of one means that the interval sets are identical. Analysis and tests confirm the effectiveness and self-consistency of the Seqpare metric.",
+        "contributors": [
+            {
+                "surname": "Feng",
+                "given-names": "Selena C."
+            },
+            {
+                "surname": "Sheffield",
+                "given-names": "Nathan C."
+            },
+            {
+                "surname": "Feng",
+                "given-names": "Jianglin"
+            }
+        ],
+        "url": "https://f1000research.com/articles/9-581/v2/",
+        "doc_id": "9-581",
+        "version": 2,
+        "ix_counter": 212,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy"
+    }
+}

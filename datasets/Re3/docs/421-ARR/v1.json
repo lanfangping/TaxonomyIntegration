@@ -1,0 +1,5065 @@
+{
+    "nodes": [
+        {
+            "ix": "421-ARR_v1_0",
+            "content": "Event Detection for Suicide Understanding",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_2",
+            "content": "Suicide is a serious problem in every society.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_3",
+            "content": "Understanding life events of a potential patient is essential for successful suicide-risk assessment and prevention. In this work, we focus on the Event Detection (ED) task to identify event trigger words of suicide-related events in public posts of discussion forums. In particular, we introduce a new dataset for ED (called SuicideED) that features seven suicidal event types to comprehensively capture suicide actions and ideation, and general risk and protective factors. Our experiments with current state-of-the-art ED systems suggest that there is still room for improvement of ED models in this domain. We will publicly release Sui-cideED to support future research in this important area.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_4",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "421-ARR_v1_5",
+            "content": "Suicide is a serious and growing problem in our society 1 . The most common procedure for suicide risk assessment is for clinicians to set up clinical interviews with potential patients that will provide rating scales based on a list of preset questions (Ross et al., 2012). However, interviews and similar activities require the willingness of potential patients to participate. Given the associated mental states, such participation can be challenging to obtain for patients with high suicidal risks.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_6",
+            "content": "In the meantime, people are increasingly spending more of their time on social networks, sharing inner thoughts and daily activities. This collection of social posts might draw a comprehensive picture of the patient's life that can be used to support the diagnosis of suicidal conditions. In fact, moderators of some social networks (e.g., Reddit, Reachout) use social posts to monitor suicide and apply immediate intervention if necessary. To assist with the processing of the large amount of posts, there have been a few methods and tools 1 https://www.nimh.nih.gov/health/statistics/suicide for automatically analyzing online posts to detect suicidal intent (Ji et al., 2018;Shing et al., 2018;Coppersmith et al., 2015;Milne et al., 2016). However, these studies mainly focus on assessing the patients' susceptibility to suicide and fail to consider contributory life events that cause/lead to such conditions. In this paper, we argue that recognizing suicide-related events is also critical to suicide understanding, identification and prevention, and natural language processing (NLP) methods are necessary to support automatic identification of such events from the vast and growing number of social media posts.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_7",
+            "content": "This work aims to advance the ultimate goal of creating NLP methods for suicide understanding by exploring the novel task of Event Detection (ED) for suicide-related events. ED is an important task in Information Extraction (IE) that aims to identify event trigger words/mentions in the text (Ahn, 2006;Ji and Grishman, 2008). Adapted to our interest in suicide-related events, in the following sentences, an ED system should be able to recognize \"date\" and \"have\" as trigger words for deteriorated personal relationship events (i.e., risk factors); \"wanna\", \"have\", and \"desirable\" as triggers for protective factor events, and \"depression\" as a trigger for a health-related risk factor event:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_8",
+            "content": "I don't date anyone and never will. It s a reason why I have no friends and never will. I wanna be funny and have a personality and be desirable but I 'm not that. I know its depression that causes it.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_9",
+            "content": "The vast majority of advanced methods for ED are based on training deep neural networks on large labeled corpora (Chen et al., 2015). As such, to facilitate ED in suicide prevention research, a key requirement is to have a benchmark dataset to standardize the development and evaluation of ED models. Unfortunately, a large amount of existing suicide-related datasets are protected due to sensitive privacy concerns and, thus, fail to support the larger research community (Coppersmith et al., 2015;Vioules et al., 2018;Bhat and Goldman-Mellor, 2017). Moreover, these existing datasets are created to detect potential suicidal attempts based on text classification (Vioules et al., 2018;Bhat and Goldman-Mellor, 2017;Shing et al., 2018), which does not provide event trigger annotations of suicide-related events for ED.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_10",
+            "content": "To overcome such challenges, this paper introduces SuicideED, a new dataset for suicidal event detection that is manually annotated for seven distinct event types to comprehensively characterize suicide-related events regarding actual actions, thoughts, and risk and protective factors. To enable data sharing, our dataset is based on pubic posts from Reddit where personal information is not presented to avoid privacy issues. The Sui-cideED dataset is challenging as it involves informal texts, and require event factuality and affected entity reasoning. Our experiments show that the performance of current state-of-the-art ED models on SuicideED lags behind their performance on other general-purpose ED datasets, thus calling for more research effort for suicide-specific ED. To facilitate future research in this area, SuicideED will be released publicly for the research community.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_11",
+            "content": "Annotation",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "421-ARR_v1_12",
+            "content": "The documents for SuicideED are collected out of publicly available posts from reddit.com. In particular, we focus on three subreddits (subgroups) that contain a high percentage of suicide-related posts: r/SuicideWatch, r/depression, and r/mentalhealth. Each original post is considered as a separate document and only posts with more than 50 words are kept to increase the probability of an event being present.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_13",
+            "content": "Event Types: An important, previously unexplored, question is what constitutes relevant events that can provide useful insights for clinicians to better understand and recognize suicide-related incidents. Accordingly, we consult specialized literature related to suicidal-behavior identification and treatment (Gutierrez, 2006;de Ruiter and Nicholls, 2011;O'Connor et al., 2013) to define the event categories for our dataset. As such, we design the event types to be exclusive to avoid type overlapping, and sufficiently comprehensive to cover relevant/impactful suicide-related events in the data. Eventually, we select the following seven event types that capture suicide-related actions, thoughts, and risk/protective factors.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_14",
+            "content": "The first two event types are concerned with statements to indicate suicidal attempts or intentions. In particular, the ACTION event type is dedicated to the direct expressions for actual suicidal attempts/actions, e.g., \"I've started cutting myself again\" 2 . In contrast, the second event type, IDEATION, represents suicidal inner thoughts, feelings, or desires, where no real action present, e.g., \"I'm going to kill myself soon\". These two types directly integrate factuality differentiation into the event types to better address the uniqueness of the data where hypothetical events are prevalent and understanding the factuality of events is critical to suicide intervention and prevention.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_15",
+            "content": "The second group of event types focuses on external events that increase a subject's susceptibility to suicidal behaviours, i.e., risk factors (RF) (Gutierrez, 2006). Given the diverse nature of RF, four event types are proposed. RF-LIFE events include mentions of a death of a close/loved entity, e.g., \"My dog just died\". RF-RELATIONSHIP concerns events related to social isolation, family breakdowns, or any mention of deteriorated interpersonal relationship, e.g., \"My dad kicked me out of the house\". Events for RF-HEALTH cover mentions of physical diseases, mental illness, and behaviors that directly affect the subject's health, e.g., \"I feel depressed\". Finally, RF-OTHER incorporates every other RF event that cannot be assigned to life, relationship, or health issues but still qualify as RF, including financial issues, chronic abuse, and general quality-of-life problems.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_16",
+            "content": "The final type, PROTECTIVE, captures events that drive an individual towards a better mentalhealth state, involving a broad range of positive activities, such as receiving effective medication or being motivated by social connections, e.g., \"The medication seems to be helping\". A detailed description and representative examples for each event type are presented in Appendix C.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_17",
+            "content": "Annotation: Given the event types, an annotation job posting is created on upwork.com and seven freelance annotators with previous experience in mental health and psychology, such as physicians and psychology graduates, are recruited. They are provided with a comprehensive guideline document with thorough annotation instructions and numerous detailed examples for training. The annotators are instructed to select a single word for each event trigger (i.e., the most im- portant) that clearly evokes the event, following the practices of prior ED work (Nguyen and Grishman, 2015). Overall, we annotate 2,300 documents for the seven event types from which the proportions of documents taken from the subreddits r/SuicideWatch, r/depression, and r/mentalhealth are 50%, 30%, and 20%, respectively. 20% of the documents are selected for co-annotation, leading to a Fleiss' Kappa score of 0.8 (i.e., close to the almost perfect agreement range of [0.81 \u2212 1.0]). The remaining 80% of documents are distributed to the annotators for individual annotation. To facilitate future research, we divide SuicideED into three different portions for training, test, and development data. Table 1 presents some statistics for different data portions while Table 2 shows the event type distribution.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_18",
+            "content": "Dataset Challenges",
+            "ntype": "title",
+            "meta": {
+                "section": "3"
+            }
+        },
+        {
+            "ix": "421-ARR_v1_19",
+            "content": "Compared to existing ED datasets, e.g., ACE-05 (Walker et al., 2006), MAVEN (Wang et al., 2020), andCySecED (Trong et al., 2020), our dataset Sui-cideED features at least three unique challenges for ED models. First, as its documents are obtained from Reddit posts, SuicideED involves texts where informal words (e.g., \"wanna\", \"gonna\") are prevalent, sentences might not follow wellstructured grammar rules, and first-person point of view is the main writing style. This is in contrast to existing ED datasets where documents are often retrieved from news or reports with formal and well-structured texts. Second, in addition to the relevance to suicide, the event types in Sui-cideED sometimes require models to simultaneously consider event factuality to accurately determine the types. This is clear for differentiating ACTION and IDEATION where the key distinction concerns event factuality. Another example involves the potential confusions between PRO-TECTIVE and RF where different event factuality might lead to different event types for the similar expressions. For instance, in the sentence \"I have a lot of friends\", the event trigger \"have\", belongs to the PROTECTIVE type given that it reveals a positive environment for the subject.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_20",
+            "content": "On the contrary, in the sentence \"I had a lot of friends\", the trigger \"had\" should be considered as a RF-RELATIONSHIP type as it might instead imply current deteriorated social connections. Last but not least, the event type determination in Sui-cideED also necessitates appropriate identification of the entity that should be considered for the effect of an event. For instance, in the sentence \"My sister killed herself.\", the trigger word \"killed\" should have the ACTION type if the entity of consideration is \"sister\". However, if we consider the event from the point of view of the poster/speaker, \"killed\" should be a RF-LIFE event. In SuicideED, the annotators are instructed to take the first person point of view (i.e., the poster) in the annotation decision.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_21",
+            "content": "As such, ED models are expected to learn this feature from the data to achieve good performance. Finally, Figure 1 illustrates the ambiguity of the event triggers in SuicideED by presenting the label distribution of the top 5 most frequent event trigger words. As can be seen, there is no particular dominant label for even the most frequent words. Hence, a ED model must effectively capture surrounding context of triggers to perform classification.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_22",
+            "content": "Experiments",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "421-ARR_v1_23",
+            "content": "To assess the complexity of the ED task in Sui-cideED, we evaluate the performance of the following state-of-the-art ED models: CNN: a con- Table 3: Performance of the models on the SuicideED test set using BERT and finetuned BERT embeddings.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_24",
+            "content": "Table 3 presents the performance of the models the SuicideED test set. The first observation is that fine-tuning BERT over Reddit posts can further improve the performance of the ED models although this is less pronounced for recent advanced ED models, i.e., GatedGCN and EEGCN. Second, the performance of the graph-based models (e.g., Gat-edGCN and EEGCN) is significantly better than those for non-graph-based models (i.e., CNN, DM-BERT, and BERTED). As such, despite the informal nature of texts that can hinder the performance for dependency parsing, dependency trees are still helpful for the representation learning of ED models in SuicideED. Finally and most importantly, we find that the performance of existing ED models on SuicideED is substantially worse than the typical performance of such models on prior ED datasets (e.g., 77.6% on ACE-05 with GatedGCN and EEGCN) (Lai et al., 2020). It thus suggests the unique challenges of SuicideED for ED models and highlight the need for further research to improve ED for suicide-related events. Finally, we provide a statement for ethical issues in the fifth page.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_25",
+            "content": "Related Work",
+            "ntype": "title",
+            "meta": {
+                "section": "5"
+            }
+        },
+        {
+            "ix": "421-ARR_v1_26",
+            "content": "Suicide detection and prevention using NLP methods has caught the attention of many researchers. Due to the privacy restrictions associated with clinical databases, researchers have used publiclyavailable data from social media with manual annotations for recognizable signals of mental health issues (Coppersmith et al., 2015;Shing et al., 2018). The majority of methods, however, focus on detecting suicidal attempts or accessing suicide propensity of users based on social media posts (Coppersmith et al., 2015;Bhat and Goldman-Mellor, 2017;Shing et al., 2018;Zirikly et al., 2019). As such, these prior work has only relied the setting of overall text classification that fails to explore fine-grained analysis/classification at word level to reveal suicide-related events as we do.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_27",
+            "content": "Prior research effort for ED has introduced various methods for this problem, including feature engineering (Ahn, 2006;Ji and Grishman, 2008;Li et al., 2013) and deep learning (Chen et al., 2015;Wang et al., 2019;Cui et al., 2020) models. However, such prior work mainly utilizes the ED datasets with general event types and formal texts, i.e., ACE-05 (Walker et al., 2006), that might not be helpful for specific domains. Recently, there have been some effort on creating new datasets for ED in more specific domains, including biomedical texts (Kim et al., 2009), literary texts (Sims et al., 2019), and cybersecurity texts (Satyapanich et al., 2020). However, none of existing ED datasets explore suicide-related events in social media texts.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_28",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "6"
+            }
+        },
+        {
+            "ix": "421-ARR_v1_29",
+            "content": "We present SuicideED, the first dataset focused on the event detection task for suicide-related events. SuicideED is manually annotated for 7 event types and provides enough training examples to develop large-scale deep learning models. We perform extensive evaluations of state-of-the-art ED models to demonstrate the challenges of the dataset and call for further effort to improve performance. In the future, we plan to extend SuicideED to annotate event arguments and other event properties better support event analysis and understanding for suicide.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_30",
+            "content": "Statement of Ethics and Human Subject Research",
+            "ntype": "title",
+            "meta": {
+                "section": "7"
+            }
+        },
+        {
+            "ix": "421-ARR_v1_31",
+            "content": "Working with sensitive data such as mental health information from human subjects requires taking special care. This becomes particularly relevant in this case as our main objective is to provide a dataset for general public use. Benton et al. (2017) discuss, however, that research with human subjects information is exempted from the required full Institutional Review Board (IRB) review if the data is already available from public sources or if the identity of the subjects cannot be recovered. By design, Reddit is a platform where users remain anonymous and make their posts available to the general public. Nonetheless, additional privacy measures were taken by removing any username mentions from the documents as they can sometimes include identifiable information. Furthermore, unlike previous works where the main objective is to assess suicidal risk at the user level (Coppersmith et al., 2015;Bhat and Goldman-Mellor, 2017;Shing et al., 2018;Zirikly et al., 2019), this work focuses on sentence-level ED. As such, our dataset does not include any user-level information that could be used to identify individual subjects. Hence, this work is considered exempt from review by our University's IRB as the documents used are already publicly available and the original posters are impossible to identify.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_32",
+            "content": "Minimizing impact on the annotators: All prospective annotators were informed beforehand about the nature of the related text material and were made aware of its potential impact on their mental health. All chosen annotators had background knowledge/training on the subject at hand and were either clinicians or psychology graduates. Any candidates who reported suffering from, or having a history of, mental health-related issues were not considered out of concern for their health.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_33",
+            "content": "\u2022 Dataset: The statistics of the created dataset SuicideED (including training/development/test portions) and the annotation process are presented in Section 2. The dataset is included in the submission. We will publicly release the dataset upon the acceptance of the paper. A URL to the publishing site will be included in the paper. \u2022 Source code with the specification of all dependencies, including external libraries:",
+            "ntype": "list",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_34",
+            "content": "We will publicly release the code to run the models upon the acceptance of the paper.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_35",
+            "content": "\u2022 Description of computing infrastructure used: All the experiments were run on a machine with 2 Intel Xeon E5-2620 v4 CPUs, 128GB of RAM, and 4 NVIDIA RTX 2080 Ti GPUs with 11GB RAM. We only train the models with one GPU. The amount of GPU memory for each run ranges from 5 to 7 GB, depending on the models being used. \u2022 Average runtime for each approach: We train the models for 100 epochs; each takes approximately 2 minutes. The best epoch is chosen based on the performance on the development set. \u2022 Number of parameters in the model: Every model uses the pre-trained BERT model with non-trainable 110M parameters. The CNN, DMBERT, BERTED, BERTGCN, Gat-edGCN, EEGCN models have additional 20M, 250K, 80K, 10M, 10M, and 8M trainable parameters, respectively. \u2022 Explanation of evaluation metrics used, with links to code: Follow prior work in ED (Nguyen and Grishman, 2015;Chen et al., 2015), we use the precision, recall, and F1 scores for performance metrics. \u2022 Hyperparameter bounds and configurations for best-performing models: We use the bert-base-cased version of BERT in all the considered models (Devlin et al., 2019). To obtain the representation vector for a trigger word candidate in a sentence, the hidden vectors of 12 layers of BERT are concatenated. We fine-tune the hyper-parameters for the models in this work over the development data",
+            "ntype": "list",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_36",
+            "content": "To better understand the topics related to suicide in the SuicideED dataset, we run a topic modeling analysis using Latent Dirichlet Allocation (LDA) (Blei et al., 2003) over the documents in the dataset. We extract ten topics from the analysis and present their words in Table 4. English stop-words, the least (p < 0.01), and most frequent words (p > 0.2) were removed in the analysis. Interestingly, it can be observed that posts can be summarized into 3 main categories: school (2, 8), work (5, 9, 10), and family (3,4,6,7), which somehow reflects the sources of mental issues. A previous suicide attempt is a self-inflicted, potentially injurious behavior with an intent to die as a result.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_37",
+            "content": "I tried to kill myself last night. A preparatory act consists of any acts of preparation toward making a suicide attempt. Must be beyond verbalization or thought such as assembling a method (e.g. buying a gun, collecting pills) or preparing for death (e.g. writing a suicide note and a will).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_38",
+            "content": "Just looked online for the quickest way I left a note for my parents Self-inflicted violence includes self-directed, harmful behaviors that do not have a clear intent to die as a I've started cutting myself again",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_39",
+            "content": "These events focus on expressing thoughts and feelings but no actual action is present. These, however, are not related to actions such as preparatory acts and, instead, refer to verbalizations of inner feelings/desires.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_40",
+            "content": "It includes passive thoughts about wanting to be dead: I wish I was dead And, active thoughts about killing oneself.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_41",
+            "content": "I am going to kill myself soon PROTECTIVE These events are related to capacities, qualities, environmental and personal resources that increase resilience; drive an individual toward growth, stability, health, and/or an increase in coping with different life events. For this category, please annotate any sentence that showcases a positive impact on an individual. These can be verbalizations of self-worth and willingness to get better, access to medical resources, positive personal relationships, positive cultural beliefs, etc.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_42",
+            "content": "Access to effective behavioral health care and medication:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_43",
+            "content": "My therapist says that I should talk more.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_44",
+            "content": "The medication seems to be helping. Connectedness to individuals, family, community, and social institutions:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_45",
+            "content": "At least my friends are there for me Life skills (including problem-solving skills and coping skills, ability to adapt to change): I've always been good at helping people Self-esteem and a sense of purpose or meaning in life:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_46",
+            "content": "My life is much better than many people. Expressing a willingness to improve: I really want to get better. I wanna be funny and outgoing. Cultural, religious, or personal beliefs that discourage suicide:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_47",
+            "content": "I know God disapproves of what I'm thinking. .",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_48",
+            "content": "This risk factor event is easy to identify as a loss of life of a both human an non-human entities. The loss of life might be explicitly or implicitly expressed.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_49",
+            "content": "Loss of a relative, explicitly expressed: After my brother killed himself... Loss of a relative, implicitly expressed:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_50",
+            "content": "My grandma has been gone for years now. Loss of a pet friend:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_51",
+            "content": "My dog just died, he was my only real friend.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_52",
+            "content": "These include events such as social isolation, family breakdowns, divorce, etc. Include in this category all events that show a loss of connection with other people. These can be both verbalization of feelings of isolation or actual incidents of loss of an interpersonal relationship such as a break-up or argument with another individual.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_53",
+            "content": "I don't have anyone to talk to.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_54",
+            "content": "My dad just kicked me out of the house. Divorce:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_55",
+            "content": "After my divorce, I started drinking",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_56",
+            "content": "These include events such as social isolation, family breakdowns, divorce, etc. Include in this category all events that show a loss of connection with other people. These can be both verbalization of feelings of isolation or actual incidents of loss of an interpersonal relationship such as a break-up or argument with another individual.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_57",
+            "content": "Mental disease/disorder such as depression, PTSD: Can't deal with my depression right now. I've been diagnosed with BPD. Chronic or long-term disease, pain, and disability:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_58",
+            "content": "I'm just giving into my eating disorder. Recently, my diabetes has been acting up. Misuse and abuse of alcohol or other drugs: I've been drinking a lot lately",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_59",
+            "content": "These events include all other risk factors that do not fall into the LIFE, RELATIONSHIP, or HEALTH categories. As such, these can be events of very diverse natures such as financial issues, chronic abuse, discrimination, or general quality of life problems.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_60",
+            "content": "Can't afford to pay rent anymore...",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_61",
+            "content": "I can't go back to jail now.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_62",
+            "content": "Lost my job today.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_63",
+            "content": "They tease me in school cause I'm gay",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "421-ARR_v1_64",
+            "content": "David Ahn, The stages of event extraction, 2006, Proceedings of the Workshop on Annotating and Reasoning about Time and Events, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": [
+                    "David Ahn"
+                ],
+                "title": "The stages of event extraction",
+                "pub_date": "2006",
+                "pub_title": "Proceedings of the Workshop on Annotating and Reasoning about Time and Events",
+                "pub": null
+            }
+        },
+        {
+            "ix": "421-ARR_v1_65",
+            "content": "Adrian Benton, Glen Coppersmith, Mark Dredze, Ethical research protocols for social media health research, 2017, Proceedings of the First ACL Workshop on Ethics in Natural Language Processing, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": [
+                    "Adrian Benton",
+                    "Glen Coppersmith",
+                    "Mark Dredze"
+                ],
+                "title": "Ethical research protocols for social media health research",
+                "pub_date": "2017",
+                "pub_title": "Proceedings of the First ACL Workshop on Ethics in Natural Language Processing",
+                "pub": null
+            }
+        },
+        {
+            "ix": "421-ARR_v1_66",
+            "content": "S Harish,  Bhat, J Sidra,  Goldman-Mellor, Predicting adolescent suicide attempts with neural networks, 2017, Workshop on Machine Learning for Health, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": [
+                    "S Harish",
+                    " Bhat",
+                    "J Sidra",
+                    " Goldman-Mellor"
+                ],
+                "title": "Predicting adolescent suicide attempts with neural networks",
+                "pub_date": "2017",
+                "pub_title": "Workshop on Machine Learning for Health",
+                "pub": null
+            }
+        },
+        {
+            "ix": "421-ARR_v1_67",
+            "content": "M David,  Blei, Y Andrew, Michael I Jordan Ng, None, 2003, Latent dirichlet allocation. the Journal of machine Learning research, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": [
+                    "M David",
+                    " Blei",
+                    "Y Andrew",
+                    "Michael I Jordan Ng"
+                ],
+                "title": null,
+                "pub_date": "2003",
+                "pub_title": "Latent dirichlet allocation. the Journal of machine Learning research",
+                "pub": null
+            }
+        },
+        {
+            "ix": "421-ARR_v1_68",
+            "content": "Yubo Chen, Liheng Xu, Kang Liu, Daojian Zeng, Jun Zhao, Event extraction via dynamic multipooling convolutional neural networks, 2015, Proceedings of the 53rd Annual Meeting of the Association for Computational Linguistics and the 7th International Joint Conference on Natural Language Processing, Long Papers.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": [
+                    "Yubo Chen",
+                    "Liheng Xu",
+                    "Kang Liu",
+                    "Daojian Zeng",
+                    "Jun Zhao"
+                ],
+                "title": "Event extraction via dynamic multipooling convolutional neural networks",
+                "pub_date": "2015",
+                "pub_title": "Proceedings of the 53rd Annual Meeting of the Association for Computational Linguistics and the 7th International Joint Conference on Natural Language Processing",
+                "pub": "Long Papers"
+            }
+        },
+        {
+            "ix": "421-ARR_v1_69",
+            "content": "Glen Coppersmith, Ryan Leary, Eric Whyne, Tony Wood, Quantifying suicidal ideation via language usage on social media, 2015, Joint Statistics Meetings Proceedings, Statistical Computing Section, JSM, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "Glen Coppersmith",
+                    "Ryan Leary",
+                    "Eric Whyne",
+                    "Tony Wood"
+                ],
+                "title": "Quantifying suicidal ideation via language usage on social media",
+                "pub_date": "2015",
+                "pub_title": "Joint Statistics Meetings Proceedings, Statistical Computing Section, JSM",
+                "pub": null
+            }
+        },
+        {
+            "ix": "421-ARR_v1_70",
+            "content": "Shiyao Cui, Bowen Yu, Tingwen Liu, Zhenyu Zhang, Xuebin Wang, Jinqiao Shi, Edgeenhanced graph convolution networks for event detection with syntactic relation, 2020, Findings of the Association for Computational Linguistics: EMNLP 2020, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": [
+                    "Shiyao Cui",
+                    "Bowen Yu",
+                    "Tingwen Liu",
+                    "Zhenyu Zhang",
+                    "Xuebin Wang",
+                    "Jinqiao Shi"
+                ],
+                "title": "Edgeenhanced graph convolution networks for event detection with syntactic relation",
+                "pub_date": "2020",
+                "pub_title": "Findings of the Association for Computational Linguistics: EMNLP 2020",
+                "pub": null
+            }
+        },
+        {
+            "ix": "421-ARR_v1_71",
+            "content": "Corine De Ruiter, Tonia Nicholls, Protective factors in forensic mental health, 2011, In International Journal of Forensic Mental Health, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": [
+                    "Corine De Ruiter",
+                    "Tonia Nicholls"
+                ],
+                "title": "Protective factors in forensic mental health",
+                "pub_date": "2011",
+                "pub_title": "In International Journal of Forensic Mental Health",
+                "pub": null
+            }
+        },
+        {
+            "ix": "421-ARR_v1_72",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: Pre-training of deep bidirectional transformers for language understanding, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": [
+                    "Jacob Devlin",
+                    "Ming-Wei Chang",
+                    "Kenton Lee",
+                    "Kristina Toutanova"
+                ],
+                "title": "BERT: Pre-training of deep bidirectional transformers for language understanding",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies",
+                "pub": null
+            }
+        },
+        {
+            "ix": "421-ARR_v1_73",
+            "content": "M Peter,  Gutierrez, Integratively assessing risk and protective factors for adolescent suicide, 2006, Suicide and Life-Threatening Behavior, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    "M Peter",
+                    " Gutierrez"
+                ],
+                "title": "Integratively assessing risk and protective factors for adolescent suicide",
+                "pub_date": "2006",
+                "pub_title": "Suicide and Life-Threatening Behavior",
+                "pub": null
+            }
+        },
+        {
+            "ix": "421-ARR_v1_74",
+            "content": "Heng Ji, Ralph Grishman, Refining event extraction through cross-document inference, 2008, Proceedings of ACL-08: HLT, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": [
+                    "Heng Ji",
+                    "Ralph Grishman"
+                ],
+                "title": "Refining event extraction through cross-document inference",
+                "pub_date": "2008",
+                "pub_title": "Proceedings of ACL-08: HLT",
+                "pub": null
+            }
+        },
+        {
+            "ix": "421-ARR_v1_75",
+            "content": "Shaoxiong Ji, Celina Yu, Sai-Fu Fung, Shirui Pan, Guodong Long, Supervised learning for suicidal ideation detection in online user content, 2018, Complexity, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": [
+                    "Shaoxiong Ji",
+                    "Celina Yu",
+                    "Sai-Fu Fung",
+                    "Shirui Pan",
+                    "Guodong Long"
+                ],
+                "title": "Supervised learning for suicidal ideation detection in online user content",
+                "pub_date": "2018",
+                "pub_title": "Complexity",
+                "pub": null
+            }
+        },
+        {
+            "ix": "421-ARR_v1_76",
+            "content": "Jin-Dong Kim, Tomoko Ohta, Sampo Pyysalo, Yoshinobu Kano, Jun'ichi Tsujii, Overview of BioNLP'09 shared task on event extraction, 2009, Proceedings of the BioNLP 2009 Workshop Companion Volume for Shared Task, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": [
+                    "Jin-Dong Kim",
+                    "Tomoko Ohta",
+                    "Sampo Pyysalo",
+                    "Yoshinobu Kano",
+                    "Jun'ichi Tsujii"
+                ],
+                "title": "Overview of BioNLP'09 shared task on event extraction",
+                "pub_date": "2009",
+                "pub_title": "Proceedings of the BioNLP 2009 Workshop Companion Volume for Shared Task",
+                "pub": null
+            }
+        },
+        {
+            "ix": "421-ARR_v1_77",
+            "content": "Tuan Viet Dac Lai, Thien Huu Ngo Nguyen,  Nguyen, Event detection: Gate diversity and syntactic importance scores for graph convolution neural networks, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": [
+                    "Tuan Viet Dac Lai",
+                    "Thien Huu Ngo Nguyen",
+                    " Nguyen"
+                ],
+                "title": "Event detection: Gate diversity and syntactic importance scores for graph convolution neural networks",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+                "pub": null
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "421-ARR_v1_0@0",
+            "content": "Event Detection for Suicide Understanding",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_0",
+            "start": 0,
+            "end": 40,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_2@0",
+            "content": "Suicide is a serious problem in every society.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_2",
+            "start": 0,
+            "end": 45,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_3@0",
+            "content": "Understanding life events of a potential patient is essential for successful suicide-risk assessment and prevention.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_3",
+            "start": 0,
+            "end": 115,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_3@1",
+            "content": "In this work, we focus on the Event Detection (ED) task to identify event trigger words of suicide-related events in public posts of discussion forums.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_3",
+            "start": 117,
+            "end": 267,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_3@2",
+            "content": "In particular, we introduce a new dataset for ED (called SuicideED) that features seven suicidal event types to comprehensively capture suicide actions and ideation, and general risk and protective factors.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_3",
+            "start": 269,
+            "end": 474,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_3@3",
+            "content": "Our experiments with current state-of-the-art ED systems suggest that there is still room for improvement of ED models in this domain.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_3",
+            "start": 476,
+            "end": 609,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_3@4",
+            "content": "We will publicly release Sui-cideED to support future research in this important area.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_3",
+            "start": 611,
+            "end": 696,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_4@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_4",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_5@0",
+            "content": "Suicide is a serious and growing problem in our society 1 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_5",
+            "start": 0,
+            "end": 58,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_5@1",
+            "content": "The most common procedure for suicide risk assessment is for clinicians to set up clinical interviews with potential patients that will provide rating scales based on a list of preset questions (Ross et al., 2012).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_5",
+            "start": 60,
+            "end": 273,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_5@2",
+            "content": "However, interviews and similar activities require the willingness of potential patients to participate.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_5",
+            "start": 275,
+            "end": 378,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_5@3",
+            "content": "Given the associated mental states, such participation can be challenging to obtain for patients with high suicidal risks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_5",
+            "start": 380,
+            "end": 501,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_6@0",
+            "content": "In the meantime, people are increasingly spending more of their time on social networks, sharing inner thoughts and daily activities.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_6",
+            "start": 0,
+            "end": 132,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_6@1",
+            "content": "This collection of social posts might draw a comprehensive picture of the patient's life that can be used to support the diagnosis of suicidal conditions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_6",
+            "start": 134,
+            "end": 287,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_6@2",
+            "content": "In fact, moderators of some social networks (e.g., Reddit, Reachout) use social posts to monitor suicide and apply immediate intervention if necessary.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_6",
+            "start": 289,
+            "end": 439,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_6@3",
+            "content": "To assist with the processing of the large amount of posts, there have been a few methods and tools 1 https://www.nimh.nih.gov/health/statistics/suicide for automatically analyzing online posts to detect suicidal intent (Ji et al., 2018;Shing et al., 2018;Coppersmith et al., 2015;Milne et al., 2016).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_6",
+            "start": 441,
+            "end": 741,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_6@4",
+            "content": "However, these studies mainly focus on assessing the patients' susceptibility to suicide and fail to consider contributory life events that cause/lead to such conditions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_6",
+            "start": 743,
+            "end": 912,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_6@5",
+            "content": "In this paper, we argue that recognizing suicide-related events is also critical to suicide understanding, identification and prevention, and natural language processing (NLP) methods are necessary to support automatic identification of such events from the vast and growing number of social media posts.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_6",
+            "start": 914,
+            "end": 1217,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_7@0",
+            "content": "This work aims to advance the ultimate goal of creating NLP methods for suicide understanding by exploring the novel task of Event Detection (ED) for suicide-related events.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_7",
+            "start": 0,
+            "end": 172,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_7@1",
+            "content": "ED is an important task in Information Extraction (IE) that aims to identify event trigger words/mentions in the text (Ahn, 2006;Ji and Grishman, 2008).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_7",
+            "start": 174,
+            "end": 325,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_7@2",
+            "content": "Adapted to our interest in suicide-related events, in the following sentences, an ED system should be able to recognize \"date\" and \"have\" as trigger words for deteriorated personal relationship events (i.e., risk factors); \"wanna\", \"have\", and \"desirable\" as triggers for protective factor events, and \"depression\" as a trigger for a health-related risk factor event:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_7",
+            "start": 327,
+            "end": 693,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_8@0",
+            "content": "I don't date anyone and never will.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_8",
+            "start": 0,
+            "end": 34,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_8@1",
+            "content": "It s a reason why I have no friends and never will. I wanna be funny and have a personality and be desirable but I 'm not that. I know its depression that causes it.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_8",
+            "start": 36,
+            "end": 200,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_9@0",
+            "content": "The vast majority of advanced methods for ED are based on training deep neural networks on large labeled corpora (Chen et al., 2015).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_9",
+            "start": 0,
+            "end": 132,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_9@1",
+            "content": "As such, to facilitate ED in suicide prevention research, a key requirement is to have a benchmark dataset to standardize the development and evaluation of ED models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_9",
+            "start": 134,
+            "end": 299,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_9@2",
+            "content": "Unfortunately, a large amount of existing suicide-related datasets are protected due to sensitive privacy concerns and, thus, fail to support the larger research community (Coppersmith et al., 2015;Vioules et al., 2018;Bhat and Goldman-Mellor, 2017).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_9",
+            "start": 301,
+            "end": 550,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_9@3",
+            "content": "Moreover, these existing datasets are created to detect potential suicidal attempts based on text classification (Vioules et al., 2018;Bhat and Goldman-Mellor, 2017;Shing et al., 2018), which does not provide event trigger annotations of suicide-related events for ED.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_9",
+            "start": 552,
+            "end": 819,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_10@0",
+            "content": "To overcome such challenges, this paper introduces SuicideED, a new dataset for suicidal event detection that is manually annotated for seven distinct event types to comprehensively characterize suicide-related events regarding actual actions, thoughts, and risk and protective factors.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_10",
+            "start": 0,
+            "end": 285,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_10@1",
+            "content": "To enable data sharing, our dataset is based on pubic posts from Reddit where personal information is not presented to avoid privacy issues.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_10",
+            "start": 287,
+            "end": 426,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_10@2",
+            "content": "The Sui-cideED dataset is challenging as it involves informal texts, and require event factuality and affected entity reasoning.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_10",
+            "start": 428,
+            "end": 555,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_10@3",
+            "content": "Our experiments show that the performance of current state-of-the-art ED models on SuicideED lags behind their performance on other general-purpose ED datasets, thus calling for more research effort for suicide-specific ED.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_10",
+            "start": 557,
+            "end": 779,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_10@4",
+            "content": "To facilitate future research in this area, SuicideED will be released publicly for the research community.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_10",
+            "start": 781,
+            "end": 887,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_11@0",
+            "content": "Annotation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_11",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_12@0",
+            "content": "The documents for SuicideED are collected out of publicly available posts from reddit.com.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_12",
+            "start": 0,
+            "end": 89,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_12@1",
+            "content": "In particular, we focus on three subreddits (subgroups) that contain a high percentage of suicide-related posts: r/SuicideWatch, r/depression, and r/mentalhealth.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_12",
+            "start": 91,
+            "end": 252,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_12@2",
+            "content": "Each original post is considered as a separate document and only posts with more than 50 words are kept to increase the probability of an event being present.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_12",
+            "start": 254,
+            "end": 411,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_13@0",
+            "content": "Event Types: An important, previously unexplored, question is what constitutes relevant events that can provide useful insights for clinicians to better understand and recognize suicide-related incidents.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_13",
+            "start": 0,
+            "end": 203,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_13@1",
+            "content": "Accordingly, we consult specialized literature related to suicidal-behavior identification and treatment (Gutierrez, 2006;de Ruiter and Nicholls, 2011;O'Connor et al., 2013) to define the event categories for our dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_13",
+            "start": 205,
+            "end": 425,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_13@2",
+            "content": "As such, we design the event types to be exclusive to avoid type overlapping, and sufficiently comprehensive to cover relevant/impactful suicide-related events in the data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_13",
+            "start": 427,
+            "end": 598,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_13@3",
+            "content": "Eventually, we select the following seven event types that capture suicide-related actions, thoughts, and risk/protective factors.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_13",
+            "start": 600,
+            "end": 729,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_14@0",
+            "content": "The first two event types are concerned with statements to indicate suicidal attempts or intentions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_14",
+            "start": 0,
+            "end": 99,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_14@1",
+            "content": "In particular, the ACTION event type is dedicated to the direct expressions for actual suicidal attempts/actions, e.g., \"I've started cutting myself again\" 2 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_14",
+            "start": 101,
+            "end": 259,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_14@2",
+            "content": "In contrast, the second event type, IDEATION, represents suicidal inner thoughts, feelings, or desires, where no real action present, e.g., \"I'm going to kill myself soon\".",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_14",
+            "start": 261,
+            "end": 432,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_14@3",
+            "content": "These two types directly integrate factuality differentiation into the event types to better address the uniqueness of the data where hypothetical events are prevalent and understanding the factuality of events is critical to suicide intervention and prevention.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_14",
+            "start": 434,
+            "end": 695,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_15@0",
+            "content": "The second group of event types focuses on external events that increase a subject's susceptibility to suicidal behaviours, i.e., risk factors (RF) (Gutierrez, 2006).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_15",
+            "start": 0,
+            "end": 165,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_15@1",
+            "content": "Given the diverse nature of RF, four event types are proposed.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_15",
+            "start": 167,
+            "end": 228,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_15@2",
+            "content": "RF-LIFE events include mentions of a death of a close/loved entity, e.g., \"My dog just died\".",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_15",
+            "start": 230,
+            "end": 322,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_15@3",
+            "content": "RF-RELATIONSHIP concerns events related to social isolation, family breakdowns, or any mention of deteriorated interpersonal relationship, e.g., \"My dad kicked me out of the house\".",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_15",
+            "start": 324,
+            "end": 504,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_15@4",
+            "content": "Events for RF-HEALTH cover mentions of physical diseases, mental illness, and behaviors that directly affect the subject's health, e.g., \"I feel depressed\".",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_15",
+            "start": 506,
+            "end": 661,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_15@5",
+            "content": "Finally, RF-OTHER incorporates every other RF event that cannot be assigned to life, relationship, or health issues but still qualify as RF, including financial issues, chronic abuse, and general quality-of-life problems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_15",
+            "start": 663,
+            "end": 883,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_16@0",
+            "content": "The final type, PROTECTIVE, captures events that drive an individual towards a better mentalhealth state, involving a broad range of positive activities, such as receiving effective medication or being motivated by social connections, e.g., \"The medication seems to be helping\".",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_16",
+            "start": 0,
+            "end": 277,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_16@1",
+            "content": "A detailed description and representative examples for each event type are presented in Appendix C.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_16",
+            "start": 279,
+            "end": 377,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_17@0",
+            "content": "Annotation: Given the event types, an annotation job posting is created on upwork.com and seven freelance annotators with previous experience in mental health and psychology, such as physicians and psychology graduates, are recruited.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_17",
+            "start": 0,
+            "end": 233,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_17@1",
+            "content": "They are provided with a comprehensive guideline document with thorough annotation instructions and numerous detailed examples for training.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_17",
+            "start": 235,
+            "end": 374,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_17@2",
+            "content": "The annotators are instructed to select a single word for each event trigger (i.e., the most im- portant) that clearly evokes the event, following the practices of prior ED work (Nguyen and Grishman, 2015).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_17",
+            "start": 376,
+            "end": 581,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_17@3",
+            "content": "Overall, we annotate 2,300 documents for the seven event types from which the proportions of documents taken from the subreddits r/SuicideWatch, r/depression, and r/mentalhealth are 50%, 30%, and 20%, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_17",
+            "start": 583,
+            "end": 796,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_17@4",
+            "content": "20% of the documents are selected for co-annotation, leading to a Fleiss' Kappa score of 0.8 (i.e., close to the almost perfect agreement range of [0.81 \u2212 1.0]).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_17",
+            "start": 798,
+            "end": 958,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_17@5",
+            "content": "The remaining 80% of documents are distributed to the annotators for individual annotation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_17",
+            "start": 960,
+            "end": 1050,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_17@6",
+            "content": "To facilitate future research, we divide SuicideED into three different portions for training, test, and development data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_17",
+            "start": 1052,
+            "end": 1173,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_17@7",
+            "content": "Table 1 presents some statistics for different data portions while Table 2 shows the event type distribution.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_17",
+            "start": 1175,
+            "end": 1283,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_18@0",
+            "content": "Dataset Challenges",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_18",
+            "start": 0,
+            "end": 17,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_19@0",
+            "content": "Compared to existing ED datasets, e.g., ACE-05 (Walker et al., 2006), MAVEN (Wang et al., 2020), andCySecED (Trong et al., 2020), our dataset Sui-cideED features at least three unique challenges for ED models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_19",
+            "start": 0,
+            "end": 208,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_19@1",
+            "content": "First, as its documents are obtained from Reddit posts, SuicideED involves texts where informal words (e.g., \"wanna\", \"gonna\") are prevalent, sentences might not follow wellstructured grammar rules, and first-person point of view is the main writing style.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_19",
+            "start": 210,
+            "end": 465,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_19@2",
+            "content": "This is in contrast to existing ED datasets where documents are often retrieved from news or reports with formal and well-structured texts.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_19",
+            "start": 467,
+            "end": 605,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_19@3",
+            "content": "Second, in addition to the relevance to suicide, the event types in Sui-cideED sometimes require models to simultaneously consider event factuality to accurately determine the types.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_19",
+            "start": 607,
+            "end": 788,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_19@4",
+            "content": "This is clear for differentiating ACTION and IDEATION where the key distinction concerns event factuality.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_19",
+            "start": 790,
+            "end": 895,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_19@5",
+            "content": "Another example involves the potential confusions between PRO-TECTIVE and RF where different event factuality might lead to different event types for the similar expressions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_19",
+            "start": 897,
+            "end": 1070,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_19@6",
+            "content": "For instance, in the sentence \"I have a lot of friends\", the event trigger \"have\", belongs to the PROTECTIVE type given that it reveals a positive environment for the subject.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_19",
+            "start": 1072,
+            "end": 1246,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_20@0",
+            "content": "On the contrary, in the sentence \"I had a lot of friends\", the trigger \"had\" should be considered as a RF-RELATIONSHIP type as it might instead imply current deteriorated social connections.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_20",
+            "start": 0,
+            "end": 189,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_20@1",
+            "content": "Last but not least, the event type determination in Sui-cideED also necessitates appropriate identification of the entity that should be considered for the effect of an event.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_20",
+            "start": 191,
+            "end": 365,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_20@2",
+            "content": "For instance, in the sentence \"My sister killed herself.\", the trigger word \"killed\" should have the ACTION type if the entity of consideration is \"sister\".",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_20",
+            "start": 367,
+            "end": 522,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_20@3",
+            "content": "However, if we consider the event from the point of view of the poster/speaker, \"killed\" should be a RF-LIFE event.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_20",
+            "start": 524,
+            "end": 638,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_20@4",
+            "content": "In SuicideED, the annotators are instructed to take the first person point of view (i.e., the poster) in the annotation decision.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_20",
+            "start": 640,
+            "end": 768,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_21@0",
+            "content": "As such, ED models are expected to learn this feature from the data to achieve good performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_21",
+            "start": 0,
+            "end": 95,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_21@1",
+            "content": "Finally, Figure 1 illustrates the ambiguity of the event triggers in SuicideED by presenting the label distribution of the top 5 most frequent event trigger words.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_21",
+            "start": 97,
+            "end": 259,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_21@2",
+            "content": "As can be seen, there is no particular dominant label for even the most frequent words.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_21",
+            "start": 261,
+            "end": 347,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_21@3",
+            "content": "Hence, a ED model must effectively capture surrounding context of triggers to perform classification.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_21",
+            "start": 349,
+            "end": 449,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_22@0",
+            "content": "Experiments",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_22",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_23@0",
+            "content": "To assess the complexity of the ED task in Sui-cideED, we evaluate the performance of the following state-of-the-art ED models: CNN: a con- Table 3: Performance of the models on the SuicideED test set using BERT and finetuned BERT embeddings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_23",
+            "start": 0,
+            "end": 241,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_24@0",
+            "content": "Table 3 presents the performance of the models the SuicideED test set.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_24",
+            "start": 0,
+            "end": 69,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_24@1",
+            "content": "The first observation is that fine-tuning BERT over Reddit posts can further improve the performance of the ED models although this is less pronounced for recent advanced ED models, i.e., GatedGCN and EEGCN.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_24",
+            "start": 71,
+            "end": 277,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_24@2",
+            "content": "Second, the performance of the graph-based models (e.g., Gat-edGCN and EEGCN) is significantly better than those for non-graph-based models (i.e., CNN, DM-BERT, and BERTED).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_24",
+            "start": 279,
+            "end": 451,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_24@3",
+            "content": "As such, despite the informal nature of texts that can hinder the performance for dependency parsing, dependency trees are still helpful for the representation learning of ED models in SuicideED.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_24",
+            "start": 453,
+            "end": 647,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_24@4",
+            "content": "Finally and most importantly, we find that the performance of existing ED models on SuicideED is substantially worse than the typical performance of such models on prior ED datasets (e.g., 77.6% on ACE-05 with GatedGCN and EEGCN) (Lai et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_24",
+            "start": 649,
+            "end": 897,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_24@5",
+            "content": "It thus suggests the unique challenges of SuicideED for ED models and highlight the need for further research to improve ED for suicide-related events.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_24",
+            "start": 899,
+            "end": 1049,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_24@6",
+            "content": "Finally, we provide a statement for ethical issues in the fifth page.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_24",
+            "start": 1051,
+            "end": 1119,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_25@0",
+            "content": "Related Work",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_25",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_26@0",
+            "content": "Suicide detection and prevention using NLP methods has caught the attention of many researchers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_26",
+            "start": 0,
+            "end": 95,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_26@1",
+            "content": "Due to the privacy restrictions associated with clinical databases, researchers have used publiclyavailable data from social media with manual annotations for recognizable signals of mental health issues (Coppersmith et al., 2015;Shing et al., 2018).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_26",
+            "start": 97,
+            "end": 346,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_26@2",
+            "content": "The majority of methods, however, focus on detecting suicidal attempts or accessing suicide propensity of users based on social media posts (Coppersmith et al., 2015;Bhat and Goldman-Mellor, 2017;Shing et al., 2018;Zirikly et al., 2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_26",
+            "start": 348,
+            "end": 584,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_26@3",
+            "content": "As such, these prior work has only relied the setting of overall text classification that fails to explore fine-grained analysis/classification at word level to reveal suicide-related events as we do.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_26",
+            "start": 586,
+            "end": 785,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_27@0",
+            "content": "Prior research effort for ED has introduced various methods for this problem, including feature engineering (Ahn, 2006;Ji and Grishman, 2008;Li et al., 2013) and deep learning (Chen et al., 2015;Wang et al., 2019;Cui et al., 2020) models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_27",
+            "start": 0,
+            "end": 237,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_27@1",
+            "content": "However, such prior work mainly utilizes the ED datasets with general event types and formal texts, i.e., ACE-05 (Walker et al., 2006), that might not be helpful for specific domains.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_27",
+            "start": 239,
+            "end": 421,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_27@2",
+            "content": "Recently, there have been some effort on creating new datasets for ED in more specific domains, including biomedical texts (Kim et al., 2009), literary texts (Sims et al., 2019), and cybersecurity texts (Satyapanich et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_27",
+            "start": 423,
+            "end": 652,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_27@3",
+            "content": "However, none of existing ED datasets explore suicide-related events in social media texts.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_27",
+            "start": 654,
+            "end": 744,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_28@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_28",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_29@0",
+            "content": "We present SuicideED, the first dataset focused on the event detection task for suicide-related events.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_29",
+            "start": 0,
+            "end": 102,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_29@1",
+            "content": "SuicideED is manually annotated for 7 event types and provides enough training examples to develop large-scale deep learning models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_29",
+            "start": 104,
+            "end": 235,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_29@2",
+            "content": "We perform extensive evaluations of state-of-the-art ED models to demonstrate the challenges of the dataset and call for further effort to improve performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_29",
+            "start": 237,
+            "end": 395,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_29@3",
+            "content": "In the future, we plan to extend SuicideED to annotate event arguments and other event properties better support event analysis and understanding for suicide.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_29",
+            "start": 397,
+            "end": 554,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_30@0",
+            "content": "Statement of Ethics and Human Subject Research",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_30",
+            "start": 0,
+            "end": 45,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_31@0",
+            "content": "Working with sensitive data such as mental health information from human subjects requires taking special care.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_31",
+            "start": 0,
+            "end": 110,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_31@1",
+            "content": "This becomes particularly relevant in this case as our main objective is to provide a dataset for general public use.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_31",
+            "start": 112,
+            "end": 228,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_31@2",
+            "content": "Benton et al. (2017) discuss, however, that research with human subjects information is exempted from the required full Institutional Review Board (IRB) review if the data is already available from public sources or if the identity of the subjects cannot be recovered.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_31",
+            "start": 230,
+            "end": 497,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_31@3",
+            "content": "By design, Reddit is a platform where users remain anonymous and make their posts available to the general public.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_31",
+            "start": 499,
+            "end": 612,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_31@4",
+            "content": "Nonetheless, additional privacy measures were taken by removing any username mentions from the documents as they can sometimes include identifiable information.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_31",
+            "start": 614,
+            "end": 773,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_31@5",
+            "content": "Furthermore, unlike previous works where the main objective is to assess suicidal risk at the user level (Coppersmith et al., 2015;Bhat and Goldman-Mellor, 2017;Shing et al., 2018;Zirikly et al., 2019), this work focuses on sentence-level ED.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_31",
+            "start": 775,
+            "end": 1016,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_31@6",
+            "content": "As such, our dataset does not include any user-level information that could be used to identify individual subjects.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_31",
+            "start": 1018,
+            "end": 1133,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_31@7",
+            "content": "Hence, this work is considered exempt from review by our University's IRB as the documents used are already publicly available and the original posters are impossible to identify.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_31",
+            "start": 1135,
+            "end": 1313,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_32@0",
+            "content": "Minimizing impact on the annotators: All prospective annotators were informed beforehand about the nature of the related text material and were made aware of its potential impact on their mental health.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_32",
+            "start": 0,
+            "end": 201,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_32@1",
+            "content": "All chosen annotators had background knowledge/training on the subject at hand and were either clinicians or psychology graduates.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_32",
+            "start": 203,
+            "end": 332,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_32@2",
+            "content": "Any candidates who reported suffering from, or having a history of, mental health-related issues were not considered out of concern for their health.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_32",
+            "start": 334,
+            "end": 482,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_33@0",
+            "content": "\u2022 Dataset: The statistics of the created dataset SuicideED (including training/development/test portions) and the annotation process are presented in Section 2. The dataset is included in the submission. We will publicly release the dataset upon the acceptance of the paper. A URL to the publishing site will be included in the paper. \u2022 Source code with the specification of all dependencies, including external libraries:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_33",
+            "start": 0,
+            "end": 421,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_34@0",
+            "content": "We will publicly release the code to run the models upon the acceptance of the paper.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_34",
+            "start": 0,
+            "end": 84,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_35@0",
+            "content": "\u2022 Description of computing infrastructure used: All the experiments were run on a machine with 2 Intel Xeon E5-2620 v4 CPUs, 128GB of RAM, and 4 NVIDIA RTX 2080 Ti GPUs with 11GB RAM. We only train the models with one GPU. The amount of GPU memory for each run ranges from 5 to 7 GB, depending on the models being used. \u2022 Average runtime for each approach: We train the models for 100 epochs; each takes approximately 2 minutes. The best epoch is chosen based on the performance on the development set. \u2022 Number of parameters in the model: Every model uses the pre-trained BERT model with non-trainable 110M parameters. The CNN, DMBERT, BERTED, BERTGCN, Gat-edGCN, EEGCN models have additional 20M, 250K, 80K, 10M, 10M, and 8M trainable parameters, respectively. \u2022 Explanation of evaluation metrics used, with links to code: Follow prior work in ED (Nguyen and Grishman, 2015;Chen et al., 2015), we use the precision, recall, and F1 scores for performance metrics. \u2022 Hyperparameter bounds and configurations for best-performing models: We use the bert-base-cased version of BERT in all the considered models (Devlin et al., 2019). To obtain the representation vector for a trigger word candidate in a sentence, the hidden vectors of 12 layers of BERT are concatenated. We fine-tune the hyper-parameters for the models in this work over the development data",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_35",
+            "start": 0,
+            "end": 1355,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_36@0",
+            "content": "To better understand the topics related to suicide in the SuicideED dataset, we run a topic modeling analysis using Latent Dirichlet Allocation (LDA) (Blei et al., 2003) over the documents in the dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_36",
+            "start": 0,
+            "end": 203,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_36@1",
+            "content": "We extract ten topics from the analysis and present their words in Table 4.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_36",
+            "start": 205,
+            "end": 279,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_36@2",
+            "content": "English stop-words, the least (p < 0.01), and most frequent words (p > 0.2) were removed in the analysis.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_36",
+            "start": 281,
+            "end": 385,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_36@3",
+            "content": "Interestingly, it can be observed that posts can be summarized into 3 main categories: school (2, 8), work (5, 9, 10), and family (3,4,6,7), which somehow reflects the sources of mental issues.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_36",
+            "start": 387,
+            "end": 579,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_36@4",
+            "content": "A previous suicide attempt is a self-inflicted, potentially injurious behavior with an intent to die as a result.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_36",
+            "start": 581,
+            "end": 693,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_37@0",
+            "content": "I tried to kill myself last night.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_37",
+            "start": 0,
+            "end": 33,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_37@1",
+            "content": "A preparatory act consists of any acts of preparation toward making a suicide attempt.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_37",
+            "start": 35,
+            "end": 120,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_37@2",
+            "content": "Must be beyond verbalization or thought such as assembling a method (e.g. buying a gun, collecting pills) or preparing for death (e.g. writing a suicide note and a will).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_37",
+            "start": 122,
+            "end": 291,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_38@0",
+            "content": "Just looked online for the quickest way I left a note for my parents Self-inflicted violence includes self-directed, harmful behaviors that do not have a clear intent to die as a I've started cutting myself again",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_38",
+            "start": 0,
+            "end": 211,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_39@0",
+            "content": "These events focus on expressing thoughts and feelings but no actual action is present.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_39",
+            "start": 0,
+            "end": 86,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_39@1",
+            "content": "These, however, are not related to actions such as preparatory acts and, instead, refer to verbalizations of inner feelings/desires.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_39",
+            "start": 88,
+            "end": 219,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_40@0",
+            "content": "It includes passive thoughts about wanting to be dead: I wish I was dead And, active thoughts about killing oneself.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_40",
+            "start": 0,
+            "end": 115,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_41@0",
+            "content": "I am going to kill myself soon PROTECTIVE These events are related to capacities, qualities, environmental and personal resources that increase resilience; drive an individual toward growth, stability, health, and/or an increase in coping with different life events.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_41",
+            "start": 0,
+            "end": 265,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_41@1",
+            "content": "For this category, please annotate any sentence that showcases a positive impact on an individual.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_41",
+            "start": 267,
+            "end": 364,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_41@2",
+            "content": "These can be verbalizations of self-worth and willingness to get better, access to medical resources, positive personal relationships, positive cultural beliefs, etc.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_41",
+            "start": 366,
+            "end": 531,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_42@0",
+            "content": "Access to effective behavioral health care and medication:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_42",
+            "start": 0,
+            "end": 57,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_43@0",
+            "content": "My therapist says that I should talk more.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_43",
+            "start": 0,
+            "end": 41,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_44@0",
+            "content": "The medication seems to be helping.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_44",
+            "start": 0,
+            "end": 34,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_44@1",
+            "content": "Connectedness to individuals, family, community, and social institutions:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_44",
+            "start": 36,
+            "end": 108,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_45@0",
+            "content": "At least my friends are there for me Life skills (including problem-solving skills and coping skills, ability to adapt to change): I've always been good at helping people Self-esteem and a sense of purpose or meaning in life:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_45",
+            "start": 0,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_46@0",
+            "content": "My life is much better than many people.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_46",
+            "start": 0,
+            "end": 39,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_46@1",
+            "content": "Expressing a willingness to improve: I really want to get better.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_46",
+            "start": 41,
+            "end": 105,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_46@2",
+            "content": "I wanna be funny and outgoing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_46",
+            "start": 107,
+            "end": 136,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_46@3",
+            "content": "Cultural, religious, or personal beliefs that discourage suicide:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_46",
+            "start": 138,
+            "end": 202,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_47@0",
+            "content": "I know God disapproves of what I'm thinking. .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_47",
+            "start": 0,
+            "end": 45,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_48@0",
+            "content": "This risk factor event is easy to identify as a loss of life of a both human an non-human entities.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_48",
+            "start": 0,
+            "end": 98,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_48@1",
+            "content": "The loss of life might be explicitly or implicitly expressed.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_48",
+            "start": 100,
+            "end": 160,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_49@0",
+            "content": "Loss of a relative, explicitly expressed: After my brother killed himself... Loss of a relative, implicitly expressed:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_49",
+            "start": 0,
+            "end": 117,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_50@0",
+            "content": "My grandma has been gone for years now.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_50",
+            "start": 0,
+            "end": 38,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_50@1",
+            "content": "Loss of a pet friend:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_50",
+            "start": 40,
+            "end": 60,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_51@0",
+            "content": "My dog just died, he was my only real friend.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_51",
+            "start": 0,
+            "end": 44,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_52@0",
+            "content": "These include events such as social isolation, family breakdowns, divorce, etc.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_52",
+            "start": 0,
+            "end": 78,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_52@1",
+            "content": "Include in this category all events that show a loss of connection with other people.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_52",
+            "start": 80,
+            "end": 164,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_52@2",
+            "content": "These can be both verbalization of feelings of isolation or actual incidents of loss of an interpersonal relationship such as a break-up or argument with another individual.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_52",
+            "start": 166,
+            "end": 338,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_53@0",
+            "content": "I don't have anyone to talk to.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_53",
+            "start": 0,
+            "end": 30,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_54@0",
+            "content": "My dad just kicked me out of the house.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_54",
+            "start": 0,
+            "end": 38,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_54@1",
+            "content": "Divorce:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_54",
+            "start": 40,
+            "end": 47,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_55@0",
+            "content": "After my divorce, I started drinking",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_55",
+            "start": 0,
+            "end": 35,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_56@0",
+            "content": "These include events such as social isolation, family breakdowns, divorce, etc.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_56",
+            "start": 0,
+            "end": 78,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_56@1",
+            "content": "Include in this category all events that show a loss of connection with other people.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_56",
+            "start": 80,
+            "end": 164,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_56@2",
+            "content": "These can be both verbalization of feelings of isolation or actual incidents of loss of an interpersonal relationship such as a break-up or argument with another individual.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_56",
+            "start": 166,
+            "end": 338,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_57@0",
+            "content": "Mental disease/disorder such as depression, PTSD: Can't deal with my depression right now.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_57",
+            "start": 0,
+            "end": 89,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_57@1",
+            "content": "I've been diagnosed with BPD.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_57",
+            "start": 91,
+            "end": 119,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_57@2",
+            "content": "Chronic or long-term disease, pain, and disability:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_57",
+            "start": 121,
+            "end": 171,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_58@0",
+            "content": "I'm just giving into my eating disorder.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_58",
+            "start": 0,
+            "end": 39,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_58@1",
+            "content": "Recently, my diabetes has been acting up.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_58",
+            "start": 41,
+            "end": 81,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_58@2",
+            "content": "Misuse and abuse of alcohol or other drugs: I've been drinking a lot lately",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_58",
+            "start": 83,
+            "end": 157,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_59@0",
+            "content": "These events include all other risk factors that do not fall into the LIFE, RELATIONSHIP, or HEALTH categories.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_59",
+            "start": 0,
+            "end": 110,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_59@1",
+            "content": "As such, these can be events of very diverse natures such as financial issues, chronic abuse, discrimination, or general quality of life problems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_59",
+            "start": 112,
+            "end": 257,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_60@0",
+            "content": "Can't afford to pay rent anymore...",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_60",
+            "start": 0,
+            "end": 34,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_61@0",
+            "content": "I can't go back to jail now.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_61",
+            "start": 0,
+            "end": 27,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_62@0",
+            "content": "Lost my job today.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_62",
+            "start": 0,
+            "end": 17,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_63@0",
+            "content": "They tease me in school cause I'm gay",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_63",
+            "start": 0,
+            "end": 36,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_64@0",
+            "content": "David Ahn, The stages of event extraction, 2006, Proceedings of the Workshop on Annotating and Reasoning about Time and Events, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_64",
+            "start": 0,
+            "end": 128,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_65@0",
+            "content": "Adrian Benton, Glen Coppersmith, Mark Dredze, Ethical research protocols for social media health research, 2017, Proceedings of the First ACL Workshop on Ethics in Natural Language Processing, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_65",
+            "start": 0,
+            "end": 193,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_66@0",
+            "content": "S Harish,  Bhat, J Sidra,  Goldman-Mellor, Predicting adolescent suicide attempts with neural networks, 2017, Workshop on Machine Learning for Health, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_66",
+            "start": 0,
+            "end": 151,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_67@0",
+            "content": "M David,  Blei, Y Andrew, Michael I Jordan Ng, None, 2003, Latent dirichlet allocation. the Journal of machine Learning research, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_67",
+            "start": 0,
+            "end": 130,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_68@0",
+            "content": "Yubo Chen, Liheng Xu, Kang Liu, Daojian Zeng, Jun Zhao, Event extraction via dynamic multipooling convolutional neural networks, 2015, Proceedings of the 53rd Annual Meeting of the Association for Computational Linguistics and the 7th International Joint Conference on Natural Language Processing, Long Papers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_68",
+            "start": 0,
+            "end": 309,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_69@0",
+            "content": "Glen Coppersmith, Ryan Leary, Eric Whyne, Tony Wood, Quantifying suicidal ideation via language usage on social media, 2015, Joint Statistics Meetings Proceedings, Statistical Computing Section, JSM, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_69",
+            "start": 0,
+            "end": 200,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_70@0",
+            "content": "Shiyao Cui, Bowen Yu, Tingwen Liu, Zhenyu Zhang, Xuebin Wang, Jinqiao Shi, Edgeenhanced graph convolution networks for event detection with syntactic relation, 2020, Findings of the Association for Computational Linguistics: EMNLP 2020, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_70",
+            "start": 0,
+            "end": 237,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_71@0",
+            "content": "Corine De Ruiter, Tonia Nicholls, Protective factors in forensic mental health, 2011, In International Journal of Forensic Mental Health, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_71",
+            "start": 0,
+            "end": 138,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_72@0",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: Pre-training of deep bidirectional transformers for language understanding, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_72",
+            "start": 0,
+            "end": 294,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_73@0",
+            "content": "M Peter,  Gutierrez, Integratively assessing risk and protective factors for adolescent suicide, 2006, Suicide and Life-Threatening Behavior, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_73",
+            "start": 0,
+            "end": 142,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_74@0",
+            "content": "Heng Ji, Ralph Grishman, Refining event extraction through cross-document inference, 2008, Proceedings of ACL-08: HLT, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_74",
+            "start": 0,
+            "end": 119,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_75@0",
+            "content": "Shaoxiong Ji, Celina Yu, Sai-Fu Fung, Shirui Pan, Guodong Long, Supervised learning for suicidal ideation detection in online user content, 2018, Complexity, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_75",
+            "start": 0,
+            "end": 158,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_76@0",
+            "content": "Jin-Dong Kim, Tomoko Ohta, Sampo Pyysalo, Yoshinobu Kano, Jun'ichi Tsujii, Overview of BioNLP'09 shared task on event extraction, 2009, Proceedings of the BioNLP 2009 Workshop Companion Volume for Shared Task, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_76",
+            "start": 0,
+            "end": 210,
+            "label": {}
+        },
+        {
+            "ix": "421-ARR_v1_77@0",
+            "content": "Tuan Viet Dac Lai, Thien Huu Ngo Nguyen,  Nguyen, Event detection: Gate diversity and syntactic importance scores for graph convolution neural networks, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "421-ARR_v1_77",
+            "start": 0,
+            "end": 255,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "421-ARR_v1_0",
+            "tgt_ix": "421-ARR_v1_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_0",
+            "tgt_ix": "421-ARR_v1_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_1",
+            "tgt_ix": "421-ARR_v1_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_1",
+            "tgt_ix": "421-ARR_v1_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_1",
+            "tgt_ix": "421-ARR_v1_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_2",
+            "tgt_ix": "421-ARR_v1_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_0",
+            "tgt_ix": "421-ARR_v1_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_3",
+            "tgt_ix": "421-ARR_v1_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_5",
+            "tgt_ix": "421-ARR_v1_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_6",
+            "tgt_ix": "421-ARR_v1_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_7",
+            "tgt_ix": "421-ARR_v1_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_8",
+            "tgt_ix": "421-ARR_v1_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_9",
+            "tgt_ix": "421-ARR_v1_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_4",
+            "tgt_ix": "421-ARR_v1_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_4",
+            "tgt_ix": "421-ARR_v1_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_4",
+            "tgt_ix": "421-ARR_v1_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_4",
+            "tgt_ix": "421-ARR_v1_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_4",
+            "tgt_ix": "421-ARR_v1_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_4",
+            "tgt_ix": "421-ARR_v1_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_4",
+            "tgt_ix": "421-ARR_v1_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_0",
+            "tgt_ix": "421-ARR_v1_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_10",
+            "tgt_ix": "421-ARR_v1_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_12",
+            "tgt_ix": "421-ARR_v1_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_13",
+            "tgt_ix": "421-ARR_v1_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_14",
+            "tgt_ix": "421-ARR_v1_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_15",
+            "tgt_ix": "421-ARR_v1_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_16",
+            "tgt_ix": "421-ARR_v1_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_11",
+            "tgt_ix": "421-ARR_v1_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_11",
+            "tgt_ix": "421-ARR_v1_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_11",
+            "tgt_ix": "421-ARR_v1_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_11",
+            "tgt_ix": "421-ARR_v1_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_11",
+            "tgt_ix": "421-ARR_v1_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_11",
+            "tgt_ix": "421-ARR_v1_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_11",
+            "tgt_ix": "421-ARR_v1_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_0",
+            "tgt_ix": "421-ARR_v1_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_17",
+            "tgt_ix": "421-ARR_v1_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_19",
+            "tgt_ix": "421-ARR_v1_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_20",
+            "tgt_ix": "421-ARR_v1_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_18",
+            "tgt_ix": "421-ARR_v1_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_18",
+            "tgt_ix": "421-ARR_v1_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_18",
+            "tgt_ix": "421-ARR_v1_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_18",
+            "tgt_ix": "421-ARR_v1_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_0",
+            "tgt_ix": "421-ARR_v1_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_21",
+            "tgt_ix": "421-ARR_v1_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_23",
+            "tgt_ix": "421-ARR_v1_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_22",
+            "tgt_ix": "421-ARR_v1_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_22",
+            "tgt_ix": "421-ARR_v1_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_22",
+            "tgt_ix": "421-ARR_v1_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_0",
+            "tgt_ix": "421-ARR_v1_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_24",
+            "tgt_ix": "421-ARR_v1_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_26",
+            "tgt_ix": "421-ARR_v1_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_25",
+            "tgt_ix": "421-ARR_v1_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_25",
+            "tgt_ix": "421-ARR_v1_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_25",
+            "tgt_ix": "421-ARR_v1_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_0",
+            "tgt_ix": "421-ARR_v1_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_27",
+            "tgt_ix": "421-ARR_v1_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_28",
+            "tgt_ix": "421-ARR_v1_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_28",
+            "tgt_ix": "421-ARR_v1_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_0",
+            "tgt_ix": "421-ARR_v1_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_29",
+            "tgt_ix": "421-ARR_v1_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_31",
+            "tgt_ix": "421-ARR_v1_32",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_32",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_34",
+            "tgt_ix": "421-ARR_v1_35",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_33",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_34",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_35",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_32",
+            "tgt_ix": "421-ARR_v1_33",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_36",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_37",
+            "tgt_ix": "421-ARR_v1_38",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_37",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_38",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_36",
+            "tgt_ix": "421-ARR_v1_37",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_39",
+            "tgt_ix": "421-ARR_v1_40",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_40",
+            "tgt_ix": "421-ARR_v1_41",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_41",
+            "tgt_ix": "421-ARR_v1_42",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_42",
+            "tgt_ix": "421-ARR_v1_43",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_43",
+            "tgt_ix": "421-ARR_v1_44",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_44",
+            "tgt_ix": "421-ARR_v1_45",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_45",
+            "tgt_ix": "421-ARR_v1_46",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_46",
+            "tgt_ix": "421-ARR_v1_47",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_39",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_40",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_41",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_42",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_43",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_44",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_45",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_46",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_47",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_38",
+            "tgt_ix": "421-ARR_v1_39",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_48",
+            "tgt_ix": "421-ARR_v1_49",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_49",
+            "tgt_ix": "421-ARR_v1_50",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_50",
+            "tgt_ix": "421-ARR_v1_51",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_48",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_49",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_50",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_51",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_47",
+            "tgt_ix": "421-ARR_v1_48",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_52",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_51",
+            "tgt_ix": "421-ARR_v1_52",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_53",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_52",
+            "tgt_ix": "421-ARR_v1_53",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_54",
+            "tgt_ix": "421-ARR_v1_55",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_54",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_55",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_53",
+            "tgt_ix": "421-ARR_v1_54",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_56",
+            "tgt_ix": "421-ARR_v1_57",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_57",
+            "tgt_ix": "421-ARR_v1_58",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_56",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_57",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_58",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_55",
+            "tgt_ix": "421-ARR_v1_56",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_59",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_58",
+            "tgt_ix": "421-ARR_v1_59",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_60",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_59",
+            "tgt_ix": "421-ARR_v1_60",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_61",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_60",
+            "tgt_ix": "421-ARR_v1_61",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_62",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_61",
+            "tgt_ix": "421-ARR_v1_62",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_63",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_62",
+            "tgt_ix": "421-ARR_v1_63",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "421-ARR_v1_0",
+            "tgt_ix": "421-ARR_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_1",
+            "tgt_ix": "421-ARR_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_2",
+            "tgt_ix": "421-ARR_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_3",
+            "tgt_ix": "421-ARR_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_3",
+            "tgt_ix": "421-ARR_v1_3@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_3",
+            "tgt_ix": "421-ARR_v1_3@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_3",
+            "tgt_ix": "421-ARR_v1_3@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_3",
+            "tgt_ix": "421-ARR_v1_3@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_4",
+            "tgt_ix": "421-ARR_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_5",
+            "tgt_ix": "421-ARR_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_5",
+            "tgt_ix": "421-ARR_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_5",
+            "tgt_ix": "421-ARR_v1_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_5",
+            "tgt_ix": "421-ARR_v1_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_6",
+            "tgt_ix": "421-ARR_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_6",
+            "tgt_ix": "421-ARR_v1_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_6",
+            "tgt_ix": "421-ARR_v1_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_6",
+            "tgt_ix": "421-ARR_v1_6@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_6",
+            "tgt_ix": "421-ARR_v1_6@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_6",
+            "tgt_ix": "421-ARR_v1_6@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_7",
+            "tgt_ix": "421-ARR_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_7",
+            "tgt_ix": "421-ARR_v1_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_7",
+            "tgt_ix": "421-ARR_v1_7@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_8",
+            "tgt_ix": "421-ARR_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_8",
+            "tgt_ix": "421-ARR_v1_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_9",
+            "tgt_ix": "421-ARR_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_9",
+            "tgt_ix": "421-ARR_v1_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_9",
+            "tgt_ix": "421-ARR_v1_9@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_9",
+            "tgt_ix": "421-ARR_v1_9@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_10",
+            "tgt_ix": "421-ARR_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_10",
+            "tgt_ix": "421-ARR_v1_10@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_10",
+            "tgt_ix": "421-ARR_v1_10@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_10",
+            "tgt_ix": "421-ARR_v1_10@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_10",
+            "tgt_ix": "421-ARR_v1_10@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_11",
+            "tgt_ix": "421-ARR_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_12",
+            "tgt_ix": "421-ARR_v1_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_12",
+            "tgt_ix": "421-ARR_v1_12@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_12",
+            "tgt_ix": "421-ARR_v1_12@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_13",
+            "tgt_ix": "421-ARR_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_13",
+            "tgt_ix": "421-ARR_v1_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_13",
+            "tgt_ix": "421-ARR_v1_13@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_13",
+            "tgt_ix": "421-ARR_v1_13@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_14",
+            "tgt_ix": "421-ARR_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_14",
+            "tgt_ix": "421-ARR_v1_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_14",
+            "tgt_ix": "421-ARR_v1_14@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_14",
+            "tgt_ix": "421-ARR_v1_14@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_15",
+            "tgt_ix": "421-ARR_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_15",
+            "tgt_ix": "421-ARR_v1_15@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_15",
+            "tgt_ix": "421-ARR_v1_15@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_15",
+            "tgt_ix": "421-ARR_v1_15@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_15",
+            "tgt_ix": "421-ARR_v1_15@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_15",
+            "tgt_ix": "421-ARR_v1_15@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_16",
+            "tgt_ix": "421-ARR_v1_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_16",
+            "tgt_ix": "421-ARR_v1_16@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_17",
+            "tgt_ix": "421-ARR_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_17",
+            "tgt_ix": "421-ARR_v1_17@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_17",
+            "tgt_ix": "421-ARR_v1_17@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_17",
+            "tgt_ix": "421-ARR_v1_17@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_17",
+            "tgt_ix": "421-ARR_v1_17@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_17",
+            "tgt_ix": "421-ARR_v1_17@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_17",
+            "tgt_ix": "421-ARR_v1_17@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_17",
+            "tgt_ix": "421-ARR_v1_17@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_18",
+            "tgt_ix": "421-ARR_v1_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_19",
+            "tgt_ix": "421-ARR_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_19",
+            "tgt_ix": "421-ARR_v1_19@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_19",
+            "tgt_ix": "421-ARR_v1_19@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_19",
+            "tgt_ix": "421-ARR_v1_19@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_19",
+            "tgt_ix": "421-ARR_v1_19@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_19",
+            "tgt_ix": "421-ARR_v1_19@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_19",
+            "tgt_ix": "421-ARR_v1_19@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_20",
+            "tgt_ix": "421-ARR_v1_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_20",
+            "tgt_ix": "421-ARR_v1_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_20",
+            "tgt_ix": "421-ARR_v1_20@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_20",
+            "tgt_ix": "421-ARR_v1_20@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_20",
+            "tgt_ix": "421-ARR_v1_20@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_21",
+            "tgt_ix": "421-ARR_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_21",
+            "tgt_ix": "421-ARR_v1_21@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_21",
+            "tgt_ix": "421-ARR_v1_21@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_21",
+            "tgt_ix": "421-ARR_v1_21@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_22",
+            "tgt_ix": "421-ARR_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_23",
+            "tgt_ix": "421-ARR_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_24",
+            "tgt_ix": "421-ARR_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_24",
+            "tgt_ix": "421-ARR_v1_24@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_24",
+            "tgt_ix": "421-ARR_v1_24@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_24",
+            "tgt_ix": "421-ARR_v1_24@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_24",
+            "tgt_ix": "421-ARR_v1_24@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_24",
+            "tgt_ix": "421-ARR_v1_24@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_24",
+            "tgt_ix": "421-ARR_v1_24@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_25",
+            "tgt_ix": "421-ARR_v1_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_26",
+            "tgt_ix": "421-ARR_v1_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_26",
+            "tgt_ix": "421-ARR_v1_26@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_26",
+            "tgt_ix": "421-ARR_v1_26@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_26",
+            "tgt_ix": "421-ARR_v1_26@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_27",
+            "tgt_ix": "421-ARR_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_27",
+            "tgt_ix": "421-ARR_v1_27@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_27",
+            "tgt_ix": "421-ARR_v1_27@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_27",
+            "tgt_ix": "421-ARR_v1_27@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_28",
+            "tgt_ix": "421-ARR_v1_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_29",
+            "tgt_ix": "421-ARR_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_29",
+            "tgt_ix": "421-ARR_v1_29@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_29",
+            "tgt_ix": "421-ARR_v1_29@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_29",
+            "tgt_ix": "421-ARR_v1_29@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_30",
+            "tgt_ix": "421-ARR_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_31",
+            "tgt_ix": "421-ARR_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_31",
+            "tgt_ix": "421-ARR_v1_31@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_31",
+            "tgt_ix": "421-ARR_v1_31@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_31",
+            "tgt_ix": "421-ARR_v1_31@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_31",
+            "tgt_ix": "421-ARR_v1_31@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_31",
+            "tgt_ix": "421-ARR_v1_31@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_31",
+            "tgt_ix": "421-ARR_v1_31@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_31",
+            "tgt_ix": "421-ARR_v1_31@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_32",
+            "tgt_ix": "421-ARR_v1_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_32",
+            "tgt_ix": "421-ARR_v1_32@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_32",
+            "tgt_ix": "421-ARR_v1_32@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_33",
+            "tgt_ix": "421-ARR_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_34",
+            "tgt_ix": "421-ARR_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_35",
+            "tgt_ix": "421-ARR_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_36",
+            "tgt_ix": "421-ARR_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_36",
+            "tgt_ix": "421-ARR_v1_36@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_36",
+            "tgt_ix": "421-ARR_v1_36@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_36",
+            "tgt_ix": "421-ARR_v1_36@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_36",
+            "tgt_ix": "421-ARR_v1_36@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_37",
+            "tgt_ix": "421-ARR_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_37",
+            "tgt_ix": "421-ARR_v1_37@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_37",
+            "tgt_ix": "421-ARR_v1_37@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_38",
+            "tgt_ix": "421-ARR_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_39",
+            "tgt_ix": "421-ARR_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_39",
+            "tgt_ix": "421-ARR_v1_39@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_40",
+            "tgt_ix": "421-ARR_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_41",
+            "tgt_ix": "421-ARR_v1_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_41",
+            "tgt_ix": "421-ARR_v1_41@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_41",
+            "tgt_ix": "421-ARR_v1_41@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_42",
+            "tgt_ix": "421-ARR_v1_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_43",
+            "tgt_ix": "421-ARR_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_44",
+            "tgt_ix": "421-ARR_v1_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_44",
+            "tgt_ix": "421-ARR_v1_44@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_45",
+            "tgt_ix": "421-ARR_v1_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_46",
+            "tgt_ix": "421-ARR_v1_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_46",
+            "tgt_ix": "421-ARR_v1_46@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_46",
+            "tgt_ix": "421-ARR_v1_46@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_46",
+            "tgt_ix": "421-ARR_v1_46@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_47",
+            "tgt_ix": "421-ARR_v1_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_48",
+            "tgt_ix": "421-ARR_v1_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_48",
+            "tgt_ix": "421-ARR_v1_48@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_49",
+            "tgt_ix": "421-ARR_v1_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_50",
+            "tgt_ix": "421-ARR_v1_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_50",
+            "tgt_ix": "421-ARR_v1_50@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_51",
+            "tgt_ix": "421-ARR_v1_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_52",
+            "tgt_ix": "421-ARR_v1_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_52",
+            "tgt_ix": "421-ARR_v1_52@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_52",
+            "tgt_ix": "421-ARR_v1_52@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_53",
+            "tgt_ix": "421-ARR_v1_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_54",
+            "tgt_ix": "421-ARR_v1_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_54",
+            "tgt_ix": "421-ARR_v1_54@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_55",
+            "tgt_ix": "421-ARR_v1_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_56",
+            "tgt_ix": "421-ARR_v1_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_56",
+            "tgt_ix": "421-ARR_v1_56@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_56",
+            "tgt_ix": "421-ARR_v1_56@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_57",
+            "tgt_ix": "421-ARR_v1_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_57",
+            "tgt_ix": "421-ARR_v1_57@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_57",
+            "tgt_ix": "421-ARR_v1_57@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_58",
+            "tgt_ix": "421-ARR_v1_58@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_58",
+            "tgt_ix": "421-ARR_v1_58@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_58",
+            "tgt_ix": "421-ARR_v1_58@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_59",
+            "tgt_ix": "421-ARR_v1_59@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_59",
+            "tgt_ix": "421-ARR_v1_59@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_60",
+            "tgt_ix": "421-ARR_v1_60@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_61",
+            "tgt_ix": "421-ARR_v1_61@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_62",
+            "tgt_ix": "421-ARR_v1_62@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_63",
+            "tgt_ix": "421-ARR_v1_63@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_64",
+            "tgt_ix": "421-ARR_v1_64@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_65",
+            "tgt_ix": "421-ARR_v1_65@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_66",
+            "tgt_ix": "421-ARR_v1_66@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_67",
+            "tgt_ix": "421-ARR_v1_67@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_68",
+            "tgt_ix": "421-ARR_v1_68@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_69",
+            "tgt_ix": "421-ARR_v1_69@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_70",
+            "tgt_ix": "421-ARR_v1_70@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_71",
+            "tgt_ix": "421-ARR_v1_71@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_72",
+            "tgt_ix": "421-ARR_v1_72@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_73",
+            "tgt_ix": "421-ARR_v1_73@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_74",
+            "tgt_ix": "421-ARR_v1_74@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_75",
+            "tgt_ix": "421-ARR_v1_75@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_76",
+            "tgt_ix": "421-ARR_v1_76@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "421-ARR_v1_77",
+            "tgt_ix": "421-ARR_v1_77@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 810,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "position_tag_type": "from_draft",
+        "doc_id": "421-ARR",
+        "version": 1
+    }
+}

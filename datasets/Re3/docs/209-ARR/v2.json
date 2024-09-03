@@ -1,0 +1,3354 @@
+{
+    "nodes": [
+        {
+            "ix": "209-ARR_v2_0",
+            "content": "Building Multilingual Machine Translation Systems That Serve Arbitrary X-Y Translations",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_2",
+            "content": "Multilingual Neural Machine Translation (MNMT) enables one system to translate sentences from multiple source languages to multiple target languages, greatly reducing deployment costs compared with conventional bilingual systems. The MNMT training benefit, however, is often limited to many-to-one directions. The model suffers from poor performance in one-to-many and many-to-many with zero-shot setup.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_3",
+            "content": "To address this issue, this paper discusses how to practically build MNMT systems that serve arbitrary X-Y translation directions while leveraging multilinguality with a two-stage training strategy of pretraining and finetuning. Experimenting with the WMT'21 multilingual translation task, we demonstrate that our systems outperform the conventional baselines of direct bilingual models and pivot translation models for most directions, averagely giving +6.0 and +4.1 BLEU, without the need for architecture change or extra data collection. Moreover, we also examine our proposed approach in an extremely large-scale data setting to accommodate practical deployment scenarios.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_4",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "209-ARR_v2_5",
+            "content": "Multilingual Neural Machine Translation (MNMT), which enables one system to serve translation for multiple directions, has attracted much attention in the machine translation area (Zoph and Knight, 2016;Firat et al., 2016). Because the multilingual capability hugely reduces the deployment cost at training and inference, MNMT has actively been employed as a machine translation system backbone in recent years (Johnson et al., 2017;Hassan et al., 2018).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_6",
+            "content": "Most MNMT systems are trained with multiple English-centric data for both directions (e.g., English \u2192 {French, Chinese} (En-X) and {French, * Equal contributions.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_7",
+            "content": "Chinese} \u2192 English (X-En)). Recent work (Gu et al., 2019;Zhang et al., 2020;Yang et al., 2021b) pointed out that such MNMT systems severely face an off-target translation issue, especially in translations from a non-English language X to another non-English language Y. Meanwhile, Freitag and Firat (2020) have extended data resources with multi-way aligned data and reported that one complete many-to-many MNMT can be fully supervised, achieving competitive translation performance for all X-Y directions. In our preliminary experiments, we observed that the complete manyto-many training is still as challenging as one-tomany training (Johnson et al., 2017;Wang et al., 2020), since we have introduced more one-to-many translation tasks into the training. Similarly reported in the many-to-many training with zero-shot setup (Gu et al., 2019;Yang et al., 2021b), the complete MNMT model also suffers from capturing correlations in the data for all the X-Y directions as one model training, due to highly imbalanced data.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_8",
+            "content": "In this paper, we propose a two-stage training for complete MNMT systems that serve arbitrary X-Y translations by 1) pretraining a complete multilingual many-to-many model and 2) finetuning the model to effectively transfer knowledge from pretraining to task-specific multilingual systems. Considering that MNMT is a multi-task learner of translation tasks with \"multiple languages\", the complete multilingual model learns more diverse and general multilingual representations. We transfer the representations to a specifically targeted task via many-to-one multilingual finetuning, and eventually build multiple many-to-one MNMT models that cover all X-Y directions. The experimental results on the WMT'21 multilingual translation task show that our systems have substantial improvement against conventional bilingual approaches and many-to-one multilingual approaches for most directions. Besides, we discuss our proposal in the Figure 1: Average translation performance of our systems in the WMT'21 large-scale multilingual translation Task 1 (top) and Task 2 (bottom), with the respective average improvement of (12E6D, 12E6D+FT, 24E12D, 24E12D+FT) = (+3.6, +4.7, +5.0, +6.0) and (+2.0, +2.9, +3.2, +4.1) against the bilingual baseline (\"Bi\") and the pivot translation baselines (\"Pivot\"). \"12E6D/24E12D\" denote our two settings, with \"+FT\" suffix for finetuned systems.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_9",
+            "content": "light of feasible deployment scenarios and show that the proposed approach also works well in an extremely large-scale data setting.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_10",
+            "content": "Two-Stage Training for MNMT Models",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "209-ARR_v2_11",
+            "content": "To support all possible translations with |L| languages (including English), we first train a complete MNMT system on all available parallel data for |L| \u00d7 (|L| \u2212 1) directions. We assume that there exist data of (|L| \u2212 1) English-centric language pairs and remaining (|L|\u22121)\u00d7(|L|\u22122) 2 non-English-centric language pairs, which lets the system learn multilingual representations across all |L| languages. Usually, the volume of English-centric data is much greater than non-English-centric one. Then, we transfer the multilingual representations to one target language L by finetuning the system on a subset of training data for many-to-L directions (i.e., multilingual many-to-one finetuning). This step leads the decoder towards the specifically targeted language L rather than multiple languages. As a result, we obtain |L| multilingual many-toone systems to serve all X-Y translation directions. We experiment with our proposed approach in the following two settings: 1) WMT'21 large-scale multilingual translation data with 972M sentence pairs and 2) our in-house production-scale dataset with 4.1B sentence pairs.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_12",
+            "content": "WMT'21 Multilingual Translation Task",
+            "ntype": "title",
+            "meta": {
+                "section": "3"
+            }
+        },
+        {
+            "ix": "209-ARR_v2_13",
+            "content": "We experiment with two small tasks of the WMT'21 large-scale multilingual translation task.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_14",
+            "content": "The tasks provide multilingual multi-way parallel corpora from the Flores 101 data (Wenzek et al., 2021). The parallel sentences are provided among English (en), five Central and East European languages of {Croatian (hr), Hungarian (hu), Estonian (et), Serbian (sr), Macedonian (mk)} for the task 1, and five Southeast Asian languages of {Javanese (jv), Indonesian (id), Malay (ms), Tagalog (tl), Tamil (ta)} for the task 2. We removed sentence pairs either of whose sides is an empty line, and eventually collected the data with (Englishcentric, Non-English-centric)=(321M, 651M) sentence pairs in total. The data size per direction varies in a range of 0.07M-83.9M. To balance the data distribution across languages (Kudugunta et al., 2019), we up-sample the low-resource languages with temperature=5. We append language ID tokens at the end of source sentences to specify a target language (Johnson et al., 2017). We tokenize the data with the SentencePiece (Kudo and Richardson, 2018) and build a shared vocabulary with 64k tokens. We train Transformer models (Vaswani et al., 2017) consisting of a m-layer encoder and n-layer decoder with (hidden dim., ffn dim.) =(768, 3072) in a complete multilingual many-to-many fashion. We have two settings of (m, n) = ( 12 1: Average sacreBLEU scores for many-to-L directions on both Task 1 and 2, and the data statistics of the corresponding L-centric training data (L={en, hu, hr, sr, et, id, ms, tl, mk, jv, ta}). All the multilingual systems including many-to-one baselines and the proposed model are 12E6D. Note that the \"Pivot-based\" system for manyto-English directions is identical to \"Bilingual\".",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_15",
+            "content": "for \"12E6D\" and (24, 12) for \"24E12D\" , to learn diverse multilingual dataset. The model parameters are optimized by using RAdam (Liu et al., 2020) with an initial learning rate of 0.025, and warm-up steps of 10k and 30k for the 12E6D and 24E12D model training, respectively. The systems are pretrained on 64 V100 GPUs with a mini-batch size of 3072 tokens and gradient accumulation of 16. After the pretraining, the models are finetuned on a subset of X-L training data. We finetune the model parameters gently on 8 V100 GPUs with the same mini-batch size, gradient accumulations, and optimizer with different learning rate scheduling of (init_lr, warm-up steps)=({1e-4, 1e-5, 1e-6}, 8k). The best checkpoints are selected based on development loss. The translations are obtained by a beam search decoding with a beam size of 4, unless otherwise stated.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_16",
+            "content": "Baselines For system comparison, we build three different baselines: 1) direct bilingual systems, 2) pivot translation systems via English (only applicable for non-English X-Y evaluation) (Utiyama and Isahara, 2007), and 3) many-to-one multilingual systems with the 12E6D architecture. The bilingual and pivot-based baselines employ the Transformer base architecture. The embedding dimension is set to 256 for jv, ms, ta, and tl, because of the training data scarcity. For the X-Y pivot translation, a source sentence in language X is translated to English with a beam size of 5 by the X-En model, then the best output is translated to the final target language Y by the En-Y model.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_17",
+            "content": "All results on the test sets are displayed in Figure 1 and Table 1, where we report the case-sensitive sacreBLEU score (Post, 2018) for translation accuracy. Overall, our best systems (\"24E12D+FT\") are significantly better by \u2265 +0.5 sacreBLEU for 83% and 88% directions against the bilingual baselines and the pivot translation baselines, respectively. In Table 1, we present the average sacreBLEU scores for many-to-L directions, showing that our proposed approach successfully achieved the best performance in most targeted languages. Compared to the many-to-one multilingual baselines, the proposed approach of utilizing the complete MNMT model transfers multilingual representations more effectively to the targeted translation directions, as the L-centric data size are smaller. We also note that the winning system of the shared task achieved (task1, task2)=(37.6, 33.9) BLEU with a 36-layer encoder and 12-layer decoder model (Yang et al., 2021a) that is pretrained on extra language data including parallel and monolingual data, while our best system with a 24-layer encoder and 12-layer decoder obtained (task1, task2)=(25.7, 22.8) sacreBLEU, without using those extra data.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_18",
+            "content": "In-house Extremely Large-Scale Setting",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "209-ARR_v2_19",
+            "content": "Deploying a larger and larger model is not always feasible. We often have limitations in the computational resources at inference time, which leads to a trade-off problem between the performance and the decoding cost caused by the model architecture. In this section, we validate our proposed approach in an extremely large-scale data setting and also discuss how we can build lighter NMT models without the performance loss, while distilling the proposed MNMT systems (Kim and Rush, 2016). We briefly touch the following three topics of 1) multi-way multilingual data collection, 2) English-centric vs. multi-centric pretraining for X-Y translations, and 3) a lighter NMT model that addresses the tradeoff issue between performance and latency. we report the experimental results in the extremely large-scale setting.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_20",
+            "content": "We build an extremely large-scale data set using our in-house English-centric data set, consisting of 10 European languages, ranging 24M-192M sentences per language. This contains available parallel data and back-translated data between English and {German (de), French (fr), Spanish (es), Italian (it), Polish (pl), Greek (el), Dutch (nl), Portuguese (pt), and Romanian (ro)}. From these English-centric corpora, we extract a multi-way multilingual X-Y data, by aligning En-X and En-Y data via pivoting English. Specifically, we extracted {de, fr, es, it, pl}-centric data and concatenate them to the existent direct X-Y data, providing 78M-279M sentence pairs per direction. Similarly as in Section 3, we build a shared SentencePiece vocabulary with 128k tokens to address the large-scale setting.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_21",
+            "content": "En-centric vs Multi-centric Pretraining In a large-scale data setting, a question might come up; Which pretrained model provides generalized multilingual representations to achieve better X-Y translation quality? Considering English is often a dominant text data, e.g., 70% tasks are Englishcentric in the WMT'21 news translation task, the model supervised on English-centric corpora might learn representations enough to transfer for X-Y translations. To investigate the usefulness of the multi-centric data training, we pretrain our Transformer models with deeper 24-12 layers described in Section 3, on the English-centric data and the L-centric data (L={en,de,fr}), individually. After pretraining, we apply the multilingual many-to-one finetuning with a subset of the training data and evaluate each system for the fully supervised X-Y directions, i.e., xx-{en,de,fr}, and the partially supervised X-Y directions, i.e., xx-{es,it,pl}.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_22",
+            "content": "We followed the same training and finetuning settings as described in Section 3, unless otherwise stated.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_23",
+            "content": "MNMT with Light Decoder At the practical level, one drawback of the large-scale models would be latency at inference time. This is mostly caused by the high computational cost in the decoder layers due to auto-regressive models and the extra cross-attention network in each block of the decoder. Recent studies (Kasai et al., 2021;Hsu et al., 2020;Li et al., 2021) have experimentally shown that models with a deep encoder and a shallow decoder can address the issue, without losing much performance. Fortunately, such an architecture also satisfies demands of the many-to-one MNMT training, which requires the encoder networks to be more complex to handle various source languages. To examine the light NMT model architecture, we train the Transformer base architecture modified with 9-3 layers (E9D3) in a bilingual setting and compare it with a standard Transformer base model, with 6-6 layers (E6D6), as a baseline. Additionally, we also report direct X-Y translation performance, when distilling the best large-scale MNMT models alongside the light NMT models as a student model. More specifically, following Kim and Rush (2016), we train light NMT student models (E9D3) that serve many-to-L translations (L={de, fr, es, it, pl}).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_24",
+            "content": "Results Table 2 reports average sacreBLEU scores for many-to-one directions in our in-house X-Y test sets. For the xx-{de,fr} directions, the proposed finetuning helps both English-centric and multi-centric pretrained models to improve the accuracy. Overall, the finetuned multi-centric models achieved the best, largely outperforming the English pivot-based baselines by +2.6 and +2.8 points. For the comparison among the multilingual systems, the multi-centric model without finetuning already surpasses the finetuned English-centric systems with a large margin of +0.9 and +0.8 points for both xx-{de,fr} directions. This suggests that, by pretraining a model on more multi-centric data, the model learns better multilinguality to transfer. For the xx-{es,it,pl} directions 1 , the fineutned multi-centric systems gain similar accuracy improvement, averagely outperforming the conventional pivot-based baselines.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_25",
+            "content": "Figure 2 shows the effectiveness of our light NMT model architecture for five bilingual En-X directions, reporting the translation performance in sacreBLEU scores and the latency measured on CPUs. Our light NMT model (E9D3) successfully achieves almost 2x speed up, without much drop of the performance for all directions. Employing this light model architecture as a student model, we report the distilled many-to-one model performance in Table 3, measured by sacreBLEU and COMET scores (Rei et al., 2020). For consistent comparison, we also built English bilingual baselines (E6D6) that are distilled from the bilingual Teachers, then we obtained the English pivot-based translation performance. For all the many-to-L directions (L={de,fr,es,it,pl}), the light NMT models that are distilled from the best MNMT models show the best performance in both metrics. Besides that, we also note that our direct X-Y light NMT systems successfully save the decoding cost with 75% against the pivot translation 2 .",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_26",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "5"
+            }
+        },
+        {
+            "ix": "209-ARR_v2_27",
+            "content": "This paper proposes a simple but effective twostage training strategy for MNMT systems that serve arbitrary X-Y translations. To support translations across languages, we first pretrain a complete multilingual many-to-many model, then transfer the representations via finetuning the model in a many-to-one multilingual fashion. In the WMT'21 translation task, we experimentally showed that the proposed approach substantially improve translation accuracy for most X-Y directions against the strong conventional baselines of bilingual systems, pivot translation systems, and many-to-one multilingual systems. We also examined the proposed approach in the extremely large-scale setting, while addressing the practical questions such as multiway parallel data collection, the usefulness of multilinguality during the pretraining and finetuning, and how to save the decoding cost, achieving the better X-Y quality.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "209-ARR_v2_28",
+            "content": "Orhan Firat, Baskaran Sankaran, Yaser Al-Onaizan, Fatos Vural, Kyunghyun Cho, Zero-resource translation with multi-lingual neural machine translation, 2016, Proceedings of the 2016 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": [
+                    "Orhan Firat",
+                    "Baskaran Sankaran",
+                    "Yaser Al-Onaizan",
+                    "Fatos Vural",
+                    "Kyunghyun Cho"
+                ],
+                "title": "Zero-resource translation with multi-lingual neural machine translation",
+                "pub_date": "2016",
+                "pub_title": "Proceedings of the 2016 Conference on Empirical Methods in Natural Language Processing",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "209-ARR_v2_29",
+            "content": "Markus Freitag, Orhan Firat, Complete multilingual neural machine translation, 2020, Proceedings of the Fifth Conference on Machine Translation, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": [
+                    "Markus Freitag",
+                    "Orhan Firat"
+                ],
+                "title": "Complete multilingual neural machine translation",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the Fifth Conference on Machine Translation",
+                "pub": null
+            }
+        },
+        {
+            "ix": "209-ARR_v2_30",
+            "content": "Jiatao Gu, Yong Wang, Kyunghyun Cho, O Victor,  Li, Improved zero-shot neural machine translation via ignoring spurious correlations, 2019, Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": [
+                    "Jiatao Gu",
+                    "Yong Wang",
+                    "Kyunghyun Cho",
+                    "O Victor",
+                    " Li"
+                ],
+                "title": "Improved zero-shot neural machine translation via ignoring spurious correlations",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "209-ARR_v2_31",
+            "content": "UNKNOWN, None, 2018, Achieving human parity on automatic chinese to english news translation, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": null,
+                "title": null,
+                "pub_date": "2018",
+                "pub_title": "Achieving human parity on automatic chinese to english news translation",
+                "pub": null
+            }
+        },
+        {
+            "ix": "209-ARR_v2_32",
+            "content": "Yi-Te Hsu, Sarthak Garg, Yi-Hsiu Liao, Ilya Chatsviorkin, Efficient inference for neural machine translation, 2020, Proceedings of SustaiNLP: Workshop on Simple and Efficient Natural Language Processing, Online. Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": [
+                    "Yi-Te Hsu",
+                    "Sarthak Garg",
+                    "Yi-Hsiu Liao",
+                    "Ilya Chatsviorkin"
+                ],
+                "title": "Efficient inference for neural machine translation",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of SustaiNLP: Workshop on Simple and Efficient Natural Language Processing",
+                "pub": "Online. Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "209-ARR_v2_33",
+            "content": "Melvin Johnson, Mike Schuster, Quoc Le, Maxim Krikun, Yonghui Wu, Zhifeng Chen, Nikhil Thorat, Fernanda Vi\u00e9gas, Martin Wattenberg, Greg Corrado, Macduff Hughes, Jeffrey Dean, Google's multilingual neural machine translation system: Enabling zero-shot translation, 2017, Transactions of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "Melvin Johnson",
+                    "Mike Schuster",
+                    "Quoc Le",
+                    "Maxim Krikun",
+                    "Yonghui Wu",
+                    "Zhifeng Chen",
+                    "Nikhil Thorat",
+                    "Fernanda Vi\u00e9gas",
+                    "Martin Wattenberg",
+                    "Greg Corrado",
+                    "Macduff Hughes",
+                    "Jeffrey Dean"
+                ],
+                "title": "Google's multilingual neural machine translation system: Enabling zero-shot translation",
+                "pub_date": "2017",
+                "pub_title": "Transactions of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "209-ARR_v2_34",
+            "content": "Jungo Kasai, Nikolaos Pappas, Hao Peng, James Cross, Noah Smith, Deep encoder, shallow decoder: Reevaluating non-autoregressive machine translation, 2021, International Conference on Learning Representations, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": [
+                    "Jungo Kasai",
+                    "Nikolaos Pappas",
+                    "Hao Peng",
+                    "James Cross",
+                    "Noah Smith"
+                ],
+                "title": "Deep encoder, shallow decoder: Reevaluating non-autoregressive machine translation",
+                "pub_date": "2021",
+                "pub_title": "International Conference on Learning Representations",
+                "pub": null
+            }
+        },
+        {
+            "ix": "209-ARR_v2_35",
+            "content": "Yoon Kim, Alexander Rush, Sequencelevel knowledge distillation, 2016, Proceedings of the 2016 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": [
+                    "Yoon Kim",
+                    "Alexander Rush"
+                ],
+                "title": "Sequencelevel knowledge distillation",
+                "pub_date": "2016",
+                "pub_title": "Proceedings of the 2016 Conference on Empirical Methods in Natural Language Processing",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "209-ARR_v2_36",
+            "content": "Taku Kudo, John Richardson, SentencePiece: A simple and language independent subword tokenizer and detokenizer for neural text processing, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing: System Demonstrations, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": [
+                    "Taku Kudo",
+                    "John Richardson"
+                ],
+                "title": "SentencePiece: A simple and language independent subword tokenizer and detokenizer for neural text processing",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing: System Demonstrations",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "209-ARR_v2_37",
+            "content": "Sneha Kudugunta, Ankur Bapna, Isaac Caswell, Orhan Firat, Investigating multilingual NMT representations at scale, 2019, Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP), Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    "Sneha Kudugunta",
+                    "Ankur Bapna",
+                    "Isaac Caswell",
+                    "Orhan Firat"
+                ],
+                "title": "Investigating multilingual NMT representations at scale",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "209-ARR_v2_38",
+            "content": "Yanyang Li, Ye Lin, Tong Xiao, Jingbo Zhu, An efficient transformer decoder with compressed sub-layers, 2021, Proceedings of the AAAI Conference on Artificial Intelligence, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": [
+                    "Yanyang Li",
+                    "Ye Lin",
+                    "Tong Xiao",
+                    "Jingbo Zhu"
+                ],
+                "title": "An efficient transformer decoder with compressed sub-layers",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the AAAI Conference on Artificial Intelligence",
+                "pub": null
+            }
+        },
+        {
+            "ix": "209-ARR_v2_39",
+            "content": "Liyuan Liu, Haoming Jiang, Pengcheng He, Weizhu Chen, Xiaodong Liu, Jianfeng Gao, Jiawei Han, On the variance of the adaptive learning rate and beyond, 2020, International Conference on Learning Representations, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": [
+                    "Liyuan Liu",
+                    "Haoming Jiang",
+                    "Pengcheng He",
+                    "Weizhu Chen",
+                    "Xiaodong Liu",
+                    "Jianfeng Gao",
+                    "Jiawei Han"
+                ],
+                "title": "On the variance of the adaptive learning rate and beyond",
+                "pub_date": "2020",
+                "pub_title": "International Conference on Learning Representations",
+                "pub": null
+            }
+        },
+        {
+            "ix": "209-ARR_v2_40",
+            "content": "Matt Post, A call for clarity in reporting BLEU scores, 2018, Proceedings of the Third Conference on Machine Translation: Research Papers, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": [
+                    "Matt Post"
+                ],
+                "title": "A call for clarity in reporting BLEU scores",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the Third Conference on Machine Translation: Research Papers",
+                "pub": null
+            }
+        },
+        {
+            "ix": "209-ARR_v2_41",
+            "content": "Ricardo Rei, Craig Stewart, Ana Farinha, Alon Lavie, COMET: A neural framework for MT evaluation, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": [
+                    "Ricardo Rei",
+                    "Craig Stewart",
+                    "Ana Farinha",
+                    "Alon Lavie"
+                ],
+                "title": "COMET: A neural framework for MT evaluation",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "209-ARR_v2_42",
+            "content": "Masao Utiyama, Hitoshi Isahara, A comparison of pivot methods for phrase-based statistical machine translation, 2007, Human Language Technologies 2007: The Conference of the North American Chapter of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": [
+                    "Masao Utiyama",
+                    "Hitoshi Isahara"
+                ],
+                "title": "A comparison of pivot methods for phrase-based statistical machine translation",
+                "pub_date": "2007",
+                "pub_title": "Human Language Technologies 2007: The Conference of the North American Chapter of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "209-ARR_v2_43",
+            "content": "UNKNOWN, None, , Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b15",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": "Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "209-ARR_v2_44",
+            "content": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan Gomez, Illia Kaiser,  Polosukhin, Attention is all you need, 2017, Advances in Neural Information Processing Systems, Curran Associates, Inc.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b16",
+                "authors": [
+                    "Ashish Vaswani",
+                    "Noam Shazeer",
+                    "Niki Parmar",
+                    "Jakob Uszkoreit",
+                    "Llion Jones",
+                    "Aidan Gomez",
+                    "Illia Kaiser",
+                    " Polosukhin"
+                ],
+                "title": "Attention is all you need",
+                "pub_date": "2017",
+                "pub_title": "Advances in Neural Information Processing Systems",
+                "pub": "Curran Associates, Inc"
+            }
+        },
+        {
+            "ix": "209-ARR_v2_45",
+            "content": "Zirui Wang, Zachary Lipton, Yulia Tsvetkov, On negative interference in multilingual models: Findings and a meta-learning treatment, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b17",
+                "authors": [
+                    "Zirui Wang",
+                    "Zachary Lipton",
+                    "Yulia Tsvetkov"
+                ],
+                "title": "On negative interference in multilingual models: Findings and a meta-learning treatment",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "209-ARR_v2_46",
+            "content": "Guillaume Wenzek, Vishrav Chaudhary, Angela Fan, Sahir Gomez, Naman Goyal, Somya Jain, Douwe Kiela, Tristan Thrush, Francisco Guzm\u00e1n, 2021. Findings of the wmt 2021 shared task on large-scale multilingual machine translation, , Proceedings of the Sixth Conference on Machine Translation, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b18",
+                "authors": [
+                    "Guillaume Wenzek",
+                    "Vishrav Chaudhary",
+                    "Angela Fan",
+                    "Sahir Gomez",
+                    "Naman Goyal",
+                    "Somya Jain",
+                    "Douwe Kiela",
+                    "Tristan Thrush",
+                    "Francisco Guzm\u00e1n"
+                ],
+                "title": "2021. Findings of the wmt 2021 shared task on large-scale multilingual machine translation",
+                "pub_date": null,
+                "pub_title": "Proceedings of the Sixth Conference on Machine Translation",
+                "pub": null
+            }
+        },
+        {
+            "ix": "209-ARR_v2_47",
+            "content": "Jian Yang, Shuming Ma, Haoyang Huang, Dongdong Zhang, Li Dong, Shaohan Huang, Alexandre Muzio, Saksham Singhal, Hany Hassan, Xia Song, Furu Wei, Multilingual machine translation systems from Microsoft for WMT21 shared task, 2021, Proceedings of the Sixth Conference on Machine Translation, Online. Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b19",
+                "authors": [
+                    "Jian Yang",
+                    "Shuming Ma",
+                    "Haoyang Huang",
+                    "Dongdong Zhang",
+                    "Li Dong",
+                    "Shaohan Huang",
+                    "Alexandre Muzio",
+                    "Saksham Singhal",
+                    "Hany Hassan",
+                    "Xia Song",
+                    "Furu Wei"
+                ],
+                "title": "Multilingual machine translation systems from Microsoft for WMT21 shared task",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the Sixth Conference on Machine Translation",
+                "pub": "Online. Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "209-ARR_v2_48",
+            "content": "Yilin Yang, Akiko Eriguchi, Alexandre Muzio, Prasad Tadepalli, Stefan Lee, Hany Hassan, Improving multilingual translation by representation and gradient regularization, 2021, Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b20",
+                "authors": [
+                    "Yilin Yang",
+                    "Akiko Eriguchi",
+                    "Alexandre Muzio",
+                    "Prasad Tadepalli",
+                    "Stefan Lee",
+                    "Hany Hassan"
+                ],
+                "title": "Improving multilingual translation by representation and gradient regularization",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "209-ARR_v2_49",
+            "content": "Biao Zhang, Philip Williams, Ivan Titov, Rico Sennrich, Improving massively multilingual neural machine translation and zero-shot translation, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b21",
+                "authors": [
+                    "Biao Zhang",
+                    "Philip Williams",
+                    "Ivan Titov",
+                    "Rico Sennrich"
+                ],
+                "title": "Improving massively multilingual neural machine translation and zero-shot translation",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "209-ARR_v2_50",
+            "content": "Barret Zoph, Kevin Knight, Multi-source neural translation, 2016, Proceedings of the 2016 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b22",
+                "authors": [
+                    "Barret Zoph",
+                    "Kevin Knight"
+                ],
+                "title": "Multi-source neural translation",
+                "pub_date": "2016",
+                "pub_title": "Proceedings of the 2016 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies",
+                "pub": "Association for Computational Linguistics"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "209-ARR_v2_0@0",
+            "content": "Building Multilingual Machine Translation Systems That Serve Arbitrary X-Y Translations",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_0",
+            "start": 0,
+            "end": 86,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_2@0",
+            "content": "Multilingual Neural Machine Translation (MNMT) enables one system to translate sentences from multiple source languages to multiple target languages, greatly reducing deployment costs compared with conventional bilingual systems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_2",
+            "start": 0,
+            "end": 228,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_2@1",
+            "content": "The MNMT training benefit, however, is often limited to many-to-one directions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_2",
+            "start": 230,
+            "end": 308,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_2@2",
+            "content": "The model suffers from poor performance in one-to-many and many-to-many with zero-shot setup.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_2",
+            "start": 310,
+            "end": 402,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_3@0",
+            "content": "To address this issue, this paper discusses how to practically build MNMT systems that serve arbitrary X-Y translation directions while leveraging multilinguality with a two-stage training strategy of pretraining and finetuning.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_3",
+            "start": 0,
+            "end": 227,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_3@1",
+            "content": "Experimenting with the WMT'21 multilingual translation task, we demonstrate that our systems outperform the conventional baselines of direct bilingual models and pivot translation models for most directions, averagely giving +6.0 and +4.1 BLEU, without the need for architecture change or extra data collection.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_3",
+            "start": 229,
+            "end": 539,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_3@2",
+            "content": "Moreover, we also examine our proposed approach in an extremely large-scale data setting to accommodate practical deployment scenarios.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_3",
+            "start": 541,
+            "end": 675,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_4@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_4",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_5@0",
+            "content": "Multilingual Neural Machine Translation (MNMT), which enables one system to serve translation for multiple directions, has attracted much attention in the machine translation area (Zoph and Knight, 2016;Firat et al., 2016).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_5",
+            "start": 0,
+            "end": 222,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_5@1",
+            "content": "Because the multilingual capability hugely reduces the deployment cost at training and inference, MNMT has actively been employed as a machine translation system backbone in recent years (Johnson et al., 2017;Hassan et al., 2018).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_5",
+            "start": 224,
+            "end": 453,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_6@0",
+            "content": "Most MNMT systems are trained with multiple English-centric data for both directions (e.g., English \u2192 {French, Chinese} (En-X) and {French, * Equal contributions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_6",
+            "start": 0,
+            "end": 161,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_7@0",
+            "content": "Chinese} \u2192 English (X-En)).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_7",
+            "start": 0,
+            "end": 26,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_7@1",
+            "content": "Recent work (Gu et al., 2019;Zhang et al., 2020;Yang et al., 2021b) pointed out that such MNMT systems severely face an off-target translation issue, especially in translations from a non-English language X to another non-English language Y. Meanwhile, Freitag and Firat (2020) have extended data resources with multi-way aligned data and reported that one complete many-to-many MNMT can be fully supervised, achieving competitive translation performance for all X-Y directions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_7",
+            "start": 28,
+            "end": 505,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_7@2",
+            "content": "In our preliminary experiments, we observed that the complete manyto-many training is still as challenging as one-tomany training (Johnson et al., 2017;Wang et al., 2020), since we have introduced more one-to-many translation tasks into the training.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_7",
+            "start": 507,
+            "end": 756,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_7@3",
+            "content": "Similarly reported in the many-to-many training with zero-shot setup (Gu et al., 2019;Yang et al., 2021b), the complete MNMT model also suffers from capturing correlations in the data for all the X-Y directions as one model training, due to highly imbalanced data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_7",
+            "start": 758,
+            "end": 1021,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_8@0",
+            "content": "In this paper, we propose a two-stage training for complete MNMT systems that serve arbitrary X-Y translations by 1) pretraining a complete multilingual many-to-many model and 2) finetuning the model to effectively transfer knowledge from pretraining to task-specific multilingual systems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_8",
+            "start": 0,
+            "end": 288,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_8@1",
+            "content": "Considering that MNMT is a multi-task learner of translation tasks with \"multiple languages\", the complete multilingual model learns more diverse and general multilingual representations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_8",
+            "start": 290,
+            "end": 476,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_8@2",
+            "content": "We transfer the representations to a specifically targeted task via many-to-one multilingual finetuning, and eventually build multiple many-to-one MNMT models that cover all X-Y directions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_8",
+            "start": 478,
+            "end": 666,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_8@3",
+            "content": "The experimental results on the WMT'21 multilingual translation task show that our systems have substantial improvement against conventional bilingual approaches and many-to-one multilingual approaches for most directions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_8",
+            "start": 668,
+            "end": 889,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_8@4",
+            "content": "Besides, we discuss our proposal in the Figure 1: Average translation performance of our systems in the WMT'21 large-scale multilingual translation Task 1 (top) and Task 2 (bottom), with the respective average improvement of (12E6D, 12E6D+FT, 24E12D, 24E12D+FT) = (+3.6, +4.7, +5.0, +6.0) and (+2.0, +2.9, +3.2, +4.1) against the bilingual baseline (\"Bi\") and the pivot translation baselines (\"Pivot\").",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_8",
+            "start": 891,
+            "end": 1292,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_8@5",
+            "content": "\"12E6D/24E12D\" denote our two settings, with \"+FT\" suffix for finetuned systems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_8",
+            "start": 1294,
+            "end": 1373,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_9@0",
+            "content": "light of feasible deployment scenarios and show that the proposed approach also works well in an extremely large-scale data setting.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_9",
+            "start": 0,
+            "end": 131,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_10@0",
+            "content": "Two-Stage Training for MNMT Models",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_10",
+            "start": 0,
+            "end": 33,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_11@0",
+            "content": "To support all possible translations with |L| languages (including English), we first train a complete MNMT system on all available parallel data for |L| \u00d7 (|L| \u2212 1) directions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_11",
+            "start": 0,
+            "end": 176,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_11@1",
+            "content": "We assume that there exist data of (|L| \u2212 1) English-centric language pairs and remaining (|L|\u22121)\u00d7(|L|\u22122) 2 non-English-centric language pairs, which lets the system learn multilingual representations across all |L| languages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_11",
+            "start": 178,
+            "end": 403,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_11@2",
+            "content": "Usually, the volume of English-centric data is much greater than non-English-centric one.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_11",
+            "start": 405,
+            "end": 493,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_11@3",
+            "content": "Then, we transfer the multilingual representations to one target language L by finetuning the system on a subset of training data for many-to-L directions (i.e., multilingual many-to-one finetuning).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_11",
+            "start": 495,
+            "end": 693,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_11@4",
+            "content": "This step leads the decoder towards the specifically targeted language L rather than multiple languages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_11",
+            "start": 695,
+            "end": 798,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_11@5",
+            "content": "As a result, we obtain |L| multilingual many-toone systems to serve all X-Y translation directions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_11",
+            "start": 800,
+            "end": 898,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_11@6",
+            "content": "We experiment with our proposed approach in the following two settings: 1) WMT'21 large-scale multilingual translation data with 972M sentence pairs and 2) our in-house production-scale dataset with 4.1B sentence pairs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_11",
+            "start": 900,
+            "end": 1118,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_12@0",
+            "content": "WMT'21 Multilingual Translation Task",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_12",
+            "start": 0,
+            "end": 35,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_13@0",
+            "content": "We experiment with two small tasks of the WMT'21 large-scale multilingual translation task.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_13",
+            "start": 0,
+            "end": 90,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_14@0",
+            "content": "The tasks provide multilingual multi-way parallel corpora from the Flores 101 data (Wenzek et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_14",
+            "start": 0,
+            "end": 104,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_14@1",
+            "content": "The parallel sentences are provided among English (en), five Central and East European languages of {Croatian (hr), Hungarian (hu), Estonian (et), Serbian (sr), Macedonian (mk)} for the task 1, and five Southeast Asian languages of {Javanese (jv), Indonesian (id), Malay (ms), Tagalog (tl), Tamil (ta)} for the task 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_14",
+            "start": 106,
+            "end": 423,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_14@2",
+            "content": "We removed sentence pairs either of whose sides is an empty line, and eventually collected the data with (Englishcentric, Non-English-centric)=(321M, 651M) sentence pairs in total.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_14",
+            "start": 425,
+            "end": 604,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_14@3",
+            "content": "The data size per direction varies in a range of 0.07M-83.9M.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_14",
+            "start": 606,
+            "end": 666,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_14@4",
+            "content": "To balance the data distribution across languages (Kudugunta et al., 2019), we up-sample the low-resource languages with temperature=5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_14",
+            "start": 668,
+            "end": 802,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_14@5",
+            "content": "We append language ID tokens at the end of source sentences to specify a target language (Johnson et al., 2017).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_14",
+            "start": 804,
+            "end": 915,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_14@6",
+            "content": "We tokenize the data with the SentencePiece (Kudo and Richardson, 2018) and build a shared vocabulary with 64k tokens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_14",
+            "start": 917,
+            "end": 1034,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_14@7",
+            "content": "We train Transformer models (Vaswani et al., 2017) consisting of a m-layer encoder and n-layer decoder with (hidden dim., ffn dim.) =(768, 3072) in a complete multilingual many-to-many fashion.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_14",
+            "start": 1036,
+            "end": 1228,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_14@8",
+            "content": "We have two settings of (m, n) = ( 12 1: Average sacreBLEU scores for many-to-L directions on both Task 1 and 2, and the data statistics of the corresponding L-centric training data (L={en, hu, hr, sr, et, id, ms, tl, mk, jv, ta}).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_14",
+            "start": 1230,
+            "end": 1460,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_14@9",
+            "content": "All the multilingual systems including many-to-one baselines and the proposed model are 12E6D.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_14",
+            "start": 1462,
+            "end": 1555,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_14@10",
+            "content": "Note that the \"Pivot-based\" system for manyto-English directions is identical to \"Bilingual\".",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_14",
+            "start": 1557,
+            "end": 1649,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_15@0",
+            "content": "for \"12E6D\" and (24, 12) for \"24E12D\" , to learn diverse multilingual dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_15",
+            "start": 0,
+            "end": 77,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_15@1",
+            "content": "The model parameters are optimized by using RAdam (Liu et al., 2020) with an initial learning rate of 0.025, and warm-up steps of 10k and 30k for the 12E6D and 24E12D model training, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_15",
+            "start": 79,
+            "end": 274,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_15@2",
+            "content": "The systems are pretrained on 64 V100 GPUs with a mini-batch size of 3072 tokens and gradient accumulation of 16.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_15",
+            "start": 276,
+            "end": 388,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_15@3",
+            "content": "After the pretraining, the models are finetuned on a subset of X-L training data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_15",
+            "start": 390,
+            "end": 470,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_15@4",
+            "content": "We finetune the model parameters gently on 8 V100 GPUs with the same mini-batch size, gradient accumulations, and optimizer with different learning rate scheduling of (init_lr, warm-up steps)=({1e-4, 1e-5, 1e-6}, 8k).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_15",
+            "start": 472,
+            "end": 688,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_15@5",
+            "content": "The best checkpoints are selected based on development loss.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_15",
+            "start": 690,
+            "end": 749,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_15@6",
+            "content": "The translations are obtained by a beam search decoding with a beam size of 4, unless otherwise stated.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_15",
+            "start": 751,
+            "end": 853,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_16@0",
+            "content": "Baselines For system comparison, we build three different baselines: 1) direct bilingual systems, 2) pivot translation systems via English (only applicable for non-English X-Y evaluation) (Utiyama and Isahara, 2007), and 3) many-to-one multilingual systems with the 12E6D architecture.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_16",
+            "start": 0,
+            "end": 284,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_16@1",
+            "content": "The bilingual and pivot-based baselines employ the Transformer base architecture.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_16",
+            "start": 286,
+            "end": 366,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_16@2",
+            "content": "The embedding dimension is set to 256 for jv, ms, ta, and tl, because of the training data scarcity.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_16",
+            "start": 368,
+            "end": 467,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_16@3",
+            "content": "For the X-Y pivot translation, a source sentence in language X is translated to English with a beam size of 5 by the X-En model, then the best output is translated to the final target language Y by the En-Y model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_16",
+            "start": 469,
+            "end": 681,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_17@0",
+            "content": "All results on the test sets are displayed in Figure 1 and Table 1, where we report the case-sensitive sacreBLEU score (Post, 2018) for translation accuracy.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_17",
+            "start": 0,
+            "end": 156,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_17@1",
+            "content": "Overall, our best systems (\"24E12D+FT\") are significantly better by \u2265 +0.5 sacreBLEU for 83% and 88% directions against the bilingual baselines and the pivot translation baselines, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_17",
+            "start": 158,
+            "end": 351,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_17@2",
+            "content": "In Table 1, we present the average sacreBLEU scores for many-to-L directions, showing that our proposed approach successfully achieved the best performance in most targeted languages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_17",
+            "start": 353,
+            "end": 535,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_17@3",
+            "content": "Compared to the many-to-one multilingual baselines, the proposed approach of utilizing the complete MNMT model transfers multilingual representations more effectively to the targeted translation directions, as the L-centric data size are smaller.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_17",
+            "start": 537,
+            "end": 782,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_17@4",
+            "content": "We also note that the winning system of the shared task achieved (task1, task2)=(37.6, 33.9) BLEU with a 36-layer encoder and 12-layer decoder model (Yang et al., 2021a) that is pretrained on extra language data including parallel and monolingual data, while our best system with a 24-layer encoder and 12-layer decoder obtained (task1, task2)=(25.7, 22.8) sacreBLEU, without using those extra data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_17",
+            "start": 784,
+            "end": 1182,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_18@0",
+            "content": "In-house Extremely Large-Scale Setting",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_18",
+            "start": 0,
+            "end": 37,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_19@0",
+            "content": "Deploying a larger and larger model is not always feasible.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_19",
+            "start": 0,
+            "end": 58,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_19@1",
+            "content": "We often have limitations in the computational resources at inference time, which leads to a trade-off problem between the performance and the decoding cost caused by the model architecture.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_19",
+            "start": 60,
+            "end": 249,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_19@2",
+            "content": "In this section, we validate our proposed approach in an extremely large-scale data setting and also discuss how we can build lighter NMT models without the performance loss, while distilling the proposed MNMT systems (Kim and Rush, 2016).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_19",
+            "start": 251,
+            "end": 489,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_19@3",
+            "content": "We briefly touch the following three topics of 1) multi-way multilingual data collection, 2) English-centric vs. multi-centric pretraining for X-Y translations, and 3) a lighter NMT model that addresses the tradeoff issue between performance and latency.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_19",
+            "start": 491,
+            "end": 744,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_19@4",
+            "content": "we report the experimental results in the extremely large-scale setting.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_19",
+            "start": 746,
+            "end": 817,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_20@0",
+            "content": "We build an extremely large-scale data set using our in-house English-centric data set, consisting of 10 European languages, ranging 24M-192M sentences per language.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_20",
+            "start": 0,
+            "end": 164,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_20@1",
+            "content": "This contains available parallel data and back-translated data between English and {German (de), French (fr), Spanish (es), Italian (it), Polish (pl), Greek (el), Dutch (nl), Portuguese (pt), and Romanian (ro)}. From these English-centric corpora, we extract a multi-way multilingual X-Y data, by aligning En-X and En-Y data via pivoting English.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_20",
+            "start": 166,
+            "end": 511,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_20@2",
+            "content": "Specifically, we extracted {de, fr, es, it, pl}-centric data and concatenate them to the existent direct X-Y data, providing 78M-279M sentence pairs per direction.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_20",
+            "start": 513,
+            "end": 675,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_20@3",
+            "content": "Similarly as in Section 3, we build a shared SentencePiece vocabulary with 128k tokens to address the large-scale setting.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_20",
+            "start": 677,
+            "end": 798,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_21@0",
+            "content": "En-centric vs Multi-centric Pretraining In a large-scale data setting, a question might come up; Which pretrained model provides generalized multilingual representations to achieve better X-Y translation quality? Considering English is often a dominant text data, e.g., 70% tasks are Englishcentric in the WMT'21 news translation task, the model supervised on English-centric corpora might learn representations enough to transfer for X-Y translations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_21",
+            "start": 0,
+            "end": 451,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_21@1",
+            "content": "To investigate the usefulness of the multi-centric data training, we pretrain our Transformer models with deeper 24-12 layers described in Section 3, on the English-centric data and the L-centric data (L={en,de,fr}), individually.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_21",
+            "start": 453,
+            "end": 682,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_21@2",
+            "content": "After pretraining, we apply the multilingual many-to-one finetuning with a subset of the training data and evaluate each system for the fully supervised X-Y directions, i.e., xx-{en,de,fr}, and the partially supervised X-Y directions, i.e., xx-{es,it,pl}.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_21",
+            "start": 684,
+            "end": 938,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_22@0",
+            "content": "We followed the same training and finetuning settings as described in Section 3, unless otherwise stated.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_22",
+            "start": 0,
+            "end": 104,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_23@0",
+            "content": "MNMT with Light Decoder At the practical level, one drawback of the large-scale models would be latency at inference time.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_23",
+            "start": 0,
+            "end": 121,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_23@1",
+            "content": "This is mostly caused by the high computational cost in the decoder layers due to auto-regressive models and the extra cross-attention network in each block of the decoder.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_23",
+            "start": 123,
+            "end": 294,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_23@2",
+            "content": "Recent studies (Kasai et al., 2021;Hsu et al., 2020;Li et al., 2021) have experimentally shown that models with a deep encoder and a shallow decoder can address the issue, without losing much performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_23",
+            "start": 296,
+            "end": 499,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_23@3",
+            "content": "Fortunately, such an architecture also satisfies demands of the many-to-one MNMT training, which requires the encoder networks to be more complex to handle various source languages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_23",
+            "start": 501,
+            "end": 681,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_23@4",
+            "content": "To examine the light NMT model architecture, we train the Transformer base architecture modified with 9-3 layers (E9D3) in a bilingual setting and compare it with a standard Transformer base model, with 6-6 layers (E6D6), as a baseline.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_23",
+            "start": 683,
+            "end": 918,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_23@5",
+            "content": "Additionally, we also report direct X-Y translation performance, when distilling the best large-scale MNMT models alongside the light NMT models as a student model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_23",
+            "start": 920,
+            "end": 1083,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_23@6",
+            "content": "More specifically, following Kim and Rush (2016), we train light NMT student models (E9D3) that serve many-to-L translations (L={de, fr, es, it, pl}).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_23",
+            "start": 1085,
+            "end": 1234,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_24@0",
+            "content": "Results Table 2 reports average sacreBLEU scores for many-to-one directions in our in-house X-Y test sets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_24",
+            "start": 0,
+            "end": 105,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_24@1",
+            "content": "For the xx-{de,fr} directions, the proposed finetuning helps both English-centric and multi-centric pretrained models to improve the accuracy.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_24",
+            "start": 107,
+            "end": 248,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_24@2",
+            "content": "Overall, the finetuned multi-centric models achieved the best, largely outperforming the English pivot-based baselines by +2.6 and +2.8 points.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_24",
+            "start": 250,
+            "end": 392,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_24@3",
+            "content": "For the comparison among the multilingual systems, the multi-centric model without finetuning already surpasses the finetuned English-centric systems with a large margin of +0.9 and +0.8 points for both xx-{de,fr} directions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_24",
+            "start": 394,
+            "end": 618,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_24@4",
+            "content": "This suggests that, by pretraining a model on more multi-centric data, the model learns better multilinguality to transfer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_24",
+            "start": 620,
+            "end": 742,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_24@5",
+            "content": "For the xx-{es,it,pl} directions 1 , the fineutned multi-centric systems gain similar accuracy improvement, averagely outperforming the conventional pivot-based baselines.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_24",
+            "start": 744,
+            "end": 914,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_25@0",
+            "content": "Figure 2 shows the effectiveness of our light NMT model architecture for five bilingual En-X directions, reporting the translation performance in sacreBLEU scores and the latency measured on CPUs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_25",
+            "start": 0,
+            "end": 195,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_25@1",
+            "content": "Our light NMT model (E9D3) successfully achieves almost 2x speed up, without much drop of the performance for all directions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_25",
+            "start": 197,
+            "end": 321,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_25@2",
+            "content": "Employing this light model architecture as a student model, we report the distilled many-to-one model performance in Table 3, measured by sacreBLEU and COMET scores (Rei et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_25",
+            "start": 323,
+            "end": 506,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_25@3",
+            "content": "For consistent comparison, we also built English bilingual baselines (E6D6) that are distilled from the bilingual Teachers, then we obtained the English pivot-based translation performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_25",
+            "start": 508,
+            "end": 696,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_25@4",
+            "content": "For all the many-to-L directions (L={de,fr,es,it,pl}), the light NMT models that are distilled from the best MNMT models show the best performance in both metrics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_25",
+            "start": 698,
+            "end": 860,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_25@5",
+            "content": "Besides that, we also note that our direct X-Y light NMT systems successfully save the decoding cost with 75% against the pivot translation 2 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_25",
+            "start": 862,
+            "end": 1004,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_26@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_26",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_27@0",
+            "content": "This paper proposes a simple but effective twostage training strategy for MNMT systems that serve arbitrary X-Y translations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_27",
+            "start": 0,
+            "end": 124,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_27@1",
+            "content": "To support translations across languages, we first pretrain a complete multilingual many-to-many model, then transfer the representations via finetuning the model in a many-to-one multilingual fashion.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_27",
+            "start": 126,
+            "end": 326,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_27@2",
+            "content": "In the WMT'21 translation task, we experimentally showed that the proposed approach substantially improve translation accuracy for most X-Y directions against the strong conventional baselines of bilingual systems, pivot translation systems, and many-to-one multilingual systems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_27",
+            "start": 328,
+            "end": 606,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_27@3",
+            "content": "We also examined the proposed approach in the extremely large-scale setting, while addressing the practical questions such as multiway parallel data collection, the usefulness of multilinguality during the pretraining and finetuning, and how to save the decoding cost, achieving the better X-Y quality.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_27",
+            "start": 608,
+            "end": 909,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_28@0",
+            "content": "Orhan Firat, Baskaran Sankaran, Yaser Al-Onaizan, Fatos Vural, Kyunghyun Cho, Zero-resource translation with multi-lingual neural machine translation, 2016, Proceedings of the 2016 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_28",
+            "start": 0,
+            "end": 286,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_29@0",
+            "content": "Markus Freitag, Orhan Firat, Complete multilingual neural machine translation, 2020, Proceedings of the Fifth Conference on Machine Translation, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_29",
+            "start": 0,
+            "end": 145,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_30@0",
+            "content": "Jiatao Gu, Yong Wang, Kyunghyun Cho, O Victor,  Li, Improved zero-shot neural machine translation via ignoring spurious correlations, 2019, Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_30",
+            "start": 0,
+            "end": 229,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_31@0",
+            "content": "UNKNOWN, None, 2018, Achieving human parity on automatic chinese to english news translation, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_31",
+            "start": 0,
+            "end": 94,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_32@0",
+            "content": "Yi-Te Hsu, Sarthak Garg, Yi-Hsiu Liao, Ilya Chatsviorkin, Efficient inference for neural machine translation, 2020, Proceedings of SustaiNLP: Workshop on Simple and Efficient Natural Language Processing, Online. Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_32",
+            "start": 0,
+            "end": 253,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_33@0",
+            "content": "Melvin Johnson, Mike Schuster, Quoc Le, Maxim Krikun, Yonghui Wu, Zhifeng Chen, Nikhil Thorat, Fernanda Vi\u00e9gas, Martin Wattenberg, Greg Corrado, Macduff Hughes, Jeffrey Dean, Google's multilingual neural machine translation system: Enabling zero-shot translation, 2017, Transactions of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_33",
+            "start": 0,
+            "end": 333,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_34@0",
+            "content": "Jungo Kasai, Nikolaos Pappas, Hao Peng, James Cross, Noah Smith, Deep encoder, shallow decoder: Reevaluating non-autoregressive machine translation, 2021, International Conference on Learning Representations, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_34",
+            "start": 0,
+            "end": 209,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_35@0",
+            "content": "Yoon Kim, Alexander Rush, Sequencelevel knowledge distillation, 2016, Proceedings of the 2016 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_35",
+            "start": 0,
+            "end": 199,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_36@0",
+            "content": "Taku Kudo, John Richardson, SentencePiece: A simple and language independent subword tokenizer and detokenizer for neural text processing, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing: System Demonstrations, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_36",
+            "start": 0,
+            "end": 297,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_37@0",
+            "content": "Sneha Kudugunta, Ankur Bapna, Isaac Caswell, Orhan Firat, Investigating multilingual NMT representations at scale, 2019, Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP), Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_37",
+            "start": 0,
+            "end": 339,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_38@0",
+            "content": "Yanyang Li, Ye Lin, Tong Xiao, Jingbo Zhu, An efficient transformer decoder with compressed sub-layers, 2021, Proceedings of the AAAI Conference on Artificial Intelligence, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_38",
+            "start": 0,
+            "end": 173,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_39@0",
+            "content": "Liyuan Liu, Haoming Jiang, Pengcheng He, Weizhu Chen, Xiaodong Liu, Jianfeng Gao, Jiawei Han, On the variance of the adaptive learning rate and beyond, 2020, International Conference on Learning Representations, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_39",
+            "start": 0,
+            "end": 212,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_40@0",
+            "content": "Matt Post, A call for clarity in reporting BLEU scores, 2018, Proceedings of the Third Conference on Machine Translation: Research Papers, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_40",
+            "start": 0,
+            "end": 139,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_41@0",
+            "content": "Ricardo Rei, Craig Stewart, Ana Farinha, Alon Lavie, COMET: A neural framework for MT evaluation, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_41",
+            "start": 0,
+            "end": 200,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_42@0",
+            "content": "Masao Utiyama, Hitoshi Isahara, A comparison of pivot methods for phrase-based statistical machine translation, 2007, Human Language Technologies 2007: The Conference of the North American Chapter of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_42",
+            "start": 0,
+            "end": 247,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_43@0",
+            "content": "UNKNOWN, None, , Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_43",
+            "start": 0,
+            "end": 60,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_44@0",
+            "content": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan Gomez, Illia Kaiser,  Polosukhin, Attention is all you need, 2017, Advances in Neural Information Processing Systems, Curran Associates, Inc.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_44",
+            "start": 0,
+            "end": 219,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_45@0",
+            "content": "Zirui Wang, Zachary Lipton, Yulia Tsvetkov, On negative interference in multilingual models: Findings and a meta-learning treatment, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_45",
+            "start": 0,
+            "end": 235,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_46@0",
+            "content": "Guillaume Wenzek, Vishrav Chaudhary, Angela Fan, Sahir Gomez, Naman Goyal, Somya Jain, Douwe Kiela, Tristan Thrush, Francisco Guzm\u00e1n, 2021. Findings of the wmt 2021 shared task on large-scale multilingual machine translation, , Proceedings of the Sixth Conference on Machine Translation, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_46",
+            "start": 0,
+            "end": 288,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_47@0",
+            "content": "Jian Yang, Shuming Ma, Haoyang Huang, Dongdong Zhang, Li Dong, Shaohan Huang, Alexandre Muzio, Saksham Singhal, Hany Hassan, Xia Song, Furu Wei, Multilingual machine translation systems from Microsoft for WMT21 shared task, 2021, Proceedings of the Sixth Conference on Machine Translation, Online. Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_47",
+            "start": 0,
+            "end": 339,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_48@0",
+            "content": "Yilin Yang, Akiko Eriguchi, Alexandre Muzio, Prasad Tadepalli, Stefan Lee, Hany Hassan, Improving multilingual translation by representation and gradient regularization, 2021, Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_48",
+            "start": 0,
+            "end": 305,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_49@0",
+            "content": "Biao Zhang, Philip Williams, Ivan Titov, Rico Sennrich, Improving massively multilingual neural machine translation and zero-shot translation, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_49",
+            "start": 0,
+            "end": 238,
+            "label": {}
+        },
+        {
+            "ix": "209-ARR_v2_50@0",
+            "content": "Barret Zoph, Kevin Knight, Multi-source neural translation, 2016, Proceedings of the 2016 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "209-ARR_v2_50",
+            "start": 0,
+            "end": 251,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "209-ARR_v2_0",
+            "tgt_ix": "209-ARR_v2_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_0",
+            "tgt_ix": "209-ARR_v2_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_1",
+            "tgt_ix": "209-ARR_v2_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_1",
+            "tgt_ix": "209-ARR_v2_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_1",
+            "tgt_ix": "209-ARR_v2_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_2",
+            "tgt_ix": "209-ARR_v2_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_0",
+            "tgt_ix": "209-ARR_v2_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_3",
+            "tgt_ix": "209-ARR_v2_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_5",
+            "tgt_ix": "209-ARR_v2_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_6",
+            "tgt_ix": "209-ARR_v2_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_7",
+            "tgt_ix": "209-ARR_v2_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_8",
+            "tgt_ix": "209-ARR_v2_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_4",
+            "tgt_ix": "209-ARR_v2_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_4",
+            "tgt_ix": "209-ARR_v2_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_4",
+            "tgt_ix": "209-ARR_v2_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_4",
+            "tgt_ix": "209-ARR_v2_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_4",
+            "tgt_ix": "209-ARR_v2_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_4",
+            "tgt_ix": "209-ARR_v2_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_0",
+            "tgt_ix": "209-ARR_v2_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_9",
+            "tgt_ix": "209-ARR_v2_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_10",
+            "tgt_ix": "209-ARR_v2_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_10",
+            "tgt_ix": "209-ARR_v2_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_0",
+            "tgt_ix": "209-ARR_v2_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_11",
+            "tgt_ix": "209-ARR_v2_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_13",
+            "tgt_ix": "209-ARR_v2_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_14",
+            "tgt_ix": "209-ARR_v2_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_15",
+            "tgt_ix": "209-ARR_v2_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_12",
+            "tgt_ix": "209-ARR_v2_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_12",
+            "tgt_ix": "209-ARR_v2_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_12",
+            "tgt_ix": "209-ARR_v2_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_12",
+            "tgt_ix": "209-ARR_v2_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_12",
+            "tgt_ix": "209-ARR_v2_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_12",
+            "tgt_ix": "209-ARR_v2_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_0",
+            "tgt_ix": "209-ARR_v2_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_17",
+            "tgt_ix": "209-ARR_v2_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_18",
+            "tgt_ix": "209-ARR_v2_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_18",
+            "tgt_ix": "209-ARR_v2_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_20",
+            "tgt_ix": "209-ARR_v2_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_21",
+            "tgt_ix": "209-ARR_v2_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_22",
+            "tgt_ix": "209-ARR_v2_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_23",
+            "tgt_ix": "209-ARR_v2_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_24",
+            "tgt_ix": "209-ARR_v2_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_18",
+            "tgt_ix": "209-ARR_v2_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_18",
+            "tgt_ix": "209-ARR_v2_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_18",
+            "tgt_ix": "209-ARR_v2_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_18",
+            "tgt_ix": "209-ARR_v2_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_18",
+            "tgt_ix": "209-ARR_v2_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_18",
+            "tgt_ix": "209-ARR_v2_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_19",
+            "tgt_ix": "209-ARR_v2_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_0",
+            "tgt_ix": "209-ARR_v2_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_25",
+            "tgt_ix": "209-ARR_v2_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_26",
+            "tgt_ix": "209-ARR_v2_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_26",
+            "tgt_ix": "209-ARR_v2_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "209-ARR_v2_0",
+            "tgt_ix": "209-ARR_v2_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_1",
+            "tgt_ix": "209-ARR_v2_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_2",
+            "tgt_ix": "209-ARR_v2_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_2",
+            "tgt_ix": "209-ARR_v2_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_2",
+            "tgt_ix": "209-ARR_v2_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_3",
+            "tgt_ix": "209-ARR_v2_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_3",
+            "tgt_ix": "209-ARR_v2_3@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_3",
+            "tgt_ix": "209-ARR_v2_3@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_4",
+            "tgt_ix": "209-ARR_v2_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_5",
+            "tgt_ix": "209-ARR_v2_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_5",
+            "tgt_ix": "209-ARR_v2_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_6",
+            "tgt_ix": "209-ARR_v2_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_7",
+            "tgt_ix": "209-ARR_v2_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_7",
+            "tgt_ix": "209-ARR_v2_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_7",
+            "tgt_ix": "209-ARR_v2_7@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_7",
+            "tgt_ix": "209-ARR_v2_7@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_8",
+            "tgt_ix": "209-ARR_v2_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_8",
+            "tgt_ix": "209-ARR_v2_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_8",
+            "tgt_ix": "209-ARR_v2_8@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_8",
+            "tgt_ix": "209-ARR_v2_8@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_8",
+            "tgt_ix": "209-ARR_v2_8@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_8",
+            "tgt_ix": "209-ARR_v2_8@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_9",
+            "tgt_ix": "209-ARR_v2_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_10",
+            "tgt_ix": "209-ARR_v2_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_11",
+            "tgt_ix": "209-ARR_v2_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_11",
+            "tgt_ix": "209-ARR_v2_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_11",
+            "tgt_ix": "209-ARR_v2_11@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_11",
+            "tgt_ix": "209-ARR_v2_11@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_11",
+            "tgt_ix": "209-ARR_v2_11@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_11",
+            "tgt_ix": "209-ARR_v2_11@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_11",
+            "tgt_ix": "209-ARR_v2_11@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_12",
+            "tgt_ix": "209-ARR_v2_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_13",
+            "tgt_ix": "209-ARR_v2_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_14",
+            "tgt_ix": "209-ARR_v2_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_14",
+            "tgt_ix": "209-ARR_v2_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_14",
+            "tgt_ix": "209-ARR_v2_14@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_14",
+            "tgt_ix": "209-ARR_v2_14@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_14",
+            "tgt_ix": "209-ARR_v2_14@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_14",
+            "tgt_ix": "209-ARR_v2_14@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_14",
+            "tgt_ix": "209-ARR_v2_14@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_14",
+            "tgt_ix": "209-ARR_v2_14@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_14",
+            "tgt_ix": "209-ARR_v2_14@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_14",
+            "tgt_ix": "209-ARR_v2_14@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_14",
+            "tgt_ix": "209-ARR_v2_14@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_15",
+            "tgt_ix": "209-ARR_v2_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_15",
+            "tgt_ix": "209-ARR_v2_15@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_15",
+            "tgt_ix": "209-ARR_v2_15@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_15",
+            "tgt_ix": "209-ARR_v2_15@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_15",
+            "tgt_ix": "209-ARR_v2_15@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_15",
+            "tgt_ix": "209-ARR_v2_15@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_15",
+            "tgt_ix": "209-ARR_v2_15@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_16",
+            "tgt_ix": "209-ARR_v2_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_16",
+            "tgt_ix": "209-ARR_v2_16@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_16",
+            "tgt_ix": "209-ARR_v2_16@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_16",
+            "tgt_ix": "209-ARR_v2_16@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_17",
+            "tgt_ix": "209-ARR_v2_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_17",
+            "tgt_ix": "209-ARR_v2_17@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_17",
+            "tgt_ix": "209-ARR_v2_17@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_17",
+            "tgt_ix": "209-ARR_v2_17@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_17",
+            "tgt_ix": "209-ARR_v2_17@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_18",
+            "tgt_ix": "209-ARR_v2_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_19",
+            "tgt_ix": "209-ARR_v2_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_19",
+            "tgt_ix": "209-ARR_v2_19@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_19",
+            "tgt_ix": "209-ARR_v2_19@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_19",
+            "tgt_ix": "209-ARR_v2_19@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_19",
+            "tgt_ix": "209-ARR_v2_19@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_20",
+            "tgt_ix": "209-ARR_v2_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_20",
+            "tgt_ix": "209-ARR_v2_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_20",
+            "tgt_ix": "209-ARR_v2_20@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_20",
+            "tgt_ix": "209-ARR_v2_20@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_21",
+            "tgt_ix": "209-ARR_v2_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_21",
+            "tgt_ix": "209-ARR_v2_21@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_21",
+            "tgt_ix": "209-ARR_v2_21@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_22",
+            "tgt_ix": "209-ARR_v2_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_23",
+            "tgt_ix": "209-ARR_v2_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_23",
+            "tgt_ix": "209-ARR_v2_23@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_23",
+            "tgt_ix": "209-ARR_v2_23@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_23",
+            "tgt_ix": "209-ARR_v2_23@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_23",
+            "tgt_ix": "209-ARR_v2_23@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_23",
+            "tgt_ix": "209-ARR_v2_23@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_23",
+            "tgt_ix": "209-ARR_v2_23@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_24",
+            "tgt_ix": "209-ARR_v2_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_24",
+            "tgt_ix": "209-ARR_v2_24@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_24",
+            "tgt_ix": "209-ARR_v2_24@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_24",
+            "tgt_ix": "209-ARR_v2_24@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_24",
+            "tgt_ix": "209-ARR_v2_24@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_24",
+            "tgt_ix": "209-ARR_v2_24@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_25",
+            "tgt_ix": "209-ARR_v2_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_25",
+            "tgt_ix": "209-ARR_v2_25@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_25",
+            "tgt_ix": "209-ARR_v2_25@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_25",
+            "tgt_ix": "209-ARR_v2_25@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_25",
+            "tgt_ix": "209-ARR_v2_25@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_25",
+            "tgt_ix": "209-ARR_v2_25@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_26",
+            "tgt_ix": "209-ARR_v2_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_27",
+            "tgt_ix": "209-ARR_v2_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_27",
+            "tgt_ix": "209-ARR_v2_27@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_27",
+            "tgt_ix": "209-ARR_v2_27@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_27",
+            "tgt_ix": "209-ARR_v2_27@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_28",
+            "tgt_ix": "209-ARR_v2_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_29",
+            "tgt_ix": "209-ARR_v2_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_30",
+            "tgt_ix": "209-ARR_v2_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_31",
+            "tgt_ix": "209-ARR_v2_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_32",
+            "tgt_ix": "209-ARR_v2_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_33",
+            "tgt_ix": "209-ARR_v2_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_34",
+            "tgt_ix": "209-ARR_v2_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_35",
+            "tgt_ix": "209-ARR_v2_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_36",
+            "tgt_ix": "209-ARR_v2_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_37",
+            "tgt_ix": "209-ARR_v2_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_38",
+            "tgt_ix": "209-ARR_v2_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_39",
+            "tgt_ix": "209-ARR_v2_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_40",
+            "tgt_ix": "209-ARR_v2_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_41",
+            "tgt_ix": "209-ARR_v2_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_42",
+            "tgt_ix": "209-ARR_v2_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_43",
+            "tgt_ix": "209-ARR_v2_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_44",
+            "tgt_ix": "209-ARR_v2_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_45",
+            "tgt_ix": "209-ARR_v2_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_46",
+            "tgt_ix": "209-ARR_v2_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_47",
+            "tgt_ix": "209-ARR_v2_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_48",
+            "tgt_ix": "209-ARR_v2_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_49",
+            "tgt_ix": "209-ARR_v2_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "209-ARR_v2_50",
+            "tgt_ix": "209-ARR_v2_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 367,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "doc_id": "209-ARR",
+        "version": 2
+    }
+}

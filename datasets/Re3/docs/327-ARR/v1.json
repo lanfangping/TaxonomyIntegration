@@ -1,0 +1,4794 @@
+{
+    "nodes": [
+        {
+            "ix": "327-ARR_v1_0",
+            "content": "Rewarding Semantic Similarity under Optimized Alignments for AMR-to-Text Generation",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_2",
+            "content": "A common way to combat exposure bias is by applying scores from evaluation metrics as rewards in reinforcement learning (RL). Metrics leveraging contextualized embeddings appear more flexible than their n-gram matching counterparts and thus ideal as training rewards. However, metrics such as BERTSCORE greedily align candidate and reference tokens, which can allow system outputs to receive excess credit relative to a reference. Furthermore, past approaches featuring semantic similarity rewards suffer from repetitive outputs and overfitting. We address these issues by proposing metrics that replace the greedy alignments in BERTSCORE with optimized ones. We compute them on a model's trained token embeddings to prevent domain mismatch. Our model optimizing discrete alignment metrics consistently outperforms cross-entropy and BLEU reward baselines on AMR-to-text generation. In addition, we find that this approach enjoys stable training compared to a non-RL setting.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "327-ARR_v1_4",
+            "content": "Automatic evaluation metrics often score natural language generation (NLG) system outputs based on how well they lexically align to humanannotated references. In tasks such as machine translation and summarization, these metrics may unfairly penalize outputs that express the correct semantics despite a lower n-gram overlap with reference strings. As a result, models overfitting to certain token-level patterns may dominate those generating more creatively (e.g., through synonyms or varied sentence structure).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_5",
+            "content": "NLG systems are typically trained to maximize likelihood of a single set of references. Conditioning models on gold prefixes shields them from their own predictions during training-an issue known as exposure bias. Adding reinforcement learning (RL) objectives (Ranzato et al., 2016;Edunov et al., 2018) can aid exploration by giving a model feed-back on sequences sampled from its own distribution. However, it is common practice to use automatic evaluation scores like BLEU (Papineni et al., 2002) and ROUGE (Lin and Hovy, 2002) as sequence-level rewards. This results in the same lack of semantic signal described earlier.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_6",
+            "content": "Instead of hinging evaluation on hard n-gram overlap, recent metrics (Zhang et al., 2019;Zhao et al., 2019) rely on vector similarity between contextualized subword embeddings to make more semantically faithful judgments. BERTSCORE, in particular F BERT , computes a token-level F1 score based on greedy alignment of similar embeddings. With their strength in offline evaluation, it is natural to ask how these embeddings-based metrics can help provide more realistic training feedback.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_7",
+            "content": "Past approaches to train models with semantic similarity scores include both non-differentiable and differentiable objectives. Wieting et al. (2019) separately train paraphrastic sentence embeddings that provide semantic similarity rewards to a neural machine translation (NMT) system. Rewards were included in a mixed minimum risk and maximum likelihood training phase. Besides an embedding training overhead, the model needed a length penalty term to limit repetitive outputs. Li et al. (2019) adopt a similar fine-tuning approach using an RL objective with F BERT for abstractive summarization. While their models were less repetitive, their news domain corpora may have been a natural match for BERT embeddings. Finally, Jauregi Unanue et al. (2021) also propose to optimize F BERT but with fully differentiable training objectives in NMT. Yet their models overfit after only a few epochs and scored lower in BLEU at the cost of higher F BERT . We hypothesize that metrics employing external pretrained vectors may suffer from domain mismatch with downstream data. This can hurt the accuracy of semantic similarity scores computed during training.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_8",
+            "content": "In this work, we focus on text generation from Abstract Meaning Representations (AMRs, Banarescu et al., 2013), sentence-level semantic graphs that are rooted, directed, and acyclic. This task's models may especially benefit from an emphasis on semantic rather than lexical similarity.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_9",
+            "content": "It also provides a challenging setting to evaluate overfitting given the relatively small corpus size.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_10",
+            "content": "In our analysis of F BERT rewards, we note that F BERT could worsen repetition and incomplete outputs in NLG systems. Due to its greedy token alignment, F BERT precision may assign extra credit to a reference token 'retrieved' multiple times. In response, we contribute the following.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_11",
+            "content": "\u2022 We introduce a metric that applies discrete and continuous alignments to BERTSCORE, mitigating the pitfalls of greedy alignment. \u2022 For text generation from AMR, we are the first to train on RL objectives with embeddingbased evaluation metrics. \u2022 We fine-tune on BERTSCORE variants computed on a model's own token representations rather than BERT embeddings. This method is more memory-efficient and does overfit relative to pure cross-entropy training.",
+            "ntype": "list",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_12",
+            "content": "Greedy Token Alignment",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "327-ARR_v1_13",
+            "content": "The main insight behind BERTSCORE and related metrics is to align hypothesis and reference tokens using their pairwise vector similarity scores. These alignments are later used to weight the contribution of token-level similarity scores towards a final sequence-level score. Concretely, given (\u0177 1 , . . . , \u0177m ) and (y 1 , . . . , y k ) hypothesis and reference token embeddings, precision in F BERT is",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_14",
+            "content": "P BERT = 1 m \u0177i \u2208\u0177 max y j \u2208y cos(\u0177 i , y j ),",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_15",
+            "content": "where cos(\u0177, y) = \u0177 y/ \u0177 y denotes cosine similarity. Each hypothesis token \u0177i is greedily aligned to the reference token y j with the highest corresponding embedding cosine similarity. Unlike in BLEU, P BERT does not clip the number of times \u0177 can align to a unique y j by its count in y. As such, a hypothesis will get excess credit by repeating a reference token beyond this count. While the authors claim greedy alignments have little effect on BERTSCORE evaluation performance, they perform poorly relative to metrics based on optimized alignments in our experiments.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_16",
+            "content": "Optimized Token Alignment",
+            "ntype": "title",
+            "meta": {
+                "section": "3"
+            }
+        },
+        {
+            "ix": "327-ARR_v1_17",
+            "content": "Aligning tokens between hypothesis and reference can be seen as an assignment problem, where a token pair (\u0177 i , y j ) is highly weighted if it incurs low cost (i.e. distance).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_18",
+            "content": "Here, we describe discrete token matching (oneto-one) and soft alignment (one-to-many). For the latter, we extract alignments from the earth mover's distance (EMD, Villani, 2009;Peyr\u00e9 et al., 2019) transport matrix. We weight pairwise token similarities as in F BERT using each of these two alignments to provide metrics F DISC and F CONT .",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_19",
+            "content": "Discrete word matching",
+            "ntype": "title",
+            "meta": {
+                "section": "3.1"
+            }
+        },
+        {
+            "ix": "327-ARR_v1_20",
+            "content": "To avoid the issues with greedy alignment in P BERT , we can extract one-to-one alignments between the two sequences. Let C \u2208 R m\u00d7k denote the pairwise cosine distance matrix such that C ij = 1 \u2212 cos(\u0177 i , y j ). For notational clarity, let C = 1 \u2212 C. We wish to find alignments",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_21",
+            "content": "T d = arg min T \u2208{0,1} m\u00d7k m i=1 k j=1 T ij C ij ,(1)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_22",
+            "content": "such that no element in h = T 1 k and r = T 1 m can exceed one. In other words, each \u0177i can align to at most one y j (exactly one when m = k), and vice versa. This linear sum assignment problem can be solved in low-order polynomial time (Crouse, 2016), making it suitable for use during training.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_23",
+            "content": "Metric The updated precision is found as",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_24",
+            "content": "P DISC = 1 m m i=1 k j=1 T d ij C ij .(2)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_25",
+            "content": "Recall takes an analogous form and is combined with recall to produce an F1 score, F DISC .",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_26",
+            "content": "Continuous word alignment",
+            "ntype": "title",
+            "meta": {
+                "section": "3.2"
+            }
+        },
+        {
+            "ix": "327-ARR_v1_27",
+            "content": "We also experiment with soft alignments, where weights in T are continuous. In the case of P BERT , one-to-many alignments between each hypothesis token \u0177i and those in {y j } j\u2208[k] are permitted.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_28",
+            "content": "Inspired by work applying EMD to semantic text similarity (Kusner et al., 2015;Clark et al., 2019), we frame alignment as minimizing the transportation cost between token embeddings from the hypothesis and reference distributions. The amount of token-level mass to transport between the two distributions is h and r, respectively. Instead of assigning IDF as the mass per token (Zhao et al., 2019), we use the norm of its embedding (e.g., y , Yokoi et al., 2020) for simplicity.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_29",
+            "content": "The EMD, or optimal transport, problem is",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_30",
+            "content": "T c = arg min T \u2208R m\u00d7k \u22650 m i=1 k j=1 T ij C ij ,(3)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_31",
+            "content": "s.t. h = T 1 k , r = T 1 m .",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_32",
+            "content": "Intuitively, if we view T ij as the joint probability of aligning \u0177i with y j , the row and column sums are marginals (Cuturi, 2013).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_33",
+            "content": "Metric To compute F CONT , we normalize the alignment weights such that the rows of T sum to one for precision, and the columns for recall.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_34",
+            "content": "P CONT = 1 m m i=1 1 h i k j=1 T c ij C ij ,(4)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_35",
+            "content": "R CONT = 1 k k j=1 1 r j m i=1 T c ij C ij (5)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_36",
+            "content": "Semantic Similarity Rewards",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "327-ARR_v1_37",
+            "content": "We propose to fine-tune on our optimized F1 metrics, applying a weighted average of cross-entropy and RL objectives. Given source sequence x (e.g., a linearized AMR), the former is computed as",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_38",
+            "content": "L e = \u2212 k i=1 log p(y i | y <i , x).",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_39",
+            "content": "To encourage close evaluation scores between sampled \u0233 and reference y, the RL objective is",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_40",
+            "content": "L r = (\u2206(\u0233 g , y) \u2212 \u2206(\u0233, y)) k i=1 log p(\u0233 i | \u0233<i , x),",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_41",
+            "content": "where \u2206 is the chosen evaluation metric and \u0233g is a greedily decoded baseline relative to \u0233. This baseline helps reduce variance in REINFORCE.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_42",
+            "content": "The combined cross-entropy and RL loss is",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_43",
+            "content": "L = \u03bbL r + (1 \u2212 \u03bb)L e ,",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_44",
+            "content": "where \u03bb is empirically set to 0.3.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_45",
+            "content": "Experiments",
+            "ntype": "title",
+            "meta": {
+                "section": "5"
+            }
+        },
+        {
+            "ix": "327-ARR_v1_46",
+            "content": "We examine the performance of our proposed metrics as RL rewards on AMR-to-text generation.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_47",
+            "content": "Setup",
+            "ntype": "title",
+            "meta": {
+                "section": "5.1"
+            }
+        },
+        {
+            "ix": "327-ARR_v1_48",
+            "content": "Dataset The LDC2017T10 dataset that we experiment on contains \u223c36K training and \u223c1.4K each of development and test AMR-sentence pairs. To leverage strong pre-trained language models, the AMRs are linearized as in Ribeiro et al. (2021).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_49",
+            "content": "Evaluation We report results in terms of BLEU (Papineni et al., 2002), METEOR (Banerjee and Lavie, 2005), CHRF (Popovi\u0107, 2015), and BLEURT (Sellam et al., 2020). Only the latter metric makes use of pre-trained contextualized embeddings.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_50",
+            "content": "Baselines For all experiments, we fine-tune the small capacity T5 model (Raffel et al., 2020) from Ribeiro et al. (2021). The model has 60M parameters and features a Transformer-based encoder and decoder. We compare our F DISC and F CONT metrics for RL-based training against three baseline approaches. XENT is a pure cross-entropy objective. For RL-based approaches, we include a BLEU reward (BL-R) and one with F BERT -computed on the lowest level token embeddings in T5 1 . The \u03bb scaling factor for the RL objective is set to 0.3 across all RL-based experiments.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_51",
+            "content": "Implementation details Adam is used to optimize the model with an initial learning rate of (1) REF There are 12 teams totally participating in the competition.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_52",
+            "content": "The competition was part of a total of 12 teams. FBERT The competition is part of a total of 12 teams.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_53",
+            "content": "The total of 12 teams participated in competition.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_54",
+            "content": "(2) REF Raymond zilinskas stated that in the worst case the bacteria would be defrosted from minus 70 degrees and it would be a real mess to clean up afterward because it would not be known for certain whether all the bacteria was dead.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_55",
+            "content": "Raymond Zilinskas stated that the bacterium was defrost in the worst case and that afterward cleaning up was a real mess because there is certainly no known cause of death for all the bacteriums. FBERT Raymond Zilinskas stated that the bacterium was defrosting in the worst case and the afterward cleaning up was a real mess because the bacterium was certainly not known to die of all the bacteriums.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_56",
+            "content": "Raymond Zilinskas stated that the bacterium was defrost in the worst case and the afterward cleaning up was a real mess because the bacterium was certainly not known to have all died. et al. (2021). We use SciPy 2 and the Python Optimal Transport library 3 to solve Eqs. 1 and 3.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_57",
+            "content": "Results",
+            "ntype": "title",
+            "meta": {
+                "section": "5.2"
+            }
+        },
+        {
+            "ix": "327-ARR_v1_58",
+            "content": "Table 1 shows that F DISC achieves the highest scores on all metrics, surpassing F CONT as well. It scores higher than the XENT baseline by 1.28 BLEU and 0.71 BLEURT points. Although BL-R was specially trained to optimize BLEU, F DISC still outperforms it by over half a point that metric.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_59",
+            "content": "There is a clear hierarchy among the approaches based on F1 score, with F DISC above F CONT , followed by F BERT at the bottom. This dynamic suggests that the optimized alignments may provide higher quality reward signals during training.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_60",
+            "content": "We note that although F CONT performed comparably to BL-R, it could exploit tensor operations and was far faster to compute than BLEU. On the other hand, F BERT achieved significantly lower scores than BL-R. As noted in \u00a72, perhaps the clipped precision counts in BLEU gave BL-R an advantage over the greedy nature of F BERT .",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_61",
+            "content": "Analysis",
+            "ntype": "title",
+            "meta": {
+                "section": "5.3"
+            }
+        },
+        {
+            "ix": "327-ARR_v1_62",
+            "content": "Training stability As shown in Fig. 1, F DISC continues to improve on validation BLEU long after XENT overfits at epoch 18. This runs counter to the expectation of unstable RL-based training. It is also interesting that while F CONT validation performance looks fairly low relative to BL-R, it achieves similar scores at test time. This may be due to irrelevant differences between the validation and test sets, however.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_63",
+            "content": "of model outputs for detailed analysis. In example (1), both XENT and F BERT make the error of predicting \"part\" instead of \"participating\". Only F DISC approaches the meaning of the reference. This may be a side-effect of weighting lexical over semantic similarity in the former two systems. In (2), F BERT repeats the word \"bacterium\", while XENT takes an anthropomorphic view of the bacterium. The repetition may be a result of F BERT rewarding multiple instances of the same token by mistake during greedy alignment.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_64",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "6"
+            }
+        },
+        {
+            "ix": "327-ARR_v1_65",
+            "content": "This paper proposed new F1 score metrics based on optimized rather than greedy alignments between predicted and reference tokens. Instead of letting hypotheses align to reference tokens without regard to their frequencies (and vice versa), we extracted alignments as a constrained optimization problem. In the discrete case, we treat alignment as a matching problem between hypothesis and reference tokens. In the continuous case, we found alignments that minimized earth mover's distance between the two token embedding distributions.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_66",
+            "content": "We applied new metrics as rewards during RLbased training for AMR-to-text generation, with F DISC outperforming both a cross-entropy baseline and one optimizing BLEU rewards. Despite being computed on a downstream model's token embeddings, the metrics still provided informative rewards during training without signs of overfitting.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "327-ARR_v1_67",
+            "content": "Laura Banarescu, Claire Bonial, Shu Cai, Madalina Georgescu, Kira Griffitt, Ulf Hermjakob, Kevin Knight, Philipp Koehn, Martha Palmer, Nathan Schneider, Abstract meaning representation for sembanking, 2013, Proceedings of the 7th Linguistic Annotation Workshop and Interoperability with Discourse, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": [
+                    "Laura Banarescu",
+                    "Claire Bonial",
+                    "Shu Cai",
+                    "Madalina Georgescu",
+                    "Kira Griffitt",
+                    "Ulf Hermjakob",
+                    "Kevin Knight",
+                    "Philipp Koehn",
+                    "Martha Palmer",
+                    "Nathan Schneider"
+                ],
+                "title": "Abstract meaning representation for sembanking",
+                "pub_date": "2013",
+                "pub_title": "Proceedings of the 7th Linguistic Annotation Workshop and Interoperability with Discourse",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_68",
+            "content": "Satanjeev Banerjee, Alon Lavie, METEOR: An automatic metric for MT evaluation with improved correlation with human judgments, 2005, Proceedings of the ACL Workshop on Intrinsic and Extrinsic Evaluation Measures for Machine Translation and/or Summarization, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": [
+                    "Satanjeev Banerjee",
+                    "Alon Lavie"
+                ],
+                "title": "METEOR: An automatic metric for MT evaluation with improved correlation with human judgments",
+                "pub_date": "2005",
+                "pub_title": "Proceedings of the ACL Workshop on Intrinsic and Extrinsic Evaluation Measures for Machine Translation and/or Summarization",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_69",
+            "content": "Elizabeth Clark, Asli Celikyilmaz, Noah Smith, Sentence mover's similarity: Automatic evaluation for multi-sentence texts, 2019, Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": [
+                    "Elizabeth Clark",
+                    "Asli Celikyilmaz",
+                    "Noah Smith"
+                ],
+                "title": "Sentence mover's similarity: Automatic evaluation for multi-sentence texts",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_70",
+            "content": "F David,  Crouse, On implementing 2D rectangular assignment algorithms, 2016, IEEE Transactions on Aerospace and Electronic Systems, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": [
+                    "F David",
+                    " Crouse"
+                ],
+                "title": "On implementing 2D rectangular assignment algorithms",
+                "pub_date": "2016",
+                "pub_title": "IEEE Transactions on Aerospace and Electronic Systems",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_71",
+            "content": "Marco Cuturi, Sinkhorn distances: Lightspeed computation of optimal transport, 2013, Advances in Neural Information Processing Systems, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": [
+                    "Marco Cuturi"
+                ],
+                "title": "Sinkhorn distances: Lightspeed computation of optimal transport",
+                "pub_date": "2013",
+                "pub_title": "Advances in Neural Information Processing Systems",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_72",
+            "content": "Sergey Edunov, Myle Ott, Michael Auli, David Grangier, Marc'aurelio Ranzato, Classical structured prediction losses for sequence to sequence learning, 2018, Proceedings of the 2018 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "Sergey Edunov",
+                    "Myle Ott",
+                    "Michael Auli",
+                    "David Grangier",
+                    "Marc'aurelio Ranzato"
+                ],
+                "title": "Classical structured prediction losses for sequence to sequence learning",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the 2018 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_73",
+            "content": "Inigo Unanue, Jacob Parnell, Massimo Piccardi, BERTTune: Fine-tuning neural machine translation with BERTScore, 2021, Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Short Papers.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": [
+                    "Inigo Unanue",
+                    "Jacob Parnell",
+                    "Massimo Piccardi"
+                ],
+                "title": "BERTTune: Fine-tuning neural machine translation with BERTScore",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing",
+                "pub": "Short Papers"
+            }
+        },
+        {
+            "ix": "327-ARR_v1_74",
+            "content": "Matt Kusner, Yu Sun, Nicholas Kolkin, Kilian Weinberger, From word embeddings to document distances, 2015, Proceedings of the 32nd International Conference on Machine Learning, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": [
+                    "Matt Kusner",
+                    "Yu Sun",
+                    "Nicholas Kolkin",
+                    "Kilian Weinberger"
+                ],
+                "title": "From word embeddings to document distances",
+                "pub_date": "2015",
+                "pub_title": "Proceedings of the 32nd International Conference on Machine Learning",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_75",
+            "content": "Siyao Li, Deren Lei, Pengda Qin, William Wang, Deep reinforcement learning with distributional semantic rewards for abstractive summarization, 2019, Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": [
+                    "Siyao Li",
+                    "Deren Lei",
+                    "Pengda Qin",
+                    "William Wang"
+                ],
+                "title": "Deep reinforcement learning with distributional semantic rewards for abstractive summarization",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_76",
+            "content": "Chin-Yew Lin, Eduard Hovy, Manual and automatic evaluation of summaries, 2002, Proceedings of the ACL-02 Workshop on Automatic Summarization, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    "Chin-Yew Lin",
+                    "Eduard Hovy"
+                ],
+                "title": "Manual and automatic evaluation of summaries",
+                "pub_date": "2002",
+                "pub_title": "Proceedings of the ACL-02 Workshop on Automatic Summarization",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_77",
+            "content": "Kishore Papineni, Salim Roukos, Todd Ward, Wei-Jing Zhu, BLEU: a method for automatic evaluation of machine translation, 2002, Proceedings of the 40th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": [
+                    "Kishore Papineni",
+                    "Salim Roukos",
+                    "Todd Ward",
+                    "Wei-Jing Zhu"
+                ],
+                "title": "BLEU: a method for automatic evaluation of machine translation",
+                "pub_date": "2002",
+                "pub_title": "Proceedings of the 40th Annual Meeting of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_78",
+            "content": "UNKNOWN, None, 2019, Computational optimal transport: With applications to data science. Foundations and Trends in Machine Learning, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "Computational optimal transport: With applications to data science. Foundations and Trends in Machine Learning",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_79",
+            "content": "Maja Popovi\u0107, chrf: character n-gram f-score for automatic mt evaluation, 2015, Proceedings of the Tenth Workshop on Statistical Machine Translation, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": [
+                    "Maja Popovi\u0107"
+                ],
+                "title": "chrf: character n-gram f-score for automatic mt evaluation",
+                "pub_date": "2015",
+                "pub_title": "Proceedings of the Tenth Workshop on Statistical Machine Translation",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_80",
+            "content": "Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, Peter J Liu, Exploring the limits of transfer learning with a unified text-to-text transformer, 2020, Journal of Machine Learning Research, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": [
+                    "Colin Raffel",
+                    "Noam Shazeer",
+                    "Adam Roberts",
+                    "Katherine Lee",
+                    "Sharan Narang",
+                    "Michael Matena",
+                    "Yanqi Zhou",
+                    "Wei Li",
+                    "Peter J Liu"
+                ],
+                "title": "Exploring the limits of transfer learning with a unified text-to-text transformer",
+                "pub_date": "2020",
+                "pub_title": "Journal of Machine Learning Research",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_81",
+            "content": "Aurelio Marc, Sumit Ranzato, Michael Chopra, Wojciech Auli,  Zaremba, Sequence level training with recurrent neural networks, 2016, 4th International Conference on Learning Representations, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": [
+                    "Aurelio Marc",
+                    "Sumit Ranzato",
+                    "Michael Chopra",
+                    "Wojciech Auli",
+                    " Zaremba"
+                ],
+                "title": "Sequence level training with recurrent neural networks",
+                "pub_date": "2016",
+                "pub_title": "4th International Conference on Learning Representations",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_82",
+            "content": "F Leonardo, Martin Ribeiro,  Schmitt, Hinrich Sch\u00fctze, and Iryna Gurevych. 2021. Investigating pretrained language models for graph-to-text generation, , Proceedings of the 3rd Workshop on Natural Language Processing for Conversational AI, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b15",
+                "authors": [
+                    "F Leonardo",
+                    "Martin Ribeiro",
+                    " Schmitt"
+                ],
+                "title": "Hinrich Sch\u00fctze, and Iryna Gurevych. 2021. Investigating pretrained language models for graph-to-text generation",
+                "pub_date": null,
+                "pub_title": "Proceedings of the 3rd Workshop on Natural Language Processing for Conversational AI",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_83",
+            "content": "Thibault Sellam, Dipanjan Das, Ankur Parikh, BLEURT: Learning robust metrics for text generation, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b16",
+                "authors": [
+                    "Thibault Sellam",
+                    "Dipanjan Das",
+                    "Ankur Parikh"
+                ],
+                "title": "BLEURT: Learning robust metrics for text generation",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_84",
+            "content": "UNKNOWN, None, 2009, Optimal Transport: Old and New, Springer.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b17",
+                "authors": null,
+                "title": null,
+                "pub_date": "2009",
+                "pub_title": "Optimal Transport: Old and New",
+                "pub": "Springer"
+            }
+        },
+        {
+            "ix": "327-ARR_v1_85",
+            "content": "John Wieting, Taylor Berg-Kirkpatrick, Kevin Gimpel, Graham Neubig, Beyond bleu: Training neural machine translation with semantic similarity, 2019, Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b18",
+                "authors": [
+                    "John Wieting",
+                    "Taylor Berg-Kirkpatrick",
+                    "Kevin Gimpel",
+                    "Graham Neubig"
+                ],
+                "title": "Beyond bleu: Training neural machine translation with semantic similarity",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_86",
+            "content": "Sho Yokoi, Ryo Takahashi, Reina Akama, Word rotator's distance, 2020-06, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b19",
+                "authors": [
+                    "Sho Yokoi",
+                    "Ryo Takahashi",
+                    "Reina Akama"
+                ],
+                "title": "Word rotator's distance",
+                "pub_date": "2020-06",
+                "pub_title": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_87",
+            "content": "Tianyi Zhang, Varsha Kishore, Felix Wu, Q Kilian, Yoav Weinberger,  Artzi, BERTScore: Evaluating text generation with BERT, 2019, International Conference on Learning Representations, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b20",
+                "authors": [
+                    "Tianyi Zhang",
+                    "Varsha Kishore",
+                    "Felix Wu",
+                    "Q Kilian",
+                    "Yoav Weinberger",
+                    " Artzi"
+                ],
+                "title": "BERTScore: Evaluating text generation with BERT",
+                "pub_date": "2019",
+                "pub_title": "International Conference on Learning Representations",
+                "pub": null
+            }
+        },
+        {
+            "ix": "327-ARR_v1_88",
+            "content": "Wei Zhao, Maxime Peyrard, Fei Liu, Yang Gao, M Christian, Steffen Meyer,  Eger, MoverScore: Text generation evaluating with contextualized embeddings and earth mover distance, 2019, Proceedings, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b21",
+                "authors": [
+                    "Wei Zhao",
+                    "Maxime Peyrard",
+                    "Fei Liu",
+                    "Yang Gao",
+                    "M Christian",
+                    "Steffen Meyer",
+                    " Eger"
+                ],
+                "title": "MoverScore: Text generation evaluating with contextualized embeddings and earth mover distance",
+                "pub_date": "2019",
+                "pub_title": "Proceedings",
+                "pub": null
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "327-ARR_v1_0@0",
+            "content": "Rewarding Semantic Similarity under Optimized Alignments for AMR-to-Text Generation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_0",
+            "start": 0,
+            "end": 82,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_2@0",
+            "content": "A common way to combat exposure bias is by applying scores from evaluation metrics as rewards in reinforcement learning (RL).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_2",
+            "start": 0,
+            "end": 124,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_2@1",
+            "content": "Metrics leveraging contextualized embeddings appear more flexible than their n-gram matching counterparts and thus ideal as training rewards.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_2",
+            "start": 126,
+            "end": 266,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_2@2",
+            "content": "However, metrics such as BERTSCORE greedily align candidate and reference tokens, which can allow system outputs to receive excess credit relative to a reference.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_2",
+            "start": 268,
+            "end": 429,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_2@3",
+            "content": "Furthermore, past approaches featuring semantic similarity rewards suffer from repetitive outputs and overfitting.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_2",
+            "start": 431,
+            "end": 544,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_2@4",
+            "content": "We address these issues by proposing metrics that replace the greedy alignments in BERTSCORE with optimized ones.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_2",
+            "start": 546,
+            "end": 658,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_2@5",
+            "content": "We compute them on a model's trained token embeddings to prevent domain mismatch.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_2",
+            "start": 660,
+            "end": 740,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_2@6",
+            "content": "Our model optimizing discrete alignment metrics consistently outperforms cross-entropy and BLEU reward baselines on AMR-to-text generation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_2",
+            "start": 742,
+            "end": 880,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_2@7",
+            "content": "In addition, we find that this approach enjoys stable training compared to a non-RL setting.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_2",
+            "start": 882,
+            "end": 973,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_4@0",
+            "content": "Automatic evaluation metrics often score natural language generation (NLG) system outputs based on how well they lexically align to humanannotated references.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_4",
+            "start": 0,
+            "end": 157,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_4@1",
+            "content": "In tasks such as machine translation and summarization, these metrics may unfairly penalize outputs that express the correct semantics despite a lower n-gram overlap with reference strings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_4",
+            "start": 159,
+            "end": 347,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_4@2",
+            "content": "As a result, models overfitting to certain token-level patterns may dominate those generating more creatively (e.g., through synonyms or varied sentence structure).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_4",
+            "start": 349,
+            "end": 512,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_5@0",
+            "content": "NLG systems are typically trained to maximize likelihood of a single set of references.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_5",
+            "start": 0,
+            "end": 86,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_5@1",
+            "content": "Conditioning models on gold prefixes shields them from their own predictions during training-an issue known as exposure bias.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_5",
+            "start": 88,
+            "end": 212,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_5@2",
+            "content": "Adding reinforcement learning (RL) objectives (Ranzato et al., 2016;Edunov et al., 2018) can aid exploration by giving a model feed-back on sequences sampled from its own distribution.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_5",
+            "start": 214,
+            "end": 397,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_5@3",
+            "content": "However, it is common practice to use automatic evaluation scores like BLEU (Papineni et al., 2002) and ROUGE (Lin and Hovy, 2002) as sequence-level rewards.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_5",
+            "start": 399,
+            "end": 555,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_5@4",
+            "content": "This results in the same lack of semantic signal described earlier.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_5",
+            "start": 557,
+            "end": 623,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_6@0",
+            "content": "Instead of hinging evaluation on hard n-gram overlap, recent metrics (Zhang et al., 2019;Zhao et al., 2019) rely on vector similarity between contextualized subword embeddings to make more semantically faithful judgments.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_6",
+            "start": 0,
+            "end": 220,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_6@1",
+            "content": "BERTSCORE, in particular F BERT , computes a token-level F1 score based on greedy alignment of similar embeddings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_6",
+            "start": 222,
+            "end": 335,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_6@2",
+            "content": "With their strength in offline evaluation, it is natural to ask how these embeddings-based metrics can help provide more realistic training feedback.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_6",
+            "start": 337,
+            "end": 485,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_7@0",
+            "content": "Past approaches to train models with semantic similarity scores include both non-differentiable and differentiable objectives.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_7",
+            "start": 0,
+            "end": 125,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_7@1",
+            "content": "Wieting et al. (2019) separately train paraphrastic sentence embeddings that provide semantic similarity rewards to a neural machine translation (NMT) system.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_7",
+            "start": 127,
+            "end": 284,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_7@2",
+            "content": "Rewards were included in a mixed minimum risk and maximum likelihood training phase.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_7",
+            "start": 286,
+            "end": 369,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_7@3",
+            "content": "Besides an embedding training overhead, the model needed a length penalty term to limit repetitive outputs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_7",
+            "start": 371,
+            "end": 477,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_7@4",
+            "content": "Li et al. (2019) adopt a similar fine-tuning approach using an RL objective with F BERT for abstractive summarization.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_7",
+            "start": 479,
+            "end": 596,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_7@5",
+            "content": "While their models were less repetitive, their news domain corpora may have been a natural match for BERT embeddings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_7",
+            "start": 598,
+            "end": 714,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_7@6",
+            "content": "Finally, Jauregi Unanue et al. (2021) also propose to optimize F BERT but with fully differentiable training objectives in NMT.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_7",
+            "start": 716,
+            "end": 842,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_7@7",
+            "content": "Yet their models overfit after only a few epochs and scored lower in BLEU at the cost of higher F BERT .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_7",
+            "start": 844,
+            "end": 947,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_7@8",
+            "content": "We hypothesize that metrics employing external pretrained vectors may suffer from domain mismatch with downstream data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_7",
+            "start": 949,
+            "end": 1067,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_7@9",
+            "content": "This can hurt the accuracy of semantic similarity scores computed during training.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_7",
+            "start": 1069,
+            "end": 1150,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_8@0",
+            "content": "In this work, we focus on text generation from Abstract Meaning Representations (AMRs, Banarescu et al., 2013), sentence-level semantic graphs that are rooted, directed, and acyclic.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_8",
+            "start": 0,
+            "end": 181,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_8@1",
+            "content": "This task's models may especially benefit from an emphasis on semantic rather than lexical similarity.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_8",
+            "start": 183,
+            "end": 284,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_9@0",
+            "content": "It also provides a challenging setting to evaluate overfitting given the relatively small corpus size.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_9",
+            "start": 0,
+            "end": 101,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_10@0",
+            "content": "In our analysis of F BERT rewards, we note that F BERT could worsen repetition and incomplete outputs in NLG systems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_10",
+            "start": 0,
+            "end": 116,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_10@1",
+            "content": "Due to its greedy token alignment, F BERT precision may assign extra credit to a reference token 'retrieved' multiple times.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_10",
+            "start": 118,
+            "end": 241,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_10@2",
+            "content": "In response, we contribute the following.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_10",
+            "start": 243,
+            "end": 283,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_11@0",
+            "content": "\u2022 We introduce a metric that applies discrete and continuous alignments to BERTSCORE, mitigating the pitfalls of greedy alignment. \u2022 For text generation from AMR, we are the first to train on RL objectives with embeddingbased evaluation metrics. \u2022 We fine-tune on BERTSCORE variants computed on a model's own token representations rather than BERT embeddings. This method is more memory-efficient and does overfit relative to pure cross-entropy training.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_11",
+            "start": 0,
+            "end": 453,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_12@0",
+            "content": "Greedy Token Alignment",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_12",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_13@0",
+            "content": "The main insight behind BERTSCORE and related metrics is to align hypothesis and reference tokens using their pairwise vector similarity scores.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_13",
+            "start": 0,
+            "end": 143,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_13@1",
+            "content": "These alignments are later used to weight the contribution of token-level similarity scores towards a final sequence-level score.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_13",
+            "start": 145,
+            "end": 273,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_13@2",
+            "content": "Concretely, given (\u0177 1 , . . . , \u0177m ) and (y 1 , . . . , y k ) hypothesis and reference token embeddings, precision in F BERT is",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_13",
+            "start": 275,
+            "end": 402,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_14@0",
+            "content": "P BERT = 1 m \u0177i \u2208\u0177 max y j \u2208y cos(\u0177 i , y j ),",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_14",
+            "start": 0,
+            "end": 45,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_15@0",
+            "content": "where cos(\u0177, y) = \u0177 y/ \u0177 y denotes cosine similarity.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_15",
+            "start": 0,
+            "end": 52,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_15@1",
+            "content": "Each hypothesis token \u0177i is greedily aligned to the reference token y j with the highest corresponding embedding cosine similarity.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_15",
+            "start": 54,
+            "end": 184,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_15@2",
+            "content": "Unlike in BLEU, P BERT does not clip the number of times \u0177 can align to a unique y j by its count in y. As such, a hypothesis will get excess credit by repeating a reference token beyond this count.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_15",
+            "start": 186,
+            "end": 383,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_15@3",
+            "content": "While the authors claim greedy alignments have little effect on BERTSCORE evaluation performance, they perform poorly relative to metrics based on optimized alignments in our experiments.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_15",
+            "start": 385,
+            "end": 571,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_16@0",
+            "content": "Optimized Token Alignment",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_16",
+            "start": 0,
+            "end": 24,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_17@0",
+            "content": "Aligning tokens between hypothesis and reference can be seen as an assignment problem, where a token pair (\u0177 i , y j ) is highly weighted if it incurs low cost (i.e. distance).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_17",
+            "start": 0,
+            "end": 175,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_18@0",
+            "content": "Here, we describe discrete token matching (oneto-one) and soft alignment (one-to-many).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_18",
+            "start": 0,
+            "end": 86,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_18@1",
+            "content": "For the latter, we extract alignments from the earth mover's distance (EMD, Villani, 2009;Peyr\u00e9 et al., 2019) transport matrix.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_18",
+            "start": 88,
+            "end": 214,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_18@2",
+            "content": "We weight pairwise token similarities as in F BERT using each of these two alignments to provide metrics F DISC and F CONT .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_18",
+            "start": 216,
+            "end": 339,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_19@0",
+            "content": "Discrete word matching",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_19",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_20@0",
+            "content": "To avoid the issues with greedy alignment in P BERT , we can extract one-to-one alignments between the two sequences.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_20",
+            "start": 0,
+            "end": 116,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_20@1",
+            "content": "Let C \u2208 R m\u00d7k denote the pairwise cosine distance matrix such that C ij = 1 \u2212 cos(\u0177 i , y j ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_20",
+            "start": 118,
+            "end": 211,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_20@2",
+            "content": "For notational clarity, let C = 1 \u2212 C. We wish to find alignments",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_20",
+            "start": 213,
+            "end": 277,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_21@0",
+            "content": "T d = arg min T \u2208{0,1} m\u00d7k m i=1 k j=1 T ij C ij ,(1)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_21",
+            "start": 0,
+            "end": 52,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_22@0",
+            "content": "such that no element in h = T 1 k and r = T 1 m can exceed one.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_22",
+            "start": 0,
+            "end": 62,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_22@1",
+            "content": "In other words, each \u0177i can align to at most one y j (exactly one when m = k), and vice versa.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_22",
+            "start": 64,
+            "end": 157,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_22@2",
+            "content": "This linear sum assignment problem can be solved in low-order polynomial time (Crouse, 2016), making it suitable for use during training.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_22",
+            "start": 159,
+            "end": 295,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_23@0",
+            "content": "Metric The updated precision is found as",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_23",
+            "start": 0,
+            "end": 39,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_24@0",
+            "content": "P DISC = 1 m m i=1 k j=1 T d ij C ij .(2)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_24",
+            "start": 0,
+            "end": 40,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_25@0",
+            "content": "Recall takes an analogous form and is combined with recall to produce an F1 score, F DISC .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_25",
+            "start": 0,
+            "end": 90,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_26@0",
+            "content": "Continuous word alignment",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_26",
+            "start": 0,
+            "end": 24,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_27@0",
+            "content": "We also experiment with soft alignments, where weights in T are continuous.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_27",
+            "start": 0,
+            "end": 74,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_27@1",
+            "content": "In the case of P BERT , one-to-many alignments between each hypothesis token \u0177i and those in {y j } j\u2208[k] are permitted.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_27",
+            "start": 76,
+            "end": 195,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_28@0",
+            "content": "Inspired by work applying EMD to semantic text similarity (Kusner et al., 2015;Clark et al., 2019), we frame alignment as minimizing the transportation cost between token embeddings from the hypothesis and reference distributions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_28",
+            "start": 0,
+            "end": 229,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_28@1",
+            "content": "The amount of token-level mass to transport between the two distributions is h and r, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_28",
+            "start": 231,
+            "end": 329,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_28@2",
+            "content": "Instead of assigning IDF as the mass per token (Zhao et al., 2019), we use the norm of its embedding (e.g., y , Yokoi et al., 2020) for simplicity.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_28",
+            "start": 331,
+            "end": 477,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_29@0",
+            "content": "The EMD, or optimal transport, problem is",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_29",
+            "start": 0,
+            "end": 40,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_30@0",
+            "content": "T c = arg min T \u2208R m\u00d7k \u22650 m i=1 k j=1 T ij C ij ,(3)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_30",
+            "start": 0,
+            "end": 51,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_31@0",
+            "content": "s.t. h = T 1 k , r = T 1 m .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_31",
+            "start": 0,
+            "end": 27,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_32@0",
+            "content": "Intuitively, if we view T ij as the joint probability of aligning \u0177i with y j , the row and column sums are marginals (Cuturi, 2013).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_32",
+            "start": 0,
+            "end": 132,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_33@0",
+            "content": "Metric To compute F CONT , we normalize the alignment weights such that the rows of T sum to one for precision, and the columns for recall.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_33",
+            "start": 0,
+            "end": 138,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_34@0",
+            "content": "P CONT = 1 m m i=1 1 h i k j=1 T c ij C ij ,(4)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_34",
+            "start": 0,
+            "end": 46,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_35@0",
+            "content": "R CONT = 1 k k j=1 1 r j m i=1 T c ij C ij (5)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_35",
+            "start": 0,
+            "end": 45,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_36@0",
+            "content": "Semantic Similarity Rewards",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_36",
+            "start": 0,
+            "end": 26,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_37@0",
+            "content": "We propose to fine-tune on our optimized F1 metrics, applying a weighted average of cross-entropy and RL objectives.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_37",
+            "start": 0,
+            "end": 115,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_37@1",
+            "content": "Given source sequence x (e.g., a linearized AMR), the former is computed as",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_37",
+            "start": 117,
+            "end": 191,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_38@0",
+            "content": "L e = \u2212 k i=1 log p(y i | y <i , x).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_38",
+            "start": 0,
+            "end": 35,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_39@0",
+            "content": "To encourage close evaluation scores between sampled \u0233 and reference y, the RL objective is",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_39",
+            "start": 0,
+            "end": 90,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_40@0",
+            "content": "L r = (\u2206(\u0233 g , y) \u2212 \u2206(\u0233, y)) k i=1 log p(\u0233 i | \u0233<i , x),",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_40",
+            "start": 0,
+            "end": 55,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_41@0",
+            "content": "where \u2206 is the chosen evaluation metric and \u0233g is a greedily decoded baseline relative to \u0233.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_41",
+            "start": 0,
+            "end": 91,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_41@1",
+            "content": "This baseline helps reduce variance in REINFORCE.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_41",
+            "start": 93,
+            "end": 141,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_42@0",
+            "content": "The combined cross-entropy and RL loss is",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_42",
+            "start": 0,
+            "end": 40,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_43@0",
+            "content": "L = \u03bbL r + (1 \u2212 \u03bb)L e ,",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_43",
+            "start": 0,
+            "end": 22,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_44@0",
+            "content": "where \u03bb is empirically set to 0.3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_44",
+            "start": 0,
+            "end": 33,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_45@0",
+            "content": "Experiments",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_45",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_46@0",
+            "content": "We examine the performance of our proposed metrics as RL rewards on AMR-to-text generation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_46",
+            "start": 0,
+            "end": 90,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_47@0",
+            "content": "Setup",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_47",
+            "start": 0,
+            "end": 4,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_48@0",
+            "content": "Dataset The LDC2017T10 dataset that we experiment on contains \u223c36K training and \u223c1.4K each of development and test AMR-sentence pairs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_48",
+            "start": 0,
+            "end": 133,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_48@1",
+            "content": "To leverage strong pre-trained language models, the AMRs are linearized as in Ribeiro et al. (2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_48",
+            "start": 135,
+            "end": 234,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_49@0",
+            "content": "Evaluation We report results in terms of BLEU (Papineni et al., 2002), METEOR (Banerjee and Lavie, 2005), CHRF (Popovi\u0107, 2015), and BLEURT (Sellam et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_49",
+            "start": 0,
+            "end": 160,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_49@1",
+            "content": "Only the latter metric makes use of pre-trained contextualized embeddings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_49",
+            "start": 162,
+            "end": 235,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_50@0",
+            "content": "Baselines For all experiments, we fine-tune the small capacity T5 model (Raffel et al., 2020) from Ribeiro et al. (2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_50",
+            "start": 0,
+            "end": 120,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_50@1",
+            "content": "The model has 60M parameters and features a Transformer-based encoder and decoder.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_50",
+            "start": 122,
+            "end": 203,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_50@2",
+            "content": "We compare our F DISC and F CONT metrics for RL-based training against three baseline approaches.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_50",
+            "start": 205,
+            "end": 301,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_50@3",
+            "content": "XENT is a pure cross-entropy objective.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_50",
+            "start": 303,
+            "end": 341,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_50@4",
+            "content": "For RL-based approaches, we include a BLEU reward (BL-R) and one with F BERT -computed on the lowest level token embeddings in T5 1 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_50",
+            "start": 343,
+            "end": 475,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_50@5",
+            "content": "The \u03bb scaling factor for the RL objective is set to 0.3 across all RL-based experiments.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_50",
+            "start": 477,
+            "end": 564,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_51@0",
+            "content": "Implementation details Adam is used to optimize the model with an initial learning rate of (1) REF There are 12 teams totally participating in the competition.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_51",
+            "start": 0,
+            "end": 158,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_52@0",
+            "content": "The competition was part of a total of 12 teams.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_52",
+            "start": 0,
+            "end": 47,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_52@1",
+            "content": "FBERT The competition is part of a total of 12 teams.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_52",
+            "start": 49,
+            "end": 101,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_53@0",
+            "content": "The total of 12 teams participated in competition.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_53",
+            "start": 0,
+            "end": 49,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_54@0",
+            "content": "(2) REF Raymond zilinskas stated that in the worst case the bacteria would be defrosted from minus 70 degrees and it would be a real mess to clean up afterward because it would not be known for certain whether all the bacteria was dead.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_54",
+            "start": 0,
+            "end": 235,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_55@0",
+            "content": "Raymond Zilinskas stated that the bacterium was defrost in the worst case and that afterward cleaning up was a real mess because there is certainly no known cause of death for all the bacteriums.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_55",
+            "start": 0,
+            "end": 194,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_55@1",
+            "content": "FBERT Raymond Zilinskas stated that the bacterium was defrosting in the worst case and the afterward cleaning up was a real mess because the bacterium was certainly not known to die of all the bacteriums.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_55",
+            "start": 196,
+            "end": 399,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_56@0",
+            "content": "Raymond Zilinskas stated that the bacterium was defrost in the worst case and the afterward cleaning up was a real mess because the bacterium was certainly not known to have all died.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_56",
+            "start": 0,
+            "end": 182,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_56@1",
+            "content": "et al. (2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_56",
+            "start": 184,
+            "end": 197,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_56@2",
+            "content": "We use SciPy 2 and the Python Optimal Transport library 3 to solve Eqs. 1 and 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_56",
+            "start": 199,
+            "end": 278,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_57@0",
+            "content": "Results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_57",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_58@0",
+            "content": "Table 1 shows that F DISC achieves the highest scores on all metrics, surpassing F CONT as well.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_58",
+            "start": 0,
+            "end": 95,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_58@1",
+            "content": "It scores higher than the XENT baseline by 1.28 BLEU and 0.71 BLEURT points.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_58",
+            "start": 97,
+            "end": 172,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_58@2",
+            "content": "Although BL-R was specially trained to optimize BLEU, F DISC still outperforms it by over half a point that metric.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_58",
+            "start": 174,
+            "end": 288,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_59@0",
+            "content": "There is a clear hierarchy among the approaches based on F1 score, with F DISC above F CONT , followed by F BERT at the bottom.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_59",
+            "start": 0,
+            "end": 126,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_59@1",
+            "content": "This dynamic suggests that the optimized alignments may provide higher quality reward signals during training.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_59",
+            "start": 128,
+            "end": 237,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_60@0",
+            "content": "We note that although F CONT performed comparably to BL-R, it could exploit tensor operations and was far faster to compute than BLEU.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_60",
+            "start": 0,
+            "end": 133,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_60@1",
+            "content": "On the other hand, F BERT achieved significantly lower scores than BL-R. As noted in \u00a72, perhaps the clipped precision counts in BLEU gave BL-R an advantage over the greedy nature of F BERT .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_60",
+            "start": 135,
+            "end": 325,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_61@0",
+            "content": "Analysis",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_61",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_62@0",
+            "content": "Training stability As shown in Fig. 1, F DISC continues to improve on validation BLEU long after XENT overfits at epoch 18.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_62",
+            "start": 0,
+            "end": 122,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_62@1",
+            "content": "This runs counter to the expectation of unstable RL-based training.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_62",
+            "start": 124,
+            "end": 190,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_62@2",
+            "content": "It is also interesting that while F CONT validation performance looks fairly low relative to BL-R, it achieves similar scores at test time.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_62",
+            "start": 192,
+            "end": 330,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_62@3",
+            "content": "This may be due to irrelevant differences between the validation and test sets, however.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_62",
+            "start": 332,
+            "end": 419,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_63@0",
+            "content": "of model outputs for detailed analysis.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_63",
+            "start": 0,
+            "end": 38,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_63@1",
+            "content": "In example (1), both XENT and F BERT make the error of predicting \"part\" instead of \"participating\".",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_63",
+            "start": 40,
+            "end": 139,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_63@2",
+            "content": "Only F DISC approaches the meaning of the reference.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_63",
+            "start": 141,
+            "end": 192,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_63@3",
+            "content": "This may be a side-effect of weighting lexical over semantic similarity in the former two systems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_63",
+            "start": 194,
+            "end": 291,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_63@4",
+            "content": "In (2), F BERT repeats the word \"bacterium\", while XENT takes an anthropomorphic view of the bacterium.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_63",
+            "start": 293,
+            "end": 395,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_63@5",
+            "content": "The repetition may be a result of F BERT rewarding multiple instances of the same token by mistake during greedy alignment.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_63",
+            "start": 397,
+            "end": 519,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_64@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_64",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_65@0",
+            "content": "This paper proposed new F1 score metrics based on optimized rather than greedy alignments between predicted and reference tokens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_65",
+            "start": 0,
+            "end": 128,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_65@1",
+            "content": "Instead of letting hypotheses align to reference tokens without regard to their frequencies (and vice versa), we extracted alignments as a constrained optimization problem.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_65",
+            "start": 130,
+            "end": 301,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_65@2",
+            "content": "In the discrete case, we treat alignment as a matching problem between hypothesis and reference tokens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_65",
+            "start": 303,
+            "end": 405,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_65@3",
+            "content": "In the continuous case, we found alignments that minimized earth mover's distance between the two token embedding distributions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_65",
+            "start": 407,
+            "end": 534,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_66@0",
+            "content": "We applied new metrics as rewards during RLbased training for AMR-to-text generation, with F DISC outperforming both a cross-entropy baseline and one optimizing BLEU rewards.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_66",
+            "start": 0,
+            "end": 173,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_66@1",
+            "content": "Despite being computed on a downstream model's token embeddings, the metrics still provided informative rewards during training without signs of overfitting.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_66",
+            "start": 175,
+            "end": 331,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_67@0",
+            "content": "Laura Banarescu, Claire Bonial, Shu Cai, Madalina Georgescu, Kira Griffitt, Ulf Hermjakob, Kevin Knight, Philipp Koehn, Martha Palmer, Nathan Schneider, Abstract meaning representation for sembanking, 2013, Proceedings of the 7th Linguistic Annotation Workshop and Interoperability with Discourse, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_67",
+            "start": 0,
+            "end": 298,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_68@0",
+            "content": "Satanjeev Banerjee, Alon Lavie, METEOR: An automatic metric for MT evaluation with improved correlation with human judgments, 2005, Proceedings of the ACL Workshop on Intrinsic and Extrinsic Evaluation Measures for Machine Translation and/or Summarization, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_68",
+            "start": 0,
+            "end": 257,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_69@0",
+            "content": "Elizabeth Clark, Asli Celikyilmaz, Noah Smith, Sentence mover's similarity: Automatic evaluation for multi-sentence texts, 2019, Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_69",
+            "start": 0,
+            "end": 218,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_70@0",
+            "content": "F David,  Crouse, On implementing 2D rectangular assignment algorithms, 2016, IEEE Transactions on Aerospace and Electronic Systems, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_70",
+            "start": 0,
+            "end": 133,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_71@0",
+            "content": "Marco Cuturi, Sinkhorn distances: Lightspeed computation of optimal transport, 2013, Advances in Neural Information Processing Systems, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_71",
+            "start": 0,
+            "end": 136,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_72@0",
+            "content": "Sergey Edunov, Myle Ott, Michael Auli, David Grangier, Marc'aurelio Ranzato, Classical structured prediction losses for sequence to sequence learning, 2018, Proceedings of the 2018 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_72",
+            "start": 0,
+            "end": 301,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_73@0",
+            "content": "Inigo Unanue, Jacob Parnell, Massimo Piccardi, BERTTune: Fine-tuning neural machine translation with BERTScore, 2021, Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Short Papers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_73",
+            "start": 0,
+            "end": 294,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_74@0",
+            "content": "Matt Kusner, Yu Sun, Nicholas Kolkin, Kilian Weinberger, From word embeddings to document distances, 2015, Proceedings of the 32nd International Conference on Machine Learning, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_74",
+            "start": 0,
+            "end": 177,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_75@0",
+            "content": "Siyao Li, Deren Lei, Pengda Qin, William Wang, Deep reinforcement learning with distributional semantic rewards for abstractive summarization, 2019, Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_75",
+            "start": 0,
+            "end": 326,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_76@0",
+            "content": "Chin-Yew Lin, Eduard Hovy, Manual and automatic evaluation of summaries, 2002, Proceedings of the ACL-02 Workshop on Automatic Summarization, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_76",
+            "start": 0,
+            "end": 142,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_77@0",
+            "content": "Kishore Papineni, Salim Roukos, Todd Ward, Wei-Jing Zhu, BLEU: a method for automatic evaluation of machine translation, 2002, Proceedings of the 40th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_77",
+            "start": 0,
+            "end": 216,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_78@0",
+            "content": "UNKNOWN, None, 2019, Computational optimal transport: With applications to data science. Foundations and Trends in Machine Learning, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_78",
+            "start": 0,
+            "end": 133,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_79@0",
+            "content": "Maja Popovi\u0107, chrf: character n-gram f-score for automatic mt evaluation, 2015, Proceedings of the Tenth Workshop on Statistical Machine Translation, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_79",
+            "start": 0,
+            "end": 150,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_80@0",
+            "content": "Colin Raffel, Noam Shazeer, Adam Roberts, Katherine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, Peter J Liu, Exploring the limits of transfer learning with a unified text-to-text transformer, 2020, Journal of Machine Learning Research, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_80",
+            "start": 0,
+            "end": 248,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_81@0",
+            "content": "Aurelio Marc, Sumit Ranzato, Michael Chopra, Wojciech Auli,  Zaremba, Sequence level training with recurrent neural networks, 2016, 4th International Conference on Learning Representations, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_81",
+            "start": 0,
+            "end": 190,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_82@0",
+            "content": "F Leonardo, Martin Ribeiro,  Schmitt, Hinrich Sch\u00fctze, and Iryna Gurevych. 2021. Investigating pretrained language models for graph-to-text generation, , Proceedings of the 3rd Workshop on Natural Language Processing for Conversational AI, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_82",
+            "start": 0,
+            "end": 240,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_83@0",
+            "content": "Thibault Sellam, Dipanjan Das, Ankur Parikh, BLEURT: Learning robust metrics for text generation, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_83",
+            "start": 0,
+            "end": 193,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_84@0",
+            "content": "UNKNOWN, None, 2009, Optimal Transport: Old and New, Springer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_84",
+            "start": 0,
+            "end": 61,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_85@0",
+            "content": "John Wieting, Taylor Berg-Kirkpatrick, Kevin Gimpel, Graham Neubig, Beyond bleu: Training neural machine translation with semantic similarity, 2019, Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_85",
+            "start": 0,
+            "end": 238,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_86@0",
+            "content": "Sho Yokoi, Ryo Takahashi, Reina Akama, Word rotator's distance, 2020-06, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_86",
+            "start": 0,
+            "end": 169,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_87@0",
+            "content": "Tianyi Zhang, Varsha Kishore, Felix Wu, Q Kilian, Yoav Weinberger,  Artzi, BERTScore: Evaluating text generation with BERT, 2019, International Conference on Learning Representations, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_87",
+            "start": 0,
+            "end": 184,
+            "label": {}
+        },
+        {
+            "ix": "327-ARR_v1_88@0",
+            "content": "Wei Zhao, Maxime Peyrard, Fei Liu, Yang Gao, M Christian, Steffen Meyer,  Eger, MoverScore: Text generation evaluating with contextualized embeddings and earth mover distance, 2019, Proceedings, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "327-ARR_v1_88",
+            "start": 0,
+            "end": 195,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "327-ARR_v1_0",
+            "tgt_ix": "327-ARR_v1_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_0",
+            "tgt_ix": "327-ARR_v1_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_1",
+            "tgt_ix": "327-ARR_v1_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_1",
+            "tgt_ix": "327-ARR_v1_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_0",
+            "tgt_ix": "327-ARR_v1_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_2",
+            "tgt_ix": "327-ARR_v1_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_4",
+            "tgt_ix": "327-ARR_v1_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_5",
+            "tgt_ix": "327-ARR_v1_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_6",
+            "tgt_ix": "327-ARR_v1_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_7",
+            "tgt_ix": "327-ARR_v1_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_8",
+            "tgt_ix": "327-ARR_v1_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_9",
+            "tgt_ix": "327-ARR_v1_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_10",
+            "tgt_ix": "327-ARR_v1_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_3",
+            "tgt_ix": "327-ARR_v1_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_3",
+            "tgt_ix": "327-ARR_v1_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_3",
+            "tgt_ix": "327-ARR_v1_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_3",
+            "tgt_ix": "327-ARR_v1_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_3",
+            "tgt_ix": "327-ARR_v1_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_3",
+            "tgt_ix": "327-ARR_v1_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_3",
+            "tgt_ix": "327-ARR_v1_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_3",
+            "tgt_ix": "327-ARR_v1_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_3",
+            "tgt_ix": "327-ARR_v1_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_0",
+            "tgt_ix": "327-ARR_v1_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_13",
+            "tgt_ix": "327-ARR_v1_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_14",
+            "tgt_ix": "327-ARR_v1_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_12",
+            "tgt_ix": "327-ARR_v1_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_12",
+            "tgt_ix": "327-ARR_v1_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_12",
+            "tgt_ix": "327-ARR_v1_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_12",
+            "tgt_ix": "327-ARR_v1_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_0",
+            "tgt_ix": "327-ARR_v1_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_15",
+            "tgt_ix": "327-ARR_v1_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_17",
+            "tgt_ix": "327-ARR_v1_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_16",
+            "tgt_ix": "327-ARR_v1_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_16",
+            "tgt_ix": "327-ARR_v1_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_16",
+            "tgt_ix": "327-ARR_v1_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_16",
+            "tgt_ix": "327-ARR_v1_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_18",
+            "tgt_ix": "327-ARR_v1_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_20",
+            "tgt_ix": "327-ARR_v1_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_21",
+            "tgt_ix": "327-ARR_v1_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_22",
+            "tgt_ix": "327-ARR_v1_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_23",
+            "tgt_ix": "327-ARR_v1_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_24",
+            "tgt_ix": "327-ARR_v1_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_19",
+            "tgt_ix": "327-ARR_v1_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_19",
+            "tgt_ix": "327-ARR_v1_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_19",
+            "tgt_ix": "327-ARR_v1_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_19",
+            "tgt_ix": "327-ARR_v1_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_19",
+            "tgt_ix": "327-ARR_v1_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_19",
+            "tgt_ix": "327-ARR_v1_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_19",
+            "tgt_ix": "327-ARR_v1_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_16",
+            "tgt_ix": "327-ARR_v1_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_25",
+            "tgt_ix": "327-ARR_v1_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_27",
+            "tgt_ix": "327-ARR_v1_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_28",
+            "tgt_ix": "327-ARR_v1_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_29",
+            "tgt_ix": "327-ARR_v1_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_30",
+            "tgt_ix": "327-ARR_v1_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_31",
+            "tgt_ix": "327-ARR_v1_32",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_32",
+            "tgt_ix": "327-ARR_v1_33",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_33",
+            "tgt_ix": "327-ARR_v1_34",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_34",
+            "tgt_ix": "327-ARR_v1_35",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_26",
+            "tgt_ix": "327-ARR_v1_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_26",
+            "tgt_ix": "327-ARR_v1_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_26",
+            "tgt_ix": "327-ARR_v1_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_26",
+            "tgt_ix": "327-ARR_v1_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_26",
+            "tgt_ix": "327-ARR_v1_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_26",
+            "tgt_ix": "327-ARR_v1_32",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_26",
+            "tgt_ix": "327-ARR_v1_33",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_26",
+            "tgt_ix": "327-ARR_v1_34",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_26",
+            "tgt_ix": "327-ARR_v1_35",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_26",
+            "tgt_ix": "327-ARR_v1_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_0",
+            "tgt_ix": "327-ARR_v1_36",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_35",
+            "tgt_ix": "327-ARR_v1_36",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_37",
+            "tgt_ix": "327-ARR_v1_38",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_38",
+            "tgt_ix": "327-ARR_v1_39",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_39",
+            "tgt_ix": "327-ARR_v1_40",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_40",
+            "tgt_ix": "327-ARR_v1_41",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_41",
+            "tgt_ix": "327-ARR_v1_42",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_42",
+            "tgt_ix": "327-ARR_v1_43",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_43",
+            "tgt_ix": "327-ARR_v1_44",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_36",
+            "tgt_ix": "327-ARR_v1_37",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_36",
+            "tgt_ix": "327-ARR_v1_38",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_36",
+            "tgt_ix": "327-ARR_v1_39",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_36",
+            "tgt_ix": "327-ARR_v1_40",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_36",
+            "tgt_ix": "327-ARR_v1_41",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_36",
+            "tgt_ix": "327-ARR_v1_42",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_36",
+            "tgt_ix": "327-ARR_v1_43",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_36",
+            "tgt_ix": "327-ARR_v1_44",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_36",
+            "tgt_ix": "327-ARR_v1_37",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_0",
+            "tgt_ix": "327-ARR_v1_45",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_44",
+            "tgt_ix": "327-ARR_v1_45",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_45",
+            "tgt_ix": "327-ARR_v1_46",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_45",
+            "tgt_ix": "327-ARR_v1_46",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_45",
+            "tgt_ix": "327-ARR_v1_47",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_46",
+            "tgt_ix": "327-ARR_v1_47",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_48",
+            "tgt_ix": "327-ARR_v1_49",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_49",
+            "tgt_ix": "327-ARR_v1_50",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_50",
+            "tgt_ix": "327-ARR_v1_51",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_47",
+            "tgt_ix": "327-ARR_v1_48",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_47",
+            "tgt_ix": "327-ARR_v1_49",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_47",
+            "tgt_ix": "327-ARR_v1_50",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_47",
+            "tgt_ix": "327-ARR_v1_51",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_47",
+            "tgt_ix": "327-ARR_v1_48",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_47",
+            "tgt_ix": "327-ARR_v1_52",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_51",
+            "tgt_ix": "327-ARR_v1_52",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_53",
+            "tgt_ix": "327-ARR_v1_54",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_47",
+            "tgt_ix": "327-ARR_v1_53",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_47",
+            "tgt_ix": "327-ARR_v1_54",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_52",
+            "tgt_ix": "327-ARR_v1_53",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_47",
+            "tgt_ix": "327-ARR_v1_55",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_54",
+            "tgt_ix": "327-ARR_v1_55",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_47",
+            "tgt_ix": "327-ARR_v1_56",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_55",
+            "tgt_ix": "327-ARR_v1_56",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_45",
+            "tgt_ix": "327-ARR_v1_57",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_56",
+            "tgt_ix": "327-ARR_v1_57",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_58",
+            "tgt_ix": "327-ARR_v1_59",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_59",
+            "tgt_ix": "327-ARR_v1_60",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_57",
+            "tgt_ix": "327-ARR_v1_58",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_57",
+            "tgt_ix": "327-ARR_v1_59",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_57",
+            "tgt_ix": "327-ARR_v1_60",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_57",
+            "tgt_ix": "327-ARR_v1_58",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_45",
+            "tgt_ix": "327-ARR_v1_61",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_60",
+            "tgt_ix": "327-ARR_v1_61",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_61",
+            "tgt_ix": "327-ARR_v1_62",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_61",
+            "tgt_ix": "327-ARR_v1_62",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_61",
+            "tgt_ix": "327-ARR_v1_63",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_62",
+            "tgt_ix": "327-ARR_v1_63",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_0",
+            "tgt_ix": "327-ARR_v1_64",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_63",
+            "tgt_ix": "327-ARR_v1_64",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_65",
+            "tgt_ix": "327-ARR_v1_66",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_64",
+            "tgt_ix": "327-ARR_v1_65",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_64",
+            "tgt_ix": "327-ARR_v1_66",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_64",
+            "tgt_ix": "327-ARR_v1_65",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "327-ARR_v1_0",
+            "tgt_ix": "327-ARR_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_1",
+            "tgt_ix": "327-ARR_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_2",
+            "tgt_ix": "327-ARR_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_2",
+            "tgt_ix": "327-ARR_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_2",
+            "tgt_ix": "327-ARR_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_2",
+            "tgt_ix": "327-ARR_v1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_2",
+            "tgt_ix": "327-ARR_v1_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_2",
+            "tgt_ix": "327-ARR_v1_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_2",
+            "tgt_ix": "327-ARR_v1_2@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_2",
+            "tgt_ix": "327-ARR_v1_2@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_3",
+            "tgt_ix": "327-ARR_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_4",
+            "tgt_ix": "327-ARR_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_4",
+            "tgt_ix": "327-ARR_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_4",
+            "tgt_ix": "327-ARR_v1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_5",
+            "tgt_ix": "327-ARR_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_5",
+            "tgt_ix": "327-ARR_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_5",
+            "tgt_ix": "327-ARR_v1_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_5",
+            "tgt_ix": "327-ARR_v1_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_5",
+            "tgt_ix": "327-ARR_v1_5@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_6",
+            "tgt_ix": "327-ARR_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_6",
+            "tgt_ix": "327-ARR_v1_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_6",
+            "tgt_ix": "327-ARR_v1_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_7",
+            "tgt_ix": "327-ARR_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_7",
+            "tgt_ix": "327-ARR_v1_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_7",
+            "tgt_ix": "327-ARR_v1_7@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_7",
+            "tgt_ix": "327-ARR_v1_7@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_7",
+            "tgt_ix": "327-ARR_v1_7@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_7",
+            "tgt_ix": "327-ARR_v1_7@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_7",
+            "tgt_ix": "327-ARR_v1_7@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_7",
+            "tgt_ix": "327-ARR_v1_7@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_7",
+            "tgt_ix": "327-ARR_v1_7@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_7",
+            "tgt_ix": "327-ARR_v1_7@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_8",
+            "tgt_ix": "327-ARR_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_8",
+            "tgt_ix": "327-ARR_v1_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_9",
+            "tgt_ix": "327-ARR_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_10",
+            "tgt_ix": "327-ARR_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_10",
+            "tgt_ix": "327-ARR_v1_10@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_10",
+            "tgt_ix": "327-ARR_v1_10@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_11",
+            "tgt_ix": "327-ARR_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_12",
+            "tgt_ix": "327-ARR_v1_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_13",
+            "tgt_ix": "327-ARR_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_13",
+            "tgt_ix": "327-ARR_v1_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_13",
+            "tgt_ix": "327-ARR_v1_13@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_14",
+            "tgt_ix": "327-ARR_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_15",
+            "tgt_ix": "327-ARR_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_15",
+            "tgt_ix": "327-ARR_v1_15@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_15",
+            "tgt_ix": "327-ARR_v1_15@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_15",
+            "tgt_ix": "327-ARR_v1_15@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_16",
+            "tgt_ix": "327-ARR_v1_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_17",
+            "tgt_ix": "327-ARR_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_18",
+            "tgt_ix": "327-ARR_v1_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_18",
+            "tgt_ix": "327-ARR_v1_18@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_18",
+            "tgt_ix": "327-ARR_v1_18@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_19",
+            "tgt_ix": "327-ARR_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_20",
+            "tgt_ix": "327-ARR_v1_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_20",
+            "tgt_ix": "327-ARR_v1_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_20",
+            "tgt_ix": "327-ARR_v1_20@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_21",
+            "tgt_ix": "327-ARR_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_22",
+            "tgt_ix": "327-ARR_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_22",
+            "tgt_ix": "327-ARR_v1_22@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_22",
+            "tgt_ix": "327-ARR_v1_22@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_23",
+            "tgt_ix": "327-ARR_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_24",
+            "tgt_ix": "327-ARR_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_25",
+            "tgt_ix": "327-ARR_v1_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_26",
+            "tgt_ix": "327-ARR_v1_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_27",
+            "tgt_ix": "327-ARR_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_27",
+            "tgt_ix": "327-ARR_v1_27@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_28",
+            "tgt_ix": "327-ARR_v1_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_28",
+            "tgt_ix": "327-ARR_v1_28@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_28",
+            "tgt_ix": "327-ARR_v1_28@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_29",
+            "tgt_ix": "327-ARR_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_30",
+            "tgt_ix": "327-ARR_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_31",
+            "tgt_ix": "327-ARR_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_32",
+            "tgt_ix": "327-ARR_v1_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_33",
+            "tgt_ix": "327-ARR_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_34",
+            "tgt_ix": "327-ARR_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_35",
+            "tgt_ix": "327-ARR_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_36",
+            "tgt_ix": "327-ARR_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_37",
+            "tgt_ix": "327-ARR_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_37",
+            "tgt_ix": "327-ARR_v1_37@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_38",
+            "tgt_ix": "327-ARR_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_39",
+            "tgt_ix": "327-ARR_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_40",
+            "tgt_ix": "327-ARR_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_41",
+            "tgt_ix": "327-ARR_v1_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_41",
+            "tgt_ix": "327-ARR_v1_41@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_42",
+            "tgt_ix": "327-ARR_v1_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_43",
+            "tgt_ix": "327-ARR_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_44",
+            "tgt_ix": "327-ARR_v1_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_45",
+            "tgt_ix": "327-ARR_v1_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_46",
+            "tgt_ix": "327-ARR_v1_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_47",
+            "tgt_ix": "327-ARR_v1_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_48",
+            "tgt_ix": "327-ARR_v1_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_48",
+            "tgt_ix": "327-ARR_v1_48@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_49",
+            "tgt_ix": "327-ARR_v1_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_49",
+            "tgt_ix": "327-ARR_v1_49@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_50",
+            "tgt_ix": "327-ARR_v1_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_50",
+            "tgt_ix": "327-ARR_v1_50@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_50",
+            "tgt_ix": "327-ARR_v1_50@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_50",
+            "tgt_ix": "327-ARR_v1_50@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_50",
+            "tgt_ix": "327-ARR_v1_50@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_50",
+            "tgt_ix": "327-ARR_v1_50@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_51",
+            "tgt_ix": "327-ARR_v1_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_52",
+            "tgt_ix": "327-ARR_v1_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_52",
+            "tgt_ix": "327-ARR_v1_52@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_53",
+            "tgt_ix": "327-ARR_v1_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_54",
+            "tgt_ix": "327-ARR_v1_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_55",
+            "tgt_ix": "327-ARR_v1_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_55",
+            "tgt_ix": "327-ARR_v1_55@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_56",
+            "tgt_ix": "327-ARR_v1_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_56",
+            "tgt_ix": "327-ARR_v1_56@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_56",
+            "tgt_ix": "327-ARR_v1_56@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_57",
+            "tgt_ix": "327-ARR_v1_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_58",
+            "tgt_ix": "327-ARR_v1_58@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_58",
+            "tgt_ix": "327-ARR_v1_58@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_58",
+            "tgt_ix": "327-ARR_v1_58@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_59",
+            "tgt_ix": "327-ARR_v1_59@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_59",
+            "tgt_ix": "327-ARR_v1_59@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_60",
+            "tgt_ix": "327-ARR_v1_60@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_60",
+            "tgt_ix": "327-ARR_v1_60@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_61",
+            "tgt_ix": "327-ARR_v1_61@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_62",
+            "tgt_ix": "327-ARR_v1_62@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_62",
+            "tgt_ix": "327-ARR_v1_62@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_62",
+            "tgt_ix": "327-ARR_v1_62@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_62",
+            "tgt_ix": "327-ARR_v1_62@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_63",
+            "tgt_ix": "327-ARR_v1_63@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_63",
+            "tgt_ix": "327-ARR_v1_63@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_63",
+            "tgt_ix": "327-ARR_v1_63@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_63",
+            "tgt_ix": "327-ARR_v1_63@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_63",
+            "tgt_ix": "327-ARR_v1_63@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_63",
+            "tgt_ix": "327-ARR_v1_63@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_64",
+            "tgt_ix": "327-ARR_v1_64@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_65",
+            "tgt_ix": "327-ARR_v1_65@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_65",
+            "tgt_ix": "327-ARR_v1_65@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_65",
+            "tgt_ix": "327-ARR_v1_65@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_65",
+            "tgt_ix": "327-ARR_v1_65@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_66",
+            "tgt_ix": "327-ARR_v1_66@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_66",
+            "tgt_ix": "327-ARR_v1_66@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_67",
+            "tgt_ix": "327-ARR_v1_67@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_68",
+            "tgt_ix": "327-ARR_v1_68@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_69",
+            "tgt_ix": "327-ARR_v1_69@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_70",
+            "tgt_ix": "327-ARR_v1_70@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_71",
+            "tgt_ix": "327-ARR_v1_71@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_72",
+            "tgt_ix": "327-ARR_v1_72@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_73",
+            "tgt_ix": "327-ARR_v1_73@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_74",
+            "tgt_ix": "327-ARR_v1_74@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_75",
+            "tgt_ix": "327-ARR_v1_75@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_76",
+            "tgt_ix": "327-ARR_v1_76@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_77",
+            "tgt_ix": "327-ARR_v1_77@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_78",
+            "tgt_ix": "327-ARR_v1_78@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_79",
+            "tgt_ix": "327-ARR_v1_79@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_80",
+            "tgt_ix": "327-ARR_v1_80@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_81",
+            "tgt_ix": "327-ARR_v1_81@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_82",
+            "tgt_ix": "327-ARR_v1_82@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_83",
+            "tgt_ix": "327-ARR_v1_83@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_84",
+            "tgt_ix": "327-ARR_v1_84@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_85",
+            "tgt_ix": "327-ARR_v1_85@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_86",
+            "tgt_ix": "327-ARR_v1_86@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_87",
+            "tgt_ix": "327-ARR_v1_87@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "327-ARR_v1_88",
+            "tgt_ix": "327-ARR_v1_88@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 733,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "position_tag_type": "from_draft",
+        "doc_id": "327-ARR",
+        "version": 1
+    }
+}

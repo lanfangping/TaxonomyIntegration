@@ -1,0 +1,3686 @@
+{
+    "nodes": [
+        {
+            "ix": "61-ARR_v2_0",
+            "content": "Mismatch between Multi-turn Dialogue and its Evaluation Metric in Dialogue State Tracking",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_2",
+            "content": "Dialogue state tracking (DST) aims to extract essential information from multi-turn dialogue situations and take appropriate actions. A belief state, one of the core pieces of information, refers to the subject and its specific content, and appears in the form of domain-slot-value. The trained model predicts \"accumulated\" belief states in every turn, and joint goal accuracy and slot accuracy are mainly used to evaluate the prediction; however, we specify that the current evaluation metrics have a critical limitation when evaluating belief states accumulated as the dialogue proceeds, especially in the most used MultiWOZ dataset. Additionally, we propose relative slot accuracy to complement existing metrics. Relative slot accuracy does not depend on the number of predefined slots, and allows intuitive evaluation by assigning relative scores according to the turn of each dialogue. This study also encourages not solely the reporting of joint goal accuracy, but also various complementary metrics in DST tasks for the sake of a realistic evaluation.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "61-ARR_v2_4",
+            "content": "The dialogue state tracking (DST) module structures the belief state that appears during the conversation in the form of domain-slot-value, to provide an appropriate response to the user. Recently, multi-turn DST datasets have been constructed using the Wizard-of-Oz method to reflect more realistic dialogue situations (Wen et al., 2017;Mrk\u0161i\u0107 et al., 2017;. The characteristic of these datasets is that belief states are \"accumulated\" and recorded every turn. That is, the belief states of the previous turns are included in the current turn. It confirms whether the DST model tracks essential information that has appeared up to the present point.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_5",
+            "content": "Joint goal accuracy and slot accuracy are utilized in most cases to evaluate the prediction of accumulated belief states. Joint goal accuracy strictly determines whether every predicted state is identical to the gold state, whereas slot accuracy measures the ratio of correct predictions. However, we determined that these two metrics solely focus on \"penalizing states that fail to predict,\" not considering \"reward for well-predicted states.\" Accordingly, as also pointed out in Rastogi et al. (2020a), joint goal accuracy underestimates the model prediction because of its error accumulation attribute, while slot accuracy overestimates it because of its dependency on predefined slots.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_6",
+            "content": "However, there is a lack of discussion on the metric for evaluating the most used MultiWOZ dataset, despite a recently published dataset (Rastogi et al., 2020b) proposing some metrics. To address the above challenge, we propose reporting the relative slot accuracy along with the existing metrics in MultiWOZ dataset. While slot accuracy has the challenge of overestimation by always considering all predefined slots in every turn, relative slot accuracy does not depend on predefined slots, and calculates a score that is affected solely by slots that appear in the current dialogue. Therefore, relative slot accuracy enables a realistic evaluation by rewarding the model's correct predictions, a complementary approach that joint goal and slot accuracies cannot fully cover. It is expected that the proposed metric can be adopted to evaluate model performance more intuitively.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_7",
+            "content": "Current Evaluation Metrics",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "61-ARR_v2_8",
+            "content": "Joint Goal Accuracy",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1"
+            }
+        },
+        {
+            "ix": "61-ARR_v2_9",
+            "content": "Joint goal accuracy, developed from Henderson et al. (2014b) and Zhong et al. (2018), can be said to be an ideal metric, in that it verifies that the predicted belief states perfectly match the gold label. Equation 1 expresses how to calculate the joint goal accuracy, depending on whether the slot values match each turn. JGA = 1 if predicted state = gold state 0 otherwise (1) However, the joint goal accuracy underestimates the accumulated states because it scores the performances of later turn to zero if the model mispredicts even once in a particular turn, regardless of the model prediction quality at later turns. As illustrated in Figure 1, we measured the relative position of the turn causing this phenomenon for the dialogue. We used MultiWOZ 2.1 (Eric et al., 2019), and analyzed 642 samples from a total of 999 test sets in which the joint goal accuracy of the last turn is zero. The DST model selected for primary verification is the SOM-DST (Kim et al., 2020), which is one of the latest DST models. Accordingly, the relative position where joint goal accuracy first became zero was mainly at the beginning of the dialogue 1 . This means that the joint goal accuracy after the beginning of the dialogue is unconditionally measured as zero because of the initial misprediction, although the model may correctly predict new belief states at later turns. Failure to measure the performance of the latter part means that it cannot consider various dialogue situations provided in the dataset, which is a critical issue in building a realistic DST model. 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_10",
+            "content": "Slot Accuracy",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2"
+            }
+        },
+        {
+            "ix": "61-ARR_v2_11",
+            "content": "Slot accuracy can compensate for situations where joint goal accuracy does not fully evaluate the dialogue situation. Equation 2 expresses how to calculate the slot accuracy. T indicates the total number of predefined slots for all the domains. M denotes the number of missed slots that the model does not accurately predict among the slots included in the gold state, and W denotes the number of wrongly predicted slots among the slots that do not exist in the gold state.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_12",
+            "content": "= T \u2212 M \u2212 W T (2)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_13",
+            "content": "Figure 2 illustrates the total number of annotated slots in MultiWOZ 2.1 to figure out the limitation of slot accuracy. Each value of x-axis in Figure 2 indicates the \"maximum\" number of slots that appear in a single dialogue, and we confirmed that approximately 85% of the test set utilized solely less than 12 of the 30 predefined slots in the experiment. Because the number of belief states appearing in the early and middle turns of the dialogue are smaller, and even fewer states make false predictions, calculating slot accuracy using Equation 2 reduces the influence of M and W , and the final score is dominated by the total slot number T . Accordingly, several previous studies still report the model performance using solely joint goal accuracy because slot accuracy excessively depends on the number of predefined slots, making the performance deviation among models trivial (refer to Table A5).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_14",
+            "content": "Furthermore, according to Table A6, we determined that slot accuracy tends to be too high. The slot accuracies of turns 0 and 1 show approximately 96% accuracy, despite the model not correctly predicting states at all. It becomes difficult to compare various models in detail, if each model shows a high performance, even though nothing is adequately predicted. In addition, as the turn progresses, there are no rewards for a situation in which the model tracks the belief state without any challenges. The case correctly predicting two out of three in turn 4, and the case correctly predicting three out of four in turn 5 exhibit the same slot accuracy. Therefore, the slot accuracy measured according to Equation 2 differs from our intuition.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_15",
+            "content": "Other Metric",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3"
+            }
+        },
+        {
+            "ix": "61-ARR_v2_16",
+            "content": "Recently, Rastogi et al. (2020b) proposed a metric called average goal accuracy. The main difference between the average goal accuracy and the proposed relative slot accuracy is that the average goal accuracy only considers the slots with non-empty values in the gold states of each turn, whereas the proposed relative slot accuracy considers those in both gold and predicted states. Since average goal accuracy ignores the predicted states, it cannot properly distinguish a better model from a worse model in some specific situations. We will discuss it in more detail in Section 4.1.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_17",
+            "content": "Relative Slot Accuracy",
+            "ntype": "title",
+            "meta": {
+                "section": "3"
+            }
+        },
+        {
+            "ix": "61-ARR_v2_18",
+            "content": "As can be observed in Equation 2, slot accuracy has the characteristic that the larger the number of predefined slots (T ), the smaller the deviation between the prediction results. The deviation among DST models will be even more minor when constructing datasets with various dialogue situations, because the number of predefined slots will continually in-crease. It is not presumed to be an appropriate metric in terms of scalability. Therefore, we propose relative slot accuracy, that is not affected by predefined slots, and is evaluated with adequate rewards and penalties that fit human intuition in every turn. Equation 3 expresses how to calculate the relative slot accuracy, and T * denotes the number of unique slots appearing in the predicted and gold states in a particular turn.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_19",
+            "content": "RSA = T * \u2212 M \u2212 W T *",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_20",
+            "content": ", where 0 if T * = 0 (3)",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_21",
+            "content": "Relative slot accuracy rewards well-predicted belief states by measuring the scores in accumulating turns. Further discussions on the relative score will be discussed in Section 4.1.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_22",
+            "content": "Experiments",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "61-ARR_v2_23",
+            "content": "We measured MultiWOZ 2.1, an improved version of MultiWOZ 2.0 , which has been adopted in several studies, according to Table A5. Five domains (i.e., hotel, train, restaurant, attraction, and taxi) are adopted in the experiment, following Wu et al. (2019), and there are a total of 30 domain-slot pairs. We selected the DST models in Table A5 that perform the Mul-tiWOZ experiment with the original authors' reproducible code 2 . Additionally, we reported the F1 score, which can be calculated using the current predicted and gold states.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_24",
+            "content": "Results and Discussion",
+            "ntype": "title",
+            "meta": {
+                "section": "4.1"
+            }
+        },
+        {
+            "ix": "61-ARR_v2_25",
+            "content": "Table 1 presents the overall results. Regarding slot accuracy, the difference between the largest and smallest values is solely 1.09%. It can be one of the reasons that several researchers do not report it. Meanwhile, relative slot accuracy can explicitly highlight the deviation among models by showing a 5.47% difference between the largest and smallest values. Furthermore, the correlation with joint goal accuracy, a mainly adopted metric, and relative slot accuracy with respect to each turn is lower than the correlation with joint goal accuracy and slot accuracy, as illustrated in Figure 3. Specifically, it can be compared with a different perspective when using the proposed reward-considering evaluation metric.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_26",
+            "content": "We reported the joint goal, slot, and relative slot accuracies per domain utilizing the SOM-DST model in Table 2. Relative slot accuracy derives a specific score in the turn configuration and prediction ratio of each domain by excluding slots that do not appear in the conversation. For example, the taxi domain shows a low score, meaning that it has relatively several cases of incorrect predictions, compared to the number of times slots belonging to the taxi domain appear. Because slot accuracy cannot distinguish the above trend, the score of the hotel domain is lower than that of the taxi domain. In summary, relative slot accuracy enables relative comparison according to the distribution of the domain in a dialogue. Dependency on Predefined Slots As discussed in Section 2.2, slot accuracy requiring total predefined slots is not a scalable method for evaluating the current dialogue dataset that contains a few domains in each dialogue. For example, when evaluating a dialogue sample that solely deals with the restaurant domain, even domains that never appear at all (i.e., hotel, train, attraction, and taxi) are involved in measuring performance, making deviations among different models trivial. However, relative slot accuracy can evaluate the model's predictive score without being affected by slots never seen in the current dialogue, which is a more realistic way, considering that each dialogue contains its own turn and slot composition. Figure 4 illustrates the mean and standard deviations of the model performance in Table 1. As can be observed from the results, the relative slot accuracy has a higher deviation than the slot accuracy, enabling a detailed comparison among the methodologies.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_27",
+            "content": "Reward on Relative Dialogue Turn Relative slot accuracy is able to reward the model's correct prediction by measuring the accuracy on a relative basis for each turn.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_28",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "5"
+            }
+        },
+        {
+            "ix": "61-ARR_v2_29",
+            "content": "This paper points out the challenge that the existing joint goal and slot accuracies cannot fully evaluate the accumulating belief state of each turn in the MultiWOZ dataset. Accordingly, the relative slot accuracy is proposed. This metric is not affected by unseen slots in the current dialogue situation, and compensates for the model's correct predic-tion. When the DST task is scaled up to deal with more diverse conversational situations, a realistic model evaluation will be possible using relative slot accuracy. Moreover, we suggest reporting various evaluation metrics to complement the limitations of each metric in future studies, not solely reporting the joint goal accuracy.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_30",
+            "content": "Our findings show that if the model makes an incorrect prediction, the error accumulates until the end of the dialogue, and the joint goal accuracy remains at zero. In this section, we discuss a few cases of 59 dialogues that do not show the trend among 642 dialogues selected in Section 2.1; however, it is important to note that these few cases have negligible effect on the trend in Figure 1, solely changing the position where the joint goal accuracy first becomes zero.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_31",
+            "content": "We sampled dialogues of the MultiWOZ 2.1 test set in Table A1 and Table A2, and marked values appearing in the dialogue in bold. Table A3 and Table A4 indicate the corresponding belief states of each dialogue. In the first dialogue presented in Table A1, the joint goal accuracy is measured as 1 at turn 2. In this case, the model incorrectly predicted the restaurant-pricerange slot at turns 0 and 1, and then the utterance about the slot appeared by chance. In a general case, the wrong prediction of the restaurant-pricerange slot at turn 0 will accumulate to the last turn. However, in this case, another incorrect prediction at turn 3 will cause error accumulation in this dialogue.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_32",
+            "content": "The second dialogue presented in Table A2, reports the incorrect prediction according to the interpretation of annotations at turn 4. In other words, because the dialogue about the hotel-internet slot appears over turns 4 and 5, it is solely an error depending on the prediction timing of the model. Because the correct belief state was predicted right from turn 5, it cannot be said to be an error accumulation phenomenon; however, the model did not predict the hotel-pricerange slot at turn 6, which is the last turn in this case.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_33",
+            "content": "In conclusion, it can be determined that the model does not seem to accumulate erroneous predictions because of an accidental situation or interpretation of annotations, but this does not negate the error accumulation phenomenon. Furthermore, the fact that the starting point of making the joint goal accuracy of subsequent turns to 0 mainly occurs at the beginning of the dialogue does not change.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_34",
+            "content": "System: \" \" User: \"can you help me find a nice restaurant ?\" 1 System: \"sure ! what kind of food do you like ?\" User: \"i was thinking some indian food would be great .\"",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_35",
+            "content": "2 System: \"i have 22 indian restaurant -s do you have a preference for area of town ?\" User: \"no , i do not care where it is . i am thinking i would like an expensive restaurant .\"",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_36",
+            "content": "3 System: \"would you like to try curry garden ?\" User: \"that is fine book me a table for 6 on sat at 17:30 . i also need a train for the same and should leave leicester for cambridge\" 4 System: \"alright , i have made your requested booking at curry garden , and the reference number is hk9ycl6z . as for the train , what time would you like to depart ?\" User: \"it does not matter as long as i am there by 13:45 leaving leicester going to cambridge , i'll need the reference number too please\" 5 System: \"i have found tr6210 leaving leicester at 11:09 on saturday and arriving in cambridge at 12:54 . i have booked 6 seats . reference number is lr5i1rzv . anything else i can do ?\" User: \"that will be all for today . thanks so much for all your help . goodbye\"",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_37",
+            "content": "Joint Goal Acc.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_38",
+            "content": "Joint Goal Acc.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "61-ARR_v2_39",
+            "content": "Pawe\u0142 Budzianowski, Tsung-Hsien Wen, Bo-Hsiang Tseng, I\u00f1igo Casanueva, Stefan Ultes, Milica Osman Ramadan,  Ga\u0161i\u0107, MultiWOZ -a largescale multi-domain Wizard-of-Oz dataset for taskoriented dialogue modelling, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": [
+                    "Pawe\u0142 Budzianowski",
+                    "Tsung-Hsien Wen",
+                    "Bo-Hsiang Tseng",
+                    "I\u00f1igo Casanueva",
+                    "Stefan Ultes",
+                    "Milica Osman Ramadan",
+                    " Ga\u0161i\u0107"
+                ],
+                "title": "MultiWOZ -a largescale multi-domain Wizard-of-Oz dataset for taskoriented dialogue modelling",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "61-ARR_v2_40",
+            "content": "Guan-Lin Chao, Ian Lane, BERT-DST: scalable end-to-end dialogue state tracking with bidirectional encoder representations from transformer, 2019-09-19, Interspeech 2019, 20th Annual Conference of the International Speech Communication Association, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": [
+                    "Guan-Lin Chao",
+                    "Ian Lane"
+                ],
+                "title": "BERT-DST: scalable end-to-end dialogue state tracking with bidirectional encoder representations from transformer",
+                "pub_date": "2019-09-19",
+                "pub_title": "Interspeech 2019, 20th Annual Conference of the International Speech Communication Association",
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_41",
+            "content": "Lu Chen, Boer Lv, Chi Wang, Su Zhu, Bowen Tan, Kai Yu ; Ye, MultiWOZ 2.1, MultiWOZ 2.2 (Zang et al, 2018, JGA MultiWOZ, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": [
+                    "Lu Chen",
+                    "Boer Lv",
+                    "Chi Wang",
+                    "Su Zhu",
+                    "Bowen Tan",
+                    "Kai Yu ; Ye"
+                ],
+                "title": "MultiWOZ 2.1, MultiWOZ 2.2 (Zang et al",
+                "pub_date": "2018",
+                "pub_title": "JGA MultiWOZ",
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_42",
+            "content": "UNKNOWN, None, 2021, , .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": null,
+                "title": null,
+                "pub_date": "2021",
+                "pub_title": null,
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_43",
+            "content": "Na-Dst ( Le, None, 2020, JGA, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": [
+                    "Na-Dst ( Le"
+                ],
+                "title": null,
+                "pub_date": "2020",
+                "pub_title": "JGA",
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_44",
+            "content": "( Trippy,  Heck, MultiWOZ 2.1, 2017, JGA, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "( Trippy",
+                    " Heck"
+                ],
+                "title": "MultiWOZ 2.1",
+                "pub_date": "2017",
+                "pub_title": "JGA",
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_45",
+            "content": "UNKNOWN, None, , 2020) JGA MultiWOZ 2.0, MultiWOZ, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": "2020) JGA MultiWOZ 2.0, MultiWOZ",
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_46",
+            "content": "UNKNOWN, None, 2020, JGA MultiWOZ 2.0, MultiWOZ, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": null,
+                "title": null,
+                "pub_date": "2020",
+                "pub_title": "JGA MultiWOZ 2.0, MultiWOZ",
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_47",
+            "content": "UNKNOWN, None, , 2020) JGA MultiWOZ 2.0, MultiWOZ, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": "2020) JGA MultiWOZ 2.0, MultiWOZ",
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_48",
+            "content": "Savn (wang, None, 2020, JGA, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    " Savn (wang"
+                ],
+                "title": null,
+                "pub_date": "2020",
+                "pub_title": "JGA",
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_49",
+            "content": "Sst (chen, None, 2020, JGA, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": [
+                    " Sst (chen"
+                ],
+                "title": null,
+                "pub_date": "2020",
+                "pub_title": "JGA",
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_50",
+            "content": "UNKNOWN, None, , 2020) JGA MultiWOZ 2.0, MultiWOZ, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": "2020) JGA MultiWOZ 2.0, MultiWOZ",
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_51",
+            "content": "Dstqa (zhou,  Small, None, 2019, JGA, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": [
+                    " Dstqa (zhou",
+                    " Small"
+                ],
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "JGA",
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_52",
+            "content": "UNKNOWN, None, 2019, , .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": null,
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_53",
+            "content": "UNKNOWN, None, 2019, , .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": null,
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_54",
+            "content": "Bert-Dst ( Chao, Lane , None, 2019, JGA, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b15",
+                "authors": [
+                    "Bert-Dst ( Chao",
+                    "Lane "
+                ],
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "JGA",
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_55",
+            "content": "UNKNOWN, None, 2019, , .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b16",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": null,
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_56",
+            "content": "UNKNOWN, None, 2019, , .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b17",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": null,
+                "pub": null
+            }
+        },
+        {
+            "ix": "61-ARR_v2_57",
+            "content": "A5 Table, Evaluation metrics used for performance comparison among the methodologies. We focused on metrics evaluating the belief state of each turn. For convenience, the name of each metric is abbreviated, , JGA: Joint Goal Accuracy, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b18",
+                "authors": [
+                    "A5 Table"
+                ],
+                "title": "Evaluation metrics used for performance comparison among the methodologies. We focused on metrics evaluating the belief state of each turn. For convenience, the name of each metric is abbreviated",
+                "pub_date": null,
+                "pub_title": "JGA: Joint Goal Accuracy",
+                "pub": null
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "61-ARR_v2_0@0",
+            "content": "Mismatch between Multi-turn Dialogue and its Evaluation Metric in Dialogue State Tracking",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_0",
+            "start": 0,
+            "end": 88,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_2@0",
+            "content": "Dialogue state tracking (DST) aims to extract essential information from multi-turn dialogue situations and take appropriate actions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_2",
+            "start": 0,
+            "end": 132,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_2@1",
+            "content": "A belief state, one of the core pieces of information, refers to the subject and its specific content, and appears in the form of domain-slot-value.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_2",
+            "start": 134,
+            "end": 281,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_2@2",
+            "content": "The trained model predicts \"accumulated\" belief states in every turn, and joint goal accuracy and slot accuracy are mainly used to evaluate the prediction; however, we specify that the current evaluation metrics have a critical limitation when evaluating belief states accumulated as the dialogue proceeds, especially in the most used MultiWOZ dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_2",
+            "start": 283,
+            "end": 634,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_2@3",
+            "content": "Additionally, we propose relative slot accuracy to complement existing metrics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_2",
+            "start": 636,
+            "end": 714,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_2@4",
+            "content": "Relative slot accuracy does not depend on the number of predefined slots, and allows intuitive evaluation by assigning relative scores according to the turn of each dialogue.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_2",
+            "start": 716,
+            "end": 889,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_2@5",
+            "content": "This study also encourages not solely the reporting of joint goal accuracy, but also various complementary metrics in DST tasks for the sake of a realistic evaluation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_2",
+            "start": 891,
+            "end": 1057,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_4@0",
+            "content": "The dialogue state tracking (DST) module structures the belief state that appears during the conversation in the form of domain-slot-value, to provide an appropriate response to the user.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_4",
+            "start": 0,
+            "end": 186,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_4@1",
+            "content": "Recently, multi-turn DST datasets have been constructed using the Wizard-of-Oz method to reflect more realistic dialogue situations (Wen et al., 2017;Mrk\u0161i\u0107 et al., 2017;. The characteristic of these datasets is that belief states are \"accumulated\" and recorded every turn.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_4",
+            "start": 188,
+            "end": 460,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_4@2",
+            "content": "That is, the belief states of the previous turns are included in the current turn.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_4",
+            "start": 462,
+            "end": 543,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_4@3",
+            "content": "It confirms whether the DST model tracks essential information that has appeared up to the present point.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_4",
+            "start": 545,
+            "end": 649,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_5@0",
+            "content": "Joint goal accuracy and slot accuracy are utilized in most cases to evaluate the prediction of accumulated belief states.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_5",
+            "start": 0,
+            "end": 120,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_5@1",
+            "content": "Joint goal accuracy strictly determines whether every predicted state is identical to the gold state, whereas slot accuracy measures the ratio of correct predictions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_5",
+            "start": 122,
+            "end": 287,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_5@2",
+            "content": "However, we determined that these two metrics solely focus on \"penalizing states that fail to predict,\" not considering \"reward for well-predicted states.\"",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_5",
+            "start": 289,
+            "end": 443,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_5@3",
+            "content": "Accordingly, as also pointed out in Rastogi et al. (2020a), joint goal accuracy underestimates the model prediction because of its error accumulation attribute, while slot accuracy overestimates it because of its dependency on predefined slots.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_5",
+            "start": 445,
+            "end": 688,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_6@0",
+            "content": "However, there is a lack of discussion on the metric for evaluating the most used MultiWOZ dataset, despite a recently published dataset (Rastogi et al., 2020b) proposing some metrics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_6",
+            "start": 0,
+            "end": 183,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_6@1",
+            "content": "To address the above challenge, we propose reporting the relative slot accuracy along with the existing metrics in MultiWOZ dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_6",
+            "start": 185,
+            "end": 316,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_6@2",
+            "content": "While slot accuracy has the challenge of overestimation by always considering all predefined slots in every turn, relative slot accuracy does not depend on predefined slots, and calculates a score that is affected solely by slots that appear in the current dialogue.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_6",
+            "start": 318,
+            "end": 583,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_6@3",
+            "content": "Therefore, relative slot accuracy enables a realistic evaluation by rewarding the model's correct predictions, a complementary approach that joint goal and slot accuracies cannot fully cover.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_6",
+            "start": 585,
+            "end": 775,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_6@4",
+            "content": "It is expected that the proposed metric can be adopted to evaluate model performance more intuitively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_6",
+            "start": 777,
+            "end": 878,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_7@0",
+            "content": "Current Evaluation Metrics",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_7",
+            "start": 0,
+            "end": 25,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_8@0",
+            "content": "Joint Goal Accuracy",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_8",
+            "start": 0,
+            "end": 18,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_9@0",
+            "content": "Joint goal accuracy, developed from Henderson et al. (2014b) and Zhong et al. (2018), can be said to be an ideal metric, in that it verifies that the predicted belief states perfectly match the gold label.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_9",
+            "start": 0,
+            "end": 204,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_9@1",
+            "content": "Equation 1 expresses how to calculate the joint goal accuracy, depending on whether the slot values match each turn.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_9",
+            "start": 206,
+            "end": 321,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_9@2",
+            "content": "JGA = 1 if predicted state = gold state 0 otherwise (1) However, the joint goal accuracy underestimates the accumulated states because it scores the performances of later turn to zero if the model mispredicts even once in a particular turn, regardless of the model prediction quality at later turns.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_9",
+            "start": 323,
+            "end": 621,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_9@3",
+            "content": "As illustrated in Figure 1, we measured the relative position of the turn causing this phenomenon for the dialogue.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_9",
+            "start": 623,
+            "end": 737,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_9@4",
+            "content": "We used MultiWOZ 2.1 (Eric et al., 2019), and analyzed 642 samples from a total of 999 test sets in which the joint goal accuracy of the last turn is zero.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_9",
+            "start": 739,
+            "end": 893,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_9@5",
+            "content": "The DST model selected for primary verification is the SOM-DST (Kim et al., 2020), which is one of the latest DST models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_9",
+            "start": 895,
+            "end": 1015,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_9@6",
+            "content": "Accordingly, the relative position where joint goal accuracy first became zero was mainly at the beginning of the dialogue 1 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_9",
+            "start": 1017,
+            "end": 1142,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_9@7",
+            "content": "This means that the joint goal accuracy after the beginning of the dialogue is unconditionally measured as zero because of the initial misprediction, although the model may correctly predict new belief states at later turns.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_9",
+            "start": 1144,
+            "end": 1367,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_9@8",
+            "content": "Failure to measure the performance of the latter part means that it cannot consider various dialogue situations provided in the dataset, which is a critical issue in building a realistic DST model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_9",
+            "start": 1369,
+            "end": 1565,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_9@9",
+            "content": "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_9",
+            "start": 1567,
+            "end": 1612,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_10@0",
+            "content": "Slot Accuracy",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_10",
+            "start": 0,
+            "end": 12,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_11@0",
+            "content": "Slot accuracy can compensate for situations where joint goal accuracy does not fully evaluate the dialogue situation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_11",
+            "start": 0,
+            "end": 116,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_11@1",
+            "content": "Equation 2 expresses how to calculate the slot accuracy.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_11",
+            "start": 118,
+            "end": 173,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_11@2",
+            "content": "T indicates the total number of predefined slots for all the domains.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_11",
+            "start": 175,
+            "end": 243,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_11@3",
+            "content": "M denotes the number of missed slots that the model does not accurately predict among the slots included in the gold state, and W denotes the number of wrongly predicted slots among the slots that do not exist in the gold state.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_11",
+            "start": 245,
+            "end": 472,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_12@0",
+            "content": "= T \u2212 M \u2212 W T (2)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_12",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_13@0",
+            "content": "Figure 2 illustrates the total number of annotated slots in MultiWOZ 2.1 to figure out the limitation of slot accuracy.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_13",
+            "start": 0,
+            "end": 118,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_13@1",
+            "content": "Each value of x-axis in Figure 2 indicates the \"maximum\" number of slots that appear in a single dialogue, and we confirmed that approximately 85% of the test set utilized solely less than 12 of the 30 predefined slots in the experiment.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_13",
+            "start": 120,
+            "end": 356,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_13@2",
+            "content": "Because the number of belief states appearing in the early and middle turns of the dialogue are smaller, and even fewer states make false predictions, calculating slot accuracy using Equation 2 reduces the influence of M and W , and the final score is dominated by the total slot number T .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_13",
+            "start": 358,
+            "end": 647,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_13@3",
+            "content": "Accordingly, several previous studies still report the model performance using solely joint goal accuracy because slot accuracy excessively depends on the number of predefined slots, making the performance deviation among models trivial (refer to Table A5).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_13",
+            "start": 649,
+            "end": 905,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_14@0",
+            "content": "Furthermore, according to Table A6, we determined that slot accuracy tends to be too high.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_14",
+            "start": 0,
+            "end": 89,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_14@1",
+            "content": "The slot accuracies of turns 0 and 1 show approximately 96% accuracy, despite the model not correctly predicting states at all.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_14",
+            "start": 91,
+            "end": 217,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_14@2",
+            "content": "It becomes difficult to compare various models in detail, if each model shows a high performance, even though nothing is adequately predicted.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_14",
+            "start": 219,
+            "end": 360,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_14@3",
+            "content": "In addition, as the turn progresses, there are no rewards for a situation in which the model tracks the belief state without any challenges.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_14",
+            "start": 362,
+            "end": 501,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_14@4",
+            "content": "The case correctly predicting two out of three in turn 4, and the case correctly predicting three out of four in turn 5 exhibit the same slot accuracy.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_14",
+            "start": 503,
+            "end": 653,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_14@5",
+            "content": "Therefore, the slot accuracy measured according to Equation 2 differs from our intuition.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_14",
+            "start": 655,
+            "end": 743,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_15@0",
+            "content": "Other Metric",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_15",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_16@0",
+            "content": "Recently, Rastogi et al. (2020b) proposed a metric called average goal accuracy.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_16",
+            "start": 0,
+            "end": 79,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_16@1",
+            "content": "The main difference between the average goal accuracy and the proposed relative slot accuracy is that the average goal accuracy only considers the slots with non-empty values in the gold states of each turn, whereas the proposed relative slot accuracy considers those in both gold and predicted states.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_16",
+            "start": 81,
+            "end": 382,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_16@2",
+            "content": "Since average goal accuracy ignores the predicted states, it cannot properly distinguish a better model from a worse model in some specific situations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_16",
+            "start": 384,
+            "end": 534,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_16@3",
+            "content": "We will discuss it in more detail in Section 4.1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_16",
+            "start": 536,
+            "end": 584,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_17@0",
+            "content": "Relative Slot Accuracy",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_17",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_18@0",
+            "content": "As can be observed in Equation 2, slot accuracy has the characteristic that the larger the number of predefined slots (T ), the smaller the deviation between the prediction results.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_18",
+            "start": 0,
+            "end": 180,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_18@1",
+            "content": "The deviation among DST models will be even more minor when constructing datasets with various dialogue situations, because the number of predefined slots will continually in-crease.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_18",
+            "start": 182,
+            "end": 363,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_18@2",
+            "content": "It is not presumed to be an appropriate metric in terms of scalability.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_18",
+            "start": 365,
+            "end": 435,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_18@3",
+            "content": "Therefore, we propose relative slot accuracy, that is not affected by predefined slots, and is evaluated with adequate rewards and penalties that fit human intuition in every turn.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_18",
+            "start": 437,
+            "end": 616,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_18@4",
+            "content": "Equation 3 expresses how to calculate the relative slot accuracy, and T * denotes the number of unique slots appearing in the predicted and gold states in a particular turn.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_18",
+            "start": 618,
+            "end": 790,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_19@0",
+            "content": "RSA = T * \u2212 M \u2212 W T *",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_19",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_20@0",
+            "content": ", where 0 if T * = 0 (3)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_20",
+            "start": 0,
+            "end": 23,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_21@0",
+            "content": "Relative slot accuracy rewards well-predicted belief states by measuring the scores in accumulating turns.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_21",
+            "start": 0,
+            "end": 105,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_21@1",
+            "content": "Further discussions on the relative score will be discussed in Section 4.1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_21",
+            "start": 107,
+            "end": 181,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_22@0",
+            "content": "Experiments",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_22",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_23@0",
+            "content": "We measured MultiWOZ 2.1, an improved version of MultiWOZ 2.0 , which has been adopted in several studies, according to Table A5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_23",
+            "start": 0,
+            "end": 128,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_23@1",
+            "content": "Five domains (i.e., hotel, train, restaurant, attraction, and taxi) are adopted in the experiment, following Wu et al. (2019), and there are a total of 30 domain-slot pairs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_23",
+            "start": 130,
+            "end": 302,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_23@2",
+            "content": "We selected the DST models in Table A5 that perform the Mul-tiWOZ experiment with the original authors' reproducible code 2 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_23",
+            "start": 304,
+            "end": 428,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_23@3",
+            "content": "Additionally, we reported the F1 score, which can be calculated using the current predicted and gold states.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_23",
+            "start": 430,
+            "end": 537,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_24@0",
+            "content": "Results and Discussion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_24",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_25@0",
+            "content": "Table 1 presents the overall results.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_25",
+            "start": 0,
+            "end": 36,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_25@1",
+            "content": "Regarding slot accuracy, the difference between the largest and smallest values is solely 1.09%.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_25",
+            "start": 38,
+            "end": 133,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_25@2",
+            "content": "It can be one of the reasons that several researchers do not report it.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_25",
+            "start": 135,
+            "end": 205,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_25@3",
+            "content": "Meanwhile, relative slot accuracy can explicitly highlight the deviation among models by showing a 5.47% difference between the largest and smallest values.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_25",
+            "start": 207,
+            "end": 362,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_25@4",
+            "content": "Furthermore, the correlation with joint goal accuracy, a mainly adopted metric, and relative slot accuracy with respect to each turn is lower than the correlation with joint goal accuracy and slot accuracy, as illustrated in Figure 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_25",
+            "start": 364,
+            "end": 597,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_25@5",
+            "content": "Specifically, it can be compared with a different perspective when using the proposed reward-considering evaluation metric.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_25",
+            "start": 599,
+            "end": 721,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_26@0",
+            "content": "We reported the joint goal, slot, and relative slot accuracies per domain utilizing the SOM-DST model in Table 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_26",
+            "start": 0,
+            "end": 112,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_26@1",
+            "content": "Relative slot accuracy derives a specific score in the turn configuration and prediction ratio of each domain by excluding slots that do not appear in the conversation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_26",
+            "start": 114,
+            "end": 281,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_26@2",
+            "content": "For example, the taxi domain shows a low score, meaning that it has relatively several cases of incorrect predictions, compared to the number of times slots belonging to the taxi domain appear.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_26",
+            "start": 283,
+            "end": 475,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_26@3",
+            "content": "Because slot accuracy cannot distinguish the above trend, the score of the hotel domain is lower than that of the taxi domain.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_26",
+            "start": 477,
+            "end": 602,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_26@4",
+            "content": "In summary, relative slot accuracy enables relative comparison according to the distribution of the domain in a dialogue.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_26",
+            "start": 604,
+            "end": 724,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_26@5",
+            "content": "Dependency on Predefined Slots As discussed in Section 2.2, slot accuracy requiring total predefined slots is not a scalable method for evaluating the current dialogue dataset that contains a few domains in each dialogue.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_26",
+            "start": 726,
+            "end": 946,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_26@6",
+            "content": "For example, when evaluating a dialogue sample that solely deals with the restaurant domain, even domains that never appear at all (i.e., hotel, train, attraction, and taxi) are involved in measuring performance, making deviations among different models trivial.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_26",
+            "start": 948,
+            "end": 1209,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_26@7",
+            "content": "However, relative slot accuracy can evaluate the model's predictive score without being affected by slots never seen in the current dialogue, which is a more realistic way, considering that each dialogue contains its own turn and slot composition.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_26",
+            "start": 1211,
+            "end": 1457,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_26@8",
+            "content": "Figure 4 illustrates the mean and standard deviations of the model performance in Table 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_26",
+            "start": 1459,
+            "end": 1548,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_26@9",
+            "content": "As can be observed from the results, the relative slot accuracy has a higher deviation than the slot accuracy, enabling a detailed comparison among the methodologies.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_26",
+            "start": 1550,
+            "end": 1715,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_27@0",
+            "content": "Reward on Relative Dialogue Turn Relative slot accuracy is able to reward the model's correct prediction by measuring the accuracy on a relative basis for each turn.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_27",
+            "start": 0,
+            "end": 164,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_28@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_28",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_29@0",
+            "content": "This paper points out the challenge that the existing joint goal and slot accuracies cannot fully evaluate the accumulating belief state of each turn in the MultiWOZ dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_29",
+            "start": 0,
+            "end": 173,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_29@1",
+            "content": "Accordingly, the relative slot accuracy is proposed.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_29",
+            "start": 175,
+            "end": 226,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_29@2",
+            "content": "This metric is not affected by unseen slots in the current dialogue situation, and compensates for the model's correct predic-tion.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_29",
+            "start": 228,
+            "end": 358,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_29@3",
+            "content": "When the DST task is scaled up to deal with more diverse conversational situations, a realistic model evaluation will be possible using relative slot accuracy.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_29",
+            "start": 360,
+            "end": 518,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_29@4",
+            "content": "Moreover, we suggest reporting various evaluation metrics to complement the limitations of each metric in future studies, not solely reporting the joint goal accuracy.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_29",
+            "start": 520,
+            "end": 686,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_30@0",
+            "content": "Our findings show that if the model makes an incorrect prediction, the error accumulates until the end of the dialogue, and the joint goal accuracy remains at zero.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_30",
+            "start": 0,
+            "end": 163,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_30@1",
+            "content": "In this section, we discuss a few cases of 59 dialogues that do not show the trend among 642 dialogues selected in Section 2.1; however, it is important to note that these few cases have negligible effect on the trend in Figure 1, solely changing the position where the joint goal accuracy first becomes zero.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_30",
+            "start": 165,
+            "end": 473,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_31@0",
+            "content": "We sampled dialogues of the MultiWOZ 2.1 test set in Table A1 and Table A2, and marked values appearing in the dialogue in bold.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_31",
+            "start": 0,
+            "end": 127,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_31@1",
+            "content": "Table A3 and Table A4 indicate the corresponding belief states of each dialogue.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_31",
+            "start": 129,
+            "end": 208,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_31@2",
+            "content": "In the first dialogue presented in Table A1, the joint goal accuracy is measured as 1 at turn 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_31",
+            "start": 210,
+            "end": 305,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_31@3",
+            "content": "In this case, the model incorrectly predicted the restaurant-pricerange slot at turns 0 and 1, and then the utterance about the slot appeared by chance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_31",
+            "start": 307,
+            "end": 458,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_31@4",
+            "content": "In a general case, the wrong prediction of the restaurant-pricerange slot at turn 0 will accumulate to the last turn.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_31",
+            "start": 460,
+            "end": 576,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_31@5",
+            "content": "However, in this case, another incorrect prediction at turn 3 will cause error accumulation in this dialogue.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_31",
+            "start": 578,
+            "end": 686,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_32@0",
+            "content": "The second dialogue presented in Table A2, reports the incorrect prediction according to the interpretation of annotations at turn 4.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_32",
+            "start": 0,
+            "end": 132,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_32@1",
+            "content": "In other words, because the dialogue about the hotel-internet slot appears over turns 4 and 5, it is solely an error depending on the prediction timing of the model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_32",
+            "start": 134,
+            "end": 298,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_32@2",
+            "content": "Because the correct belief state was predicted right from turn 5, it cannot be said to be an error accumulation phenomenon; however, the model did not predict the hotel-pricerange slot at turn 6, which is the last turn in this case.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_32",
+            "start": 300,
+            "end": 531,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_33@0",
+            "content": "In conclusion, it can be determined that the model does not seem to accumulate erroneous predictions because of an accidental situation or interpretation of annotations, but this does not negate the error accumulation phenomenon.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_33",
+            "start": 0,
+            "end": 228,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_33@1",
+            "content": "Furthermore, the fact that the starting point of making the joint goal accuracy of subsequent turns to 0 mainly occurs at the beginning of the dialogue does not change.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_33",
+            "start": 230,
+            "end": 397,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_34@0",
+            "content": "System: \" \" User: \"can you help me find a nice restaurant ?\" 1 System: \"sure ! what kind of food do you like ?\" User: \"i was thinking some indian food would be great .\"",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_34",
+            "start": 0,
+            "end": 167,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_35@0",
+            "content": "2 System: \"i have 22 indian restaurant -s do you have a preference for area of town ?\" User: \"no , i do not care where it is . i am thinking i would like an expensive restaurant .\"",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_35",
+            "start": 0,
+            "end": 179,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_36@0",
+            "content": "3 System: \"would you like to try curry garden ?\"",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_36",
+            "start": 0,
+            "end": 47,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_36@1",
+            "content": "User: \"that is fine book me a table for 6 on sat at 17:30 . i also need a train for the same and should leave leicester for cambridge\" 4 System: \"alright , i have made your requested booking at curry garden , and the reference number is hk9ycl6z . as for the train , what time would you like to depart ?\"",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_36",
+            "start": 49,
+            "end": 352,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_36@2",
+            "content": "User: \"it does not matter as long as i am there by 13:45 leaving leicester going to cambridge , i'll need the reference number too please\" 5 System: \"i have found tr6210 leaving leicester at 11:09 on saturday and arriving in cambridge at 12:54 . i have booked 6 seats . reference number is lr5i1rzv . anything else i can do ?\"",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_36",
+            "start": 354,
+            "end": 679,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_36@3",
+            "content": "User: \"that will be all for today . thanks so much for all your help . goodbye\"",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_36",
+            "start": 681,
+            "end": 759,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_37@0",
+            "content": "Joint Goal Acc.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_37",
+            "start": 0,
+            "end": 14,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_38@0",
+            "content": "Joint Goal Acc.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_38",
+            "start": 0,
+            "end": 14,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_39@0",
+            "content": "Pawe\u0142 Budzianowski, Tsung-Hsien Wen, Bo-Hsiang Tseng, I\u00f1igo Casanueva, Stefan Ultes, Milica Osman Ramadan,  Ga\u0161i\u0107, MultiWOZ -a largescale multi-domain Wizard-of-Oz dataset for taskoriented dialogue modelling, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_39",
+            "start": 0,
+            "end": 344,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_40@0",
+            "content": "Guan-Lin Chao, Ian Lane, BERT-DST: scalable end-to-end dialogue state tracking with bidirectional encoder representations from transformer, 2019-09-19, Interspeech 2019, 20th Annual Conference of the International Speech Communication Association, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_40",
+            "start": 0,
+            "end": 248,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_41@0",
+            "content": "Lu Chen, Boer Lv, Chi Wang, Su Zhu, Bowen Tan, Kai Yu ; Ye, MultiWOZ 2.1, MultiWOZ 2.2 (Zang et al, 2018, JGA MultiWOZ, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_41",
+            "start": 0,
+            "end": 120,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_42@0",
+            "content": "UNKNOWN, None, 2021, , .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_42",
+            "start": 0,
+            "end": 23,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_43@0",
+            "content": "Na-Dst ( Le, None, 2020, JGA, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_43",
+            "start": 0,
+            "end": 30,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_44@0",
+            "content": "( Trippy,  Heck, MultiWOZ 2.1, 2017, JGA, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_44",
+            "start": 0,
+            "end": 42,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_45@0",
+            "content": "UNKNOWN, None, , 2020) JGA MultiWOZ 2.0, MultiWOZ, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_45",
+            "start": 0,
+            "end": 51,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_46@0",
+            "content": "UNKNOWN, None, 2020, JGA MultiWOZ 2.0, MultiWOZ, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_46",
+            "start": 0,
+            "end": 49,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_47@0",
+            "content": "UNKNOWN, None, , 2020) JGA MultiWOZ 2.0, MultiWOZ, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_47",
+            "start": 0,
+            "end": 51,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_48@0",
+            "content": "Savn (wang, None, 2020, JGA, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_48",
+            "start": 0,
+            "end": 29,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_49@0",
+            "content": "Sst (chen, None, 2020, JGA, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_49",
+            "start": 0,
+            "end": 28,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_50@0",
+            "content": "UNKNOWN, None, , 2020) JGA MultiWOZ 2.0, MultiWOZ, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_50",
+            "start": 0,
+            "end": 51,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_51@0",
+            "content": "Dstqa (zhou,  Small, None, 2019, JGA, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_51",
+            "start": 0,
+            "end": 38,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_52@0",
+            "content": "UNKNOWN, None, 2019, , .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_52",
+            "start": 0,
+            "end": 23,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_53@0",
+            "content": "UNKNOWN, None, 2019, , .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_53",
+            "start": 0,
+            "end": 23,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_54@0",
+            "content": "Bert-Dst ( Chao, Lane , None, 2019, JGA, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_54",
+            "start": 0,
+            "end": 41,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_55@0",
+            "content": "UNKNOWN, None, 2019, , .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_55",
+            "start": 0,
+            "end": 23,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_56@0",
+            "content": "UNKNOWN, None, 2019, , .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_56",
+            "start": 0,
+            "end": 23,
+            "label": {}
+        },
+        {
+            "ix": "61-ARR_v2_57@0",
+            "content": "A5 Table, Evaluation metrics used for performance comparison among the methodologies. We focused on metrics evaluating the belief state of each turn. For convenience, the name of each metric is abbreviated, , JGA: Joint Goal Accuracy, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "61-ARR_v2_57",
+            "start": 0,
+            "end": 235,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "61-ARR_v2_0",
+            "tgt_ix": "61-ARR_v2_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_0",
+            "tgt_ix": "61-ARR_v2_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_1",
+            "tgt_ix": "61-ARR_v2_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_1",
+            "tgt_ix": "61-ARR_v2_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_0",
+            "tgt_ix": "61-ARR_v2_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_2",
+            "tgt_ix": "61-ARR_v2_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_4",
+            "tgt_ix": "61-ARR_v2_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_5",
+            "tgt_ix": "61-ARR_v2_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_3",
+            "tgt_ix": "61-ARR_v2_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_3",
+            "tgt_ix": "61-ARR_v2_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_3",
+            "tgt_ix": "61-ARR_v2_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_3",
+            "tgt_ix": "61-ARR_v2_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_0",
+            "tgt_ix": "61-ARR_v2_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_6",
+            "tgt_ix": "61-ARR_v2_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_7",
+            "tgt_ix": "61-ARR_v2_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_7",
+            "tgt_ix": "61-ARR_v2_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_8",
+            "tgt_ix": "61-ARR_v2_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_8",
+            "tgt_ix": "61-ARR_v2_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_7",
+            "tgt_ix": "61-ARR_v2_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_9",
+            "tgt_ix": "61-ARR_v2_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_10",
+            "tgt_ix": "61-ARR_v2_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_10",
+            "tgt_ix": "61-ARR_v2_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_12",
+            "tgt_ix": "61-ARR_v2_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_13",
+            "tgt_ix": "61-ARR_v2_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_10",
+            "tgt_ix": "61-ARR_v2_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_10",
+            "tgt_ix": "61-ARR_v2_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_10",
+            "tgt_ix": "61-ARR_v2_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_11",
+            "tgt_ix": "61-ARR_v2_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_7",
+            "tgt_ix": "61-ARR_v2_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_14",
+            "tgt_ix": "61-ARR_v2_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_15",
+            "tgt_ix": "61-ARR_v2_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_15",
+            "tgt_ix": "61-ARR_v2_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_0",
+            "tgt_ix": "61-ARR_v2_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_16",
+            "tgt_ix": "61-ARR_v2_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_18",
+            "tgt_ix": "61-ARR_v2_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_19",
+            "tgt_ix": "61-ARR_v2_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_20",
+            "tgt_ix": "61-ARR_v2_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_17",
+            "tgt_ix": "61-ARR_v2_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_17",
+            "tgt_ix": "61-ARR_v2_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_17",
+            "tgt_ix": "61-ARR_v2_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_17",
+            "tgt_ix": "61-ARR_v2_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_17",
+            "tgt_ix": "61-ARR_v2_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_0",
+            "tgt_ix": "61-ARR_v2_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_21",
+            "tgt_ix": "61-ARR_v2_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_22",
+            "tgt_ix": "61-ARR_v2_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_22",
+            "tgt_ix": "61-ARR_v2_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_22",
+            "tgt_ix": "61-ARR_v2_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_23",
+            "tgt_ix": "61-ARR_v2_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_24",
+            "tgt_ix": "61-ARR_v2_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_24",
+            "tgt_ix": "61-ARR_v2_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_24",
+            "tgt_ix": "61-ARR_v2_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_25",
+            "tgt_ix": "61-ARR_v2_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_24",
+            "tgt_ix": "61-ARR_v2_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_26",
+            "tgt_ix": "61-ARR_v2_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_0",
+            "tgt_ix": "61-ARR_v2_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_27",
+            "tgt_ix": "61-ARR_v2_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_28",
+            "tgt_ix": "61-ARR_v2_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_28",
+            "tgt_ix": "61-ARR_v2_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_30",
+            "tgt_ix": "61-ARR_v2_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_31",
+            "tgt_ix": "61-ARR_v2_32",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_32",
+            "tgt_ix": "61-ARR_v2_33",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_28",
+            "tgt_ix": "61-ARR_v2_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_28",
+            "tgt_ix": "61-ARR_v2_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_28",
+            "tgt_ix": "61-ARR_v2_32",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_28",
+            "tgt_ix": "61-ARR_v2_33",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_29",
+            "tgt_ix": "61-ARR_v2_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_34",
+            "tgt_ix": "61-ARR_v2_35",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_35",
+            "tgt_ix": "61-ARR_v2_36",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_28",
+            "tgt_ix": "61-ARR_v2_34",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_28",
+            "tgt_ix": "61-ARR_v2_35",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_28",
+            "tgt_ix": "61-ARR_v2_36",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_33",
+            "tgt_ix": "61-ARR_v2_34",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_28",
+            "tgt_ix": "61-ARR_v2_37",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_36",
+            "tgt_ix": "61-ARR_v2_37",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_28",
+            "tgt_ix": "61-ARR_v2_38",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_37",
+            "tgt_ix": "61-ARR_v2_38",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "61-ARR_v2_0",
+            "tgt_ix": "61-ARR_v2_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_1",
+            "tgt_ix": "61-ARR_v2_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_2",
+            "tgt_ix": "61-ARR_v2_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_2",
+            "tgt_ix": "61-ARR_v2_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_2",
+            "tgt_ix": "61-ARR_v2_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_2",
+            "tgt_ix": "61-ARR_v2_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_2",
+            "tgt_ix": "61-ARR_v2_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_2",
+            "tgt_ix": "61-ARR_v2_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_3",
+            "tgt_ix": "61-ARR_v2_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_4",
+            "tgt_ix": "61-ARR_v2_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_4",
+            "tgt_ix": "61-ARR_v2_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_4",
+            "tgt_ix": "61-ARR_v2_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_4",
+            "tgt_ix": "61-ARR_v2_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_5",
+            "tgt_ix": "61-ARR_v2_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_5",
+            "tgt_ix": "61-ARR_v2_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_5",
+            "tgt_ix": "61-ARR_v2_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_5",
+            "tgt_ix": "61-ARR_v2_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_6",
+            "tgt_ix": "61-ARR_v2_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_6",
+            "tgt_ix": "61-ARR_v2_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_6",
+            "tgt_ix": "61-ARR_v2_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_6",
+            "tgt_ix": "61-ARR_v2_6@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_6",
+            "tgt_ix": "61-ARR_v2_6@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_7",
+            "tgt_ix": "61-ARR_v2_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_8",
+            "tgt_ix": "61-ARR_v2_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_9",
+            "tgt_ix": "61-ARR_v2_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_9",
+            "tgt_ix": "61-ARR_v2_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_9",
+            "tgt_ix": "61-ARR_v2_9@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_9",
+            "tgt_ix": "61-ARR_v2_9@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_9",
+            "tgt_ix": "61-ARR_v2_9@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_9",
+            "tgt_ix": "61-ARR_v2_9@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_9",
+            "tgt_ix": "61-ARR_v2_9@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_9",
+            "tgt_ix": "61-ARR_v2_9@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_9",
+            "tgt_ix": "61-ARR_v2_9@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_9",
+            "tgt_ix": "61-ARR_v2_9@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_10",
+            "tgt_ix": "61-ARR_v2_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_11",
+            "tgt_ix": "61-ARR_v2_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_11",
+            "tgt_ix": "61-ARR_v2_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_11",
+            "tgt_ix": "61-ARR_v2_11@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_11",
+            "tgt_ix": "61-ARR_v2_11@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_12",
+            "tgt_ix": "61-ARR_v2_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_13",
+            "tgt_ix": "61-ARR_v2_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_13",
+            "tgt_ix": "61-ARR_v2_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_13",
+            "tgt_ix": "61-ARR_v2_13@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_13",
+            "tgt_ix": "61-ARR_v2_13@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_14",
+            "tgt_ix": "61-ARR_v2_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_14",
+            "tgt_ix": "61-ARR_v2_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_14",
+            "tgt_ix": "61-ARR_v2_14@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_14",
+            "tgt_ix": "61-ARR_v2_14@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_14",
+            "tgt_ix": "61-ARR_v2_14@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_14",
+            "tgt_ix": "61-ARR_v2_14@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_15",
+            "tgt_ix": "61-ARR_v2_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_16",
+            "tgt_ix": "61-ARR_v2_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_16",
+            "tgt_ix": "61-ARR_v2_16@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_16",
+            "tgt_ix": "61-ARR_v2_16@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_16",
+            "tgt_ix": "61-ARR_v2_16@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_17",
+            "tgt_ix": "61-ARR_v2_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_18",
+            "tgt_ix": "61-ARR_v2_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_18",
+            "tgt_ix": "61-ARR_v2_18@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_18",
+            "tgt_ix": "61-ARR_v2_18@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_18",
+            "tgt_ix": "61-ARR_v2_18@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_18",
+            "tgt_ix": "61-ARR_v2_18@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_19",
+            "tgt_ix": "61-ARR_v2_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_20",
+            "tgt_ix": "61-ARR_v2_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_21",
+            "tgt_ix": "61-ARR_v2_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_21",
+            "tgt_ix": "61-ARR_v2_21@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_22",
+            "tgt_ix": "61-ARR_v2_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_23",
+            "tgt_ix": "61-ARR_v2_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_23",
+            "tgt_ix": "61-ARR_v2_23@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_23",
+            "tgt_ix": "61-ARR_v2_23@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_23",
+            "tgt_ix": "61-ARR_v2_23@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_24",
+            "tgt_ix": "61-ARR_v2_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_25",
+            "tgt_ix": "61-ARR_v2_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_25",
+            "tgt_ix": "61-ARR_v2_25@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_25",
+            "tgt_ix": "61-ARR_v2_25@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_25",
+            "tgt_ix": "61-ARR_v2_25@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_25",
+            "tgt_ix": "61-ARR_v2_25@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_25",
+            "tgt_ix": "61-ARR_v2_25@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_26",
+            "tgt_ix": "61-ARR_v2_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_26",
+            "tgt_ix": "61-ARR_v2_26@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_26",
+            "tgt_ix": "61-ARR_v2_26@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_26",
+            "tgt_ix": "61-ARR_v2_26@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_26",
+            "tgt_ix": "61-ARR_v2_26@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_26",
+            "tgt_ix": "61-ARR_v2_26@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_26",
+            "tgt_ix": "61-ARR_v2_26@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_26",
+            "tgt_ix": "61-ARR_v2_26@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_26",
+            "tgt_ix": "61-ARR_v2_26@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_26",
+            "tgt_ix": "61-ARR_v2_26@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_27",
+            "tgt_ix": "61-ARR_v2_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_28",
+            "tgt_ix": "61-ARR_v2_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_29",
+            "tgt_ix": "61-ARR_v2_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_29",
+            "tgt_ix": "61-ARR_v2_29@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_29",
+            "tgt_ix": "61-ARR_v2_29@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_29",
+            "tgt_ix": "61-ARR_v2_29@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_29",
+            "tgt_ix": "61-ARR_v2_29@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_30",
+            "tgt_ix": "61-ARR_v2_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_30",
+            "tgt_ix": "61-ARR_v2_30@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_31",
+            "tgt_ix": "61-ARR_v2_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_31",
+            "tgt_ix": "61-ARR_v2_31@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_31",
+            "tgt_ix": "61-ARR_v2_31@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_31",
+            "tgt_ix": "61-ARR_v2_31@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_31",
+            "tgt_ix": "61-ARR_v2_31@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_31",
+            "tgt_ix": "61-ARR_v2_31@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_32",
+            "tgt_ix": "61-ARR_v2_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_32",
+            "tgt_ix": "61-ARR_v2_32@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_32",
+            "tgt_ix": "61-ARR_v2_32@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_33",
+            "tgt_ix": "61-ARR_v2_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_33",
+            "tgt_ix": "61-ARR_v2_33@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_34",
+            "tgt_ix": "61-ARR_v2_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_35",
+            "tgt_ix": "61-ARR_v2_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_36",
+            "tgt_ix": "61-ARR_v2_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_36",
+            "tgt_ix": "61-ARR_v2_36@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_36",
+            "tgt_ix": "61-ARR_v2_36@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_36",
+            "tgt_ix": "61-ARR_v2_36@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_37",
+            "tgt_ix": "61-ARR_v2_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_38",
+            "tgt_ix": "61-ARR_v2_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_39",
+            "tgt_ix": "61-ARR_v2_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_40",
+            "tgt_ix": "61-ARR_v2_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_41",
+            "tgt_ix": "61-ARR_v2_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_42",
+            "tgt_ix": "61-ARR_v2_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_43",
+            "tgt_ix": "61-ARR_v2_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_44",
+            "tgt_ix": "61-ARR_v2_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_45",
+            "tgt_ix": "61-ARR_v2_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_46",
+            "tgt_ix": "61-ARR_v2_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_47",
+            "tgt_ix": "61-ARR_v2_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_48",
+            "tgt_ix": "61-ARR_v2_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_49",
+            "tgt_ix": "61-ARR_v2_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_50",
+            "tgt_ix": "61-ARR_v2_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_51",
+            "tgt_ix": "61-ARR_v2_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_52",
+            "tgt_ix": "61-ARR_v2_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_53",
+            "tgt_ix": "61-ARR_v2_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_54",
+            "tgt_ix": "61-ARR_v2_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_55",
+            "tgt_ix": "61-ARR_v2_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_56",
+            "tgt_ix": "61-ARR_v2_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "61-ARR_v2_57",
+            "tgt_ix": "61-ARR_v2_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 428,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "doc_id": "61-ARR",
+        "version": 2
+    }
+}

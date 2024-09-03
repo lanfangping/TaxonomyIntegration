@@ -1,0 +1,1170 @@
+{
+    "nodes": [
+        {
+            "ix": "39-ARR_v1_review1_0",
+            "content": "39-ARR_v1_review1",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "39-ARR_v1_review1_1",
+            "content": "paper_summary. This paper deals with the Cross-Lingual Event Detection (CLED) task where only source language data is available for training but the model is then tested on a target language. The paper claims that their intuition is using unlabelled data in training (line 097-101). They use adversarial language adaptation (ALA) to learn language-invariant representations out of unlabeled bilingual text data. The main contribution of the paper is it proposes to use Optimal Transport (OT) for selecting samples for ALA training. Introducing ALA into CLED itself can be seen as a minor contribution.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "39-ARR_v1_review1_2",
+            "content": "summary_of_strengths. 1. The paper proposes to leverage Optimal Transport (OT) to find similar samples. This is new knowledge to me. Previously I only know Optimal Transport (OT) or Wasserstein Distance is used in Wasserstein GAN (WGAN) which aligns real and fake image spaces. I did not see papers that use OT to search similar data samples before. I also appreciate the way that the paper draw samples in equation (3) and calculate p(s) and p(t) in 2.4.2 which is clever.  2. The main results in 3.2 looks promising.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "39-ARR_v1_review1_3",
+            "content": "summary_of_weaknesses. 1. The paper claims that it exploits unlabelled target language data. However, in line 363, it seems that the paper actually uses event-presence labels $e_{i}$ for each target language sample. First, $e_{i}$ is probably extracted directly from labels $y_{i}$; it is when $y_{i}$ says that some word is an event trigger that one can know that $e_{i}=1$. So, for target language data, their labels are actually used in an indirect way. Thus the method is not totally using pure \"unlabelled\" target language data as the paper claims. Second, I think $e_{i}$ provides super crucial information which might be responsible for most of the gain derived.  To make fair comparisons with the baselines, I think baseline methods BERT-CRF in section 3.2 and the BERT-CRF+MLM in 3.4 should also see $e_{i}$ labels.  2. Also concerning $e_{i}$ in weakness point 1 above, it is not known how $e_{i}$ and $e_{i}$'s distributions look like at all. I could only guess $e_{i}$ is 0,1 binary variables? Since all SRC and TRG data comes from Cross-Lingual Event Detection datasets, maybe most samples do have an event trigger and thus most $e_{i}$s equal 1.  3. It is confusing in line 339: s$\\sim$p(s) and t$\\sim$p(t). Do p(s) and p(t) here the ones calculated and updated in equation (6-7) in lines 369-370? Or maybe it is fixed since each sample already has a ground truth $e_{i}$. If it is the former case, I think it might be a little weird to predict the p(s) and p(t) which the paper uses to draw samples, because p(s) and p(t) are already given since $e_{i}$s are known for all samples?  4. The authors did not justify why Optimal Transport (OT) is used and did not elaborate on what are OT's advantages. One simple substitute for OT is average euclidean distance or average cosine similarity, which can be used to replace the paper's equation (8). There are more substitutes to OT, such as the KL divergence or the Jensen-Shannon divergence (which are commonly used to make comparisons with OT). It is worth comparing OT with say, Euclidean distance, KL divergence as a side experiment. All these simple substitutes are probably super-efficient and quicker to compute than OT.  5. It is not known if the OT sample selection process in 2.4.3 only runs once or runs iteratively as EP module is updated during the training steps. Are optimizing the loss of equation (10), i.e. the training steps, and solving OT in equation (3) conducted by turns iteratively? It will be much easier for readers to know the whole process if more details and a flow chart can be added. Furthermore, what is the runtime for solving the entropic regularized discrete OT problem, and the runtime for OT sample selection?\n6. It is claimed in lines 128-132 that \"it would be beneficial for the LD to be trained with examples containing events\". The statement in lines 137-148 also focuses only on LD. Why only LD benefits from seeing examples containing events? Do the text encoders also benefit from seeing these examples? A clue that the encoder might benefit from unlabelled data is in 3.4's result where simply MLM fine-tuning can derive considerable gains.\n7. In section 3.4, the result shows that simple MLM fine-tuning on unlabelled target language data derives considerable gains against BERT-CRF baseline. I was curious if the authors could do BERT-CRF + MLM + EP like in equation (10), can the performance be better than ALA? If true, it might show that a simple MLM is better than adversarial training.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "39-ARR_v1_review1_4",
+            "content": "comments,_suggestions_and_typos. 1. The writing is not fluent enough. Some typos and awkward/redundant/unnatural sentences such as lines 019, 041-043. \n2. Using Optimal Transport (OT), or more specifically leveraging the Wasserstein Distance, in GAN is first seen in the Wasserstein GAN paper, i.e. WGAN (Arjovsky et al. ICML 2017). It might be beneficial to discuss WGAN a bit or even add WGAN as a baseline method. \n3. The paper should elaborate on OT in both the introduction and the methodology parts and should provide more details and justifications for OT. \n4. In equation (4), L2 distance is used. In OT,  earth mover's distance is more common. What is the benefit of L2 distance? \n5. I hope to see the authors' response in resubmission (if rejected) or clarifications in the camera-ready (if accepted) to remove my concern.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "39-ARR_v1_review1_5",
+            "content": "ethical_concerns. N/A",
+            "ntype": "p",
+            "meta": null
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "39-ARR_v1_review1_0@0",
+            "content": "39-ARR_v1_review1",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_0",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_1@0",
+            "content": "paper_summary.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_1",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_1@1",
+            "content": "This paper deals with the Cross-Lingual Event Detection (CLED) task where only source language data is available for training but the model is then tested on a target language.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_1",
+            "start": 15,
+            "end": 190,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_1@2",
+            "content": "The paper claims that their intuition is using unlabelled data in training (line 097-101).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_1",
+            "start": 192,
+            "end": 281,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_1@3",
+            "content": "They use adversarial language adaptation (ALA) to learn language-invariant representations out of unlabeled bilingual text data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_1",
+            "start": 283,
+            "end": 410,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_1@4",
+            "content": "The main contribution of the paper is it proposes to use Optimal Transport (OT) for selecting samples for ALA training.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_1",
+            "start": 412,
+            "end": 530,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_1@5",
+            "content": "Introducing ALA into CLED itself can be seen as a minor contribution.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_1",
+            "start": 532,
+            "end": 600,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_2@0",
+            "content": "summary_of_strengths.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_2",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_2@1",
+            "content": "1. The paper proposes to leverage Optimal Transport (OT) to find similar samples.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_2",
+            "start": 22,
+            "end": 102,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_2@2",
+            "content": "This is new knowledge to me.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_2",
+            "start": 104,
+            "end": 131,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_2@3",
+            "content": "Previously I only know Optimal Transport (OT) or Wasserstein Distance is used in Wasserstein GAN (WGAN) which aligns real and fake image spaces.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_2",
+            "start": 133,
+            "end": 276,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_2@4",
+            "content": "I did not see papers that use OT to search similar data samples before. I also appreciate the way that the paper draw samples in equation (3) and calculate p(s) and p(t) in 2.4.2 which is clever.  ",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_2",
+            "start": 278,
+            "end": 474,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_2@5",
+            "content": "2. The main results in 3.2 looks promising.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_2",
+            "start": 475,
+            "end": 517,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@0",
+            "content": "summary_of_weaknesses.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@1",
+            "content": "1. The paper claims that it exploits unlabelled target language data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 23,
+            "end": 91,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@2",
+            "content": "However, in line 363, it seems that the paper actually uses event-presence labels $e_{i}$ for each target language sample.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 93,
+            "end": 214,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@3",
+            "content": "First, $e_{i}$ is probably extracted directly from labels $y_{i}$; it is when $y_{i}$ says that some word is an event trigger that one can know that $e_{i}=1$.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 216,
+            "end": 374,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@4",
+            "content": "So, for target language data, their labels are actually used in an indirect way.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 376,
+            "end": 455,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@5",
+            "content": "Thus the method is not totally using pure \"unlabelled\" target language data as the paper claims.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 457,
+            "end": 552,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@6",
+            "content": "Second, I think $e_{i}$ provides super crucial information which might be responsible for most of the gain derived.  ",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 554,
+            "end": 670,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@7",
+            "content": "To make fair comparisons with the baselines, I think baseline methods BERT-CRF in section 3.2 and the BERT-CRF+MLM in 3.4 should also see $e_{i}$ labels.  ",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 671,
+            "end": 825,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@8",
+            "content": "2. Also concerning $e_{i}$ in weakness point 1 above, it is not known how $e_{i}$ and $e_{i}$'s distributions look like at all.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 826,
+            "end": 952,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@9",
+            "content": "I could only guess $e_{i}$ is 0,1 binary variables? Since all SRC and TRG data comes from Cross-Lingual Event Detection datasets, maybe most samples do have an event trigger and thus most $e_{i}$s equal 1.  3. It is confusing in line 339: s$\\sim$p(s) and t$\\sim$p(t). Do p(s) and p(t) here the ones calculated and updated in equation (6-7) in lines 369-370?",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 954,
+            "end": 1310,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@10",
+            "content": "Or maybe it is fixed since each sample already has a ground truth $e_{i}$. If it is the former case, I think it might be a little weird to predict the p(s) and p(t) which the paper uses to draw samples, because p(s) and p(t) are already given since $e_{i}$s are known for all samples?  ",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 1312,
+            "end": 1597,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@11",
+            "content": "4. The authors did not justify why Optimal Transport (OT) is used and did not elaborate on what are OT's advantages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 1598,
+            "end": 1713,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@12",
+            "content": "One simple substitute for OT is average euclidean distance or average cosine similarity, which can be used to replace the paper's equation (8).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 1715,
+            "end": 1857,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@13",
+            "content": "There are more substitutes to OT, such as the KL divergence or the Jensen-Shannon divergence (which are commonly used to make comparisons with OT).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 1859,
+            "end": 2005,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@14",
+            "content": "It is worth comparing OT with say, Euclidean distance, KL divergence as a side experiment.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 2007,
+            "end": 2096,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@15",
+            "content": "All these simple substitutes are probably super-efficient and quicker to compute than OT.  ",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 2098,
+            "end": 2188,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@16",
+            "content": "5. It is not known if the OT sample selection process in 2.4.3 only runs once or runs iteratively as EP module is updated during the training steps.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 2189,
+            "end": 2336,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@17",
+            "content": "Are optimizing the loss of equation (10), i.e. the training steps, and solving OT in equation (3) conducted by turns iteratively?",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 2338,
+            "end": 2466,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@18",
+            "content": "It will be much easier for readers to know the whole process if more details and a flow chart can be added.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 2468,
+            "end": 2574,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@19",
+            "content": "Furthermore, what is the runtime for solving the entropic regularized discrete OT problem, and the runtime for OT sample selection?\n",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 2576,
+            "end": 2707,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@20",
+            "content": "6. It is claimed in lines 128-132 that \"it would be beneficial for the LD to be trained with examples containing events\".",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 2708,
+            "end": 2828,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@21",
+            "content": "The statement in lines 137-148 also focuses only on LD.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 2830,
+            "end": 2884,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@22",
+            "content": "Why only LD benefits from seeing examples containing events?",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 2886,
+            "end": 2945,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@23",
+            "content": "Do the text encoders also benefit from seeing these examples?",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 2947,
+            "end": 3007,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@24",
+            "content": "A clue that the encoder might benefit from unlabelled data is in 3.4's result where simply MLM fine-tuning can derive considerable gains.\n",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 3009,
+            "end": 3146,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@25",
+            "content": "7. In section 3.4, the result shows that simple MLM fine-tuning on unlabelled target language data derives considerable gains against BERT-CRF baseline.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 3147,
+            "end": 3298,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@26",
+            "content": "I was curious if the authors could do BERT-CRF + MLM + EP like in equation (10), can the performance be better than ALA?",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 3300,
+            "end": 3419,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_3@27",
+            "content": "If true, it might show that a simple MLM is better than adversarial training.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_3",
+            "start": 3421,
+            "end": 3497,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_4@0",
+            "content": "comments,_suggestions_and_typos.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_4",
+            "start": 0,
+            "end": 31,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_4@1",
+            "content": "1. The writing is not fluent enough.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_4",
+            "start": 33,
+            "end": 68,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_4@2",
+            "content": "Some typos and awkward/redundant/unnatural sentences such as lines 019, 041-043. \n",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_4",
+            "start": 70,
+            "end": 151,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_4@3",
+            "content": "2. Using Optimal Transport (OT), or more specifically leveraging the Wasserstein Distance, in GAN is first seen in the Wasserstein GAN paper, i.e. WGAN (Arjovsky et al. ICML 2017).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_4",
+            "start": 152,
+            "end": 331,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_4@4",
+            "content": "It might be beneficial to discuss WGAN a bit or even add WGAN as a baseline method. \n",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_4",
+            "start": 333,
+            "end": 417,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_4@5",
+            "content": "3. The paper should elaborate on OT in both the introduction and the methodology parts and should provide more details and justifications for OT. \n",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_4",
+            "start": 418,
+            "end": 564,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_4@6",
+            "content": "4. In equation (4), L2 distance is used.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_4",
+            "start": 565,
+            "end": 604,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_4@7",
+            "content": "In OT,  earth mover's distance is more common.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_4",
+            "start": 606,
+            "end": 651,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_4@8",
+            "content": "What is the benefit of L2 distance? \n",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_4",
+            "start": 653,
+            "end": 689,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_4@9",
+            "content": "5. I hope to see the authors' response in resubmission (if rejected) or clarifications in the camera-ready (if accepted) to remove my concern.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_4",
+            "start": 690,
+            "end": 831,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_5@0",
+            "content": "ethical_concerns.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_5",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "39-ARR_v1_review1_5@1",
+            "content": "N/A",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "39-ARR_v1_review1_5",
+            "start": 18,
+            "end": 20,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "39-ARR_v1_review1_0",
+            "tgt_ix": "39-ARR_v1_review1_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_0",
+            "tgt_ix": "39-ARR_v1_review1_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_0",
+            "tgt_ix": "39-ARR_v1_review1_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_0",
+            "tgt_ix": "39-ARR_v1_review1_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_0",
+            "tgt_ix": "39-ARR_v1_review1_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_0",
+            "tgt_ix": "39-ARR_v1_review1_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_1",
+            "tgt_ix": "39-ARR_v1_review1_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_2",
+            "tgt_ix": "39-ARR_v1_review1_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_4",
+            "tgt_ix": "39-ARR_v1_review1_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_0",
+            "tgt_ix": "39-ARR_v1_review1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_1",
+            "tgt_ix": "39-ARR_v1_review1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_1",
+            "tgt_ix": "39-ARR_v1_review1_1@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_1",
+            "tgt_ix": "39-ARR_v1_review1_1@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_1",
+            "tgt_ix": "39-ARR_v1_review1_1@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_1",
+            "tgt_ix": "39-ARR_v1_review1_1@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_1",
+            "tgt_ix": "39-ARR_v1_review1_1@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_2",
+            "tgt_ix": "39-ARR_v1_review1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_2",
+            "tgt_ix": "39-ARR_v1_review1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_2",
+            "tgt_ix": "39-ARR_v1_review1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_2",
+            "tgt_ix": "39-ARR_v1_review1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_2",
+            "tgt_ix": "39-ARR_v1_review1_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_2",
+            "tgt_ix": "39-ARR_v1_review1_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@11",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@12",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@13",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@14",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@15",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@16",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@17",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@18",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@19",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@20",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@21",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@22",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@23",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@24",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@25",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@26",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_3",
+            "tgt_ix": "39-ARR_v1_review1_3@27",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_4",
+            "tgt_ix": "39-ARR_v1_review1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_4",
+            "tgt_ix": "39-ARR_v1_review1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_4",
+            "tgt_ix": "39-ARR_v1_review1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_4",
+            "tgt_ix": "39-ARR_v1_review1_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_4",
+            "tgt_ix": "39-ARR_v1_review1_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_4",
+            "tgt_ix": "39-ARR_v1_review1_4@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_4",
+            "tgt_ix": "39-ARR_v1_review1_4@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_4",
+            "tgt_ix": "39-ARR_v1_review1_4@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_4",
+            "tgt_ix": "39-ARR_v1_review1_4@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_4",
+            "tgt_ix": "39-ARR_v1_review1_4@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_5",
+            "tgt_ix": "39-ARR_v1_review1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "39-ARR_v1_review1_5",
+            "tgt_ix": "39-ARR_v1_review1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "39-ARR_v1_review1",
+    "meta": {
+        "ix_counter": 58,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy"
+    }
+}

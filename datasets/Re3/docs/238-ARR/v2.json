@@ -1,0 +1,3661 @@
+{
+    "nodes": [
+        {
+            "ix": "238-ARR_v2_0",
+            "content": "Grapheme-to-Phoneme Conversion for Thai using Neural Regression Models",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_2",
+            "content": "We propose a novel Thai grapheme-tophoneme conversion method based on a neural regression model that is trained using neural networks to predict the similarity between a candidate and the correct pronunciation. After generating a set of candidates for an input word or phrase using the orthography rules, this model selects the best-similarity pronunciation from the candidates. This method can be applied to languages other than Thai simply by preparing enough orthography rules, and can reduce the mistakes that neural network models often make. We show that the accuracy of the proposed method is .931, which is comparable to that of encoder-decoder sequence models. We also demonstrate that the proposed method is superior in terms of the difference between correct and predicted pronunciations because incorrect, strange output sometimes occurs when using encoder-decoder sequence models but the error is within the expected range when using the proposed method.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "238-ARR_v2_4",
+            "content": "Grapheme-to-phoneme conversion (G2P) is the task of converting grapheme sequences into corresponding phoneme sequences. Many languages have the difficulty that some grapheme sequences correspond to more than one different phoneme sequence depending on the context.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_5",
+            "content": "G2P plays a key role in speech and text processing systems, especially in text-to-speech (TTS) systems. These systems have to produce speech sounds for every word or phrase, even those not contained in a dictionary. In low-resource languages, it is fundamentally difficult to obtain large vocabulary dictionaries with pronunciations. Therefore, pronunciations need to be predicted from character sequences.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_6",
+            "content": "In many languages, each word is composed of syllables and each syllable is composed of characters following the orthography rules of that lan-guage. This means that G2P for languages with syllabic orthography rules can be formulated as the task of selecting the best path in a lattice generated for a given input word or phrase if we prepare enough orthography rules to make sure that any lattice generated almost certainly includes the path for the correct pronunciation.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_7",
+            "content": "\u1faeE\u1faf HD >H@ HD >L@ RZ >R\u202b@\u075c\u202c RZ \u202b@\u075c\u0724>\u202c P >P@ G >G@ \u1faeH\u1faf Figure 1: G2P can be formulated as the task of selecting the best path in a lattice. In English, because \"ea\" can be pronounced as /e/ and /i:/ and \"ow\" can be pronounced as /oU/ and /aU/, the word \"meadow\" has 4 pronunciation candidates, excluding stress position estimation.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_8",
+            "content": "As the result of some effort, we prepared Thai orthography rules. Almost all possible paths in a lattice can be generated from these, and each path needs to be evaluated using a phonological language model to select the best path. With this in mind, we propose a novel G2P method based on a neural regression model that is trained using neural networks to predict how similar a pronunciation candidate is to the correct pronunciation. After generating a set of candidates for an input word or phrase using the orthography rules, this model selects the best-similarity pronunciation from the candidates.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_9",
+            "content": "In the following sections, we describe the proposed method and explain experiments on a dataset of Thai vocabulary entries with pronunciations collected from Wiktionary. After that, we show that the proposed method outperforms encoder-decoder sequence models in terms of the difference between correct and predicted pronunciations, and demonstrate that incorrect, strange output sometimes occurs when using encoderdecoder sequence models while error is within the expected range when using the proposed method. The code is available at https://github.com/ T0106661.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_10",
+            "content": "Related Work",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "238-ARR_v2_11",
+            "content": "For G2P, converting words into pronunciations does not require as much expertise as needed to prepare correspondences between graphemes and phonemes. Therefore, a method of learning correspondences from a large number of word-pronunciation pairs has been used (van den Bosch and Daelemans, 1993). To solve the problem that graphemes and phonemes often have many-to-many correspondence, a hidden Markov model-based method (Jiampojamarn et al., 2007) and weighted finite-state transducer-based methods (Novak et al., 2012a,b) have been developed. Bisani and Ney (2008) assumed that graphones underlie both graphemes and phonemes, and achieved great performance by learning graphones to minimize joint errors.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_12",
+            "content": "In addition, there have been some attempts to apply encoder-decoder models to learn end-to-end G2P models. For example, Toshniwal and Livescu (2016) applied a sequence-to-sequence architecture (Sutskever et al., 2014;Luong et al., 2015). Yolchuyeva et al. (2020) and Vesik et al. (2020) applied a transformer architecture (Vaswani et al., 2017) to train models that can deal with English or many other languages.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_13",
+            "content": "Proposed Method",
+            "ntype": "title",
+            "meta": {
+                "section": "3"
+            }
+        },
+        {
+            "ix": "238-ARR_v2_14",
+            "content": "It is well known that word segmentation (WS) is a necessary preprocessing for languages without word delimiters, such as Chinese, Japanese, and Thai. To solve WS and homograph disambiguation for Thai simultaneously, Tesprasit et al. (2003) enumerated pronunciation candidates for text data with ambiguity and trained a model to select the correct pronunciation from candidates based on the context in which the text data appear.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_15",
+            "content": "In contrast, the proposed method trains a model that predicts how similar each candidate is to the correct pronunciation. Although the main process of the proposed method is language independent, we take Thai as an example in this section.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_16",
+            "content": "First, we prepared correspondences between graphemes and phonemes by combining Thai characters consisting of 44 consonants, 15 vowels, and several symbols, resulting in an approximately 300-line program and more than 180,000 entries.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_17",
+            "content": "The prepared entries consisted of 77 characters, 5,772 syllables, and 31 phoneme symbols, and each syllable was composed of up to 7 phoneme symbols.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_18",
+            "content": "Syllables Suppose that a dataset of vocabulary entries with pronunciations D = {(v i , p i ) | i = 0, . . .} is given. We begin by tracing characters in each vocabulary v i one at a time to generate a lattice of nodes corresponding to entries. We then enumerate all possible paths in the lattice from one end to the other, and obtain a set of pronunciation candidates C i = {c i j | j = 0, . . .} by joining syllables assigned to nodes. For example, when we have v i = \"\u0e01\u0e25\u0e32\u0e07\u0e04\u0e37 \u0e19\"(night), we obtain the set",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_19",
+            "content": "\u0e40\u0e2a /see\u0139\u00a3/ \u0e21\u0e2d /mOO \u0102 \u00a3/ \u0e40\u0e2a\u0e21\u0e2d /sa \u0102 \u00a3 m@@\u0139\u00a3/ \u0e1c\u0e25 /phon\u0139\u00a3/, /phon\u0139\u00a3 la \u0102 \u00a3/ \u0e23\u0e31 (silent)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_20",
+            "content": "C i = {/ka \u0102 \u00a3 laa \u0102 \u00a3 Na \u0102 \u00a3 khWWn \u0102 \u00a3/, /klaa \u0102 \u00a3 Na \u0102 \u00a3 khWWn \u0102 \u00a3/, /klaaN \u0102 \u00a3 khWWn \u0102 \u00a3/}.",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_21",
+            "content": "After that, we calculate the similarity",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_22",
+            "content": "s i j = s(p i , c i j ) = 1 \u2212 d(p i , c i j ) max(|p i |, |c i j |)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_23",
+            "content": "to the correct pronunciation p i for each candidate c i j , where d(\u2022, \u2022) denotes symbol-based edit distance. This s i j takes a maximum of 1 when c i j = p i and approaches a minimum of 0 as c i j diverges from p i . For the previous example, we obtained p i = /klaaN \u0102 \u00a3 khWWn \u0102 \u00a3/; thus s(/klaaN \u0102 \u00a3 khWWn \u0102 \u00a3/, /klaaN \u0102 \u00a3 khWWn \u0102 \u00a3/) = 1, s(/klaaN \u0102 \u00a3 khWWn \u0102 \u00a3/, /klaa \u0102 \u00a3 Na \u0102 \u00a3 khWWn \u0102 \u00a3/) = 13/16, for example, were obtained.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_24",
+            "content": "Using the similarity defined above, we train a neural regression model that predicts how similar each candidate is to the correct pronunciation. More specifically, we train the model to return the similarity s i j from the encoded vectors of v i and c i j using RNNs with mean absolute error as the loss function to keep each sample error as small as possible.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_25",
+            "content": "Figure 2 shows the model architecture. Vocabulary v is converted into a d v -dimensional vector by a character embedding layer and a bi-directional GRU (Bi-GRU). Candidate c is converted into a d c -dimensional vector by a syllable embedding layer, a phoneme embedding layer, and Bi-GRUs, like the network of Lample et al. (2016). Finally, both vectors are concatenated and converted into similarity s by two dense layers. Each layer dimension can be changed depending on the target language. The model trained in this way is expected to represent the phonological nature of the target language. Therefore, we can predict the pronunciation p for a given vocabulary v as follows. As in the training phase, we trace characters in each vocabulary v , generate a lattice, and obtain a set of candidates C = {c j | j = 0, . . .}. Next, we calculate the similarity s j for each pair (v , c j ) using this model, and find j max = argmax j s j . Finally, we output the predicted pronunciation p = c j max .",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_26",
+            "content": "As can be seen, both training and predicting processes are language independent. In other words, the proposed method can be applied to languages other than Thai simply by preparing enough orthography rules.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_27",
+            "content": "However, one potential problem with the proposed method is that the number of candidates increases exponentially with input length, which can be undesirable for long words and phrases. This is considered in the next section.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_28",
+            "content": "Experimental Setup and Results",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "238-ARR_v2_29",
+            "content": "We collected 18,066 Thai vocabulary entries with pronunciations from Wiktionary as an experimental dataset. The vocabulary consisted of not only words but also phrases. We then converted the pronunciations described in a Thai-specific way into International Phonetic Alphabet sequences. For entries without pronunciations but with syllable boundaries, we determined their pronunciations when all candidates for each boundary were uniquely generated. For entries where the pronunciations were unable to be determined, two workers fluent in Thai described the correct pronunciations. The average length of each data was 7.42 in characters, 2.47 in syllables, and 12.48 in phoneme symbols.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_30",
+            "content": "First, we examined the number of candidates generated and the coverage rate of the correct pronunciations. Figure 3 shows the distribution of the number of candidates. As seen in the figure, the number is usually less than 10 and seldom greater than 100. In fact, the minimum, mode, median, mean, and maximum were 1, 2, 4, 19.6, and 19,242 respectively. This means that the average stayed slightly less than 20, although the lattice generated for longer input tends to have many branches and can cause an exponential increase in candidates. For the coverage rate, 17,720 of 18,066 correct pronunciations were included in the sets of candidates and 346 were not.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_31",
+            "content": "Next, we evaluated our method compared with three G2P baseline models available from SIG-MORPHON ( 2020 baseline models for Thai. Difference is calculated across all entries. Each result is the average of 10-fold cross-validation on the test data, and thus maximum difference may not be an integer.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_32",
+            "content": "breviated to enc-dec and xformer). Table 2 shows the results of 10-fold cross-validation on the test data. For each fold in the experiments, we used 8/10 of entries for training, 1/10 for validation, and 1/10 for testing. We also used accuracy and the difference between correct and predicted pronunciations counted by phoneme symbols as evaluation metrics. In other words, accuracy is the percentage of 0-difference entries. As a result, 1.17 \u00d7 10 6 parameters were trained. Each training run was composed of about 40 epochs and each epoch took about 13 minutes on 1 GPU (Titan V, 11GB). The absence of decoders in our model is a possible reason why the number of parameters is small and the training time is short.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_33",
+            "content": "Table 2 shows that our method achieved high accuracy, small average difference, and small maximum difference, and the accuracy in particular is comparable to those of enc-dec and xformer. In contrast, the low accuracy and large average difference of fst indicate that an ngram model was not able to sufficiently learn the Thai phonological nature, and large maximum differences of encdec and xformer indicate the well-known problem of neural network models returning good output when they work, but sometimes making mistakes when they do not.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_34",
+            "content": "(French presidential election) fst As shown in Table 3, further investigation revealed that the outputs of the encoder-decoder sequence models sometimes included unnatural syllable repetitions and sometimes lacked syllables in the middle, which are undesirable for TTS systems because they might give the impression that the system is failing. In contrast, our method was able to reduce such mistakes because all candidates followed the orthography rules.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_35",
+            "content": "/kaan \u0102 \u00a3 lWak\u010e\u00a3 taN\u010e\u00a3 pra\u0102\u00a3 thaa \u0102 \u00a3 naa \u0102 \u00a3 thi \u0102 \u00a3 bOO \u0102 \u00a3 dii \u0102 \u00a3 fa \u0102 \u00a3 raN\u010e\u00a3 seet\u0102\u00a3/ enc-dec /kaan \u0102 \u00a3 lWak\u010e\u00a3 taN\u010e\u00a3 pra\u0102\u00a3 thaa \u0102 \u00a3 naa \u0102 \u00a3 thip \u0102 \u00a3 dii \u0102 \u00a3 fa \u0102 \u00a3 raN\u010e\u00a3 pra\u0102\u00a3 thaa \u0102 \u00a3 naa \u0102 \u00a3 thip \u0102 \u00a3 dii \u0102 \u00a3 fa \u0102 \u00a3 raN\u010e\u00a3 pra\u0102\u00a3 thaa \u0102 \u00a3 naa \u0102 \u00a3 thip \u0102 \u00a3 dii \u0102 \u00a3 fa \u0102 \u00a3 raN\u010e\u00a3 pra\u0102\u00a3 thaa \u0102 \u00a3/ xformer /kaan \u0102 \u00a3 lWak\u010e\u00a3 taN\u010e\u00a3 pra\u0102\u00a3 thaan \u0102 \u00a3 baa \u0102 \u00a3 dii \u0102 \u00a3/ ours /kaan \u0102 \u00a3 lWak\u010e\u00a3 taN\u010e\u00a3 pra\u0102\u00a3 thaa \u0102 \u00a3 naa \u0102 \u00a3 thi \u0102 \u00a3 ba \u0102 \u00a3 dii \u0102 \u00a3 fa \u0102 \u00a3 raN\u010e\u00a3 seet\u0102\u00a3/ correct /kaan \u0102 \u00a3 lWak\u010e\u00a3 taN\u010e\u00a3 pra\u0102\u00a3 thaa \u0102 \u00a3 naa \u0102 \u00a3 thip \u0102 \u00a3 dii \u0102 \u00a3 fa \u0102 \u00a3 raN\u010e\u00a3 seet\u0102\u00a3/",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_36",
+            "content": "Additional Experiments",
+            "ntype": "title",
+            "meta": {
+                "section": "4.1"
+            }
+        },
+        {
+            "ix": "238-ARR_v2_37",
+            "content": "To confirm that the main process of our method can be applied to other languages, we performed additional experiments on the Japanese Hiragana dataset available from SIGMORPHON (2021). This dataset consisted of 10,000 entries and the average length of each data was 4.21 in characters, 6.53 in syllables, and 16.43 in phoneme symbols.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_38",
+            "content": "As the result of some effort, we prepared Japanese Hiragana orthography rules. The prepared entries consisted of 85 characters, 405 syllables, and 45 phoneme symbols, and each syllable was composed of up to 6 phoneme symbols. Table 4 shows performance comparison with three G2P baseline models. As can be seen, our method also achieved high accuracy and small average difference. However, the maximum differences of enc-dec and xformer are comparable to that of our method. A possible reason why the encoder-decoder sequence models worked well is that the number of long inputs in this dataset was smaller compared with Thai.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_39",
+            "content": "Conclusion and Future Work",
+            "ntype": "title",
+            "meta": {
+                "section": "5"
+            }
+        },
+        {
+            "ix": "238-ARR_v2_40",
+            "content": "In this study, we proposed a novel Thai G2P method based on neural regression models. We confirmed that the model trained using neural networks to predict the similarity was able to select the correct pronunciations from candidates. The accuracy was .931 and the difference between correct and predicted pronunciations was .217 on average and 8.7 at maximum. This means that the performance of our proposed method was comparable to that of encoderdecoder sequence models and superior in terms of the difference between correct and predicted pronunciations. In particular, error is within the expected range when using our proposed method. Use of neural regression models not only for G2P but also for summarization and generation opens the possibility that neural network models could reduce strange mistakes.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_41",
+            "content": "Our proposed method has the strength that it can be applied to any language by preparing enough orthography rules. However, it also has the weakness of the number of candidates increasing exponentially with input length, which can be a concern for languages with many exceptional orthography rules, such as English.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_42",
+            "content": "A method for reducing candidates might thus be needed. There may be an efficient solution to find the correct pronunciation using a given candidate and the predicted similarity. However, these studies and experiments are left as future work.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "238-ARR_v2_43",
+            "content": "Maximilian Bisani, Hermann Ney, Jointsequence models for grapheme-to-phoneme conversion, 2008, Speech Commun, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": [
+                    "Maximilian Bisani",
+                    "Hermann Ney"
+                ],
+                "title": "Jointsequence models for grapheme-to-phoneme conversion",
+                "pub_date": "2008",
+                "pub_title": "Speech Commun",
+                "pub": null
+            }
+        },
+        {
+            "ix": "238-ARR_v2_44",
+            "content": "Grzegorz Sittichai Jiampojamarn, Tarek Kondrak,  Sherif, Applying many-to-many alignments and hidden Markov models to letter-to-phoneme conversion, 2007, Human Language Technologies 2007: The Conference of the North American Chapter of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": [
+                    "Grzegorz Sittichai Jiampojamarn",
+                    "Tarek Kondrak",
+                    " Sherif"
+                ],
+                "title": "Applying many-to-many alignments and hidden Markov models to letter-to-phoneme conversion",
+                "pub_date": "2007",
+                "pub_title": "Human Language Technologies 2007: The Conference of the North American Chapter of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "238-ARR_v2_45",
+            "content": "UNKNOWN, None, , Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": "Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "238-ARR_v2_46",
+            "content": "Guillaume Lample, Miguel Ballesteros, Sandeep Subramanian, Kazuya Kawakami, Chris Dyer, Neural architectures for named entity recognition, 2016, Proceedings of the 2016 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": [
+                    "Guillaume Lample",
+                    "Miguel Ballesteros",
+                    "Sandeep Subramanian",
+                    "Kazuya Kawakami",
+                    "Chris Dyer"
+                ],
+                "title": "Neural architectures for named entity recognition",
+                "pub_date": "2016",
+                "pub_title": "Proceedings of the 2016 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "238-ARR_v2_47",
+            "content": "Thang Luong, Hieu Pham, Christopher Manning, Effective approaches to attention-based neural machine translation, 2015, Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": [
+                    "Thang Luong",
+                    "Hieu Pham",
+                    "Christopher Manning"
+                ],
+                "title": "Effective approaches to attention-based neural machine translation",
+                "pub_date": "2015",
+                "pub_title": "Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing",
+                "pub": null
+            }
+        },
+        {
+            "ix": "238-ARR_v2_48",
+            "content": "Josef Novak, Nobuaki Minematsu, Keikichi Hirose, WFST-based grapheme-to-phoneme conversion: Open source tools for alignment, model-building and decoding, 2012, Proceedings of the 10th International Workshop on Finite State Methods and Natural Language Processing, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "Josef Novak",
+                    "Nobuaki Minematsu",
+                    "Keikichi Hirose"
+                ],
+                "title": "WFST-based grapheme-to-phoneme conversion: Open source tools for alignment, model-building and decoding",
+                "pub_date": "2012",
+                "pub_title": "Proceedings of the 10th International Workshop on Finite State Methods and Natural Language Processing",
+                "pub": null
+            }
+        },
+        {
+            "ix": "238-ARR_v2_49",
+            "content": "Josef Novak, Nobuaki Minematsu, Keikichi Hirose, Chiori Hori, Hideki Kashioka, Paul Dixon, Improving wfst-based G2P conversion with alignment constraints and RNNLM n-best rescoring, 2012-09-09, INTERSPEECH 2012, 13th Annual Conference of the International Speech Communication Association, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": [
+                    "Josef Novak",
+                    "Nobuaki Minematsu",
+                    "Keikichi Hirose",
+                    "Chiori Hori",
+                    "Hideki Kashioka",
+                    "Paul Dixon"
+                ],
+                "title": "Improving wfst-based G2P conversion with alignment constraints and RNNLM n-best rescoring",
+                "pub_date": "2012-09-09",
+                "pub_title": "INTERSPEECH 2012, 13th Annual Conference of the International Speech Communication Association",
+                "pub": null
+            }
+        },
+        {
+            "ix": "238-ARR_v2_50",
+            "content": "Ilya Sutskever, Oriol Vinyals, Quoc V Le, Sequence to sequence learning with neural networks, 2014, Advances in Neural Information Processing Systems, Curran Associates, Inc.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": [
+                    "Ilya Sutskever",
+                    "Oriol Vinyals",
+                    "Quoc V Le"
+                ],
+                "title": "Sequence to sequence learning with neural networks",
+                "pub_date": "2014",
+                "pub_title": "Advances in Neural Information Processing Systems",
+                "pub": "Curran Associates, Inc"
+            }
+        },
+        {
+            "ix": "238-ARR_v2_51",
+            "content": "Virongrong Tesprasit, Paisarn Charoenpornsawat, Virach Sornlertlamvanich, A contextsensitive homograph disambiguation in Thai text-tospeech synthesis, 2003, Companion Volume of the Proceedings of HLT-NAACL 2003 -Short Papers, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": [
+                    "Virongrong Tesprasit",
+                    "Paisarn Charoenpornsawat",
+                    "Virach Sornlertlamvanich"
+                ],
+                "title": "A contextsensitive homograph disambiguation in Thai text-tospeech synthesis",
+                "pub_date": "2003",
+                "pub_title": "Companion Volume of the Proceedings of HLT-NAACL 2003 -Short Papers",
+                "pub": null
+            }
+        },
+        {
+            "ix": "238-ARR_v2_52",
+            "content": "Shubham Toshniwal, Karen Livescu, Jointly learning to align and convert graphemes to phonemes with neural attention models, 2016-12-13, 2016 IEEE Spoken Language Technology Workshop, SLT 2016, IEEE.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    "Shubham Toshniwal",
+                    "Karen Livescu"
+                ],
+                "title": "Jointly learning to align and convert graphemes to phonemes with neural attention models",
+                "pub_date": "2016-12-13",
+                "pub_title": "2016 IEEE Spoken Language Technology Workshop, SLT 2016",
+                "pub": "IEEE"
+            }
+        },
+        {
+            "ix": "238-ARR_v2_53",
+            "content": "Antal Van Den, Walter Bosch,  Daelemans, Data-oriented methods for grapheme-to-phoneme conversion, 1993, Sixth Conference of the European Chapter of the Association for Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": [
+                    "Antal Van Den",
+                    "Walter Bosch",
+                    " Daelemans"
+                ],
+                "title": "Data-oriented methods for grapheme-to-phoneme conversion",
+                "pub_date": "1993",
+                "pub_title": "Sixth Conference of the European Chapter of the Association for Computational Linguistics",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "238-ARR_v2_54",
+            "content": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan Gomez, Illia Kaiser,  Polosukhin, Attention is all you need, 2017, Advances in Neural Information Processing Systems, Curran Associates, Inc.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": [
+                    "Ashish Vaswani",
+                    "Noam Shazeer",
+                    "Niki Parmar",
+                    "Jakob Uszkoreit",
+                    "Llion Jones",
+                    "Aidan Gomez",
+                    "Illia Kaiser",
+                    " Polosukhin"
+                ],
+                "title": "Attention is all you need",
+                "pub_date": "2017",
+                "pub_title": "Advances in Neural Information Processing Systems",
+                "pub": "Curran Associates, Inc"
+            }
+        },
+        {
+            "ix": "238-ARR_v2_55",
+            "content": "Kaili Vesik, Muhammad Abdul-Mageed, Miikka Silfverberg, One model to pronounce them all: Multilingual grapheme-to-phoneme conversion with a transformer ensemble, 2020, Proceedings of the 17th SIGMORPHON Workshop on Computational Research in Phonetics, Phonology, and Morphology, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": [
+                    "Kaili Vesik",
+                    "Muhammad Abdul-Mageed",
+                    "Miikka Silfverberg"
+                ],
+                "title": "One model to pronounce them all: Multilingual grapheme-to-phoneme conversion with a transformer ensemble",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 17th SIGMORPHON Workshop on Computational Research in Phonetics, Phonology, and Morphology",
+                "pub": null
+            }
+        },
+        {
+            "ix": "238-ARR_v2_56",
+            "content": "UNKNOWN, None, , , .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": null,
+                "pub": null
+            }
+        },
+        {
+            "ix": "238-ARR_v2_57",
+            "content": "UNKNOWN, None, 2004, Transformer based grapheme-tophoneme conversion. CoRR, abs, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": null,
+                "title": null,
+                "pub_date": "2004",
+                "pub_title": "Transformer based grapheme-tophoneme conversion. CoRR, abs",
+                "pub": null
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "238-ARR_v2_0@0",
+            "content": "Grapheme-to-Phoneme Conversion for Thai using Neural Regression Models",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_0",
+            "start": 0,
+            "end": 69,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_2@0",
+            "content": "We propose a novel Thai grapheme-tophoneme conversion method based on a neural regression model that is trained using neural networks to predict the similarity between a candidate and the correct pronunciation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_2",
+            "start": 0,
+            "end": 209,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_2@1",
+            "content": "After generating a set of candidates for an input word or phrase using the orthography rules, this model selects the best-similarity pronunciation from the candidates.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_2",
+            "start": 211,
+            "end": 377,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_2@2",
+            "content": "This method can be applied to languages other than Thai simply by preparing enough orthography rules, and can reduce the mistakes that neural network models often make.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_2",
+            "start": 379,
+            "end": 546,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_2@3",
+            "content": "We show that the accuracy of the proposed method is .931, which is comparable to that of encoder-decoder sequence models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_2",
+            "start": 548,
+            "end": 668,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_2@4",
+            "content": "We also demonstrate that the proposed method is superior in terms of the difference between correct and predicted pronunciations because incorrect, strange output sometimes occurs when using encoder-decoder sequence models but the error is within the expected range when using the proposed method.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_2",
+            "start": 670,
+            "end": 966,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_4@0",
+            "content": "Grapheme-to-phoneme conversion (G2P) is the task of converting grapheme sequences into corresponding phoneme sequences.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_4",
+            "start": 0,
+            "end": 118,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_4@1",
+            "content": "Many languages have the difficulty that some grapheme sequences correspond to more than one different phoneme sequence depending on the context.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_4",
+            "start": 120,
+            "end": 263,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_5@0",
+            "content": "G2P plays a key role in speech and text processing systems, especially in text-to-speech (TTS) systems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_5",
+            "start": 0,
+            "end": 102,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_5@1",
+            "content": "These systems have to produce speech sounds for every word or phrase, even those not contained in a dictionary.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_5",
+            "start": 104,
+            "end": 214,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_5@2",
+            "content": "In low-resource languages, it is fundamentally difficult to obtain large vocabulary dictionaries with pronunciations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_5",
+            "start": 216,
+            "end": 332,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_5@3",
+            "content": "Therefore, pronunciations need to be predicted from character sequences.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_5",
+            "start": 334,
+            "end": 405,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_6@0",
+            "content": "In many languages, each word is composed of syllables and each syllable is composed of characters following the orthography rules of that lan-guage.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_6",
+            "start": 0,
+            "end": 147,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_6@1",
+            "content": "This means that G2P for languages with syllabic orthography rules can be formulated as the task of selecting the best path in a lattice generated for a given input word or phrase if we prepare enough orthography rules to make sure that any lattice generated almost certainly includes the path for the correct pronunciation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_6",
+            "start": 149,
+            "end": 471,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_7@0",
+            "content": "\u1faeE\u1faf HD >H@ HD >L@ RZ >R\u202b@\u075c\u202c RZ \u202b@\u075c\u0724>\u202c P >P@ G >G@ \u1faeH\u1faf Figure 1: G2P can be formulated as the task of selecting the best path in a lattice.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_7",
+            "start": 0,
+            "end": 137,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_7@1",
+            "content": "In English, because \"ea\" can be pronounced as /e/ and /i:/ and \"ow\" can be pronounced as /oU/ and /aU/, the word \"meadow\" has 4 pronunciation candidates, excluding stress position estimation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_7",
+            "start": 139,
+            "end": 329,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_8@0",
+            "content": "As the result of some effort, we prepared Thai orthography rules.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_8",
+            "start": 0,
+            "end": 64,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_8@1",
+            "content": "Almost all possible paths in a lattice can be generated from these, and each path needs to be evaluated using a phonological language model to select the best path.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_8",
+            "start": 66,
+            "end": 229,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_8@2",
+            "content": "With this in mind, we propose a novel G2P method based on a neural regression model that is trained using neural networks to predict how similar a pronunciation candidate is to the correct pronunciation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_8",
+            "start": 231,
+            "end": 433,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_8@3",
+            "content": "After generating a set of candidates for an input word or phrase using the orthography rules, this model selects the best-similarity pronunciation from the candidates.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_8",
+            "start": 435,
+            "end": 601,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_9@0",
+            "content": "In the following sections, we describe the proposed method and explain experiments on a dataset of Thai vocabulary entries with pronunciations collected from Wiktionary. After that, we show that the proposed method outperforms encoder-decoder sequence models in terms of the difference between correct and predicted pronunciations, and demonstrate that incorrect, strange output sometimes occurs when using encoderdecoder sequence models while error is within the expected range when using the proposed method.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_9",
+            "start": 0,
+            "end": 509,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_9@1",
+            "content": "The code is available at https://github.com/ T0106661.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_9",
+            "start": 511,
+            "end": 564,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_10@0",
+            "content": "Related Work",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_10",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_11@0",
+            "content": "For G2P, converting words into pronunciations does not require as much expertise as needed to prepare correspondences between graphemes and phonemes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_11",
+            "start": 0,
+            "end": 148,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_11@1",
+            "content": "Therefore, a method of learning correspondences from a large number of word-pronunciation pairs has been used (van den Bosch and Daelemans, 1993).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_11",
+            "start": 150,
+            "end": 295,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_11@2",
+            "content": "To solve the problem that graphemes and phonemes often have many-to-many correspondence, a hidden Markov model-based method (Jiampojamarn et al., 2007) and weighted finite-state transducer-based methods (Novak et al., 2012a,b) have been developed.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_11",
+            "start": 297,
+            "end": 543,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_11@3",
+            "content": "Bisani and Ney (2008) assumed that graphones underlie both graphemes and phonemes, and achieved great performance by learning graphones to minimize joint errors.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_11",
+            "start": 545,
+            "end": 705,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_12@0",
+            "content": "In addition, there have been some attempts to apply encoder-decoder models to learn end-to-end G2P models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_12",
+            "start": 0,
+            "end": 105,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_12@1",
+            "content": "For example, Toshniwal and Livescu (2016) applied a sequence-to-sequence architecture (Sutskever et al., 2014;Luong et al., 2015).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_12",
+            "start": 107,
+            "end": 236,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_12@2",
+            "content": "Yolchuyeva et al. (2020) and Vesik et al. (2020) applied a transformer architecture (Vaswani et al., 2017) to train models that can deal with English or many other languages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_12",
+            "start": 238,
+            "end": 411,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_13@0",
+            "content": "Proposed Method",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_13",
+            "start": 0,
+            "end": 14,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_14@0",
+            "content": "It is well known that word segmentation (WS) is a necessary preprocessing for languages without word delimiters, such as Chinese, Japanese, and Thai.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_14",
+            "start": 0,
+            "end": 148,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_14@1",
+            "content": "To solve WS and homograph disambiguation for Thai simultaneously, Tesprasit et al. (2003) enumerated pronunciation candidates for text data with ambiguity and trained a model to select the correct pronunciation from candidates based on the context in which the text data appear.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_14",
+            "start": 150,
+            "end": 427,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_15@0",
+            "content": "In contrast, the proposed method trains a model that predicts how similar each candidate is to the correct pronunciation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_15",
+            "start": 0,
+            "end": 120,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_15@1",
+            "content": "Although the main process of the proposed method is language independent, we take Thai as an example in this section.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_15",
+            "start": 122,
+            "end": 238,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_16@0",
+            "content": "First, we prepared correspondences between graphemes and phonemes by combining Thai characters consisting of 44 consonants, 15 vowels, and several symbols, resulting in an approximately 300-line program and more than 180,000 entries.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_16",
+            "start": 0,
+            "end": 232,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_17@0",
+            "content": "The prepared entries consisted of 77 characters, 5,772 syllables, and 31 phoneme symbols, and each syllable was composed of up to 7 phoneme symbols.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_17",
+            "start": 0,
+            "end": 147,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_18@0",
+            "content": "Syllables Suppose that a dataset of vocabulary entries with pronunciations D = {(v i , p i ) | i = 0, . . .} is given.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_18",
+            "start": 0,
+            "end": 117,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_18@1",
+            "content": "We begin by tracing characters in each vocabulary v i one at a time to generate a lattice of nodes corresponding to entries.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_18",
+            "start": 119,
+            "end": 242,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_18@2",
+            "content": "We then enumerate all possible paths in the lattice from one end to the other, and obtain a set of pronunciation candidates C i = {c i j | j = 0, . . .} by joining syllables assigned to nodes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_18",
+            "start": 244,
+            "end": 435,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_18@3",
+            "content": "For example, when we have v i = \"\u0e01\u0e25\u0e32\u0e07\u0e04\u0e37 \u0e19\"(night), we obtain the set",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_18",
+            "start": 437,
+            "end": 504,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_19@0",
+            "content": "\u0e40\u0e2a /see\u0139\u00a3/ \u0e21\u0e2d /mOO \u0102 \u00a3/ \u0e40\u0e2a\u0e21\u0e2d /sa \u0102 \u00a3 m@@\u0139\u00a3/ \u0e1c\u0e25 /phon\u0139\u00a3/, /phon\u0139\u00a3 la \u0102 \u00a3/ \u0e23\u0e31 (silent)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_19",
+            "start": 0,
+            "end": 83,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_20@0",
+            "content": "C i = {/ka \u0102 \u00a3 laa \u0102 \u00a3 Na \u0102 \u00a3 khWWn \u0102 \u00a3/, /klaa \u0102 \u00a3 Na \u0102 \u00a3 khWWn \u0102 \u00a3/, /klaaN \u0102 \u00a3 khWWn \u0102 \u00a3/}.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_20",
+            "start": 0,
+            "end": 93,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_21@0",
+            "content": "After that, we calculate the similarity",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_21",
+            "start": 0,
+            "end": 38,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_22@0",
+            "content": "s i j = s(p i , c i j ) = 1 \u2212 d(p i , c i j ) max(|p i |, |c i j |)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_22",
+            "start": 0,
+            "end": 66,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_23@0",
+            "content": "to the correct pronunciation p i for each candidate c i j , where d(\u2022, \u2022) denotes symbol-based edit distance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_23",
+            "start": 0,
+            "end": 108,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_23@1",
+            "content": "This s i j takes a maximum of 1 when c i j = p i and approaches a minimum of 0 as c i j diverges from p i .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_23",
+            "start": 110,
+            "end": 216,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_23@2",
+            "content": "For the previous example, we obtained p i = /klaaN \u0102 \u00a3 khWWn \u0102 \u00a3/; thus s(/klaaN \u0102 \u00a3 khWWn \u0102 \u00a3/, /klaaN \u0102 \u00a3 khWWn \u0102 \u00a3/) = 1, s(/klaaN \u0102 \u00a3 khWWn \u0102 \u00a3/, /klaa \u0102 \u00a3 Na \u0102 \u00a3 khWWn \u0102 \u00a3/) = 13/16, for example, were obtained.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_23",
+            "start": 218,
+            "end": 432,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_24@0",
+            "content": "Using the similarity defined above, we train a neural regression model that predicts how similar each candidate is to the correct pronunciation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_24",
+            "start": 0,
+            "end": 143,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_24@1",
+            "content": "More specifically, we train the model to return the similarity s i j from the encoded vectors of v i and c i j using RNNs with mean absolute error as the loss function to keep each sample error as small as possible.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_24",
+            "start": 145,
+            "end": 359,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_25@0",
+            "content": "Figure 2 shows the model architecture.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_25",
+            "start": 0,
+            "end": 37,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_25@1",
+            "content": "Vocabulary v is converted into a d v -dimensional vector by a character embedding layer and a bi-directional GRU (Bi-GRU).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_25",
+            "start": 39,
+            "end": 160,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_25@2",
+            "content": "Candidate c is converted into a d c -dimensional vector by a syllable embedding layer, a phoneme embedding layer, and Bi-GRUs, like the network of Lample et al. (2016).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_25",
+            "start": 162,
+            "end": 329,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_25@3",
+            "content": "Finally, both vectors are concatenated and converted into similarity s by two dense layers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_25",
+            "start": 331,
+            "end": 421,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_25@4",
+            "content": "Each layer dimension can be changed depending on the target language.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_25",
+            "start": 423,
+            "end": 491,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_25@5",
+            "content": "The model trained in this way is expected to represent the phonological nature of the target language.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_25",
+            "start": 493,
+            "end": 594,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_25@6",
+            "content": "Therefore, we can predict the pronunciation p for a given vocabulary v as follows.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_25",
+            "start": 596,
+            "end": 677,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_25@7",
+            "content": "As in the training phase, we trace characters in each vocabulary v , generate a lattice, and obtain a set of candidates C = {c j | j = 0, . .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_25",
+            "start": 679,
+            "end": 819,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_25@8",
+            "content": ".}. Next, we calculate the similarity s j for each pair (v , c j ) using this model, and find j max = argmax j s j .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_25",
+            "start": 821,
+            "end": 936,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_25@9",
+            "content": "Finally, we output the predicted pronunciation p = c j max .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_25",
+            "start": 938,
+            "end": 997,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_26@0",
+            "content": "As can be seen, both training and predicting processes are language independent.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_26",
+            "start": 0,
+            "end": 79,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_26@1",
+            "content": "In other words, the proposed method can be applied to languages other than Thai simply by preparing enough orthography rules.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_26",
+            "start": 81,
+            "end": 205,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_27@0",
+            "content": "However, one potential problem with the proposed method is that the number of candidates increases exponentially with input length, which can be undesirable for long words and phrases.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_27",
+            "start": 0,
+            "end": 183,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_27@1",
+            "content": "This is considered in the next section.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_27",
+            "start": 185,
+            "end": 223,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_28@0",
+            "content": "Experimental Setup and Results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_28",
+            "start": 0,
+            "end": 29,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_29@0",
+            "content": "We collected 18,066 Thai vocabulary entries with pronunciations from Wiktionary as an experimental dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_29",
+            "start": 0,
+            "end": 106,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_29@1",
+            "content": "The vocabulary consisted of not only words but also phrases.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_29",
+            "start": 108,
+            "end": 167,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_29@2",
+            "content": "We then converted the pronunciations described in a Thai-specific way into International Phonetic Alphabet sequences.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_29",
+            "start": 169,
+            "end": 285,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_29@3",
+            "content": "For entries without pronunciations but with syllable boundaries, we determined their pronunciations when all candidates for each boundary were uniquely generated.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_29",
+            "start": 287,
+            "end": 448,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_29@4",
+            "content": "For entries where the pronunciations were unable to be determined, two workers fluent in Thai described the correct pronunciations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_29",
+            "start": 450,
+            "end": 580,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_29@5",
+            "content": "The average length of each data was 7.42 in characters, 2.47 in syllables, and 12.48 in phoneme symbols.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_29",
+            "start": 582,
+            "end": 685,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_30@0",
+            "content": "First, we examined the number of candidates generated and the coverage rate of the correct pronunciations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_30",
+            "start": 0,
+            "end": 105,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_30@1",
+            "content": "Figure 3 shows the distribution of the number of candidates.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_30",
+            "start": 107,
+            "end": 166,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_30@2",
+            "content": "As seen in the figure, the number is usually less than 10 and seldom greater than 100.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_30",
+            "start": 168,
+            "end": 253,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_30@3",
+            "content": "In fact, the minimum, mode, median, mean, and maximum were 1, 2, 4, 19.6, and 19,242 respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_30",
+            "start": 255,
+            "end": 352,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_30@4",
+            "content": "This means that the average stayed slightly less than 20, although the lattice generated for longer input tends to have many branches and can cause an exponential increase in candidates.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_30",
+            "start": 354,
+            "end": 539,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_30@5",
+            "content": "For the coverage rate, 17,720 of 18,066 correct pronunciations were included in the sets of candidates and 346 were not.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_30",
+            "start": 541,
+            "end": 660,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_31@0",
+            "content": "Next, we evaluated our method compared with three G2P baseline models available from SIG-MORPHON ( 2020 baseline models for Thai.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_31",
+            "start": 0,
+            "end": 128,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_31@1",
+            "content": "Difference is calculated across all entries.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_31",
+            "start": 130,
+            "end": 173,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_31@2",
+            "content": "Each result is the average of 10-fold cross-validation on the test data, and thus maximum difference may not be an integer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_31",
+            "start": 175,
+            "end": 297,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_32@0",
+            "content": "breviated to enc-dec and xformer).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_32",
+            "start": 0,
+            "end": 33,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_32@1",
+            "content": "Table 2 shows the results of 10-fold cross-validation on the test data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_32",
+            "start": 35,
+            "end": 105,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_32@2",
+            "content": "For each fold in the experiments, we used 8/10 of entries for training, 1/10 for validation, and 1/10 for testing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_32",
+            "start": 107,
+            "end": 220,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_32@3",
+            "content": "We also used accuracy and the difference between correct and predicted pronunciations counted by phoneme symbols as evaluation metrics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_32",
+            "start": 222,
+            "end": 356,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_32@4",
+            "content": "In other words, accuracy is the percentage of 0-difference entries.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_32",
+            "start": 358,
+            "end": 424,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_32@5",
+            "content": "As a result, 1.17 \u00d7 10 6 parameters were trained.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_32",
+            "start": 426,
+            "end": 474,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_32@6",
+            "content": "Each training run was composed of about 40 epochs and each epoch took about 13 minutes on 1 GPU (Titan V, 11GB).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_32",
+            "start": 476,
+            "end": 587,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_32@7",
+            "content": "The absence of decoders in our model is a possible reason why the number of parameters is small and the training time is short.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_32",
+            "start": 589,
+            "end": 715,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_33@0",
+            "content": "Table 2 shows that our method achieved high accuracy, small average difference, and small maximum difference, and the accuracy in particular is comparable to those of enc-dec and xformer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_33",
+            "start": 0,
+            "end": 186,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_33@1",
+            "content": "In contrast, the low accuracy and large average difference of fst indicate that an ngram model was not able to sufficiently learn the Thai phonological nature, and large maximum differences of encdec and xformer indicate the well-known problem of neural network models returning good output when they work, but sometimes making mistakes when they do not.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_33",
+            "start": 188,
+            "end": 541,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_34@0",
+            "content": "(French presidential election) fst As shown in Table 3, further investigation revealed that the outputs of the encoder-decoder sequence models sometimes included unnatural syllable repetitions and sometimes lacked syllables in the middle, which are undesirable for TTS systems because they might give the impression that the system is failing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_34",
+            "start": 0,
+            "end": 342,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_34@1",
+            "content": "In contrast, our method was able to reduce such mistakes because all candidates followed the orthography rules.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_34",
+            "start": 344,
+            "end": 454,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_35@0",
+            "content": "/kaan \u0102 \u00a3 lWak\u010e\u00a3 taN\u010e\u00a3 pra\u0102\u00a3 thaa \u0102 \u00a3 naa \u0102 \u00a3 thi \u0102 \u00a3 bOO \u0102 \u00a3 dii \u0102 \u00a3 fa \u0102 \u00a3 raN\u010e\u00a3 seet\u0102\u00a3/ enc-dec /kaan \u0102 \u00a3 lWak\u010e\u00a3 taN\u010e\u00a3 pra\u0102\u00a3 thaa \u0102 \u00a3 naa \u0102 \u00a3 thip \u0102 \u00a3 dii \u0102 \u00a3 fa \u0102 \u00a3 raN\u010e\u00a3 pra\u0102\u00a3 thaa \u0102 \u00a3 naa \u0102 \u00a3 thip \u0102 \u00a3 dii \u0102 \u00a3 fa \u0102 \u00a3 raN\u010e\u00a3 pra\u0102\u00a3 thaa \u0102 \u00a3 naa \u0102 \u00a3 thip \u0102 \u00a3 dii \u0102 \u00a3 fa \u0102 \u00a3 raN\u010e\u00a3 pra\u0102\u00a3 thaa \u0102 \u00a3/ xformer /kaan \u0102 \u00a3 lWak\u010e\u00a3 taN\u010e\u00a3 pra\u0102\u00a3 thaan \u0102 \u00a3 baa \u0102 \u00a3 dii \u0102 \u00a3/ ours /kaan \u0102 \u00a3 lWak\u010e\u00a3 taN\u010e\u00a3 pra\u0102\u00a3 thaa \u0102 \u00a3 naa \u0102 \u00a3 thi \u0102 \u00a3 ba \u0102 \u00a3 dii \u0102 \u00a3 fa \u0102 \u00a3 raN\u010e\u00a3 seet\u0102\u00a3/ correct /kaan \u0102 \u00a3 lWak\u010e\u00a3 taN\u010e\u00a3 pra\u0102\u00a3 thaa \u0102 \u00a3 naa \u0102 \u00a3 thip \u0102 \u00a3 dii \u0102 \u00a3 fa \u0102 \u00a3 raN\u010e\u00a3 seet\u0102\u00a3/",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_35",
+            "start": 0,
+            "end": 546,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_36@0",
+            "content": "Additional Experiments",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_36",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_37@0",
+            "content": "To confirm that the main process of our method can be applied to other languages, we performed additional experiments on the Japanese Hiragana dataset available from SIGMORPHON (2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_37",
+            "start": 0,
+            "end": 183,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_37@1",
+            "content": "This dataset consisted of 10,000 entries and the average length of each data was 4.21 in characters, 6.53 in syllables, and 16.43 in phoneme symbols.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_37",
+            "start": 185,
+            "end": 333,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_38@0",
+            "content": "As the result of some effort, we prepared Japanese Hiragana orthography rules.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_38",
+            "start": 0,
+            "end": 77,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_38@1",
+            "content": "The prepared entries consisted of 85 characters, 405 syllables, and 45 phoneme symbols, and each syllable was composed of up to 6 phoneme symbols.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_38",
+            "start": 79,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_38@2",
+            "content": "Table 4 shows performance comparison with three G2P baseline models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_38",
+            "start": 226,
+            "end": 293,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_38@3",
+            "content": "As can be seen, our method also achieved high accuracy and small average difference.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_38",
+            "start": 295,
+            "end": 378,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_38@4",
+            "content": "However, the maximum differences of enc-dec and xformer are comparable to that of our method.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_38",
+            "start": 380,
+            "end": 472,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_38@5",
+            "content": "A possible reason why the encoder-decoder sequence models worked well is that the number of long inputs in this dataset was smaller compared with Thai.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_38",
+            "start": 474,
+            "end": 624,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_39@0",
+            "content": "Conclusion and Future Work",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_39",
+            "start": 0,
+            "end": 25,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_40@0",
+            "content": "In this study, we proposed a novel Thai G2P method based on neural regression models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_40",
+            "start": 0,
+            "end": 84,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_40@1",
+            "content": "We confirmed that the model trained using neural networks to predict the similarity was able to select the correct pronunciations from candidates.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_40",
+            "start": 86,
+            "end": 231,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_40@2",
+            "content": "The accuracy was .931 and the difference between correct and predicted pronunciations was .217 on average and 8.7 at maximum.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_40",
+            "start": 233,
+            "end": 357,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_40@3",
+            "content": "This means that the performance of our proposed method was comparable to that of encoderdecoder sequence models and superior in terms of the difference between correct and predicted pronunciations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_40",
+            "start": 359,
+            "end": 555,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_40@4",
+            "content": "In particular, error is within the expected range when using our proposed method.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_40",
+            "start": 557,
+            "end": 637,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_40@5",
+            "content": "Use of neural regression models not only for G2P but also for summarization and generation opens the possibility that neural network models could reduce strange mistakes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_40",
+            "start": 639,
+            "end": 808,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_41@0",
+            "content": "Our proposed method has the strength that it can be applied to any language by preparing enough orthography rules.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_41",
+            "start": 0,
+            "end": 113,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_41@1",
+            "content": "However, it also has the weakness of the number of candidates increasing exponentially with input length, which can be a concern for languages with many exceptional orthography rules, such as English.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_41",
+            "start": 115,
+            "end": 314,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_42@0",
+            "content": "A method for reducing candidates might thus be needed.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_42",
+            "start": 0,
+            "end": 53,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_42@1",
+            "content": "There may be an efficient solution to find the correct pronunciation using a given candidate and the predicted similarity.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_42",
+            "start": 55,
+            "end": 176,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_42@2",
+            "content": "However, these studies and experiments are left as future work.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_42",
+            "start": 178,
+            "end": 240,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_43@0",
+            "content": "Maximilian Bisani, Hermann Ney, Jointsequence models for grapheme-to-phoneme conversion, 2008, Speech Commun, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_43",
+            "start": 0,
+            "end": 110,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_44@0",
+            "content": "Grzegorz Sittichai Jiampojamarn, Tarek Kondrak,  Sherif, Applying many-to-many alignments and hidden Markov models to letter-to-phoneme conversion, 2007, Human Language Technologies 2007: The Conference of the North American Chapter of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_44",
+            "start": 0,
+            "end": 283,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_45@0",
+            "content": "UNKNOWN, None, , Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_45",
+            "start": 0,
+            "end": 60,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_46@0",
+            "content": "Guillaume Lample, Miguel Ballesteros, Sandeep Subramanian, Kazuya Kawakami, Chris Dyer, Neural architectures for named entity recognition, 2016, Proceedings of the 2016 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_46",
+            "start": 0,
+            "end": 330,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_47@0",
+            "content": "Thang Luong, Hieu Pham, Christopher Manning, Effective approaches to attention-based neural machine translation, 2015, Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_47",
+            "start": 0,
+            "end": 207,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_48@0",
+            "content": "Josef Novak, Nobuaki Minematsu, Keikichi Hirose, WFST-based grapheme-to-phoneme conversion: Open source tools for alignment, model-building and decoding, 2012, Proceedings of the 10th International Workshop on Finite State Methods and Natural Language Processing, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_48",
+            "start": 0,
+            "end": 264,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_49@0",
+            "content": "Josef Novak, Nobuaki Minematsu, Keikichi Hirose, Chiori Hori, Hideki Kashioka, Paul Dixon, Improving wfst-based G2P conversion with alignment constraints and RNNLM n-best rescoring, 2012-09-09, INTERSPEECH 2012, 13th Annual Conference of the International Speech Communication Association, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_49",
+            "start": 0,
+            "end": 290,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_50@0",
+            "content": "Ilya Sutskever, Oriol Vinyals, Quoc V Le, Sequence to sequence learning with neural networks, 2014, Advances in Neural Information Processing Systems, Curran Associates, Inc.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_50",
+            "start": 0,
+            "end": 173,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_51@0",
+            "content": "Virongrong Tesprasit, Paisarn Charoenpornsawat, Virach Sornlertlamvanich, A contextsensitive homograph disambiguation in Thai text-tospeech synthesis, 2003, Companion Volume of the Proceedings of HLT-NAACL 2003 -Short Papers, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_51",
+            "start": 0,
+            "end": 226,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_52@0",
+            "content": "Shubham Toshniwal, Karen Livescu, Jointly learning to align and convert graphemes to phonemes with neural attention models, 2016-12-13, 2016 IEEE Spoken Language Technology Workshop, SLT 2016, IEEE.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_52",
+            "start": 0,
+            "end": 197,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_53@0",
+            "content": "Antal Van Den, Walter Bosch,  Daelemans, Data-oriented methods for grapheme-to-phoneme conversion, 1993, Sixth Conference of the European Chapter of the Association for Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_53",
+            "start": 0,
+            "end": 237,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_54@0",
+            "content": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan Gomez, Illia Kaiser,  Polosukhin, Attention is all you need, 2017, Advances in Neural Information Processing Systems, Curran Associates, Inc.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_54",
+            "start": 0,
+            "end": 219,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_55@0",
+            "content": "Kaili Vesik, Muhammad Abdul-Mageed, Miikka Silfverberg, One model to pronounce them all: Multilingual grapheme-to-phoneme conversion with a transformer ensemble, 2020, Proceedings of the 17th SIGMORPHON Workshop on Computational Research in Phonetics, Phonology, and Morphology, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_55",
+            "start": 0,
+            "end": 279,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_56@0",
+            "content": "UNKNOWN, None, , , .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_56",
+            "start": 0,
+            "end": 19,
+            "label": {}
+        },
+        {
+            "ix": "238-ARR_v2_57@0",
+            "content": "UNKNOWN, None, 2004, Transformer based grapheme-tophoneme conversion. CoRR, abs, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "238-ARR_v2_57",
+            "start": 0,
+            "end": 81,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "238-ARR_v2_0",
+            "tgt_ix": "238-ARR_v2_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_0",
+            "tgt_ix": "238-ARR_v2_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_1",
+            "tgt_ix": "238-ARR_v2_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_1",
+            "tgt_ix": "238-ARR_v2_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_0",
+            "tgt_ix": "238-ARR_v2_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_2",
+            "tgt_ix": "238-ARR_v2_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_4",
+            "tgt_ix": "238-ARR_v2_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_5",
+            "tgt_ix": "238-ARR_v2_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_6",
+            "tgt_ix": "238-ARR_v2_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_7",
+            "tgt_ix": "238-ARR_v2_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_8",
+            "tgt_ix": "238-ARR_v2_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_3",
+            "tgt_ix": "238-ARR_v2_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_3",
+            "tgt_ix": "238-ARR_v2_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_3",
+            "tgt_ix": "238-ARR_v2_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_3",
+            "tgt_ix": "238-ARR_v2_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_3",
+            "tgt_ix": "238-ARR_v2_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_3",
+            "tgt_ix": "238-ARR_v2_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_3",
+            "tgt_ix": "238-ARR_v2_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_0",
+            "tgt_ix": "238-ARR_v2_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_9",
+            "tgt_ix": "238-ARR_v2_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_11",
+            "tgt_ix": "238-ARR_v2_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_10",
+            "tgt_ix": "238-ARR_v2_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_10",
+            "tgt_ix": "238-ARR_v2_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_10",
+            "tgt_ix": "238-ARR_v2_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_0",
+            "tgt_ix": "238-ARR_v2_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_12",
+            "tgt_ix": "238-ARR_v2_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_14",
+            "tgt_ix": "238-ARR_v2_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_15",
+            "tgt_ix": "238-ARR_v2_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_16",
+            "tgt_ix": "238-ARR_v2_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_18",
+            "tgt_ix": "238-ARR_v2_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_19",
+            "tgt_ix": "238-ARR_v2_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_20",
+            "tgt_ix": "238-ARR_v2_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_21",
+            "tgt_ix": "238-ARR_v2_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_22",
+            "tgt_ix": "238-ARR_v2_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_23",
+            "tgt_ix": "238-ARR_v2_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_24",
+            "tgt_ix": "238-ARR_v2_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_25",
+            "tgt_ix": "238-ARR_v2_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_26",
+            "tgt_ix": "238-ARR_v2_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_17",
+            "tgt_ix": "238-ARR_v2_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_0",
+            "tgt_ix": "238-ARR_v2_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_27",
+            "tgt_ix": "238-ARR_v2_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_29",
+            "tgt_ix": "238-ARR_v2_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_30",
+            "tgt_ix": "238-ARR_v2_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_31",
+            "tgt_ix": "238-ARR_v2_32",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_32",
+            "tgt_ix": "238-ARR_v2_33",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_28",
+            "tgt_ix": "238-ARR_v2_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_28",
+            "tgt_ix": "238-ARR_v2_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_28",
+            "tgt_ix": "238-ARR_v2_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_28",
+            "tgt_ix": "238-ARR_v2_32",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_28",
+            "tgt_ix": "238-ARR_v2_33",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_28",
+            "tgt_ix": "238-ARR_v2_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_34",
+            "tgt_ix": "238-ARR_v2_35",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_28",
+            "tgt_ix": "238-ARR_v2_34",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_28",
+            "tgt_ix": "238-ARR_v2_35",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_33",
+            "tgt_ix": "238-ARR_v2_34",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_28",
+            "tgt_ix": "238-ARR_v2_36",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_35",
+            "tgt_ix": "238-ARR_v2_36",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_37",
+            "tgt_ix": "238-ARR_v2_38",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_36",
+            "tgt_ix": "238-ARR_v2_37",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_36",
+            "tgt_ix": "238-ARR_v2_38",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_36",
+            "tgt_ix": "238-ARR_v2_37",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_0",
+            "tgt_ix": "238-ARR_v2_39",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_38",
+            "tgt_ix": "238-ARR_v2_39",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_40",
+            "tgt_ix": "238-ARR_v2_41",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_41",
+            "tgt_ix": "238-ARR_v2_42",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_39",
+            "tgt_ix": "238-ARR_v2_40",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_39",
+            "tgt_ix": "238-ARR_v2_41",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_39",
+            "tgt_ix": "238-ARR_v2_42",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_39",
+            "tgt_ix": "238-ARR_v2_40",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "238-ARR_v2_0",
+            "tgt_ix": "238-ARR_v2_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_1",
+            "tgt_ix": "238-ARR_v2_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_2",
+            "tgt_ix": "238-ARR_v2_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_2",
+            "tgt_ix": "238-ARR_v2_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_2",
+            "tgt_ix": "238-ARR_v2_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_2",
+            "tgt_ix": "238-ARR_v2_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_2",
+            "tgt_ix": "238-ARR_v2_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_3",
+            "tgt_ix": "238-ARR_v2_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_4",
+            "tgt_ix": "238-ARR_v2_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_4",
+            "tgt_ix": "238-ARR_v2_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_5",
+            "tgt_ix": "238-ARR_v2_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_5",
+            "tgt_ix": "238-ARR_v2_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_5",
+            "tgt_ix": "238-ARR_v2_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_5",
+            "tgt_ix": "238-ARR_v2_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_6",
+            "tgt_ix": "238-ARR_v2_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_6",
+            "tgt_ix": "238-ARR_v2_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_7",
+            "tgt_ix": "238-ARR_v2_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_7",
+            "tgt_ix": "238-ARR_v2_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_8",
+            "tgt_ix": "238-ARR_v2_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_8",
+            "tgt_ix": "238-ARR_v2_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_8",
+            "tgt_ix": "238-ARR_v2_8@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_8",
+            "tgt_ix": "238-ARR_v2_8@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_9",
+            "tgt_ix": "238-ARR_v2_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_9",
+            "tgt_ix": "238-ARR_v2_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_10",
+            "tgt_ix": "238-ARR_v2_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_11",
+            "tgt_ix": "238-ARR_v2_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_11",
+            "tgt_ix": "238-ARR_v2_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_11",
+            "tgt_ix": "238-ARR_v2_11@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_11",
+            "tgt_ix": "238-ARR_v2_11@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_12",
+            "tgt_ix": "238-ARR_v2_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_12",
+            "tgt_ix": "238-ARR_v2_12@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_12",
+            "tgt_ix": "238-ARR_v2_12@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_13",
+            "tgt_ix": "238-ARR_v2_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_14",
+            "tgt_ix": "238-ARR_v2_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_14",
+            "tgt_ix": "238-ARR_v2_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_15",
+            "tgt_ix": "238-ARR_v2_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_15",
+            "tgt_ix": "238-ARR_v2_15@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_16",
+            "tgt_ix": "238-ARR_v2_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_17",
+            "tgt_ix": "238-ARR_v2_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_18",
+            "tgt_ix": "238-ARR_v2_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_18",
+            "tgt_ix": "238-ARR_v2_18@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_18",
+            "tgt_ix": "238-ARR_v2_18@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_18",
+            "tgt_ix": "238-ARR_v2_18@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_19",
+            "tgt_ix": "238-ARR_v2_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_20",
+            "tgt_ix": "238-ARR_v2_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_21",
+            "tgt_ix": "238-ARR_v2_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_22",
+            "tgt_ix": "238-ARR_v2_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_23",
+            "tgt_ix": "238-ARR_v2_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_23",
+            "tgt_ix": "238-ARR_v2_23@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_23",
+            "tgt_ix": "238-ARR_v2_23@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_24",
+            "tgt_ix": "238-ARR_v2_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_24",
+            "tgt_ix": "238-ARR_v2_24@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_25",
+            "tgt_ix": "238-ARR_v2_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_25",
+            "tgt_ix": "238-ARR_v2_25@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_25",
+            "tgt_ix": "238-ARR_v2_25@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_25",
+            "tgt_ix": "238-ARR_v2_25@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_25",
+            "tgt_ix": "238-ARR_v2_25@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_25",
+            "tgt_ix": "238-ARR_v2_25@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_25",
+            "tgt_ix": "238-ARR_v2_25@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_25",
+            "tgt_ix": "238-ARR_v2_25@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_25",
+            "tgt_ix": "238-ARR_v2_25@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_25",
+            "tgt_ix": "238-ARR_v2_25@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_26",
+            "tgt_ix": "238-ARR_v2_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_26",
+            "tgt_ix": "238-ARR_v2_26@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_27",
+            "tgt_ix": "238-ARR_v2_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_27",
+            "tgt_ix": "238-ARR_v2_27@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_28",
+            "tgt_ix": "238-ARR_v2_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_29",
+            "tgt_ix": "238-ARR_v2_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_29",
+            "tgt_ix": "238-ARR_v2_29@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_29",
+            "tgt_ix": "238-ARR_v2_29@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_29",
+            "tgt_ix": "238-ARR_v2_29@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_29",
+            "tgt_ix": "238-ARR_v2_29@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_29",
+            "tgt_ix": "238-ARR_v2_29@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_30",
+            "tgt_ix": "238-ARR_v2_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_30",
+            "tgt_ix": "238-ARR_v2_30@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_30",
+            "tgt_ix": "238-ARR_v2_30@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_30",
+            "tgt_ix": "238-ARR_v2_30@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_30",
+            "tgt_ix": "238-ARR_v2_30@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_30",
+            "tgt_ix": "238-ARR_v2_30@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_31",
+            "tgt_ix": "238-ARR_v2_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_31",
+            "tgt_ix": "238-ARR_v2_31@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_31",
+            "tgt_ix": "238-ARR_v2_31@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_32",
+            "tgt_ix": "238-ARR_v2_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_32",
+            "tgt_ix": "238-ARR_v2_32@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_32",
+            "tgt_ix": "238-ARR_v2_32@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_32",
+            "tgt_ix": "238-ARR_v2_32@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_32",
+            "tgt_ix": "238-ARR_v2_32@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_32",
+            "tgt_ix": "238-ARR_v2_32@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_32",
+            "tgt_ix": "238-ARR_v2_32@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_32",
+            "tgt_ix": "238-ARR_v2_32@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_33",
+            "tgt_ix": "238-ARR_v2_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_33",
+            "tgt_ix": "238-ARR_v2_33@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_34",
+            "tgt_ix": "238-ARR_v2_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_34",
+            "tgt_ix": "238-ARR_v2_34@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_35",
+            "tgt_ix": "238-ARR_v2_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_36",
+            "tgt_ix": "238-ARR_v2_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_37",
+            "tgt_ix": "238-ARR_v2_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_37",
+            "tgt_ix": "238-ARR_v2_37@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_38",
+            "tgt_ix": "238-ARR_v2_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_38",
+            "tgt_ix": "238-ARR_v2_38@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_38",
+            "tgt_ix": "238-ARR_v2_38@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_38",
+            "tgt_ix": "238-ARR_v2_38@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_38",
+            "tgt_ix": "238-ARR_v2_38@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_38",
+            "tgt_ix": "238-ARR_v2_38@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_39",
+            "tgt_ix": "238-ARR_v2_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_40",
+            "tgt_ix": "238-ARR_v2_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_40",
+            "tgt_ix": "238-ARR_v2_40@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_40",
+            "tgt_ix": "238-ARR_v2_40@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_40",
+            "tgt_ix": "238-ARR_v2_40@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_40",
+            "tgt_ix": "238-ARR_v2_40@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_40",
+            "tgt_ix": "238-ARR_v2_40@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_41",
+            "tgt_ix": "238-ARR_v2_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_41",
+            "tgt_ix": "238-ARR_v2_41@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_42",
+            "tgt_ix": "238-ARR_v2_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_42",
+            "tgt_ix": "238-ARR_v2_42@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_42",
+            "tgt_ix": "238-ARR_v2_42@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_43",
+            "tgt_ix": "238-ARR_v2_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_44",
+            "tgt_ix": "238-ARR_v2_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_45",
+            "tgt_ix": "238-ARR_v2_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_46",
+            "tgt_ix": "238-ARR_v2_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_47",
+            "tgt_ix": "238-ARR_v2_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_48",
+            "tgt_ix": "238-ARR_v2_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_49",
+            "tgt_ix": "238-ARR_v2_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_50",
+            "tgt_ix": "238-ARR_v2_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_51",
+            "tgt_ix": "238-ARR_v2_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_52",
+            "tgt_ix": "238-ARR_v2_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_53",
+            "tgt_ix": "238-ARR_v2_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_54",
+            "tgt_ix": "238-ARR_v2_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_55",
+            "tgt_ix": "238-ARR_v2_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_56",
+            "tgt_ix": "238-ARR_v2_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "238-ARR_v2_57",
+            "tgt_ix": "238-ARR_v2_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 397,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "doc_id": "238-ARR",
+        "version": 2
+    }
+}

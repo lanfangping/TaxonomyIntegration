@@ -1,0 +1,4109 @@
+{
+    "nodes": [
+        {
+            "ix": "8-1775_v2_0",
+            "content": "Prediction of cell position using single-cell transcriptomic data: an iterative procedure",
+            "ntype": "article-title",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_2",
+            "content": "Single-cell sequencing reveals cellular heterogeneity but not cell localization. However, by combining single-cell transcriptomic data with a reference atlas of a small set of genes, it would be possible to predict the position of individual cells and reconstruct the spatial expression profile of thousands of genes reported in the single-cell study. With the purpose of developing new algorithms, the Dialogue for Reverse Engineering Assessments and Methods (DREAM) consortium organized a crowd-sourced competition known as DREAM Single Cell Transcriptomics Challenge (SCTC). Within this context, we describe here our proposed procedures for adequate reference genes selection, and an iterative procedure to predict spatial expression profile of other genes.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1",
+                "sec-type": "intro",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_4",
+            "content": "Multicellular organisms show throughout their development a crescent cellular heterogeneity, distributed and organized in different organs and tissues. This spatial heterogeneity has been explored using different techniques, such as immunohistochemistry and single-molecule fluorescence in situ hybridization (FISH) <REF-1> . These approaches allow quantification of gene expression in many cells but, unfortunately, these techniques can currently be assayed only over a small number of genes. The selection of these genes introduces a bias that limits the power of these studies. With the advent of emergent methods in genomics, it has become possible to assess the transcriptomic profile of complex tissues with unprecedented resolution, thereby allowing insights into complex processes such as: differentiation trajectories, cell fate decisions, and spatial relationships. In this sense, high-throughput single-cell RNA-seq (sc-RNA-seq) is becoming an established experimental technique <REF-2> . The protocol of this technique includes the initial step of sample collection, during which solid tissue dissociation results in single cells. Removing cells from their native context results in the loss of spatial information. However, this information can be crucial when the goal is to study the molecular composition of individual cells in the context of spatial location, for example, in the context of primary cancer cells research <REF-3> . Fortunately, some progress has been made to overcome limitations of spatial information loss associated to this technique. Computational methods, based on Principal Component Analysis, are able to partially recover the spatial structure of gene expression patterns <REF-4> . More recently, several computational techniques coupled to in situ RNA patterns facilitate this reconstruction with better resolution <REF-5> \u2013 <REF-7> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_5",
+            "content": "In order to catalyze research on computational methods for the spatial reconstruction of single-cell gene expression data, a crowd-sourced competition was designed by the DREAM Consortium in collaboration with Nikos Karaiskos and Nikolaus Rajewsky from Max Delbruck Institute. Using sc-RNA-seq data from Rajewsky Lab, published in <REF-7> , and the expression patterns of driver genes as an expression reference atlas, three main subchallenges were designed. The particular aim was to predict the position of 1297 cells in the 3039 Drosophila melanogaster embryonic locations, or bins, for one half of an embryo in stage 6 (pre-gastrulation), based on scR-NAseq data. The prediction of the 1297 cell positions must be done using a limited number of genes selected from a pool of 84 expression patterns used as a reference atlas. In subchallenge 1 the prediction must be performed using 60 driver genes out of 84 genes, in subchallenge 2 using a subset of any expression patterns from 40 genes out of the 84, and in subchallenge 3 using a subset of any expression patterns from only 20 driver genes. The selection of the subset of genes used for the prediction poses an additional and interesting problem. In this paper we present a procedure for solving the cell-position problem posed in the DREAM SCTC. This challenge consists of predicting the positions of individual cells, based on an expression reference atlas and a small set of genes reported in single-cell studies.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_6",
+            "content": "Methods",
+            "ntype": "title",
+            "meta": {
+                "section": "2",
+                "sec-type": "methods",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_7",
+            "content": "DREAM challenge data",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_8",
+            "content": "Expression patterns used as a reference atlas correspond to 84 driver genes obtained from in situ hybridization experiments; the data correspond to The Berkeley Drosophila Transcription Network Project (BDTNP) <REF-8> . This gene expression data set is listed in the file bdtnp.csv at DVEX server. One half of the Drosophila embryo has 3039 cells locations, each location is specified by three coordinates ( x , y and z ) (geometry.txt at DVEX). Thus, the reference database consists of an expression matrix of 84 genes (columns) quantified across the 3039 embryonic locations (rows). These data were next binarized <REF-7> , sorted in the same order of cell location, and listed in an additional file (binarized_bdtnp.csv at DVEX server). The single-cell RNA sequencing data is provided as a matrix with 8924 genes as rows, and 1297 cells as columns. These data are divided by the total number of counts for that cell, in this step a pseudocount is added. The normalized values are obtained by taking the logarithm of the total counts. The normalized values are also binarized, i.e. a given gene is ON (OFF) if the normalized values are above (below) of a quantile value. Based on a distance minimization criterion, the quantile value was chosen as 0.23. The short sequences for each of the 1297 cells in the raw and normalized data are the barcodes of individual cells. Both normalized as well as binarized data were provided by the DREAM Challenge.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_9",
+            "content": "Selection of the gene sets",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_10",
+            "content": "In order to select the gene sets to be used in each subchallenge, we take into account two criteria:",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_11",
+            "content": "- (i) Genes that have complementary expression patterns across the single-cell population. It is well known that many genes are co-expressed, that is, their expression profiles are highly correlated. This correlation introduces a degree of redundancy in the expression matrix, which frequently is reduced by clustering those genes with similar expression profiles. This step allows us to identify genes with complementary expression patterns.\n- (ii) Genes with expression levels broadly distributed across the single-cell population. This step is performed in order to select one gene per cluster. Those genes with many null expression values over a large part of the population are discarded, because they are associated with distributions with a large peak at zero.",
+            "ntype": "list",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_12",
+            "content": "To accomplish these criteria, we first perform an agglomerative clustering procedure over the expression matrix comprising the 84 genes (the same genes as the available in the in situ expression data) over the 1297 cells). We cluster genes with similar expression profiles across the cells, by means of using the Euclidean distance over the normalized gene expression levels, and the Unweighted Pair Group Method with Arithmetic Mean (UPGMA) as a linkage method. Then, we cut the dendogram tree into 20, 40, or 60 groups depending on the subchallenge. Next, we need to select only one gene per cluster. This selection is performed based on the criterion of the broadest distribution. To this end, for each gene within a given cluster we compute the frequency distribution p i , where p i denotes the frequency of occurrence of expression levels within the bin i . Here, we set the bin size equal to 0.125. After that, we compute the associated entropy H = \u2013 \u2009 \u2211 i p i 1 n p i . Then, we select the gene with the greatest entropy in each cluster, i.e. the gene within the cluster with the broadest expression distribution across the single-cell population. This selection procedure is performed with the R script named preprocessing.r, which uses the function selgen.R, both available at Zenodo (see Data availability ). To assess this method for the gene selection, we compare the prediction performance obtained with the set of 20 genes selected in this way with the results obtained with different sets of genes sampled at random. For comparison, we consider the Mathews correlation coefficient (MCC) <REF-10> between the 1297 cells and the 3039 bins. Then, the ten better scored bins are selected as putative position for each cell. As the true positions of the cells are not available, we take the bin with the highest MCC, obtained with the set that include all 84 genes, as the bin associated with the true position. Thus, we count cells with the ten best scores containing the true position as cells whose positions are well predicted. The percentage of the well-predicted positions will be our measure of the performance. Figure 1 depicts the histogram of percentage of cells with well-predicted positions, obtained with 200 sets of 20 randomly selected genes. In all cases, this percentage is quite lower than that obtained with 20 genes selected as indicated above, which is 33.46%.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_13",
+            "content": "Figure 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "f1",
+                "caption": "Performance of the gene selection procedure. Histogram of the performance obtained with 20 genes selected at random (yellow).The performance obtained with the set of 20 genes selected by the proposed method is indicated with a black arrow.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/25587/46865a3c-3389-4f04-a7f4-5fc3fdc2bbe2_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_14",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f1\" position=\"float\"> <caption> <title>Performance of the gene selection procedure.</title> <p>Histogram of the performance obtained with 20 genes selected at random (yellow).The performance obtained with the set of 20 genes selected by the proposed method is indicated with a black arrow.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/25587/46865a3c-3389-4f04-a7f4-5fc3fdc2bbe2_figure1.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f1",
+                "caption": "Performance of the gene selection procedure. Histogram of the performance obtained with 20 genes selected at random (yellow).The performance obtained with the set of 20 genes selected by the proposed method is indicated with a black arrow.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/25587/46865a3c-3389-4f04-a7f4-5fc3fdc2bbe2_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_15",
+            "content": "We use this procedure to select an additional set of 100 genes from the 8924 genes measured by the single-cell technique, but excluding the genes from the 84 reference gene set. These 100 genes will be used in further steps during the iterative procedure, and will be denoted as the outgroup set hereafter. The 20, 40 and 60 selected genes used for each cell location prediction task are listed in Table S1 (see Extended data ); we also include the outgroup set of genes.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_16",
+            "content": "Scoring functions",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_17",
+            "content": "In order to predict the position of a given single cell, we use a score approach based on two similarity measures between the sc-RNA-seq data, and the reference atlas. One of these measures is the MCC computed between the binarized expression profiles, as proposed in <REF-7> . The MCC will be used in the initial step to assign putative bin positions for each single cell, and then to predict the spatial expression profile of the outgroup set of genes. The other measure is the overlap between the normalized expression vector of the single cells, and the projected vector corresponding to the predicted spatial expression profile. This vectorial space corresponds to the one spanned by the outgroup set of genes only. The overlap is defined by: cos ( \u03b8 ) = u \u22c5 v p u v p , where u is the profile vector of the single cell, and v p is the vector obtained by projecting the profile vector of the predicted profile on the subspace spanned by the non-null components of the profile vector u , as illustrated in Figure 2 . The scoring functions are performed by the R script named functions.r, available at Zenodo (see Data availability ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_18",
+            "content": "Figure 2.",
+            "ntype": "label",
+            "meta": {
+                "id": "f2",
+                "caption": "Overlap-based score. Low-dimensional representation of the angle between the expression vector u , and the projected expression vector v p .",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/25587/46865a3c-3389-4f04-a7f4-5fc3fdc2bbe2_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_19",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f2\" position=\"float\"> <caption> <title>Overlap-based score.</title> <p>Low-dimensional representation of the angle between the expression vector <bold>u</bold>, and the projected expression vector <bold>v</bold> <italic> <sub>p</sub> </italic>.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/25587/46865a3c-3389-4f04-a7f4-5fc3fdc2bbe2_figure2.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f2",
+                "caption": "Overlap-based score. Low-dimensional representation of the angle between the expression vector u , and the projected expression vector v p .",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/25587/46865a3c-3389-4f04-a7f4-5fc3fdc2bbe2_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_20",
+            "content": "Results",
+            "ntype": "title",
+            "meta": {
+                "section": "3",
+                "sec-type": "results",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_21",
+            "content": "The proposed procedure is schematically illustrated in Figure 3 . In the first step we select the set of N genes from the 84 driver genes to be used in the prediction, using the method described in Selection of the gene sets section. We also select an additional 100 genes (outgroup set of genes) from all genes measured in the sc-RNAseq experiment, but excluding the driver genes. The name of the genes used are listed in Extended data : Table S1. Then, using the binarized expression data of the selected genes, we compute the MCC (measure 1) for each binarized single-cell vector against the 3039 binarized vectors associated with each positional bin of the reference atlas (BDTNP). By means of the MCC-based score, we predict the single-cell positions and build the putative expression patterns of the outgroup set of genes. In this sense, the expression level of gen g at the bin position i is given by the weighted average of the normalized gene expression across 10 putative positions corresponding to that bin, being the weight proportional to the associated MCC. Mathematically, e i g = \u2211 j * c i j e j g , where c ij are the MCC-based scores of the single cell j against position i , and e i g are the expression levels of gene g recorded in the individual cells j . The asterisk in the summation indicates that the 10 first better scored cells positions are included. The predicted expression patterns of the outgroup set of genes computed in this manner are used to compute the overlap (measure 2) with the corresponding expression level of each one of the 1297 single cells. Finally, using the measure 1 and the measure 2 we compute a composed score S , defined as S = w 1 \u2217 c + w 2 \u2217 o , where c is MCC-based score, o is the overlap-based score, and w 1 and w 2 are the respective weights. The score S is used to predict positions and improve the predicted expression patterns of the outgroup set of genes in each iteration. The last two steps are repeated (2 or 3 times), as indicated in Figure 3 with dashed arrows.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_22",
+            "content": "Figure 3.",
+            "ntype": "label",
+            "meta": {
+                "id": "f3",
+                "caption": "Flow diagram of the proposed method. Step 1: The set of N genes and the additional 100 outgroup genes are selected from the sc-RNAseq data. Step 2: Using the binarized expression data of the N selected genes we compute measure 1 for the1297 single-cell vectors against the 3039 binarized vectors of the reference atlas. Step 3: We predict the single-cell positions using the positions of the 10 better scored cells. Step 4: We build the putative expression patterns of the outgroup set of genes and we compute measure 2 against the expression level of 1297 single-cells. Step 5: By means of using the composed score S , the predicted expression patterns of the outgroup set of genes is improved in each iteration. The last two steps are repeated (2 or 3 times).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/25587/46865a3c-3389-4f04-a7f4-5fc3fdc2bbe2_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_23",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f3\" position=\"float\"> <caption> <title>Flow diagram of the proposed method.</title> <p>Step 1: The set of <italic>N</italic> genes and the additional 100 outgroup genes are selected from the sc-RNAseq data. Step 2: Using the binarized expression data of the <italic>N</italic> selected genes we compute measure 1 for the1297 single-cell vectors against the 3039 binarized vectors of the reference atlas. Step 3: We predict the single-cell positions using the positions of the 10 better scored cells. Step 4: We build the putative expression patterns of the outgroup set of genes and we compute measure 2 against the expression level of 1297 single-cells. Step 5: By means of using the composed score <italic>S</italic>, the predicted expression patterns of the outgroup set of genes is improved in each iteration. The last two steps are repeated (2 or 3 times).</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/25587/46865a3c-3389-4f04-a7f4-5fc3fdc2bbe2_figure3.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f3",
+                "caption": "Flow diagram of the proposed method. Step 1: The set of N genes and the additional 100 outgroup genes are selected from the sc-RNAseq data. Step 2: Using the binarized expression data of the N selected genes we compute measure 1 for the1297 single-cell vectors against the 3039 binarized vectors of the reference atlas. Step 3: We predict the single-cell positions using the positions of the 10 better scored cells. Step 4: We build the putative expression patterns of the outgroup set of genes and we compute measure 2 against the expression level of 1297 single-cells. Step 5: By means of using the composed score S , the predicted expression patterns of the outgroup set of genes is improved in each iteration. The last two steps are repeated (2 or 3 times).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/25587/46865a3c-3389-4f04-a7f4-5fc3fdc2bbe2_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_24",
+            "content": "The above scheme is applied to the subchallenges with 20, 40 and 60 genes using different weight values. First of all, we apply the procedure to the subchallenge 3. Using the 20 genes we compute the MCC for every cell-bin combination. The first iteration of this scoring procedure leads to a performance of 33.5% in assigning the putative positions to each single cell. By means of using the 20 highest coefficients, we predict the expression patterns of the outgroup set of genes. Then, we compute a scoring measure composed of two terms: the MCC computed in the first step (with a weight w 1 = 0.7), and the previously-defined overlap between the expression vector of each single cell and the projected expression vector of the reference atlas, being both vectors composed of the 100 outgroup genes (with a weight w 2 = 0.3). The score combining both measures is then used to predict the positions of each single cell, which leads to a performance of 36% in the second iteration, and 38% in the third iteration. Further iteration steps do not produce any additional improvement. Figure 4A depicts the performance evolution of the procedure using this gene set.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_25",
+            "content": "Figure 4.",
+            "ntype": "label",
+            "meta": {
+                "id": "f4",
+                "caption": "Prediction performance. Panel A : Performance obtained by means of using the iterative procedure with 20 genes. Panel B : Predicted expression pattern of the ftz gene obtained with 60 genes after two iteration steps. The expression level of each nuclei is given in white-red scale. Gray nuclei correspond to positional bins without prediction.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/25587/46865a3c-3389-4f04-a7f4-5fc3fdc2bbe2_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_26",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f4\" position=\"float\"> <caption> <title>Prediction performance.</title> <p>Panel <bold>A</bold>: Performance obtained by means of using the iterative procedure with 20 genes. Panel <bold>B</bold>: Predicted expression pattern of the <italic>ftz</italic> gene obtained with 60 genes after two iteration steps. The expression level of each nuclei is given in white-red scale. Gray nuclei correspond to positional bins without prediction.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/25587/46865a3c-3389-4f04-a7f4-5fc3fdc2bbe2_figure4.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f4",
+                "caption": "Prediction performance. Panel A : Performance obtained by means of using the iterative procedure with 20 genes. Panel B : Predicted expression pattern of the ftz gene obtained with 60 genes after two iteration steps. The expression level of each nuclei is given in white-red scale. Gray nuclei correspond to positional bins without prediction.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/25587/46865a3c-3389-4f04-a7f4-5fc3fdc2bbe2_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_27",
+            "content": "In order to select the set of 60 genes to be used in subchallenge 1, from the 84 genes available in the reference atlas, we perform the above-mentioned agglomerative clustering procedure. Then, the 60 genes with the greatest entropy within each cluster are selected. The names of the resulting genes are listed in the first column of Extended data : Table S1. As a first step, we compute the MCC for each binarized single-cell vector, and the corresponding 3039 binarized vectors associated with each positional bin of the reference atlas. By means of using the 20 highest MCC for each cell ( N = 20), we compute the putative expression patterns of the outgroup set of genes. In this case, the used scoring measure was composed by MCC with a weight of 0.90; and the overlap of the single-cell expression profiles and the 3039 positions of the predicted expression patterns obtained in the previous step, with a weight of 0.10. After two iterations the performance obtained is 95.4%. Figure 4B shows the predicted expression pattern of the ftz gene obtained using the set of 60 genes. The same procedure is used to predict the positions of single cells by considering a set of 40 genes. Again, these genes are selected as described in Methods. The names of the resulting genes are listed in the second column of Extended data : Table S1. In this case, the performance obtained reaches 71.4%.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_28",
+            "content": "Discussion",
+            "ntype": "title",
+            "meta": {
+                "section": "4",
+                "sec-type": "discussion",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_29",
+            "content": "We present three innovations that could represent improvements in regard to the original proposal <REF-7> . One of these innovations is the method for selecting the set of genes to be used as reference in the cell-positions prediction task. This set of genes is a good starting point in the presented strategy for position prediction, although we have not explored this method in depth. For example, the Jaccard distance <REF-10> could be used in the clustering procedure instead of the Euclidean distance. We noticed that MCC can overestimate false negatives due to the fact that sc-RNA-seq are not able to record expression of many genes. This results in profiles with many zeros, even in cases of moderate expression levels. For that reason, our second proposed innovation is an alternative way to make the comparison between profiles, as we used in subchallenge 3. Last but not least, the third innovation is the iterative procedure, which improves the performance of any of the alternative strategies presented here. In addition, we noticed that the iterative procedure does not necessarily converge to the correct solution, may be due to error propagation on the predicted patterns.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_30",
+            "content": "Data availability",
+            "ntype": "title",
+            "meta": {
+                "section": "5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_31",
+            "content": "Underlying data",
+            "ntype": "title",
+            "meta": {
+                "section": "5.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_32",
+            "content": "Challenge documentation, including the detailed description of the Challenge design, overall results, scoring scripts, can be found at: http://www.synapse.org/#!Synapse:syn15665609/wiki . Data for this Challenge can be downloaded from http://shiny.mdc-berlin.de/DVEX/ .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_33",
+            "content": "Zenodo: Prediction of cell position using single-cell transcriptomic data: an iterative procedure, https://doi.org/10.5281/zenodo.3470061 <REF-11> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_34",
+            "content": "This project contains code and documentation underlying the methods.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_35",
+            "content": "Data are available under the terms of the Creative Commons Zero \"No rights reserved\" data waiver (CC0 1.0 Public domain dedication).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_36",
+            "content": "Extended data",
+            "ntype": "title",
+            "meta": {
+                "section": "5.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_37",
+            "content": "Zenodo: Prediction of cell position using single-cell transcriptomic data: an iterative procedure, https://doi.org/10.5281/zenodo.3470061 <REF-11> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_38",
+            "content": "This project contains the following extended data:",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_39",
+            "content": "- Table S1: Selected genes: first, second and third columns list the name of genes used in the subchallenges 1, 2 and 3, respectively. The last column lists the names of the outgroup genes.",
+            "ntype": "list",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_40",
+            "content": "Data are available under the terms of the Creative Commons Zero \"No rights reserved\" data waiver (CC0 1.0 Public domain dedication).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_41",
+            "content": "<REF-1> Battich N Stoeger T Pelkmans L : Image-based transcriptomics in thousands of single human cells at single-molecule resolution. Nat Methods. 2013 ; 10 ( 11 ): 1127 \u2013 33 . 24097269 10.1038/nmeth.2657",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_42",
+            "content": "<REF-2> Shapiro E Biezuner T Linnarsson S : Single-cell sequencing-based technologies will revolutionize whole-organism science. Nat Rev Genet. 2013 ; 14 ( 9 ): 618 \u2013 30 . 23897237 10.1038/nrg3542",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_43",
+            "content": "<REF-3> Sierant MC Choi J : SingleSingle-Cell Ssequencing in Cancer: Recent Applications to Immunogenomics and Multi-omics Tools. Genomics Inform. 2018 ; 16 : e17 . 30602078 10.5808/GI.2018.16.4.e17 6440661",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_44",
+            "content": "<REF-4> Durruthy-Durruthy R Gottlieb A Hartman BH : Reconstruction of the mouse otocyst and early neuroblast lineage at single-cell resolution. Cell. 2014 ; 157 ( 4 ): 964 \u2013 78 . 24768691 10.1016/j.cell.2014.03.036 4051200",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_45",
+            "content": "<REF-5> Achim K Pettit JB Saraiva LR : High-throughput spatial mapping of single-cell RNA-seq data to tissue of origin. Nat Biotechnol. 2015 ; 33 ( 5 ): 503 \u2013 9 . 25867922 10.1038/nbt.3209",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_46",
+            "content": "<REF-7> Karaiskos N Wahle P Alles J : The Drosophila embryo at single-cell transcriptome resolution. Science. 2017 ; 358 ( 6360 ): 194 \u2013 199 . 28860209 10.1126/science.aan3235",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-7",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_47",
+            "content": "<REF-8> Fowlkes CC Hendriks CL Ker\u00e4nen SV : A quantitative spatiotemporal atlas of gene expression in the Drosophila blastoderm. Cell. 2008 ; 133 ( 2 ): 364 \u2013 74 . 18423206 10.1016/j.cell.2008.01.053",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-8",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_48",
+            "content": "<REF-10> Matthews BW : Comparison of the predicted and observed secondary structure of T4 phage lysozyme. Biochim Biophys Acta. 1975 ; 405 ( 2 ): 442 \u2013 451 . 1180967 10.1016/0005-2795(75)90109-9",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-10",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1775_v2_49",
+            "content": "<REF-11> Rogers DJ Tanimoto TT : A Computer Program for Classifying Plants. Science. 1960 ; 132 ( 3434 ): 1115 \u2013 1118 . 17790723 10.1126/science.132.3434.1115",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-11",
+                "created_by": "F1000XMLParser"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "8-1775_v2_0@0",
+            "content": "Prediction of cell position using single-cell transcriptomic data: an iterative procedure",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_0",
+            "start": 0,
+            "end": 88,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_2@0",
+            "content": "Single-cell sequencing reveals cellular heterogeneity but not cell localization.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_2",
+            "start": 0,
+            "end": 79,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_2@1",
+            "content": "However, by combining single-cell transcriptomic data with a reference atlas of a small set of genes, it would be possible to predict the position of individual cells and reconstruct the spatial expression profile of thousands of genes reported in the single-cell study.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_2",
+            "start": 81,
+            "end": 350,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_2@2",
+            "content": "With the purpose of developing new algorithms, the Dialogue for Reverse Engineering Assessments and Methods (DREAM) consortium organized a crowd-sourced competition known as DREAM Single Cell Transcriptomics Challenge (SCTC).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_2",
+            "start": 352,
+            "end": 576,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_2@3",
+            "content": "Within this context, we describe here our proposed procedures for adequate reference genes selection, and an iterative procedure to predict spatial expression profile of other genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_2",
+            "start": 578,
+            "end": 759,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_4@0",
+            "content": "Multicellular organisms show throughout their development a crescent cellular heterogeneity, distributed and organized in different organs and tissues.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_4",
+            "start": 0,
+            "end": 150,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_4@1",
+            "content": "This spatial heterogeneity has been explored using different techniques, such as immunohistochemistry and single-molecule fluorescence in situ hybridization (FISH) <REF-1> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_4",
+            "start": 152,
+            "end": 324,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_4@2",
+            "content": "These approaches allow quantification of gene expression in many cells but, unfortunately, these techniques can currently be assayed only over a small number of genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_4",
+            "start": 326,
+            "end": 492,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_4@3",
+            "content": "The selection of these genes introduces a bias that limits the power of these studies.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_4",
+            "start": 494,
+            "end": 579,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_4@4",
+            "content": "With the advent of emergent methods in genomics, it has become possible to assess the transcriptomic profile of complex tissues with unprecedented resolution, thereby allowing insights into complex processes such as: differentiation trajectories, cell fate decisions, and spatial relationships.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_4",
+            "start": 581,
+            "end": 874,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_4@5",
+            "content": "In this sense, high-throughput single-cell RNA-seq (sc-RNA-seq) is becoming an established experimental technique <REF-2> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_4",
+            "start": 876,
+            "end": 998,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_4@6",
+            "content": "The protocol of this technique includes the initial step of sample collection, during which solid tissue dissociation results in single cells.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_4",
+            "start": 1000,
+            "end": 1141,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_4@7",
+            "content": "Removing cells from their native context results in the loss of spatial information.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_4",
+            "start": 1143,
+            "end": 1226,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_4@8",
+            "content": "However, this information can be crucial when the goal is to study the molecular composition of individual cells in the context of spatial location, for example, in the context of primary cancer cells research <REF-3> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_4",
+            "start": 1228,
+            "end": 1446,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_4@9",
+            "content": "Fortunately, some progress has been made to overcome limitations of spatial information loss associated to this technique.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_4",
+            "start": 1448,
+            "end": 1569,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_4@10",
+            "content": "Computational methods, based on Principal Component Analysis, are able to partially recover the spatial structure of gene expression patterns <REF-4> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_4",
+            "start": 1571,
+            "end": 1721,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_4@11",
+            "content": "More recently, several computational techniques coupled to in situ RNA patterns facilitate this reconstruction with better resolution <REF-5> \u2013 <REF-7> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_4",
+            "start": 1723,
+            "end": 1875,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_5@0",
+            "content": "In order to catalyze research on computational methods for the spatial reconstruction of single-cell gene expression data, a crowd-sourced competition was designed by the DREAM Consortium in collaboration with Nikos Karaiskos and Nikolaus Rajewsky from Max Delbruck Institute.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_5",
+            "start": 0,
+            "end": 275,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_5@1",
+            "content": "Using sc-RNA-seq data from Rajewsky Lab, published in <REF-7> , and the expression patterns of driver genes as an expression reference atlas, three main subchallenges were designed.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_5",
+            "start": 277,
+            "end": 457,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_5@2",
+            "content": "The particular aim was to predict the position of 1297 cells in the 3039 Drosophila melanogaster embryonic locations, or bins, for one half of an embryo in stage 6 (pre-gastrulation), based on scR-NAseq data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_5",
+            "start": 459,
+            "end": 666,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_5@3",
+            "content": "The prediction of the 1297 cell positions must be done using a limited number of genes selected from a pool of 84 expression patterns used as a reference atlas.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_5",
+            "start": 668,
+            "end": 827,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_5@4",
+            "content": "In subchallenge 1 the prediction must be performed using 60 driver genes out of 84 genes, in subchallenge 2 using a subset of any expression patterns from 40 genes out of the 84, and in subchallenge 3 using a subset of any expression patterns from only 20 driver genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_5",
+            "start": 829,
+            "end": 1097,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_5@5",
+            "content": "The selection of the subset of genes used for the prediction poses an additional and interesting problem.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_5",
+            "start": 1099,
+            "end": 1203,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_5@6",
+            "content": "In this paper we present a procedure for solving the cell-position problem posed in the DREAM SCTC.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_5",
+            "start": 1205,
+            "end": 1303,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_5@7",
+            "content": "This challenge consists of predicting the positions of individual cells, based on an expression reference atlas and a small set of genes reported in single-cell studies.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_5",
+            "start": 1305,
+            "end": 1473,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_6@0",
+            "content": "Methods",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_6",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_7@0",
+            "content": "DREAM challenge data",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_7",
+            "start": 0,
+            "end": 19,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_8@0",
+            "content": "Expression patterns used as a reference atlas correspond to 84 driver genes obtained from in situ hybridization experiments; the data correspond to The Berkeley Drosophila Transcription Network Project (BDTNP) <REF-8> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_8",
+            "start": 0,
+            "end": 218,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_8@1",
+            "content": "This gene expression data set is listed in the file bdtnp.csv at DVEX server.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_8",
+            "start": 220,
+            "end": 296,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_8@2",
+            "content": "One half of the Drosophila embryo has 3039 cells locations, each location is specified by three coordinates ( x , y and z ) (geometry.txt at DVEX).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_8",
+            "start": 298,
+            "end": 444,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_8@3",
+            "content": "Thus, the reference database consists of an expression matrix of 84 genes (columns) quantified across the 3039 embryonic locations (rows).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_8",
+            "start": 446,
+            "end": 583,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_8@4",
+            "content": "These data were next binarized <REF-7> , sorted in the same order of cell location, and listed in an additional file (binarized_bdtnp.csv at DVEX server).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_8",
+            "start": 585,
+            "end": 738,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_8@5",
+            "content": "The single-cell RNA sequencing data is provided as a matrix with 8924 genes as rows, and 1297 cells as columns.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_8",
+            "start": 740,
+            "end": 850,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_8@6",
+            "content": "These data are divided by the total number of counts for that cell, in this step a pseudocount is added.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_8",
+            "start": 852,
+            "end": 955,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_8@7",
+            "content": "The normalized values are obtained by taking the logarithm of the total counts.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_8",
+            "start": 957,
+            "end": 1035,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_8@8",
+            "content": "The normalized values are also binarized, i.e. a given gene is ON (OFF) if the normalized values are above (below) of a quantile value.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_8",
+            "start": 1037,
+            "end": 1171,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_8@9",
+            "content": "Based on a distance minimization criterion, the quantile value was chosen as 0.23.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_8",
+            "start": 1173,
+            "end": 1254,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_8@10",
+            "content": "The short sequences for each of the 1297 cells in the raw and normalized data are the barcodes of individual cells.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_8",
+            "start": 1256,
+            "end": 1370,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_8@11",
+            "content": "Both normalized as well as binarized data were provided by the DREAM Challenge.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_8",
+            "start": 1372,
+            "end": 1450,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_9@0",
+            "content": "Selection of the gene sets",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_9",
+            "start": 0,
+            "end": 25,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_10@0",
+            "content": "In order to select the gene sets to be used in each subchallenge, we take into account two criteria:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_10",
+            "start": 0,
+            "end": 99,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_11@0",
+            "content": "- (i) Genes that have complementary expression patterns across the single-cell population. It is well known that many genes are co-expressed, that is, their expression profiles are highly correlated. This correlation introduces a degree of redundancy in the expression matrix, which frequently is reduced by clustering those genes with similar expression profiles. This step allows us to identify genes with complementary expression patterns.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_11",
+            "start": 0,
+            "end": 441,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_11@1",
+            "content": "- (ii) Genes with expression levels broadly distributed across the single-cell population. This step is performed in order to select one gene per cluster. Those genes with many null expression values over a large part of the population are discarded, because they are associated with distributions with a large peak at zero.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_11",
+            "start": 443,
+            "end": 766,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@0",
+            "content": "To accomplish these criteria, we first perform an agglomerative clustering procedure over the expression matrix comprising the 84 genes (the same genes as the available in the in situ expression data) over the 1297 cells).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 0,
+            "end": 221,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@1",
+            "content": "We cluster genes with similar expression profiles across the cells, by means of using the Euclidean distance over the normalized gene expression levels, and the Unweighted Pair Group Method with Arithmetic Mean (UPGMA) as a linkage method.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 223,
+            "end": 461,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@2",
+            "content": "Then, we cut the dendogram tree into 20, 40, or 60 groups depending on the subchallenge.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 463,
+            "end": 550,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@3",
+            "content": "Next, we need to select only one gene per cluster.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 552,
+            "end": 601,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@4",
+            "content": "This selection is performed based on the criterion of the broadest distribution.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 603,
+            "end": 682,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@5",
+            "content": "To this end, for each gene within a given cluster we compute the frequency distribution p i , where p i denotes the frequency of occurrence of expression levels within the bin i .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 684,
+            "end": 862,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@6",
+            "content": "Here, we set the bin size equal to 0.125.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 864,
+            "end": 904,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@7",
+            "content": "After that, we compute the associated entropy H = \u2013 \u2009 \u2211 i p i 1 n p i .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 906,
+            "end": 976,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@8",
+            "content": "Then, we select the gene with the greatest entropy in each cluster, i.e. the gene within the cluster with the broadest expression distribution across the single-cell population.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 978,
+            "end": 1154,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@9",
+            "content": "This selection procedure is performed with the R script named preprocessing.r, which uses the function selgen.R, both available at Zenodo (see Data availability ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 1156,
+            "end": 1318,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@10",
+            "content": "To assess this method for the gene selection, we compare the prediction performance obtained with the set of 20 genes selected in this way with the results obtained with different sets of genes sampled at random.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 1320,
+            "end": 1531,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@11",
+            "content": "For comparison, we consider the Mathews correlation coefficient (MCC) <REF-10> between the 1297 cells and the 3039 bins.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 1533,
+            "end": 1652,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@12",
+            "content": "Then, the ten better scored bins are selected as putative position for each cell.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 1654,
+            "end": 1734,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@13",
+            "content": "As the true positions of the cells are not available, we take the bin with the highest MCC, obtained with the set that include all 84 genes, as the bin associated with the true position.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 1736,
+            "end": 1921,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@14",
+            "content": "Thus, we count cells with the ten best scores containing the true position as cells whose positions are well predicted.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 1923,
+            "end": 2041,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@15",
+            "content": "The percentage of the well-predicted positions will be our measure of the performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 2043,
+            "end": 2128,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@16",
+            "content": "Figure 1 depicts the histogram of percentage of cells with well-predicted positions, obtained with 200 sets of 20 randomly selected genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 2130,
+            "end": 2267,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_12@17",
+            "content": "In all cases, this percentage is quite lower than that obtained with 20 genes selected as indicated above, which is 33.46%.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_12",
+            "start": 2269,
+            "end": 2391,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_13@0",
+            "content": "Figure 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_13",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_15@0",
+            "content": "We use this procedure to select an additional set of 100 genes from the 8924 genes measured by the single-cell technique, but excluding the genes from the 84 reference gene set.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_15",
+            "start": 0,
+            "end": 176,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_15@1",
+            "content": "These 100 genes will be used in further steps during the iterative procedure, and will be denoted as the outgroup set hereafter.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_15",
+            "start": 178,
+            "end": 305,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_15@2",
+            "content": "The 20, 40 and 60 selected genes used for each cell location prediction task are listed in Table S1 (see Extended data ); we also include the outgroup set of genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_15",
+            "start": 307,
+            "end": 470,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_16@0",
+            "content": "Scoring functions",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_16",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_17@0",
+            "content": "In order to predict the position of a given single cell, we use a score approach based on two similarity measures between the sc-RNA-seq data, and the reference atlas.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_17",
+            "start": 0,
+            "end": 166,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_17@1",
+            "content": "One of these measures is the MCC computed between the binarized expression profiles, as proposed in <REF-7> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_17",
+            "start": 168,
+            "end": 276,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_17@2",
+            "content": "The MCC will be used in the initial step to assign putative bin positions for each single cell, and then to predict the spatial expression profile of the outgroup set of genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_17",
+            "start": 278,
+            "end": 453,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_17@3",
+            "content": "The other measure is the overlap between the normalized expression vector of the single cells, and the projected vector corresponding to the predicted spatial expression profile.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_17",
+            "start": 455,
+            "end": 632,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_17@4",
+            "content": "This vectorial space corresponds to the one spanned by the outgroup set of genes only.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_17",
+            "start": 634,
+            "end": 719,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_17@5",
+            "content": "The overlap is defined by: cos ( \u03b8 ) = u \u22c5 v p u v p , where u is the profile vector of the single cell, and v p is the vector obtained by projecting the profile vector of the predicted profile on the subspace spanned by the non-null components of the profile vector u , as illustrated in Figure 2 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_17",
+            "start": 721,
+            "end": 1019,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_17@6",
+            "content": "The scoring functions are performed by the R script named functions.r, available at Zenodo (see Data availability ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_17",
+            "start": 1021,
+            "end": 1136,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_18@0",
+            "content": "Figure 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_18",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_20@0",
+            "content": "Results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_20",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_21@0",
+            "content": "The proposed procedure is schematically illustrated in Figure 3 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_21",
+            "start": 0,
+            "end": 64,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_21@1",
+            "content": "In the first step we select the set of N genes from the 84 driver genes to be used in the prediction, using the method described in Selection of the gene sets section.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_21",
+            "start": 66,
+            "end": 232,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_21@2",
+            "content": "We also select an additional 100 genes (outgroup set of genes) from all genes measured in the sc-RNAseq experiment, but excluding the driver genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_21",
+            "start": 234,
+            "end": 380,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_21@3",
+            "content": "The name of the genes used are listed in Extended data : Table S1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_21",
+            "start": 382,
+            "end": 447,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_21@4",
+            "content": "Then, using the binarized expression data of the selected genes, we compute the MCC (measure 1) for each binarized single-cell vector against the 3039 binarized vectors associated with each positional bin of the reference atlas (BDTNP).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_21",
+            "start": 449,
+            "end": 684,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_21@5",
+            "content": "By means of the MCC-based score, we predict the single-cell positions and build the putative expression patterns of the outgroup set of genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_21",
+            "start": 686,
+            "end": 827,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_21@6",
+            "content": "In this sense, the expression level of gen g at the bin position i is given by the weighted average of the normalized gene expression across 10 putative positions corresponding to that bin, being the weight proportional to the associated MCC.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_21",
+            "start": 829,
+            "end": 1070,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_21@7",
+            "content": "Mathematically, e i g = \u2211 j * c i j e j g , where c ij are the MCC-based scores of the single cell j against position i , and e i g are the expression levels of gene g recorded in the individual cells j .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_21",
+            "start": 1072,
+            "end": 1275,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_21@8",
+            "content": "The asterisk in the summation indicates that the 10 first better scored cells positions are included.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_21",
+            "start": 1277,
+            "end": 1377,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_21@9",
+            "content": "The predicted expression patterns of the outgroup set of genes computed in this manner are used to compute the overlap (measure 2) with the corresponding expression level of each one of the 1297 single cells.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_21",
+            "start": 1379,
+            "end": 1586,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_21@10",
+            "content": "Finally, using the measure 1 and the measure 2 we compute a composed score S , defined as S = w 1 \u2217 c + w 2 \u2217 o , where c is MCC-based score, o is the overlap-based score, and w 1 and w 2 are the respective weights.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_21",
+            "start": 1588,
+            "end": 1802,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_21@11",
+            "content": "The score S is used to predict positions and improve the predicted expression patterns of the outgroup set of genes in each iteration.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_21",
+            "start": 1804,
+            "end": 1937,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_21@12",
+            "content": "The last two steps are repeated (2 or 3 times), as indicated in Figure 3 with dashed arrows.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_21",
+            "start": 1939,
+            "end": 2030,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_22@0",
+            "content": "Figure 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_22",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_24@0",
+            "content": "The above scheme is applied to the subchallenges with 20, 40 and 60 genes using different weight values.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_24",
+            "start": 0,
+            "end": 103,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_24@1",
+            "content": "First of all, we apply the procedure to the subchallenge 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_24",
+            "start": 105,
+            "end": 163,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_24@2",
+            "content": "Using the 20 genes we compute the MCC for every cell-bin combination.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_24",
+            "start": 165,
+            "end": 233,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_24@3",
+            "content": "The first iteration of this scoring procedure leads to a performance of 33.5% in assigning the putative positions to each single cell.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_24",
+            "start": 235,
+            "end": 368,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_24@4",
+            "content": "By means of using the 20 highest coefficients, we predict the expression patterns of the outgroup set of genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_24",
+            "start": 370,
+            "end": 480,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_24@5",
+            "content": "Then, we compute a scoring measure composed of two terms: the MCC computed in the first step (with a weight w 1 = 0.7), and the previously-defined overlap between the expression vector of each single cell and the projected expression vector of the reference atlas, being both vectors composed of the 100 outgroup genes (with a weight w 2 = 0.3).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_24",
+            "start": 482,
+            "end": 826,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_24@6",
+            "content": "The score combining both measures is then used to predict the positions of each single cell, which leads to a performance of 36% in the second iteration, and 38% in the third iteration.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_24",
+            "start": 828,
+            "end": 1012,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_24@7",
+            "content": "Further iteration steps do not produce any additional improvement.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_24",
+            "start": 1014,
+            "end": 1079,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_24@8",
+            "content": "Figure 4A depicts the performance evolution of the procedure using this gene set.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_24",
+            "start": 1081,
+            "end": 1161,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_25@0",
+            "content": "Figure 4.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_25",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_27@0",
+            "content": "In order to select the set of 60 genes to be used in subchallenge 1, from the 84 genes available in the reference atlas, we perform the above-mentioned agglomerative clustering procedure.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_27",
+            "start": 0,
+            "end": 186,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_27@1",
+            "content": "Then, the 60 genes with the greatest entropy within each cluster are selected.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_27",
+            "start": 188,
+            "end": 265,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_27@2",
+            "content": "The names of the resulting genes are listed in the first column of Extended data : Table S1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_27",
+            "start": 267,
+            "end": 358,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_27@3",
+            "content": "As a first step, we compute the MCC for each binarized single-cell vector, and the corresponding 3039 binarized vectors associated with each positional bin of the reference atlas.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_27",
+            "start": 360,
+            "end": 538,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_27@4",
+            "content": "By means of using the 20 highest MCC for each cell ( N = 20), we compute the putative expression patterns of the outgroup set of genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_27",
+            "start": 540,
+            "end": 674,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_27@5",
+            "content": "In this case, the used scoring measure was composed by MCC with a weight of 0.90; and the overlap of the single-cell expression profiles and the 3039 positions of the predicted expression patterns obtained in the previous step, with a weight of 0.10.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_27",
+            "start": 676,
+            "end": 925,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_27@6",
+            "content": "After two iterations the performance obtained is 95.4%.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_27",
+            "start": 927,
+            "end": 981,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_27@7",
+            "content": "Figure 4B shows the predicted expression pattern of the ftz gene obtained using the set of 60 genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_27",
+            "start": 983,
+            "end": 1082,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_27@8",
+            "content": "The same procedure is used to predict the positions of single cells by considering a set of 40 genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_27",
+            "start": 1084,
+            "end": 1184,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_27@9",
+            "content": "Again, these genes are selected as described in Methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_27",
+            "start": 1186,
+            "end": 1241,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_27@10",
+            "content": "The names of the resulting genes are listed in the second column of Extended data : Table S1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_27",
+            "start": 1243,
+            "end": 1335,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_27@11",
+            "content": "In this case, the performance obtained reaches 71.4%.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_27",
+            "start": 1337,
+            "end": 1389,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_28@0",
+            "content": "Discussion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_28",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_29@0",
+            "content": "We present three innovations that could represent improvements in regard to the original proposal <REF-7> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_29",
+            "start": 0,
+            "end": 106,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_29@1",
+            "content": "One of these innovations is the method for selecting the set of genes to be used as reference in the cell-positions prediction task.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_29",
+            "start": 108,
+            "end": 239,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_29@2",
+            "content": "This set of genes is a good starting point in the presented strategy for position prediction, although we have not explored this method in depth.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_29",
+            "start": 241,
+            "end": 385,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_29@3",
+            "content": "For example, the Jaccard distance <REF-10> could be used in the clustering procedure instead of the Euclidean distance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_29",
+            "start": 387,
+            "end": 505,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_29@4",
+            "content": "We noticed that MCC can overestimate false negatives due to the fact that sc-RNA-seq are not able to record expression of many genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_29",
+            "start": 507,
+            "end": 639,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_29@5",
+            "content": "This results in profiles with many zeros, even in cases of moderate expression levels.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_29",
+            "start": 641,
+            "end": 726,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_29@6",
+            "content": "For that reason, our second proposed innovation is an alternative way to make the comparison between profiles, as we used in subchallenge 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_29",
+            "start": 728,
+            "end": 867,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_29@7",
+            "content": "Last but not least, the third innovation is the iterative procedure, which improves the performance of any of the alternative strategies presented here.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_29",
+            "start": 869,
+            "end": 1020,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_29@8",
+            "content": "In addition, we noticed that the iterative procedure does not necessarily converge to the correct solution, may be due to error propagation on the predicted patterns.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_29",
+            "start": 1022,
+            "end": 1187,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_30@0",
+            "content": "Data availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_30",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_31@0",
+            "content": "Underlying data",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_31",
+            "start": 0,
+            "end": 14,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_32@0",
+            "content": "Challenge documentation, including the detailed description of the Challenge design, overall results, scoring scripts, can be found at: http://www.synapse.org/#!Synapse:syn15665609/wiki .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_32",
+            "start": 0,
+            "end": 186,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_32@1",
+            "content": "Data for this Challenge can be downloaded from http://shiny.mdc-berlin.de/DVEX/ .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_32",
+            "start": 188,
+            "end": 268,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_33@0",
+            "content": "Zenodo: Prediction of cell position using single-cell transcriptomic data: an iterative procedure, https://doi.org/10.5281/zenodo.3470061 <REF-11> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_33",
+            "start": 0,
+            "end": 147,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_34@0",
+            "content": "This project contains code and documentation underlying the methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_34",
+            "start": 0,
+            "end": 67,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_35@0",
+            "content": "Data are available under the terms of the Creative Commons Zero \"No rights reserved\" data waiver (CC0 1.0 Public domain dedication).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_35",
+            "start": 0,
+            "end": 131,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_36@0",
+            "content": "Extended data",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_36",
+            "start": 0,
+            "end": 12,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_37@0",
+            "content": "Zenodo: Prediction of cell position using single-cell transcriptomic data: an iterative procedure, https://doi.org/10.5281/zenodo.3470061 <REF-11> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_37",
+            "start": 0,
+            "end": 147,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_38@0",
+            "content": "This project contains the following extended data:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_38",
+            "start": 0,
+            "end": 49,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_39@0",
+            "content": "- Table S1: Selected genes: first, second and third columns list the name of genes used in the subchallenges 1, 2 and 3, respectively. The last column lists the names of the outgroup genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_39",
+            "start": 0,
+            "end": 188,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_40@0",
+            "content": "Data are available under the terms of the Creative Commons Zero \"No rights reserved\" data waiver (CC0 1.0 Public domain dedication).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_40",
+            "start": 0,
+            "end": 131,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_41@0",
+            "content": "<REF-1> Battich N Stoeger T Pelkmans L : Image-based transcriptomics in thousands of single human cells at single-molecule resolution. Nat Methods. 2013 ; 10 ( 11 ): 1127 \u2013 33 . 24097269 10.1038/nmeth.2657",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_41",
+            "start": 0,
+            "end": 204,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_42@0",
+            "content": "<REF-2> Shapiro E Biezuner T Linnarsson S : Single-cell sequencing-based technologies will revolutionize whole-organism science. Nat Rev Genet. 2013 ; 14 ( 9 ): 618 \u2013 30 . 23897237 10.1038/nrg3542",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_42",
+            "start": 0,
+            "end": 195,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_43@0",
+            "content": "<REF-3> Sierant MC Choi J : SingleSingle-Cell Ssequencing in Cancer: Recent Applications to Immunogenomics and Multi-omics Tools. Genomics Inform. 2018 ; 16 : e17 . 30602078 10.5808/GI.2018.16.4.e17 6440661",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_43",
+            "start": 0,
+            "end": 205,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_44@0",
+            "content": "<REF-4> Durruthy-Durruthy R Gottlieb A Hartman BH : Reconstruction of the mouse otocyst and early neuroblast lineage at single-cell resolution. Cell. 2014 ; 157 ( 4 ): 964 \u2013 78 . 24768691 10.1016/j.cell.2014.03.036 4051200",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_44",
+            "start": 0,
+            "end": 221,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_45@0",
+            "content": "<REF-5> Achim K Pettit JB Saraiva LR : High-throughput spatial mapping of single-cell RNA-seq data to tissue of origin. Nat Biotechnol. 2015 ; 33 ( 5 ): 503 \u2013 9 . 25867922 10.1038/nbt.3209",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_45",
+            "start": 0,
+            "end": 187,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_46@0",
+            "content": "<REF-7> Karaiskos N Wahle P Alles J : The Drosophila embryo at single-cell transcriptome resolution. Science. 2017 ; 358 ( 6360 ): 194 \u2013 199 . 28860209 10.1126/science.aan3235",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_46",
+            "start": 0,
+            "end": 174,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_47@0",
+            "content": "<REF-8> Fowlkes CC Hendriks CL Ker\u00e4nen SV : A quantitative spatiotemporal atlas of gene expression in the Drosophila blastoderm. Cell. 2008 ; 133 ( 2 ): 364 \u2013 74 . 18423206 10.1016/j.cell.2008.01.053",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_47",
+            "start": 0,
+            "end": 198,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_48@0",
+            "content": "<REF-10> Matthews BW : Comparison of the predicted and observed secondary structure of T4 phage lysozyme. Biochim Biophys Acta. 1975 ; 405 ( 2 ): 442 \u2013 451 . 1180967 10.1016/0005-2795(75)90109-9",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_48",
+            "start": 0,
+            "end": 193,
+            "label": {}
+        },
+        {
+            "ix": "8-1775_v2_49@0",
+            "content": "<REF-11> Rogers DJ Tanimoto TT : A Computer Program for Classifying Plants. Science. 1960 ; 132 ( 3434 ): 1115 \u2013 1118 . 17790723 10.1126/science.132.3434.1115",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1775_v2_49",
+            "start": 0,
+            "end": 157,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "8-1775_v2_0",
+            "tgt_ix": "8-1775_v2_1",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_1",
+            "tgt_ix": "8-1775_v2_2",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_0",
+            "tgt_ix": "8-1775_v2_3",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_3",
+            "tgt_ix": "8-1775_v2_4",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_3",
+            "tgt_ix": "8-1775_v2_5",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_0",
+            "tgt_ix": "8-1775_v2_6",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_6",
+            "tgt_ix": "8-1775_v2_7",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_7",
+            "tgt_ix": "8-1775_v2_8",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_6",
+            "tgt_ix": "8-1775_v2_9",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_9",
+            "tgt_ix": "8-1775_v2_10",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_9",
+            "tgt_ix": "8-1775_v2_11",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_9",
+            "tgt_ix": "8-1775_v2_12",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_9",
+            "tgt_ix": "8-1775_v2_13",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_13",
+            "tgt_ix": "8-1775_v2_14",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_9",
+            "tgt_ix": "8-1775_v2_15",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_6",
+            "tgt_ix": "8-1775_v2_16",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_16",
+            "tgt_ix": "8-1775_v2_17",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_16",
+            "tgt_ix": "8-1775_v2_18",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_18",
+            "tgt_ix": "8-1775_v2_19",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_0",
+            "tgt_ix": "8-1775_v2_20",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_20",
+            "tgt_ix": "8-1775_v2_21",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_20",
+            "tgt_ix": "8-1775_v2_22",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_22",
+            "tgt_ix": "8-1775_v2_23",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_20",
+            "tgt_ix": "8-1775_v2_24",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_20",
+            "tgt_ix": "8-1775_v2_25",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_25",
+            "tgt_ix": "8-1775_v2_26",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_20",
+            "tgt_ix": "8-1775_v2_27",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_0",
+            "tgt_ix": "8-1775_v2_28",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_28",
+            "tgt_ix": "8-1775_v2_29",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_0",
+            "tgt_ix": "8-1775_v2_30",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_30",
+            "tgt_ix": "8-1775_v2_31",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_31",
+            "tgt_ix": "8-1775_v2_32",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_31",
+            "tgt_ix": "8-1775_v2_33",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_31",
+            "tgt_ix": "8-1775_v2_34",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_31",
+            "tgt_ix": "8-1775_v2_35",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_30",
+            "tgt_ix": "8-1775_v2_36",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_36",
+            "tgt_ix": "8-1775_v2_37",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_36",
+            "tgt_ix": "8-1775_v2_38",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_36",
+            "tgt_ix": "8-1775_v2_39",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_36",
+            "tgt_ix": "8-1775_v2_40",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_0",
+            "tgt_ix": "8-1775_v2_1",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_1",
+            "tgt_ix": "8-1775_v2_2",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_2",
+            "tgt_ix": "8-1775_v2_3",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_3",
+            "tgt_ix": "8-1775_v2_4",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_5",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_5",
+            "tgt_ix": "8-1775_v2_6",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_6",
+            "tgt_ix": "8-1775_v2_7",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_7",
+            "tgt_ix": "8-1775_v2_8",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_8",
+            "tgt_ix": "8-1775_v2_9",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_9",
+            "tgt_ix": "8-1775_v2_10",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_10",
+            "tgt_ix": "8-1775_v2_11",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_11",
+            "tgt_ix": "8-1775_v2_12",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_13",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_13",
+            "tgt_ix": "8-1775_v2_14",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_14",
+            "tgt_ix": "8-1775_v2_15",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_15",
+            "tgt_ix": "8-1775_v2_16",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_16",
+            "tgt_ix": "8-1775_v2_17",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_17",
+            "tgt_ix": "8-1775_v2_18",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_18",
+            "tgt_ix": "8-1775_v2_19",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_19",
+            "tgt_ix": "8-1775_v2_20",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_20",
+            "tgt_ix": "8-1775_v2_21",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_21",
+            "tgt_ix": "8-1775_v2_22",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_22",
+            "tgt_ix": "8-1775_v2_23",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_23",
+            "tgt_ix": "8-1775_v2_24",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_24",
+            "tgt_ix": "8-1775_v2_25",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_25",
+            "tgt_ix": "8-1775_v2_26",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_26",
+            "tgt_ix": "8-1775_v2_27",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_27",
+            "tgt_ix": "8-1775_v2_28",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_28",
+            "tgt_ix": "8-1775_v2_29",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_29",
+            "tgt_ix": "8-1775_v2_30",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_30",
+            "tgt_ix": "8-1775_v2_31",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_31",
+            "tgt_ix": "8-1775_v2_32",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_32",
+            "tgt_ix": "8-1775_v2_33",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_33",
+            "tgt_ix": "8-1775_v2_34",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_34",
+            "tgt_ix": "8-1775_v2_35",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_35",
+            "tgt_ix": "8-1775_v2_36",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_36",
+            "tgt_ix": "8-1775_v2_37",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_37",
+            "tgt_ix": "8-1775_v2_38",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_38",
+            "tgt_ix": "8-1775_v2_39",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_39",
+            "tgt_ix": "8-1775_v2_40",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_41",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_42",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_43",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_44",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_45",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_46",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_8",
+            "tgt_ix": "8-1775_v2_47",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_48",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_33",
+            "tgt_ix": "8-1775_v2_49",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_14",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_17",
+            "tgt_ix": "8-1775_v2_19",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_21",
+            "tgt_ix": "8-1775_v2_23",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_24",
+            "tgt_ix": "8-1775_v2_26",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_0",
+            "tgt_ix": "8-1775_v2_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_1",
+            "tgt_ix": "8-1775_v2_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_2",
+            "tgt_ix": "8-1775_v2_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_2",
+            "tgt_ix": "8-1775_v2_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_2",
+            "tgt_ix": "8-1775_v2_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_2",
+            "tgt_ix": "8-1775_v2_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_3",
+            "tgt_ix": "8-1775_v2_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_4@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_4@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_4@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_4@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_4@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_4@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_4",
+            "tgt_ix": "8-1775_v2_4@11",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_5",
+            "tgt_ix": "8-1775_v2_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_5",
+            "tgt_ix": "8-1775_v2_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_5",
+            "tgt_ix": "8-1775_v2_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_5",
+            "tgt_ix": "8-1775_v2_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_5",
+            "tgt_ix": "8-1775_v2_5@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_5",
+            "tgt_ix": "8-1775_v2_5@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_5",
+            "tgt_ix": "8-1775_v2_5@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_5",
+            "tgt_ix": "8-1775_v2_5@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_6",
+            "tgt_ix": "8-1775_v2_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_7",
+            "tgt_ix": "8-1775_v2_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_8",
+            "tgt_ix": "8-1775_v2_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_8",
+            "tgt_ix": "8-1775_v2_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_8",
+            "tgt_ix": "8-1775_v2_8@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_8",
+            "tgt_ix": "8-1775_v2_8@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_8",
+            "tgt_ix": "8-1775_v2_8@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_8",
+            "tgt_ix": "8-1775_v2_8@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_8",
+            "tgt_ix": "8-1775_v2_8@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_8",
+            "tgt_ix": "8-1775_v2_8@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_8",
+            "tgt_ix": "8-1775_v2_8@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_8",
+            "tgt_ix": "8-1775_v2_8@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_8",
+            "tgt_ix": "8-1775_v2_8@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_8",
+            "tgt_ix": "8-1775_v2_8@11",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_9",
+            "tgt_ix": "8-1775_v2_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_10",
+            "tgt_ix": "8-1775_v2_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_11",
+            "tgt_ix": "8-1775_v2_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_11",
+            "tgt_ix": "8-1775_v2_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@11",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@12",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@13",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@14",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@15",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@16",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_12",
+            "tgt_ix": "8-1775_v2_12@17",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_13",
+            "tgt_ix": "8-1775_v2_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_15",
+            "tgt_ix": "8-1775_v2_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_15",
+            "tgt_ix": "8-1775_v2_15@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_15",
+            "tgt_ix": "8-1775_v2_15@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_16",
+            "tgt_ix": "8-1775_v2_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_17",
+            "tgt_ix": "8-1775_v2_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_17",
+            "tgt_ix": "8-1775_v2_17@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_17",
+            "tgt_ix": "8-1775_v2_17@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_17",
+            "tgt_ix": "8-1775_v2_17@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_17",
+            "tgt_ix": "8-1775_v2_17@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_17",
+            "tgt_ix": "8-1775_v2_17@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_17",
+            "tgt_ix": "8-1775_v2_17@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_18",
+            "tgt_ix": "8-1775_v2_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_20",
+            "tgt_ix": "8-1775_v2_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_21",
+            "tgt_ix": "8-1775_v2_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_21",
+            "tgt_ix": "8-1775_v2_21@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_21",
+            "tgt_ix": "8-1775_v2_21@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_21",
+            "tgt_ix": "8-1775_v2_21@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_21",
+            "tgt_ix": "8-1775_v2_21@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_21",
+            "tgt_ix": "8-1775_v2_21@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_21",
+            "tgt_ix": "8-1775_v2_21@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_21",
+            "tgt_ix": "8-1775_v2_21@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_21",
+            "tgt_ix": "8-1775_v2_21@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_21",
+            "tgt_ix": "8-1775_v2_21@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_21",
+            "tgt_ix": "8-1775_v2_21@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_21",
+            "tgt_ix": "8-1775_v2_21@11",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_21",
+            "tgt_ix": "8-1775_v2_21@12",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_22",
+            "tgt_ix": "8-1775_v2_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_24",
+            "tgt_ix": "8-1775_v2_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_24",
+            "tgt_ix": "8-1775_v2_24@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_24",
+            "tgt_ix": "8-1775_v2_24@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_24",
+            "tgt_ix": "8-1775_v2_24@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_24",
+            "tgt_ix": "8-1775_v2_24@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_24",
+            "tgt_ix": "8-1775_v2_24@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_24",
+            "tgt_ix": "8-1775_v2_24@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_24",
+            "tgt_ix": "8-1775_v2_24@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_24",
+            "tgt_ix": "8-1775_v2_24@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_25",
+            "tgt_ix": "8-1775_v2_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_27",
+            "tgt_ix": "8-1775_v2_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_27",
+            "tgt_ix": "8-1775_v2_27@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_27",
+            "tgt_ix": "8-1775_v2_27@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_27",
+            "tgt_ix": "8-1775_v2_27@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_27",
+            "tgt_ix": "8-1775_v2_27@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_27",
+            "tgt_ix": "8-1775_v2_27@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_27",
+            "tgt_ix": "8-1775_v2_27@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_27",
+            "tgt_ix": "8-1775_v2_27@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_27",
+            "tgt_ix": "8-1775_v2_27@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_27",
+            "tgt_ix": "8-1775_v2_27@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_27",
+            "tgt_ix": "8-1775_v2_27@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_27",
+            "tgt_ix": "8-1775_v2_27@11",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_28",
+            "tgt_ix": "8-1775_v2_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_29",
+            "tgt_ix": "8-1775_v2_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_29",
+            "tgt_ix": "8-1775_v2_29@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_29",
+            "tgt_ix": "8-1775_v2_29@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_29",
+            "tgt_ix": "8-1775_v2_29@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_29",
+            "tgt_ix": "8-1775_v2_29@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_29",
+            "tgt_ix": "8-1775_v2_29@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_29",
+            "tgt_ix": "8-1775_v2_29@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_29",
+            "tgt_ix": "8-1775_v2_29@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_29",
+            "tgt_ix": "8-1775_v2_29@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_30",
+            "tgt_ix": "8-1775_v2_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_31",
+            "tgt_ix": "8-1775_v2_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_32",
+            "tgt_ix": "8-1775_v2_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_32",
+            "tgt_ix": "8-1775_v2_32@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_33",
+            "tgt_ix": "8-1775_v2_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_34",
+            "tgt_ix": "8-1775_v2_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_35",
+            "tgt_ix": "8-1775_v2_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_36",
+            "tgt_ix": "8-1775_v2_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_37",
+            "tgt_ix": "8-1775_v2_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_38",
+            "tgt_ix": "8-1775_v2_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_39",
+            "tgt_ix": "8-1775_v2_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_40",
+            "tgt_ix": "8-1775_v2_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_41",
+            "tgt_ix": "8-1775_v2_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_42",
+            "tgt_ix": "8-1775_v2_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_43",
+            "tgt_ix": "8-1775_v2_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_44",
+            "tgt_ix": "8-1775_v2_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_45",
+            "tgt_ix": "8-1775_v2_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_46",
+            "tgt_ix": "8-1775_v2_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_47",
+            "tgt_ix": "8-1775_v2_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_48",
+            "tgt_ix": "8-1775_v2_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1775_v2_49",
+            "tgt_ix": "8-1775_v2_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "8-1775_v2",
+    "meta": {
+        "parser": "F1000XMLParser",
+        "intertext-graph": "N/A",
+        "doi": "10.12688/f1000research.20715.2",
+        "atype": "method-article",
+        "license": "http://creativecommons.org/licenses/by/4.0/",
+        "title": "Prediction of cell position using single-cell transcriptomic data: an iterative procedure",
+        "abstract": "Single-cell sequencing reveals cellular heterogeneity but not cell localization. However, by combining single-cell transcriptomic data with a reference atlas of a small set of genes, it would be possible to predict the position of individual cells and reconstruct the spatial expression profile of thousands of genes reported in the single-cell study. With the purpose of developing new algorithms, the Dialogue for Reverse Engineering Assessments and Methods (DREAM) consortium organized a crowd-sourced competition known as DREAM Single Cell Transcriptomics Challenge (SCTC). Within this context, we describe here our proposed procedures for adequate reference genes selection, and an iterative procedure to predict spatial expression profile of other genes.",
+        "contributors": [
+            {
+                "surname": "Alonso",
+                "given-names": "Andr\u00e9s M."
+            },
+            {
+                "surname": "Carrea",
+                "given-names": "Alejandra"
+            },
+            {
+                "surname": "Diambra",
+                "given-names": "Luis"
+            }
+        ],
+        "url": "https://f1000research.com/articles/8-1775/v2/",
+        "doc_id": "8-1775",
+        "version": 2,
+        "ix_counter": 243,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy"
+    }
+}

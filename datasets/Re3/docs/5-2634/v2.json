@@ -1,0 +1,4271 @@
+{
+    "nodes": [
+        {
+            "ix": "5-2634_v2_0",
+            "content": "Design of chemical space networks incorporating compound distance relationships",
+            "ntype": "article-title",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_2",
+            "content": "Networks, in which nodes represent compounds and edges pairwise similarity relationships, are used as coordinate-free representations of chemical space. So-called chemical space networks (CSNs) provide intuitive access to structural relationships within compound data sets and can be annotated with activity information. However, in such similarity-based networks, distances between compounds are typically determined for layout purposes and clarity and have no chemical meaning. By contrast, inter-compound distances as a measure of dissimilarity can be directly obtained from coordinate-based representations of chemical space. Herein, we introduce a CSN variant that incorporates compound distance relationships and thus further increases the information content of compound networks. The design was facilitated by adapting the Kamada-Kawai algorithm. Kamada-Kawai networks are the first CSNs that are based on numerical similarity measures, but do not depend on chosen similarity threshold values.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1",
+                "sec-type": "intro",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_4",
+            "content": "In chemoinformatics, molecular network representations have thus far mostly been applied to study similarity relationships between compounds and visualize structure-activity relationships (SARs) <REF-1> \u2013 <REF-3> . In such networks, molecules are represented as nodes and edges indicate pairwise similarity relationships. Potency information can be added, for example, through node coloring, which provides a basis for SAR visualization <REF-2> . A prototypic network representation specifically designed for SAR analysis was the \u2018network-like similarity graph\u2019 (NSG) <REF-3> , a precursor of more generally defined \u2018chemical space networks\u2019 (CSNs) <REF-4> , which are characterized using statistical concepts from the interdisciplinary field of network science <REF-5> . As SAR-oriented network representations, NSGs provide immediate visual access to local communities (subsets) of active compounds with interesting SAR characteristics.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_5",
+            "content": "A major distinguishing feature of different CSNs is the way in which molecular similarity relationships are established <REF-5> . The use of alternative similarity measures often changes local and global network properties of CSNs <REF-5> . When numerical similarity measures are used, pairwise compound comparisons yield a similarity matrix that contains similarity values for all compound pairs in a data set. The application of a similarity threshold value then transforms the similarity matrix into an adjacency matrix, which serves as input for layout algorithms to generate a graphical representation <REF-6> . In fact, network appearance is often strongly influenced by chosen layout algorithms.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_6",
+            "content": "Conventional chemical space representations used in chemoinformatics are mostly generated on the basis of vectors of numerical descriptors. The resulting coordinate-based space representations are multi- or high-dimensional, with each chosen descriptor adding another dimension to the space. In such coordinate-based spaces, compound positions are unambiguously defined and so are distances between compounds that are quantified as a measure of dissimilarity, i.e. the larger the distance is, the more dissimilar the compounds are. By contrast, CSNs have become a paradigm of coordinate-free chemical space representations, which are entirely determined by pairwise similarity relationships <REF-4> , <REF-5> . If substructure-based similarity measures are employed, binary relationships are obtained (i.e. two compounds are either \u2018similar\u2019 or not); if similarity threshold values are applied to numerical measures, pairs of compounds reaching the threshold are classified as similar (and appear in the adjacency matrix). Hence, distance relationships between compounds are typically not considered in coordinate-free chemical space representations.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_7",
+            "content": "In this work, we introduce a novel layout for CSNs that does not depend on chosen threshold values, but takes distances derived from pairwise similarity values into account. Thus, in contrast to currently available CSNs, distances between compounds and communities in the resulting networks become chemically relevant (at least with respect to chosen descriptors), which further increases the information content of these representations.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_8",
+            "content": "Methods",
+            "ntype": "title",
+            "meta": {
+                "section": "2",
+                "sec-type": "materials",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_9",
+            "content": "Data sets",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_10",
+            "content": "For network design, one large and three small compound sets (active against human targets with defined equilibrium constants) were taken from ChEMBL (version 21) ( https://www.ebi.ac.uk/chembl/ ) <REF-7> , as reported in Table 1 . We note that there was no specific reason to focus on these sets; many others could have been selected instead.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_11",
+            "content": "Table 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "T1",
+                "caption": "Compound sets.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_12",
+            "content": "<table-wrap xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"T1\" position=\"anchor\"> <caption> <title>Compound sets.</title> </caption> <table content-type=\"article-table\" frame=\"hsides\"> <thead> <tr> <th align=\"center\">ID</th> <th align=\"center\">Target set</th> <th align=\"center\"># CPDs</th> </tr> </thead> <tbody> <tr> <td align=\"center\">11638</td> <td align=\"left\">MAP kinase ERK2 inhibitors</td> <td align=\"center\">90</td> </tr> <tr> <td align=\"center\">222</td> <td align=\"left\">Glutamate [NMDA] receptor subunit <break/>&#949; 2 ligands</td> <td align=\"center\">59</td> </tr> <tr> <td align=\"center\">100476</td> <td align=\"left\">Apoptosis regulator Bcl-W inhibitors</td> <td align=\"center\">48</td> </tr> <tr> <td align=\"center\">51</td> <td align=\"left\">Serotonin 1a (5-HT1a) receptor <break/>ligands</td> <td align=\"center\">1680</td> </tr> </tbody> </table> <table-wrap-foot> <fn> <p>&#8216;ID&#8217; is the ChEMBL target identifier and &#8216;# CPDs&#8217; means number of compounds.</p> </fn> </table-wrap-foot> </table-wrap>",
+            "ntype": "table-wrap",
+            "meta": {
+                "id": "T1",
+                "caption": "Compound sets.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_13",
+            "content": "Molecular representation and similarity metric",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_14",
+            "content": "Compounds were represented using the MACCS fingerprint <REF-8> (consisting of 166 structural keys or patterns), which were generated using an in-house Python implementation. Pairwise similarity values were calculated using the Tanimoto coefficient (Tc) <REF-9> . Fingerprint descriptors of different design might have been selected instead, but for our proof-of-principle investigation, the relatively simple MACCS fingerprint was readily sufficient.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_15",
+            "content": "Similarity vs. distance",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_16",
+            "content": "Pairwise similarity values were transformed into distances using the formula",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_17",
+            "content": "distance = 1 \u2013 CDF ( similarity )",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_18",
+            "content": "where CDF is the cumulative distribution function for an assumed normal distribution. For each compound set, the mean and standard deviation were calculated from its pairwise similarity values. The CDF was used to emphasize compound pairs with large Tc values and de-emphasize pairs with small values compared to a linear relationship.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_19",
+            "content": "Network layouts",
+            "ntype": "title",
+            "meta": {
+                "section": "2.4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_20",
+            "content": "Alternative CSN layouts were generated with in-house Java programs based upon the JUNG library ( http://jung.sourceforge.net/doc/JUNG_journal.pdf ). Please also see the \u2018Data availability\u2019 section.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_21",
+            "content": "Fruchterman-Reingold. The Fruchterman-Reingold (FR) algorithm <REF-10> has so far consistently been used for NSGs <REF-3> and CSNs <REF-5> . FR is a force-directed algorithm that brings together subsets of densely connected objects and separates different subsets from each other through repulsion (until equilibrium positions are obtained). Only similarity values reaching a pre-defined threshold are considered in FR layout construction (all other similarity values are ignored). In FR-based network views, distances between compounds have no chemical meaning.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_22",
+            "content": "Kamada-Kawai. The Kamada-Kawai (KK) algorithm <REF-11> , adapted herein for CSN design, is also a force-directed layout method. However, KK uses all distances derived from similarity values as input, and optimizes (threshold-independent) edge lengths with respect to inter-compound distances. Thus, the KK approach incorporates distance relationships into network layouts. In principle, KK-based networks are completely connected. Thus, edges between distant compounds might be omitted for clarity. Although all similarity values and corresponding distance relationships are considered for network construction, for selective edge display, similarity threshold values can also be applied.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_23",
+            "content": "As similarity-based compound networks, KK network representations are covered by the general definition of CSNs <REF-4> , <REF-5> and are in the following also referred to as KK CSNs.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_24",
+            "content": "Results and discussion",
+            "ntype": "title",
+            "meta": {
+                "section": "3",
+                "sec-type": "results | discussion",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_25",
+            "content": "Kamada-Kawai network design",
+            "ntype": "title",
+            "meta": {
+                "section": "3.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_26",
+            "content": "The characteristic feature of the KK approach is that it takes distances derived from all pairwise similarity values quantitatively into account during network construction. The resulting layout reflects relative compound distances, which principally increases the chemical information contained in KK CSNs compared to threshold-dependent FR CSNs. Independent of the KK network structure, which remains constant, edges in KK CSNs can be selectively displayed at varying similarity threshold values to optimize the clarity of the presentation.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_27",
+            "content": "Kamada-Kawai network of a model data set",
+            "ntype": "title",
+            "meta": {
+                "section": "3.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_28",
+            "content": "For an initial proof-of-principle assessment, a model data set was generated by combining four subsets (A\u2013D) of five hypothetical data points, each with well-defined intra-set similarity value ranges, as reported in Table 2 . Subsets A\u2013C contained highly similar data points with varying inter-subset similarity values ( Table 2 ), whereas subset D consisted of dissimilar data points (singletons). The KK CSN of this model data set is shown in Figure 1 . All three subsets of similar data points formed separate clusters in the network, whereas data points from subset D were widely distributed. Furthermore, clusters of subsets A and B, which displayed largest inter-subset similarity values ( Table 2 ), were located close to each other and removed from the less similar subset C. Moreover, the KK CSN also correctly accounted for the smaller distance between A and C compared to B and C. Thus, the KK CSN incorporated for various distance relationships present in the model set; an encouraging finding.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_29",
+            "content": "Table 2.",
+            "ntype": "label",
+            "meta": {
+                "id": "T2",
+                "caption": "Similarity relationships in a model data set.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_30",
+            "content": "<table-wrap xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"T2\" position=\"anchor\"> <caption> <title>Similarity relationships in a model data set.</title> </caption> <table content-type=\"article-table\" frame=\"hsides\"> <thead> <tr> <th align=\"center\"/> <th align=\"center\">A</th> <th align=\"center\">B</th> <th align=\"center\">C</th> <th align=\"center\">D</th> </tr> </thead> <tbody> <tr> <td align=\"center\"> <bold>A</bold> </td> <td align=\"center\">1.0-0.9</td> <td align=\"center\">0.8-0.7</td> <td align=\"center\">0.6-0.5</td> <td align=\"center\">0.1-0.0</td> </tr> <tr> <th align=\"char\">B</th> <td align=\"center\">0.8-0.7</td> <td align=\"center\">1.0-0.9</td> <td align=\"center\">0.4-0.3</td> <td align=\"center\">0.1-0.0</td> </tr> <tr> <td align=\"center\"> <bold>C</bold> </td> <td align=\"center\">0.6-0.5</td> <td align=\"center\">0.4-0.3</td> <td align=\"center\">1.0-0.9</td> <td align=\"center\">0.1-0.0</td> </tr> <tr> <th align=\"char\">D</th> <td align=\"center\">0.1-0.0</td> <td align=\"center\">0.1-0.0</td> <td align=\"center\">0.1-0.0</td> <td align=\"center\">0.1-0.0</td> </tr> </tbody> </table> <table-wrap-foot> <fn> <p>For each subset of compounds in the model data set, intra-set (diagonal) and inter-set MACCS Tc value ranges are given.</p> </fn> </table-wrap-foot> </table-wrap>",
+            "ntype": "table-wrap",
+            "meta": {
+                "id": "T2",
+                "caption": "Similarity relationships in a model data set.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_31",
+            "content": "Figure 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "f1",
+                "caption": "Kamada-Kawai network of a model data set. Shown is the KK CSN of the model data set according to Table 2 . Data points are colored on the basis of compound subset membership: A, blue; B, red; C, green; D, gray.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/11126/f6c655d4-e95d-45a4-900e-9265662aca03_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_32",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f1\" position=\"float\"> <caption> <title>Kamada-Kawai network of a model data set.</title> <p>Shown is the KK CSN of the model data set according to <xref ref-type=\"table\" rid=\"T2\">Table 2</xref>. Data points are colored on the basis of compound subset membership: A, blue; B, red; C, green; D, gray.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/11126/f6c655d4-e95d-45a4-900e-9265662aca03_figure1.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f1",
+                "caption": "Kamada-Kawai network of a model data set. Shown is the KK CSN of the model data set according to Table 2 . Data points are colored on the basis of compound subset membership: A, blue; B, red; C, green; D, gray.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/11126/f6c655d4-e95d-45a4-900e-9265662aca03_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_33",
+            "content": "Kamada-Kawai networks for different sets of bioactive compounds",
+            "ntype": "title",
+            "meta": {
+                "section": "3.3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_34",
+            "content": "Figure 2 shows KK CSNs for inhibitors of MAP kinase ERK2 and glutamate [NMDA] receptor subunit \u03b52 (data sets 11638 and 222, respectively) ( Table 1 ). In each case, edges were selectively displayed at three different similarity threshold values, which enabled viewing edge distributions on a \u201csliding scale\u201d. The KK CSN of the MAP kinase inhibitor set 11638 revealed a clear clustering of similar compounds with comparably high or low potency, corresponding to the presence of locally continuous SARs <REF-1> . By contrast, the KK CSN of the set of ligands of glutamate [NMDA] receptor subunit \u03b52 revealed a cluster of highly similar compounds with large potency variations, corresponding to a high degree of local SAR discontinuity <REF-1> . This cluster was distant from other compounds of this set, consistent with the presence of unique structural features.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_35",
+            "content": "Because edge densities can be selectively displayed, KK CSNs generated for larger compound data sets can be readily analyzed. In addition, for SAR analysis, one may initially select a high threshold value to primarily focus on intra-cluster relationships and then gradually decrease the threshold to concentrate more on inter-cluster connections, as illustrated in Figure 2 .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_36",
+            "content": "Figure 2.",
+            "ntype": "label",
+            "meta": {
+                "id": "f2",
+                "caption": "Chemical space networks with compound distance relationships. KK CSNs are displayed for two data sets (11638 and 222 according to Table 1 ) at three similarity threshold values of 0.8, 0.7, and 0.6, respectively. Nodes are colored on the basis of potency values applying a color gradient from green (highest potency) over yellow (intermediate) to red (lowest potency).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/11126/f6c655d4-e95d-45a4-900e-9265662aca03_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_37",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f2\" position=\"float\"> <caption> <title>Chemical space networks with compound distance relationships.</title> <p>KK CSNs are displayed for two data sets (11638 and 222 according to <xref ref-type=\"table\" rid=\"T1\">Table 1</xref>) at three similarity threshold values of 0.8, 0.7, and 0.6, respectively. Nodes are colored on the basis of potency values applying a color gradient from green (highest potency) over yellow (intermediate) to red (lowest potency).</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/11126/f6c655d4-e95d-45a4-900e-9265662aca03_figure2.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f2",
+                "caption": "Chemical space networks with compound distance relationships. KK CSNs are displayed for two data sets (11638 and 222 according to Table 1 ) at three similarity threshold values of 0.8, 0.7, and 0.6, respectively. Nodes are colored on the basis of potency values applying a color gradient from green (highest potency) over yellow (intermediate) to red (lowest potency).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/11126/f6c655d4-e95d-45a4-900e-9265662aca03_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_38",
+            "content": "Comparison of Kawada-Kawai and Fruchterman-Reingold networks",
+            "ntype": "title",
+            "meta": {
+                "section": "3.4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_39",
+            "content": "Figure 3 compares the KK and FR CSNs for a set of inhibitors of the apoptosis regulator Bcl-W (data set 100476), revealing the presence of distinct layouts. In the KK CSN a larger cluster of similar \u2013and mostly weakly potent\u2013 compounds emerged that was distant from other data set compounds. The corresponding FR CSN provided a completely different view of the compound set with several clusters that were essentially evenly distributed across the layout (consistent with its threshold-dependent force-directed design). For each of these clusters, a corresponding cluster was also identified in the KK CSN. In three cases, the corresponding compounds were so similar \u2013and the resulting distances so small\u2013 that these clusters needed to be magnified for a detailed inspection, as shown in Figure 4a . Hence, the KK and FR CSNs also provided complementary network views of the data set.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_40",
+            "content": "Figure 3.",
+            "ntype": "label",
+            "meta": {
+                "id": "f3",
+                "caption": "Comparison of Kamada-Kawai and Fruchterman-Reingold layouts. For data set 100476, KK and FR CSNs are compared at a similarity threshold value of 0.8 for selective edge display (KK) and network generation (FR). Nodes are colored according to Figure 2 . At the bottom, similarity values and corresponding network distances of all compound pairs are compared in scatter plots and correlation coefficients are reported.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/11126/f6c655d4-e95d-45a4-900e-9265662aca03_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_41",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f3\" position=\"float\"> <caption> <title>Comparison of Kamada-Kawai and Fruchterman-Reingold layouts.</title> <p>For data set 100476, KK and FR CSNs are compared at a similarity threshold value of 0.8 for selective edge display (KK) and network generation (FR). Nodes are colored according to <xref ref-type=\"fig\" rid=\"f2\">Figure 2</xref>. At the bottom, similarity values and corresponding network distances of all compound pairs are compared in scatter plots and correlation coefficients are reported.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/11126/f6c655d4-e95d-45a4-900e-9265662aca03_figure3.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f3",
+                "caption": "Comparison of Kamada-Kawai and Fruchterman-Reingold layouts. For data set 100476, KK and FR CSNs are compared at a similarity threshold value of 0.8 for selective edge display (KK) and network generation (FR). Nodes are colored according to Figure 2 . At the bottom, similarity values and corresponding network distances of all compound pairs are compared in scatter plots and correlation coefficients are reported.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/11126/f6c655d4-e95d-45a4-900e-9265662aca03_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_42",
+            "content": "Figure 4.",
+            "ntype": "label",
+            "meta": {
+                "id": "f4",
+                "caption": "Comparison of compound communities. In ( a ), corresponding compound communities are highlighted in the KK and FR CSNs from Figure 3 and enlarged. Compounds in each community are numbered. In ( b ), compounds forming the top cluster in ( a ) are shown.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/11126/f6c655d4-e95d-45a4-900e-9265662aca03_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_43",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f4\" position=\"float\"> <caption> <title>Comparison of compound communities.</title> <p>In ( <bold>a</bold>), corresponding compound communities are highlighted in the KK and FR CSNs from <xref ref-type=\"fig\" rid=\"f3\">Figure 3</xref> and enlarged. Compounds in each community are numbered. In ( <bold>b</bold>), compounds forming the top cluster in ( <bold>a</bold>) are shown.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/11126/f6c655d4-e95d-45a4-900e-9265662aca03_figure4.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f4",
+                "caption": "Comparison of compound communities. In ( a ), corresponding compound communities are highlighted in the KK and FR CSNs from Figure 3 and enlarged. Compounds in each community are numbered. In ( b ), compounds forming the top cluster in ( a ) are shown.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/11126/f6c655d4-e95d-45a4-900e-9265662aca03_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_44",
+            "content": "The scatter plots in Figure 3 reveal that there was no correlation between similarity values and network distances in the FR CSN, consistent with its design principles. By contrast, with a correlation coefficient of -0.79, significant inverse correlation (i.e. large similarity values corresponding to small distances) was observed for the KK CSN, which was largely determined by compound pairs with similarity values greater than 0.5. For small similarity values, correlation was only weak. This observation was consistent with the use of the CDF in the distance function, which emphasized distance relationships between similar compounds, as discussed above. For data sets 222 and 11638 ( Figure 2 ), KK CSNs yielded correlation coefficients of -0.84 and -0.88, respectively.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_45",
+            "content": "Comparison of compound communities and series",
+            "ntype": "title",
+            "meta": {
+                "section": "3.5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_46",
+            "content": "In Figure 4a , corresponding compound communities in KK and FR CSNs are compared in detail. FR CSN clusters contain edges of comparable length and have similar topology, which is a characteristic feature of this layout. By contrast, KK CSN clusters display different topologies and contain edges of different length that further differentiate intra-cluster similarity relationships and position similar compounds closely together. For example, compounds 3, 4, and 5 from the cluster at the top in Figure 4a only differ by the (ortho, meta, or para) position of a benzene ring and are more similar to each other than to compounds 1, 2, 6, and 7 that have different substituents ( Figure 4b ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_47",
+            "content": "Figure 5 shows a KK CSN representation for three analog series (A, B, and C) that were extracted from compounds active against the serotonin 1a receptor (data set 51). Series A and B had chemically related core structures, whereas the core of series C was distinct from A and B. In the KK CSN, the three series formed communities that were separated from each other. Consistent with the structural relationship between their cores, series A and B were positioned closer to each other than to series C. A single compound from series A was found to form a bridge between the communities of A and B. This compound contained a cyclobutyl substituent at R1 and thus closely resembled the core of series B. Taken together, these observations indicated that the KK CSN captured similarity relationships between these analog series in a meaningful way.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_48",
+            "content": "Figure 5.",
+            "ntype": "label",
+            "meta": {
+                "id": "f5",
+                "caption": "Exemplary compound series. Shown are three analog series from the KK CSN of data set 51. For clarity, a similarity threshold value of 0.88 was applied for edge display. Each analog series is encircled and its common core structure is displayed. Compounds in each series were distinguished by substituents at a single site (R1).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/11126/f6c655d4-e95d-45a4-900e-9265662aca03_figure5.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_49",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f5\" position=\"float\"> <caption> <title>Exemplary compound series.</title> <p>Shown are three analog series from the KK CSN of data set 51. For clarity, a similarity threshold value of 0.88 was applied for edge display. Each analog series is encircled and its common core structure is displayed. Compounds in each series were distinguished by substituents at a single site (R1).</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/11126/f6c655d4-e95d-45a4-900e-9265662aca03_figure5.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f5",
+                "caption": "Exemplary compound series. Shown are three analog series from the KK CSN of data set 51. For clarity, a similarity threshold value of 0.88 was applied for edge display. Each analog series is encircled and its common core structure is displayed. Compounds in each series were distinguished by substituents at a single site (R1).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/11126/f6c655d4-e95d-45a4-900e-9265662aca03_figure5.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_50",
+            "content": "Conclusions",
+            "ntype": "title",
+            "meta": {
+                "section": "4",
+                "sec-type": "conclusions",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_51",
+            "content": "We have introduced an approach to incorporate compound distance relationships into CSNs that are coordinate-free representations of chemical space. For this purpose, the KK algorithm was adapted, which takes into account all inter-compound distances during network construction and does not depend on chosen similarity threshold values, in contrast to the FR algorithm. As such, KK networks also represent the first threshold-independent CSNs for numerical similarity measures, which further extends the current CSN spectrum. Initial results obtained for KK CSNs were encouraging, as demonstrated by the study of a model data set, for which subset relationships were correctly reproduced. Informative KK CSNs were also obtained for sets of bioactive compounds. Furthermore, we have shown that KK and FR CSNs may provide complementary representations that make it possible to view and compare compound communities in different ways. KK CSNs were also found to capture chemical relationships between analog series, which provided an advantage compared to FR CSNs.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_52",
+            "content": "In summary, the results of our proof-of-principle investigation suggest that KK CSNs should be of considerable interest for further exploring biologically relevant chemical space.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_53",
+            "content": "Data availability",
+            "ntype": "title",
+            "meta": {
+                "section": "5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_54",
+            "content": "The data sets used in this study are freely available in ChEMBL ( https://www.ebi.ac.uk/chembl/ ) via the identifiers reported Table 1 . The NSG (FR CSN) software is freely available as a part of the SARANEA program suite <REF-12> in an open access deposition (DOI: 10.12688/f1000research.3713.1 ) <REF-13> . The implementation can be adapted to generate KK CSNs.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_55",
+            "content": "<REF-1> Peltason L Bajorath J : Systematic computational analysis of structure-activity relationships: concepts, challenges and recent advances. Future Med Chem. 2009 ; 1 ( 3 ): 451 \u2013 466 . 21426126 10.4155/fmc.09.41",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_56",
+            "content": "<REF-2> Stumpfe D Bajorath J : Methods for SAR visualization. RSC Adv. 2012 ; 2 ( 2 ): 369 \u2013 378 . 10.1039/C1RA00924A",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_57",
+            "content": "<REF-3> Wawer M Peltason L Weskamp N : Structure-activity relationship anatomy by network-like similarity graphs and local structure-activity relationship indices. J Med Chem. 2008 ; 51 ( 19 ): 6075 \u2013 6084 . 18798611 10.1021/jm800867g",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_58",
+            "content": "<REF-4> Maggiora GM Bajorath J : Chemical space networks: a powerful new paradigm for the description of chemical space. J Comput Aided Mol Des. 2014 ; 28 ( 8 ): 795 \u2013 802 . 24925682 10.1007/s10822-014-9760-0",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_59",
+            "content": "<REF-5> Vogt M Stumpfe D,Maggiora GM : Lessons learned from the design of chemical space networks and opportunities for new applications. J Comput Aided Mol Des. 2016 ; 30 ( 3 ): 191 \u2013 208 . 26945865 10.1007/s10822-016-9906-3",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_60",
+            "content": "<REF-6> Brandes U : Drawing on physical analogies . In: Drawing graphs: methods and models. Kaufmann M, Wagner D (eds.); Springer Berlin Heidelberg. 2001 ; 71 \u2013 86 . 10.1007/3-540-44969-8_4",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_61",
+            "content": "<REF-7> Gaulton A Bellis LJ Bento AP : ChEMBL: a large-scale bioactivity database for drug discovery. Nucleic Acids Res. 2012 ; 40 ( Database issue ): D1100 \u2013 D1107 . 21948594 10.1093/nar/gkr777 3245175",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-7",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_62",
+            "content": "<REF-8> Durant JL Leland BA Henry DR : Reoptimization of MDL keys for use in drug discovery. J Chem Inf Comput Sci. 2002 ; 42 ( 6 ): 1273 \u2013 1280 . 12444722 10.1021/ci010132r",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-8",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_63",
+            "content": "<REF-9> Willet P Barnard J Downs GM : Chemical similarity searching. J Chem Inf Comp Sci. 1998 ; 38 ( 6 ): 983 \u2013 996 . 10.1021/ci9800211",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-9",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_64",
+            "content": "<REF-10> Fruchterman TM Reingold EM : Graph drawing by force-directed placement. Softw Pract Exp. 1991 ; 21 ( 11 ): 1129 \u2013 1164 . 10.1002/spe.4380211102",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-10",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_65",
+            "content": "<REF-11> Kamada T Kawai S : An algorithm for drawing general undirected graphs. Inform Process Lett. 1989 ; 31 ( 1 ): 7 \u2013 15 . 10.1016/0020-0190(89)90102-6",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-11",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_66",
+            "content": "<REF-12> Lounkine E Wawer M Wassermann AM : SARANEA: a freely available program to mine structure-activity and structure-selectivity relationship information in compound data sets. J Chem Inf Model. 2010 ; 50 ( 1 ): 68 \u2013 78 . 20053000 10.1021/ci900416a",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-12",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "5-2634_v2_67",
+            "content": "<REF-13> Hu Y Bajorath J : Follow up: Compound data sets and software tools for chemoinformatics and medicinal chemistry applications: update and data transfer [version 1; referees: 3 approved]. F1000Res. 2014 ; 3 : 69 . 25520777 10.12688/f1000research.3713.1 4264635",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-13",
+                "created_by": "F1000XMLParser"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "5-2634_v2_0@0",
+            "content": "Design of chemical space networks incorporating compound distance relationships",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_0",
+            "start": 0,
+            "end": 78,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_2@0",
+            "content": "Networks, in which nodes represent compounds and edges pairwise similarity relationships, are used as coordinate-free representations of chemical space.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_2",
+            "start": 0,
+            "end": 151,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_2@1",
+            "content": "So-called chemical space networks (CSNs) provide intuitive access to structural relationships within compound data sets and can be annotated with activity information.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_2",
+            "start": 153,
+            "end": 319,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_2@2",
+            "content": "However, in such similarity-based networks, distances between compounds are typically determined for layout purposes and clarity and have no chemical meaning.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_2",
+            "start": 321,
+            "end": 478,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_2@3",
+            "content": "By contrast, inter-compound distances as a measure of dissimilarity can be directly obtained from coordinate-based representations of chemical space.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_2",
+            "start": 480,
+            "end": 628,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_2@4",
+            "content": "Herein, we introduce a CSN variant that incorporates compound distance relationships and thus further increases the information content of compound networks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_2",
+            "start": 630,
+            "end": 786,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_2@5",
+            "content": "The design was facilitated by adapting the Kamada-Kawai algorithm.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_2",
+            "start": 788,
+            "end": 853,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_2@6",
+            "content": "Kamada-Kawai networks are the first CSNs that are based on numerical similarity measures, but do not depend on chosen similarity threshold values.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_2",
+            "start": 855,
+            "end": 1000,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_4@0",
+            "content": "In chemoinformatics, molecular network representations have thus far mostly been applied to study similarity relationships between compounds and visualize structure-activity relationships (SARs) <REF-1> \u2013 <REF-3> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_4",
+            "start": 0,
+            "end": 213,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_4@1",
+            "content": "In such networks, molecules are represented as nodes and edges indicate pairwise similarity relationships.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_4",
+            "start": 215,
+            "end": 320,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_4@2",
+            "content": "Potency information can be added, for example, through node coloring, which provides a basis for SAR visualization <REF-2> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_4",
+            "start": 322,
+            "end": 445,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_4@3",
+            "content": "A prototypic network representation specifically designed for SAR analysis was the \u2018network-like similarity graph\u2019 (NSG) <REF-3> , a precursor of more generally defined \u2018chemical space networks\u2019 (CSNs) <REF-4> , which are characterized using statistical concepts from the interdisciplinary field of network science <REF-5> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_4",
+            "start": 447,
+            "end": 770,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_4@4",
+            "content": "As SAR-oriented network representations, NSGs provide immediate visual access to local communities (subsets) of active compounds with interesting SAR characteristics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_4",
+            "start": 772,
+            "end": 937,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_5@0",
+            "content": "A major distinguishing feature of different CSNs is the way in which molecular similarity relationships are established <REF-5> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_5",
+            "start": 0,
+            "end": 128,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_5@1",
+            "content": "The use of alternative similarity measures often changes local and global network properties of CSNs <REF-5> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_5",
+            "start": 130,
+            "end": 239,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_5@2",
+            "content": "When numerical similarity measures are used, pairwise compound comparisons yield a similarity matrix that contains similarity values for all compound pairs in a data set.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_5",
+            "start": 241,
+            "end": 410,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_5@3",
+            "content": "The application of a similarity threshold value then transforms the similarity matrix into an adjacency matrix, which serves as input for layout algorithms to generate a graphical representation <REF-6> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_5",
+            "start": 412,
+            "end": 615,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_5@4",
+            "content": "In fact, network appearance is often strongly influenced by chosen layout algorithms.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_5",
+            "start": 617,
+            "end": 701,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_6@0",
+            "content": "Conventional chemical space representations used in chemoinformatics are mostly generated on the basis of vectors of numerical descriptors.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_6",
+            "start": 0,
+            "end": 138,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_6@1",
+            "content": "The resulting coordinate-based space representations are multi- or high-dimensional, with each chosen descriptor adding another dimension to the space.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_6",
+            "start": 140,
+            "end": 290,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_6@2",
+            "content": "In such coordinate-based spaces, compound positions are unambiguously defined and so are distances between compounds that are quantified as a measure of dissimilarity, i.e. the larger the distance is, the more dissimilar the compounds are.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_6",
+            "start": 292,
+            "end": 530,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_6@3",
+            "content": "By contrast, CSNs have become a paradigm of coordinate-free chemical space representations, which are entirely determined by pairwise similarity relationships <REF-4> , <REF-5> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_6",
+            "start": 532,
+            "end": 709,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_6@4",
+            "content": "If substructure-based similarity measures are employed, binary relationships are obtained (i.e. two compounds are either \u2018similar\u2019 or not); if similarity threshold values are applied to numerical measures, pairs of compounds reaching the threshold are classified as similar (and appear in the adjacency matrix).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_6",
+            "start": 711,
+            "end": 1021,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_6@5",
+            "content": "Hence, distance relationships between compounds are typically not considered in coordinate-free chemical space representations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_6",
+            "start": 1023,
+            "end": 1149,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_7@0",
+            "content": "In this work, we introduce a novel layout for CSNs that does not depend on chosen threshold values, but takes distances derived from pairwise similarity values into account.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_7",
+            "start": 0,
+            "end": 172,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_7@1",
+            "content": "Thus, in contrast to currently available CSNs, distances between compounds and communities in the resulting networks become chemically relevant (at least with respect to chosen descriptors), which further increases the information content of these representations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_7",
+            "start": 174,
+            "end": 437,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_8@0",
+            "content": "Methods",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_8",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_9@0",
+            "content": "Data sets",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_9",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_10@0",
+            "content": "For network design, one large and three small compound sets (active against human targets with defined equilibrium constants) were taken from ChEMBL (version 21) ( https://www.ebi.ac.uk/chembl/ ) <REF-7> , as reported in Table 1 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_10",
+            "start": 0,
+            "end": 229,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_10@1",
+            "content": "We note that there was no specific reason to focus on these sets; many others could have been selected instead.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_10",
+            "start": 231,
+            "end": 341,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_11@0",
+            "content": "Table 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_11",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_13@0",
+            "content": "Molecular representation and similarity metric",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_13",
+            "start": 0,
+            "end": 45,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_14@0",
+            "content": "Compounds were represented using the MACCS fingerprint <REF-8> (consisting of 166 structural keys or patterns), which were generated using an in-house Python implementation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_14",
+            "start": 0,
+            "end": 172,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_14@1",
+            "content": "Pairwise similarity values were calculated using the Tanimoto coefficient (Tc) <REF-9> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_14",
+            "start": 174,
+            "end": 261,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_14@2",
+            "content": "Fingerprint descriptors of different design might have been selected instead, but for our proof-of-principle investigation, the relatively simple MACCS fingerprint was readily sufficient.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_14",
+            "start": 263,
+            "end": 449,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_15@0",
+            "content": "Similarity vs. distance",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_15",
+            "start": 0,
+            "end": 22,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_16@0",
+            "content": "Pairwise similarity values were transformed into distances using the formula",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_16",
+            "start": 0,
+            "end": 75,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_17@0",
+            "content": "distance = 1 \u2013 CDF ( similarity )",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_17",
+            "start": 0,
+            "end": 32,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_18@0",
+            "content": "where CDF is the cumulative distribution function for an assumed normal distribution.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_18",
+            "start": 0,
+            "end": 84,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_18@1",
+            "content": "For each compound set, the mean and standard deviation were calculated from its pairwise similarity values.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_18",
+            "start": 86,
+            "end": 192,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_18@2",
+            "content": "The CDF was used to emphasize compound pairs with large Tc values and de-emphasize pairs with small values compared to a linear relationship.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_18",
+            "start": 194,
+            "end": 334,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_19@0",
+            "content": "Network layouts",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_19",
+            "start": 0,
+            "end": 14,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_20@0",
+            "content": "Alternative CSN layouts were generated with in-house Java programs based upon the JUNG library ( http://jung.sourceforge.net/doc/JUNG_journal.pdf ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_20",
+            "start": 0,
+            "end": 147,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_20@1",
+            "content": "Please also see the \u2018Data availability\u2019 section.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_20",
+            "start": 149,
+            "end": 196,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_21@0",
+            "content": "Fruchterman-Reingold.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_21",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_21@1",
+            "content": "The Fruchterman-Reingold (FR) algorithm <REF-10> has so far consistently been used for NSGs <REF-3> and CSNs <REF-5> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_21",
+            "start": 22,
+            "end": 139,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_21@2",
+            "content": "FR is a force-directed algorithm that brings together subsets of densely connected objects and separates different subsets from each other through repulsion (until equilibrium positions are obtained).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_21",
+            "start": 141,
+            "end": 340,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_21@3",
+            "content": "Only similarity values reaching a pre-defined threshold are considered in FR layout construction (all other similarity values are ignored).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_21",
+            "start": 342,
+            "end": 480,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_21@4",
+            "content": "In FR-based network views, distances between compounds have no chemical meaning.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_21",
+            "start": 482,
+            "end": 561,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_22@0",
+            "content": "Kamada-Kawai.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_22",
+            "start": 0,
+            "end": 12,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_22@1",
+            "content": "The Kamada-Kawai (KK) algorithm <REF-11> , adapted herein for CSN design, is also a force-directed layout method.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_22",
+            "start": 14,
+            "end": 126,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_22@2",
+            "content": "However, KK uses all distances derived from similarity values as input, and optimizes (threshold-independent) edge lengths with respect to inter-compound distances.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_22",
+            "start": 128,
+            "end": 291,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_22@3",
+            "content": "Thus, the KK approach incorporates distance relationships into network layouts.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_22",
+            "start": 293,
+            "end": 371,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_22@4",
+            "content": "In principle, KK-based networks are completely connected.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_22",
+            "start": 373,
+            "end": 429,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_22@5",
+            "content": "Thus, edges between distant compounds might be omitted for clarity.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_22",
+            "start": 431,
+            "end": 497,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_22@6",
+            "content": "Although all similarity values and corresponding distance relationships are considered for network construction, for selective edge display, similarity threshold values can also be applied.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_22",
+            "start": 499,
+            "end": 687,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_23@0",
+            "content": "As similarity-based compound networks, KK network representations are covered by the general definition of CSNs <REF-4> , <REF-5> and are in the following also referred to as KK CSNs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_23",
+            "start": 0,
+            "end": 182,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_24@0",
+            "content": "Results and discussion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_24",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_25@0",
+            "content": "Kamada-Kawai network design",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_25",
+            "start": 0,
+            "end": 26,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_26@0",
+            "content": "The characteristic feature of the KK approach is that it takes distances derived from all pairwise similarity values quantitatively into account during network construction.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_26",
+            "start": 0,
+            "end": 172,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_26@1",
+            "content": "The resulting layout reflects relative compound distances, which principally increases the chemical information contained in KK CSNs compared to threshold-dependent FR CSNs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_26",
+            "start": 174,
+            "end": 346,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_26@2",
+            "content": "Independent of the KK network structure, which remains constant, edges in KK CSNs can be selectively displayed at varying similarity threshold values to optimize the clarity of the presentation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_26",
+            "start": 348,
+            "end": 541,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_27@0",
+            "content": "Kamada-Kawai network of a model data set",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_27",
+            "start": 0,
+            "end": 39,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_28@0",
+            "content": "For an initial proof-of-principle assessment, a model data set was generated by combining four subsets (A\u2013D) of five hypothetical data points, each with well-defined intra-set similarity value ranges, as reported in Table 2 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_28",
+            "start": 0,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_28@1",
+            "content": "Subsets A\u2013C contained highly similar data points with varying inter-subset similarity values ( Table 2 ), whereas subset D consisted of dissimilar data points (singletons).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_28",
+            "start": 226,
+            "end": 397,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_28@2",
+            "content": "The KK CSN of this model data set is shown in Figure 1 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_28",
+            "start": 399,
+            "end": 454,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_28@3",
+            "content": "All three subsets of similar data points formed separate clusters in the network, whereas data points from subset D were widely distributed.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_28",
+            "start": 456,
+            "end": 595,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_28@4",
+            "content": "Furthermore, clusters of subsets A and B, which displayed largest inter-subset similarity values ( Table 2 ), were located close to each other and removed from the less similar subset C. Moreover, the KK CSN also correctly accounted for the smaller distance between A and C compared to B and C. Thus, the KK CSN incorporated for various distance relationships present in the model set; an encouraging finding.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_28",
+            "start": 597,
+            "end": 1005,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_29@0",
+            "content": "Table 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_29",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_31@0",
+            "content": "Figure 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_31",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_33@0",
+            "content": "Kamada-Kawai networks for different sets of bioactive compounds",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_33",
+            "start": 0,
+            "end": 62,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_34@0",
+            "content": "Figure 2 shows KK CSNs for inhibitors of MAP kinase ERK2 and glutamate [NMDA] receptor subunit \u03b52 (data sets 11638 and 222, respectively) ( Table 1 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_34",
+            "start": 0,
+            "end": 149,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_34@1",
+            "content": "In each case, edges were selectively displayed at three different similarity threshold values, which enabled viewing edge distributions on a \u201csliding scale\u201d.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_34",
+            "start": 151,
+            "end": 307,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_34@2",
+            "content": "The KK CSN of the MAP kinase inhibitor set 11638 revealed a clear clustering of similar compounds with comparably high or low potency, corresponding to the presence of locally continuous SARs <REF-1> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_34",
+            "start": 309,
+            "end": 509,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_34@3",
+            "content": "By contrast, the KK CSN of the set of ligands of glutamate [NMDA] receptor subunit \u03b52 revealed a cluster of highly similar compounds with large potency variations, corresponding to a high degree of local SAR discontinuity <REF-1> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_34",
+            "start": 511,
+            "end": 741,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_34@4",
+            "content": "This cluster was distant from other compounds of this set, consistent with the presence of unique structural features.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_34",
+            "start": 743,
+            "end": 860,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_35@0",
+            "content": "Because edge densities can be selectively displayed, KK CSNs generated for larger compound data sets can be readily analyzed.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_35",
+            "start": 0,
+            "end": 124,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_35@1",
+            "content": "In addition, for SAR analysis, one may initially select a high threshold value to primarily focus on intra-cluster relationships and then gradually decrease the threshold to concentrate more on inter-cluster connections, as illustrated in Figure 2 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_35",
+            "start": 126,
+            "end": 374,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_36@0",
+            "content": "Figure 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_36",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_38@0",
+            "content": "Comparison of Kawada-Kawai and Fruchterman-Reingold networks",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_38",
+            "start": 0,
+            "end": 59,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_39@0",
+            "content": "Figure 3 compares the KK and FR CSNs for a set of inhibitors of the apoptosis regulator Bcl-W (data set 100476), revealing the presence of distinct layouts.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_39",
+            "start": 0,
+            "end": 155,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_39@1",
+            "content": "In the KK CSN a larger cluster of similar \u2013and mostly weakly potent\u2013 compounds emerged that was distant from other data set compounds.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_39",
+            "start": 157,
+            "end": 290,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_39@2",
+            "content": "The corresponding FR CSN provided a completely different view of the compound set with several clusters that were essentially evenly distributed across the layout (consistent with its threshold-dependent force-directed design).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_39",
+            "start": 292,
+            "end": 518,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_39@3",
+            "content": "For each of these clusters, a corresponding cluster was also identified in the KK CSN.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_39",
+            "start": 520,
+            "end": 605,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_39@4",
+            "content": "In three cases, the corresponding compounds were so similar \u2013and the resulting distances so small\u2013 that these clusters needed to be magnified for a detailed inspection, as shown in Figure 4a .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_39",
+            "start": 607,
+            "end": 798,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_39@5",
+            "content": "Hence, the KK and FR CSNs also provided complementary network views of the data set.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_39",
+            "start": 800,
+            "end": 883,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_40@0",
+            "content": "Figure 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_40",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_42@0",
+            "content": "Figure 4.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_42",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_44@0",
+            "content": "The scatter plots in Figure 3 reveal that there was no correlation between similarity values and network distances in the FR CSN, consistent with its design principles.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_44",
+            "start": 0,
+            "end": 167,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_44@1",
+            "content": "By contrast, with a correlation coefficient of -0.79, significant inverse correlation (i.e. large similarity values corresponding to small distances) was observed for the KK CSN, which was largely determined by compound pairs with similarity values greater than 0.5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_44",
+            "start": 169,
+            "end": 434,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_44@2",
+            "content": "For small similarity values, correlation was only weak.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_44",
+            "start": 436,
+            "end": 490,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_44@3",
+            "content": "This observation was consistent with the use of the CDF in the distance function, which emphasized distance relationships between similar compounds, as discussed above.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_44",
+            "start": 492,
+            "end": 659,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_44@4",
+            "content": "For data sets 222 and 11638 ( Figure 2 ), KK CSNs yielded correlation coefficients of -0.84 and -0.88, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_44",
+            "start": 661,
+            "end": 776,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_45@0",
+            "content": "Comparison of compound communities and series",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_45",
+            "start": 0,
+            "end": 44,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_46@0",
+            "content": "In Figure 4a , corresponding compound communities in KK and FR CSNs are compared in detail.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_46",
+            "start": 0,
+            "end": 90,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_46@1",
+            "content": "FR CSN clusters contain edges of comparable length and have similar topology, which is a characteristic feature of this layout.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_46",
+            "start": 92,
+            "end": 218,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_46@2",
+            "content": "By contrast, KK CSN clusters display different topologies and contain edges of different length that further differentiate intra-cluster similarity relationships and position similar compounds closely together.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_46",
+            "start": 220,
+            "end": 429,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_46@3",
+            "content": "For example, compounds 3, 4, and 5 from the cluster at the top in Figure 4a only differ by the (ortho, meta, or para) position of a benzene ring and are more similar to each other than to compounds 1, 2, 6, and 7 that have different substituents ( Figure 4b ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_46",
+            "start": 431,
+            "end": 690,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_47@0",
+            "content": "Figure 5 shows a KK CSN representation for three analog series (A, B, and C) that were extracted from compounds active against the serotonin 1a receptor (data set 51).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_47",
+            "start": 0,
+            "end": 166,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_47@1",
+            "content": "Series A and B had chemically related core structures, whereas the core of series C was distinct from A and B. In the KK CSN, the three series formed communities that were separated from each other.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_47",
+            "start": 168,
+            "end": 365,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_47@2",
+            "content": "Consistent with the structural relationship between their cores, series A and B were positioned closer to each other than to series C. A single compound from series A was found to form a bridge between the communities of A and B. This compound contained a cyclobutyl substituent at R1 and thus closely resembled the core of series B. Taken together, these observations indicated that the KK CSN captured similarity relationships between these analog series in a meaningful way.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_47",
+            "start": 367,
+            "end": 843,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_48@0",
+            "content": "Figure 5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_48",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_50@0",
+            "content": "Conclusions",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_50",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_51@0",
+            "content": "We have introduced an approach to incorporate compound distance relationships into CSNs that are coordinate-free representations of chemical space.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_51",
+            "start": 0,
+            "end": 146,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_51@1",
+            "content": "For this purpose, the KK algorithm was adapted, which takes into account all inter-compound distances during network construction and does not depend on chosen similarity threshold values, in contrast to the FR algorithm.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_51",
+            "start": 148,
+            "end": 368,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_51@2",
+            "content": "As such, KK networks also represent the first threshold-independent CSNs for numerical similarity measures, which further extends the current CSN spectrum.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_51",
+            "start": 370,
+            "end": 524,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_51@3",
+            "content": "Initial results obtained for KK CSNs were encouraging, as demonstrated by the study of a model data set, for which subset relationships were correctly reproduced.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_51",
+            "start": 526,
+            "end": 687,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_51@4",
+            "content": "Informative KK CSNs were also obtained for sets of bioactive compounds.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_51",
+            "start": 689,
+            "end": 759,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_51@5",
+            "content": "Furthermore, we have shown that KK and FR CSNs may provide complementary representations that make it possible to view and compare compound communities in different ways.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_51",
+            "start": 761,
+            "end": 930,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_51@6",
+            "content": "KK CSNs were also found to capture chemical relationships between analog series, which provided an advantage compared to FR CSNs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_51",
+            "start": 932,
+            "end": 1060,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_52@0",
+            "content": "In summary, the results of our proof-of-principle investigation suggest that KK CSNs should be of considerable interest for further exploring biologically relevant chemical space.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_52",
+            "start": 0,
+            "end": 178,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_53@0",
+            "content": "Data availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_53",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_54@0",
+            "content": "The data sets used in this study are freely available in ChEMBL ( https://www.ebi.ac.uk/chembl/ ) via the identifiers reported Table 1 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_54",
+            "start": 0,
+            "end": 135,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_54@1",
+            "content": "The NSG (FR CSN) software is freely available as a part of the SARANEA program suite <REF-12> in an open access deposition (DOI: 10.12688/f1000research.3713.1 ) <REF-13> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_54",
+            "start": 137,
+            "end": 307,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_54@2",
+            "content": "The implementation can be adapted to generate KK CSNs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_54",
+            "start": 309,
+            "end": 362,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_55@0",
+            "content": "<REF-1> Peltason L Bajorath J : Systematic computational analysis of structure-activity relationships: concepts, challenges and recent advances. Future Med Chem. 2009 ; 1 ( 3 ): 451 \u2013 466 . 21426126 10.4155/fmc.09.41",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_55",
+            "start": 0,
+            "end": 215,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_56@0",
+            "content": "<REF-2> Stumpfe D Bajorath J : Methods for SAR visualization. RSC Adv. 2012 ; 2 ( 2 ): 369 \u2013 378 . 10.1039/C1RA00924A",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_56",
+            "start": 0,
+            "end": 116,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_57@0",
+            "content": "<REF-3> Wawer M Peltason L Weskamp N : Structure-activity relationship anatomy by network-like similarity graphs and local structure-activity relationship indices. J Med Chem. 2008 ; 51 ( 19 ): 6075 \u2013 6084 . 18798611 10.1021/jm800867g",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_57",
+            "start": 0,
+            "end": 233,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_58@0",
+            "content": "<REF-4> Maggiora GM Bajorath J : Chemical space networks: a powerful new paradigm for the description of chemical space. J Comput Aided Mol Des. 2014 ; 28 ( 8 ): 795 \u2013 802 . 24925682 10.1007/s10822-014-9760-0",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_58",
+            "start": 0,
+            "end": 207,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_59@0",
+            "content": "<REF-5> Vogt M Stumpfe D,Maggiora GM : Lessons learned from the design of chemical space networks and opportunities for new applications. J Comput Aided Mol Des. 2016 ; 30 ( 3 ): 191 \u2013 208 . 26945865 10.1007/s10822-016-9906-3",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_59",
+            "start": 0,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_60@0",
+            "content": "<REF-6> Brandes U : Drawing on physical analogies . In: Drawing graphs: methods and models. Kaufmann M, Wagner D (eds.); Springer Berlin Heidelberg. 2001 ; 71 \u2013 86 . 10.1007/3-540-44969-8_4",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_60",
+            "start": 0,
+            "end": 188,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_61@0",
+            "content": "<REF-7> Gaulton A Bellis LJ Bento AP : ChEMBL: a large-scale bioactivity database for drug discovery. Nucleic Acids Res. 2012 ; 40 ( Database issue ): D1100 \u2013 D1107 . 21948594 10.1093/nar/gkr777 3245175",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_61",
+            "start": 0,
+            "end": 201,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_62@0",
+            "content": "<REF-8> Durant JL Leland BA Henry DR : Reoptimization of MDL keys for use in drug discovery. J Chem Inf Comput Sci. 2002 ; 42 ( 6 ): 1273 \u2013 1280 . 12444722 10.1021/ci010132r",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_62",
+            "start": 0,
+            "end": 172,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_63@0",
+            "content": "<REF-9> Willet P Barnard J Downs GM : Chemical similarity searching. J Chem Inf Comp Sci. 1998 ; 38 ( 6 ): 983 \u2013 996 . 10.1021/ci9800211",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_63",
+            "start": 0,
+            "end": 135,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_64@0",
+            "content": "<REF-10> Fruchterman TM Reingold EM : Graph drawing by force-directed placement. Softw Pract Exp. 1991 ; 21 ( 11 ): 1129 \u2013 1164 . 10.1002/spe.4380211102",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_64",
+            "start": 0,
+            "end": 151,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_65@0",
+            "content": "<REF-11> Kamada T Kawai S : An algorithm for drawing general undirected graphs. Inform Process Lett. 1989 ; 31 ( 1 ): 7 \u2013 15 . 10.1016/0020-0190(89)90102-6",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_65",
+            "start": 0,
+            "end": 154,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_66@0",
+            "content": "<REF-12> Lounkine E Wawer M Wassermann AM : SARANEA: a freely available program to mine structure-activity and structure-selectivity relationship information in compound data sets. J Chem Inf Model. 2010 ; 50 ( 1 ): 68 \u2013 78 . 20053000 10.1021/ci900416a",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_66",
+            "start": 0,
+            "end": 251,
+            "label": {}
+        },
+        {
+            "ix": "5-2634_v2_67@0",
+            "content": "<REF-13> Hu Y Bajorath J : Follow up: Compound data sets and software tools for chemoinformatics and medicinal chemistry applications: update and data transfer [version 1; referees: 3 approved]. F1000Res. 2014 ; 3 : 69 . 25520777 10.12688/f1000research.3713.1 4264635",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "5-2634_v2_67",
+            "start": 0,
+            "end": 266,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "5-2634_v2_0",
+            "tgt_ix": "5-2634_v2_1",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_1",
+            "tgt_ix": "5-2634_v2_2",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_0",
+            "tgt_ix": "5-2634_v2_3",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_3",
+            "tgt_ix": "5-2634_v2_4",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_3",
+            "tgt_ix": "5-2634_v2_5",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_3",
+            "tgt_ix": "5-2634_v2_6",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_3",
+            "tgt_ix": "5-2634_v2_7",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_0",
+            "tgt_ix": "5-2634_v2_8",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_8",
+            "tgt_ix": "5-2634_v2_9",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_9",
+            "tgt_ix": "5-2634_v2_10",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_9",
+            "tgt_ix": "5-2634_v2_11",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_11",
+            "tgt_ix": "5-2634_v2_12",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_8",
+            "tgt_ix": "5-2634_v2_13",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_13",
+            "tgt_ix": "5-2634_v2_14",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_8",
+            "tgt_ix": "5-2634_v2_15",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_15",
+            "tgt_ix": "5-2634_v2_16",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_15",
+            "tgt_ix": "5-2634_v2_17",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_15",
+            "tgt_ix": "5-2634_v2_18",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_8",
+            "tgt_ix": "5-2634_v2_19",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_19",
+            "tgt_ix": "5-2634_v2_20",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_19",
+            "tgt_ix": "5-2634_v2_21",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_19",
+            "tgt_ix": "5-2634_v2_22",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_19",
+            "tgt_ix": "5-2634_v2_23",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_0",
+            "tgt_ix": "5-2634_v2_24",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_24",
+            "tgt_ix": "5-2634_v2_25",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_25",
+            "tgt_ix": "5-2634_v2_26",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_24",
+            "tgt_ix": "5-2634_v2_27",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_27",
+            "tgt_ix": "5-2634_v2_28",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_27",
+            "tgt_ix": "5-2634_v2_29",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_29",
+            "tgt_ix": "5-2634_v2_30",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_27",
+            "tgt_ix": "5-2634_v2_31",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_31",
+            "tgt_ix": "5-2634_v2_32",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_24",
+            "tgt_ix": "5-2634_v2_33",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_33",
+            "tgt_ix": "5-2634_v2_34",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_33",
+            "tgt_ix": "5-2634_v2_35",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_33",
+            "tgt_ix": "5-2634_v2_36",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_36",
+            "tgt_ix": "5-2634_v2_37",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_24",
+            "tgt_ix": "5-2634_v2_38",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_38",
+            "tgt_ix": "5-2634_v2_39",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_38",
+            "tgt_ix": "5-2634_v2_40",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_40",
+            "tgt_ix": "5-2634_v2_41",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_38",
+            "tgt_ix": "5-2634_v2_42",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_42",
+            "tgt_ix": "5-2634_v2_43",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_38",
+            "tgt_ix": "5-2634_v2_44",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_24",
+            "tgt_ix": "5-2634_v2_45",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_45",
+            "tgt_ix": "5-2634_v2_46",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_45",
+            "tgt_ix": "5-2634_v2_47",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_45",
+            "tgt_ix": "5-2634_v2_48",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_48",
+            "tgt_ix": "5-2634_v2_49",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_0",
+            "tgt_ix": "5-2634_v2_50",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_50",
+            "tgt_ix": "5-2634_v2_51",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_50",
+            "tgt_ix": "5-2634_v2_52",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_0",
+            "tgt_ix": "5-2634_v2_53",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_53",
+            "tgt_ix": "5-2634_v2_54",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_0",
+            "tgt_ix": "5-2634_v2_1",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_1",
+            "tgt_ix": "5-2634_v2_2",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_2",
+            "tgt_ix": "5-2634_v2_3",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_3",
+            "tgt_ix": "5-2634_v2_4",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_4",
+            "tgt_ix": "5-2634_v2_5",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_5",
+            "tgt_ix": "5-2634_v2_6",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_6",
+            "tgt_ix": "5-2634_v2_7",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_7",
+            "tgt_ix": "5-2634_v2_8",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_8",
+            "tgt_ix": "5-2634_v2_9",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_9",
+            "tgt_ix": "5-2634_v2_10",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_10",
+            "tgt_ix": "5-2634_v2_11",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_11",
+            "tgt_ix": "5-2634_v2_12",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_12",
+            "tgt_ix": "5-2634_v2_13",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_13",
+            "tgt_ix": "5-2634_v2_14",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_14",
+            "tgt_ix": "5-2634_v2_15",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_15",
+            "tgt_ix": "5-2634_v2_16",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_16",
+            "tgt_ix": "5-2634_v2_17",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_17",
+            "tgt_ix": "5-2634_v2_18",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_18",
+            "tgt_ix": "5-2634_v2_19",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_19",
+            "tgt_ix": "5-2634_v2_20",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_20",
+            "tgt_ix": "5-2634_v2_21",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_21",
+            "tgt_ix": "5-2634_v2_22",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_22",
+            "tgt_ix": "5-2634_v2_23",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_23",
+            "tgt_ix": "5-2634_v2_24",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_24",
+            "tgt_ix": "5-2634_v2_25",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_25",
+            "tgt_ix": "5-2634_v2_26",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_26",
+            "tgt_ix": "5-2634_v2_27",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_27",
+            "tgt_ix": "5-2634_v2_28",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_28",
+            "tgt_ix": "5-2634_v2_29",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_29",
+            "tgt_ix": "5-2634_v2_30",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_30",
+            "tgt_ix": "5-2634_v2_31",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_31",
+            "tgt_ix": "5-2634_v2_32",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_32",
+            "tgt_ix": "5-2634_v2_33",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_33",
+            "tgt_ix": "5-2634_v2_34",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_34",
+            "tgt_ix": "5-2634_v2_35",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_35",
+            "tgt_ix": "5-2634_v2_36",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_36",
+            "tgt_ix": "5-2634_v2_37",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_37",
+            "tgt_ix": "5-2634_v2_38",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_38",
+            "tgt_ix": "5-2634_v2_39",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_39",
+            "tgt_ix": "5-2634_v2_40",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_40",
+            "tgt_ix": "5-2634_v2_41",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_41",
+            "tgt_ix": "5-2634_v2_42",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_42",
+            "tgt_ix": "5-2634_v2_43",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_43",
+            "tgt_ix": "5-2634_v2_44",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_44",
+            "tgt_ix": "5-2634_v2_45",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_45",
+            "tgt_ix": "5-2634_v2_46",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_46",
+            "tgt_ix": "5-2634_v2_47",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_47",
+            "tgt_ix": "5-2634_v2_48",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_48",
+            "tgt_ix": "5-2634_v2_49",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_49",
+            "tgt_ix": "5-2634_v2_50",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_50",
+            "tgt_ix": "5-2634_v2_51",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_51",
+            "tgt_ix": "5-2634_v2_52",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_52",
+            "tgt_ix": "5-2634_v2_53",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_53",
+            "tgt_ix": "5-2634_v2_54",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_4",
+            "tgt_ix": "5-2634_v2_55",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_4",
+            "tgt_ix": "5-2634_v2_56",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_4",
+            "tgt_ix": "5-2634_v2_57",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_4",
+            "tgt_ix": "5-2634_v2_58",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_4",
+            "tgt_ix": "5-2634_v2_59",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_5",
+            "tgt_ix": "5-2634_v2_60",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_10",
+            "tgt_ix": "5-2634_v2_61",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_14",
+            "tgt_ix": "5-2634_v2_62",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_14",
+            "tgt_ix": "5-2634_v2_63",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_21",
+            "tgt_ix": "5-2634_v2_64",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_22",
+            "tgt_ix": "5-2634_v2_65",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_54",
+            "tgt_ix": "5-2634_v2_66",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_54",
+            "tgt_ix": "5-2634_v2_67",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_10",
+            "tgt_ix": "5-2634_v2_12",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_28",
+            "tgt_ix": "5-2634_v2_30",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_28",
+            "tgt_ix": "5-2634_v2_32",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_34",
+            "tgt_ix": "5-2634_v2_37",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_39",
+            "tgt_ix": "5-2634_v2_41",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_39",
+            "tgt_ix": "5-2634_v2_43",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_47",
+            "tgt_ix": "5-2634_v2_49",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_0",
+            "tgt_ix": "5-2634_v2_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_1",
+            "tgt_ix": "5-2634_v2_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_2",
+            "tgt_ix": "5-2634_v2_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_2",
+            "tgt_ix": "5-2634_v2_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_2",
+            "tgt_ix": "5-2634_v2_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_2",
+            "tgt_ix": "5-2634_v2_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_2",
+            "tgt_ix": "5-2634_v2_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_2",
+            "tgt_ix": "5-2634_v2_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_2",
+            "tgt_ix": "5-2634_v2_2@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_3",
+            "tgt_ix": "5-2634_v2_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_4",
+            "tgt_ix": "5-2634_v2_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_4",
+            "tgt_ix": "5-2634_v2_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_4",
+            "tgt_ix": "5-2634_v2_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_4",
+            "tgt_ix": "5-2634_v2_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_4",
+            "tgt_ix": "5-2634_v2_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_5",
+            "tgt_ix": "5-2634_v2_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_5",
+            "tgt_ix": "5-2634_v2_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_5",
+            "tgt_ix": "5-2634_v2_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_5",
+            "tgt_ix": "5-2634_v2_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_5",
+            "tgt_ix": "5-2634_v2_5@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_6",
+            "tgt_ix": "5-2634_v2_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_6",
+            "tgt_ix": "5-2634_v2_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_6",
+            "tgt_ix": "5-2634_v2_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_6",
+            "tgt_ix": "5-2634_v2_6@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_6",
+            "tgt_ix": "5-2634_v2_6@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_6",
+            "tgt_ix": "5-2634_v2_6@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_7",
+            "tgt_ix": "5-2634_v2_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_7",
+            "tgt_ix": "5-2634_v2_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_8",
+            "tgt_ix": "5-2634_v2_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_9",
+            "tgt_ix": "5-2634_v2_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_10",
+            "tgt_ix": "5-2634_v2_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_10",
+            "tgt_ix": "5-2634_v2_10@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_11",
+            "tgt_ix": "5-2634_v2_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_13",
+            "tgt_ix": "5-2634_v2_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_14",
+            "tgt_ix": "5-2634_v2_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_14",
+            "tgt_ix": "5-2634_v2_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_14",
+            "tgt_ix": "5-2634_v2_14@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_15",
+            "tgt_ix": "5-2634_v2_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_16",
+            "tgt_ix": "5-2634_v2_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_17",
+            "tgt_ix": "5-2634_v2_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_18",
+            "tgt_ix": "5-2634_v2_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_18",
+            "tgt_ix": "5-2634_v2_18@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_18",
+            "tgt_ix": "5-2634_v2_18@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_19",
+            "tgt_ix": "5-2634_v2_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_20",
+            "tgt_ix": "5-2634_v2_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_20",
+            "tgt_ix": "5-2634_v2_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_21",
+            "tgt_ix": "5-2634_v2_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_21",
+            "tgt_ix": "5-2634_v2_21@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_21",
+            "tgt_ix": "5-2634_v2_21@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_21",
+            "tgt_ix": "5-2634_v2_21@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_21",
+            "tgt_ix": "5-2634_v2_21@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_22",
+            "tgt_ix": "5-2634_v2_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_22",
+            "tgt_ix": "5-2634_v2_22@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_22",
+            "tgt_ix": "5-2634_v2_22@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_22",
+            "tgt_ix": "5-2634_v2_22@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_22",
+            "tgt_ix": "5-2634_v2_22@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_22",
+            "tgt_ix": "5-2634_v2_22@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_22",
+            "tgt_ix": "5-2634_v2_22@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_23",
+            "tgt_ix": "5-2634_v2_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_24",
+            "tgt_ix": "5-2634_v2_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_25",
+            "tgt_ix": "5-2634_v2_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_26",
+            "tgt_ix": "5-2634_v2_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_26",
+            "tgt_ix": "5-2634_v2_26@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_26",
+            "tgt_ix": "5-2634_v2_26@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_27",
+            "tgt_ix": "5-2634_v2_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_28",
+            "tgt_ix": "5-2634_v2_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_28",
+            "tgt_ix": "5-2634_v2_28@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_28",
+            "tgt_ix": "5-2634_v2_28@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_28",
+            "tgt_ix": "5-2634_v2_28@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_28",
+            "tgt_ix": "5-2634_v2_28@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_29",
+            "tgt_ix": "5-2634_v2_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_31",
+            "tgt_ix": "5-2634_v2_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_33",
+            "tgt_ix": "5-2634_v2_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_34",
+            "tgt_ix": "5-2634_v2_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_34",
+            "tgt_ix": "5-2634_v2_34@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_34",
+            "tgt_ix": "5-2634_v2_34@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_34",
+            "tgt_ix": "5-2634_v2_34@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_34",
+            "tgt_ix": "5-2634_v2_34@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_35",
+            "tgt_ix": "5-2634_v2_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_35",
+            "tgt_ix": "5-2634_v2_35@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_36",
+            "tgt_ix": "5-2634_v2_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_38",
+            "tgt_ix": "5-2634_v2_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_39",
+            "tgt_ix": "5-2634_v2_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_39",
+            "tgt_ix": "5-2634_v2_39@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_39",
+            "tgt_ix": "5-2634_v2_39@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_39",
+            "tgt_ix": "5-2634_v2_39@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_39",
+            "tgt_ix": "5-2634_v2_39@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_39",
+            "tgt_ix": "5-2634_v2_39@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_40",
+            "tgt_ix": "5-2634_v2_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_42",
+            "tgt_ix": "5-2634_v2_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_44",
+            "tgt_ix": "5-2634_v2_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_44",
+            "tgt_ix": "5-2634_v2_44@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_44",
+            "tgt_ix": "5-2634_v2_44@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_44",
+            "tgt_ix": "5-2634_v2_44@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_44",
+            "tgt_ix": "5-2634_v2_44@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_45",
+            "tgt_ix": "5-2634_v2_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_46",
+            "tgt_ix": "5-2634_v2_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_46",
+            "tgt_ix": "5-2634_v2_46@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_46",
+            "tgt_ix": "5-2634_v2_46@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_46",
+            "tgt_ix": "5-2634_v2_46@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_47",
+            "tgt_ix": "5-2634_v2_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_47",
+            "tgt_ix": "5-2634_v2_47@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_47",
+            "tgt_ix": "5-2634_v2_47@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_48",
+            "tgt_ix": "5-2634_v2_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_50",
+            "tgt_ix": "5-2634_v2_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_51",
+            "tgt_ix": "5-2634_v2_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_51",
+            "tgt_ix": "5-2634_v2_51@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_51",
+            "tgt_ix": "5-2634_v2_51@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_51",
+            "tgt_ix": "5-2634_v2_51@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_51",
+            "tgt_ix": "5-2634_v2_51@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_51",
+            "tgt_ix": "5-2634_v2_51@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_51",
+            "tgt_ix": "5-2634_v2_51@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_52",
+            "tgt_ix": "5-2634_v2_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_53",
+            "tgt_ix": "5-2634_v2_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_54",
+            "tgt_ix": "5-2634_v2_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_54",
+            "tgt_ix": "5-2634_v2_54@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_54",
+            "tgt_ix": "5-2634_v2_54@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_55",
+            "tgt_ix": "5-2634_v2_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_56",
+            "tgt_ix": "5-2634_v2_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_57",
+            "tgt_ix": "5-2634_v2_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_58",
+            "tgt_ix": "5-2634_v2_58@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_59",
+            "tgt_ix": "5-2634_v2_59@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_60",
+            "tgt_ix": "5-2634_v2_60@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_61",
+            "tgt_ix": "5-2634_v2_61@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_62",
+            "tgt_ix": "5-2634_v2_62@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_63",
+            "tgt_ix": "5-2634_v2_63@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_64",
+            "tgt_ix": "5-2634_v2_64@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_65",
+            "tgt_ix": "5-2634_v2_65@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_66",
+            "tgt_ix": "5-2634_v2_66@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "5-2634_v2_67",
+            "tgt_ix": "5-2634_v2_67@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "5-2634_v2",
+    "meta": {
+        "parser": "F1000XMLParser",
+        "intertext-graph": "N/A",
+        "doi": "10.12688/f1000research.10021.2",
+        "atype": "method-article",
+        "license": "http://creativecommons.org/licenses/by/4.0/",
+        "title": "Design of chemical space networks incorporating compound distance relationships",
+        "abstract": "Networks, in which nodes represent compounds and edges pairwise similarity relationships, are used as coordinate-free representations of chemical space. So-called chemical space networks (CSNs) provide intuitive access to structural relationships within compound data sets and can be annotated with activity information. However, in such similarity-based networks, distances between compounds are typically determined for layout purposes and clarity and have no chemical meaning. By contrast, inter-compound distances as a measure of dissimilarity can be directly obtained from coordinate-based representations of chemical space. Herein, we introduce a CSN variant that incorporates compound distance relationships and thus further increases the information content of compound networks. The design was facilitated by adapting the Kamada-Kawai algorithm. Kamada-Kawai networks are the first CSNs that are based on numerical similarity measures, but do not depend on chosen similarity threshold values.",
+        "contributors": [
+            {
+                "surname": "de la Vega de Le\u00f3n",
+                "given-names": "Antonio"
+            },
+            {
+                "surname": "Bajorath",
+                "given-names": "J\u00fcrgen"
+            }
+        ],
+        "url": "https://f1000research.com/articles/5-2634/v2/",
+        "doc_id": "5-2634",
+        "version": 2,
+        "ix_counter": 265,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy"
+    }
+}

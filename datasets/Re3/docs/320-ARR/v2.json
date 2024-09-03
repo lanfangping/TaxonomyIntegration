@@ -1,0 +1,3593 @@
+{
+    "nodes": [
+        {
+            "ix": "320-ARR_v2_0",
+            "content": "Learning Discriminative Representations for Open Relation Extraction with Instance Ranking and Label Calibration",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_2",
+            "content": "Open relation extraction is the task to extract relational facts without pre-defined relation types from open-domain corpora. However, since there are some hard or semi-hard instances sharing similar context and entity information but belonging to different underlying relation, current OpenRE methods always cluster them into the same relation type. In this paper, we propose a novel method based on Instance Ranking and Label Calibration strategies (IRLC) to learn discriminative representations for open relation extraction. Due to lacking the original instance label, we provide three surrogate strategies to generate the positive, hard negative, and semi-hard negative instances for the original instance. Instance ranking aims to refine the relational feature space by pushing the hard and semi-hard negative instances apart from the original instance with different margins and pulling the original instance and its positive instance together. To refine the cluster probability distributions of these instances, we introduce a label calibration strategy to model the constraint relationship between instances. Experimental results on two public datasets demonstrate that our proposed method can significantly outperform the previous state-of-the-art methods 1",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_4",
+            "content": "Open relation extraction (OpenRE) has been proposed to extract new relational facts where the types of target relations are not pre-defined. Previous methods can be classified into two types: open information extraction (OpenIE) and unsupervised relation discovery. For OpenIE (Yates et al., 2007;Etzioni et al., 2008;Fader et al., 2011), the relations are directly represented by relation phrases * The first three authors contribute equally. Yajing Xu is the corresponding author.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_5",
+            "content": "1 Our code and implementation details are publicly available at https://github.com/ShusenWang/NAACL2022-IRLC The distribution refined by our method, where these negative instances are separated from the original instance and correctly predicted.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_6",
+            "content": "extracted in the sentence. However, the generalization capabilities of these methods are limited since they severely rely on surface-form relations and a relation can be expressed by many surface forms. Recently, much attention has been focused on unsupervised relation discovery, which is commonly formulated as a clustering task to learn effective relation representations and cluster them (Yao et al., 2011;Marcheggiani and Titov, 2016;Simon et al., 2019). Hu et al. (2020) leverage BERT to extract relational feature and propose a self-supervised framework to learn relation representations from pseudo labels. Because current methods are unstable and easily collapsed (Simon et al., 2019), Liu et al. (2021) solve above-mentioned problems from a causal view and propose element intervention to alleviate the spurious correlations in OpenRE models. However, there are still some hard or semi-hard samples wrongly predicted in the representation space due to the spurious correlations from entities and context to the relation type.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_7",
+            "content": "As shown in Figure 1(a), there are two types of negative instances for the relation type BORN_IN_PLACE: Hard negative and Semihard negative. For Semi-hard negative instances like S 4 , OpenRE models will assign S 1 and S 4 into the same relation type BORN_IN_PLACE since S 1 and S 4 share similar context information. This problem can be even more severe if the representation space exists some hard negative instances like S 3 , because S 3 possesses a similar context \"was born in \"and similar entity \"Jon\" to S 1 . An intuitive way to solve this problem is to refine the relational feature space, as shown in Figure 1 (b). Besides, all instances should follow the same relative relationship in the label semantic space which means the original and positive instances have a more similar cluster probability distribution than the hard and semi-hard negative instances. Therefore, it is important to model the constraint relationship between these instances in the label semantic space.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_8",
+            "content": "In this paper, we propose a novel method based on Instance Ranking and Label Calibration strategies (IRLC) to better identify the hard and semihard negative instances by learning discriminative representations in relational feature and label semantic space simultaneously. However, due to lacking of the instance label, we cannot directly obtain the positive, hard negative and semi-hard negative instances of the original instance. To solve this, we use three data augmentation strategies to generate the positive, hard negative and semi-hard negative instances for the original instance. To refine the relational feature space, we introduce instance ranking to make the original instance close to its positive instance and away from its hard and semi-hard negative instances. To correct the cluster assignment probabilities of hard and semi-hard negative instances, and keep the probability distributions of the original and positive instances aligned, in the label semantic space, Label Calibration strategy is designed to model two constraint relationships between the original and hard negative instance, and between the hard and semi-hard negative instance.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_9",
+            "content": "To summarize, the major contributions of our work are as follows: (1) We propose a novel method based on instance ranking and label calibration to learn discriminative representations in relational feature and label semantic space simultaneously. (2) We introduce three surrogate strategies to generate the positive, hard negative and semi-hard negative instances under unsupervised manner. (3) Experimental results show that our proposed method significantly outperforms the previous state-of-the-art models with the improvements of average performance of 11.1% and 11.8%, on two datasets respectively.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_10",
+            "content": "Tokyo, Japan, contains many parks and gardens. Original Positive Hard Negative Semi-hard Negative In Tokyo, Japan, there are many parks and gardens. Kyoto, Japan contains many parks and gardens. Guangzhou, China contains many parks and gardens. Figure 2: Framework of our proposed method.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_11",
+            "content": "Method",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_12",
+            "content": "In this work, we propose a novel method to learn relation representations in feature and semantic space simultaneously. As shown in Figure 2, our method mainly consists of three components: data augmentation, instance ranking, and label calibration modules. We will introduce these module details in the following subsections.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_13",
+            "content": "Data Augmentation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_14",
+            "content": "Since there are no pre-defined relation types, it is difficult to directly obtain the positive, hard negative, and semi-hard negative instances of the original instance. To solve this problem, we introduce three surrogate data augmentation strategies to generate above-mentioned instances for the original instance. Specifically, for an original relation instance X i , we use the following strategies: Back Translation for Positive: To keep the relation type consistent with the original instance and introduce minimal semantic impact, we use back translation to generate the high-quality positive instance by first translating the original instance to another language and then back to English. Entity Replacing for Hard Negative: We choose T5 (Raffel et al., 2019) to generate the most similar word to head or tail entity, and then replace the head or tail entity with its augmented word to obtain the hard negative instance, which possesses the similar entity and context to original instance. Entity Swap for Semi-Hard Negative: To construct a semi-hard negative instance for the original instance, we follow the setting of Entity Swap (Cao and Wang, 2021), which swaps the target entities with other randomly selected entities of the same entity type in the original instance.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_15",
+            "content": "Instance Ranking",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_16",
+            "content": "After instance construction, we obtain a group of augmented instances of the original instance. Instance Ranking aims to refine the relational feature space. Specifically, given a group of instances (X i , X p i , X hn i , X sn i ), where X p i , X hn i , X sn i are positive, hard negative, and semi-hard negative instances respectively. We first encode them to obtain their relation representations (r i , r p i , r hn i , r sn i ), and then map these representations into the relational feature space with an instance-level head h to obtain a group of relational feature (t i , t p i , t hn i , t sn i ). Then we can obtain the instance-level ranking loss:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_17",
+            "content": "L IR i = max(0, D(t i , t p i ) \u2212 D(t i , t hn i ) + m H ) + max(0, D(t i , t hn i ) \u2212 D(t i , t sn i ) + m S )(1",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_18",
+            "content": ") where D(x, y) is the euclidean distance between x and y, m H and m S are two margins for instancelevel ranking loss. Optimized by the objective L IR i , model can make the original relation instance closer to its positive instance and away from its correspondingly hard and semi-hard negative instances with different margins.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_19",
+            "content": "Label Calibration",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_20",
+            "content": "In addition to refining the feature space, we introduce Label Calibration to model the constraint relationship between instances to correct the cluster assignment probabilities of hard and semi-hard negative instances and keep the probability distributions of the original and positive instance aligned in the label semantic space. With a group of relation representations (r i , r p i , r hn i , r sn i ) encoded from their corresponding instances, we first generate the group of cluster representations (z i , z p i , z hn i , z sn i ) by mapping them into the label semantic space with a cluster-level head g, and then obtain the cluster-level ranking loss:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_21",
+            "content": "L LC i = max(0, D(z i , z p i ) \u2212 D(z i , z hn i )) + max(0, D(z i , z hn i ) \u2212 D(z i , z sn i ) + m L )",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_22",
+            "content": "(2) where D(x, y) is the KL distance between x and y to measure the difference between the cluster assignment probabilities of the instances, m L is the margin for cluster-level ranking loss. The first term is to model the constraint relationship between the original and hard negative instance, and the second term is to the constraint relationship between the hard and semi-hard negative instance. The final loss function is as follows:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_23",
+            "content": "L = \u2212 1 n n i=1 (L IR i + L LC i )(3)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_24",
+            "content": "3 Experiments",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_25",
+            "content": "Datasets",
+            "ntype": "title",
+            "meta": {
+                "section": "3.1"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_26",
+            "content": "To assess the performance of our method, we conduct experiments on",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_27",
+            "content": "Baselines",
+            "ntype": "title",
+            "meta": {
+                "section": "3.2"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_28",
+            "content": "For comparison, we consider the following baselines:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_29",
+            "content": "\u2022 rel-LDA A generative method proposed by Yao et al. (2011), which treats unsupervised relation discovery as a topic model. In our experiment, we choose the full rel-LDA to compare with our method. \u2022 March A method (Marcheggiani and Titov, 2016) based on self-supervised signal from entity link predictor to learn a VAE-based model. T-REx SPO rel-LDA-full (Yao et al., 2011) 18.5 14.3 26.1 19.4 16.1 24.5 8.6 15.5 March (Marcheggiani and Titov, 2016) 24.8 20.6 31.3 23.6 19.1 30.6 12.6 20.3 UIE-PCNN (Simon et al., 2019) 36.3 28.4 (Marcheggiani and Titov, 2016) 9.0 6.4 15.5 5.7 4.5 7.9 1.9 5.5 UIE-PCNN (Simon et al., 2019) 19",
+            "ntype": "list",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_30",
+            "content": "Evaluation Metrics",
+            "ntype": "title",
+            "meta": {
+                "section": "3.3"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_31",
+            "content": "As the previous work (Simon et al., 2019;Hu et al., 2020;Liu et al., 2021), we adopt B 3 (Bagga and Baldwin, 1998), V-measure (Rosenberg and Hirschberg, 2007), and Adjusted Rand Index (ARI) (Hubert and Arabie, 1985) to evaluate different methods. Considering that any of the three metrics can measure the clustering performance from different angles, we take the average of B 3 F1, Vmeasure F1 and ARI for comprehensive evaluation.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_32",
+            "content": "Implementation Details",
+            "ntype": "title",
+            "meta": {
+                "section": "3.4"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_33",
+            "content": "For fair comparison, all model are trained and evaluated on 10 relation types, same as (Simon et al., 2019;Hu et al., 2020;Liu et al., 2021). We implement our model in PyTorch 3 (Paszke et al., 2017) with transformers package 4 (Wolf et al., 2020). We adopt bert-base-cased as backbone to generate contextual relation representations.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_34",
+            "content": "The output size of the instance-level head in instance ranking is 128, while the size is set to 10 in the cluster-level head for label calibration, same as the number of relation types. We use Adam (Kingma and Ba, 2014) as optimizer with a learning rate of 1e-5 for backbone and a learning rate of 1e-3 for two heads. The max length of input sentence is 96 and the batch size is 32. All experiments are conducted by using a GeForce RTX 3090Ti with 24 GB memory.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_35",
+            "content": "Main Results",
+            "ntype": "title",
+            "meta": {
+                "section": "3.5"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_36",
+            "content": "We summarize the performances of the baselines and our method in Table 1. From the experimental results, we can see that our method IRLC significantly outperforms baselines by a large margin and achieves new state-of-the-art results on both two datasets. For T-REx SPO, compared with the previous SOTA model, IRLC improves the average performance by 11.1%, B 3 F1-score by 12.4%, Vmeasure F1-score by 15.1%, and ARI by 5.7%. The results confirm IRLC can learn discriminative representations to help model extract novel relations.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_37",
+            "content": "For T-REx DS, our method IRLC outperforms the SOTA model with an average performance gain of 11.8%, proving the effectiveness of IRLC for OpenRE.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_38",
+            "content": "Ablation Study",
+            "ntype": "title",
+            "meta": {
+                "section": "3.6"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_39",
+            "content": "To study the effect of instance ranking and label calibration in the proposed method, we conduct ablation experiments on two datasets and report the results in Table 1. We find that the performance of IRLC will severely degrade without instance ranking or label calibration. SPO dataset, showing the effectiveness of these two strategies.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_40",
+            "content": "Qualitative Analysis",
+            "ntype": "title",
+            "meta": {
+                "section": "3.7"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_41",
+            "content": "In this section, we first analyse the representation distribution of novel relations on two datasets from two perspectives, intra-class and inter-class, to study how our method refines the representation space. And then we visualize the representations of novel relations to show the effectiveness of our method.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_42",
+            "content": "IRLC leads to smaller intra-class distance. Table 2 shows the intra-class variance statistics. Specifically, we use intra-class variance to indicate the intra-class distance of relation type.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_43",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_44",
+            "content": "In this paper, we propose a novel method based on instance ranking and label calibration (IRLC) to learn discriminative representations for better identifying the hard and semi-hard negative intances, in the relational feature and label semantic space simultaneously. Due to lacking the label of each instance, we introduce three surrogate strategies to generate the augmented views for the original instance. And then instance ranking is used to refine the relational feature space, and label calibration is designed to model the constraint relationship between instances. Experiments and analysis confirm the effectiveness of IRLC for OpenRE.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "320-ARR_v2_45",
+            "content": "Amit Bagga, Breck Baldwin, Entity-based cross-document coreferencing using the vector space model, 1998, 36th Annual Meeting of the Association for Computational Linguistics and 17th International Conference on Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": [
+                    "Amit Bagga",
+                    "Breck Baldwin"
+                ],
+                "title": "Entity-based cross-document coreferencing using the vector space model",
+                "pub_date": "1998",
+                "pub_title": "36th Annual Meeting of the Association for Computational Linguistics and 17th International Conference on Computational Linguistics",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_46",
+            "content": "UNKNOWN, None, 2021, Cliff: Contrastive learning for improving faithfulness and factuality in abstractive summarization, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": null,
+                "title": null,
+                "pub_date": "2021",
+                "pub_title": "Cliff: Contrastive learning for improving faithfulness and factuality in abstractive summarization",
+                "pub": null
+            }
+        },
+        {
+            "ix": "320-ARR_v2_47",
+            "content": "Hady Elsahar, Pavlos Vougiouklis, Arslen Remaci, Christophe Gravier, Jonathon Hare, T-REx: A large scale alignment of natural language with knowledge base triples, 2018, Proceedings of the Eleventh International Conference on Language Resources and Evaluation (LREC 2018), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": [
+                    "Hady Elsahar",
+                    "Pavlos Vougiouklis",
+                    "Arslen Remaci",
+                    "Christophe Gravier",
+                    "Jonathon Hare"
+                ],
+                "title": "T-REx: A large scale alignment of natural language with knowledge base triples",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the Eleventh International Conference on Language Resources and Evaluation (LREC 2018)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "320-ARR_v2_48",
+            "content": "Oren Etzioni, Michele Banko, Stephen Soderland, Daniel Weld, Open information extraction from the web, 2008, Communications of the ACM, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": [
+                    "Oren Etzioni",
+                    "Michele Banko",
+                    "Stephen Soderland",
+                    "Daniel Weld"
+                ],
+                "title": "Open information extraction from the web",
+                "pub_date": "2008",
+                "pub_title": "Communications of the ACM",
+                "pub": null
+            }
+        },
+        {
+            "ix": "320-ARR_v2_49",
+            "content": "Anthony Fader, Stephen Soderland, Oren Etzioni, Identifying relations for open information extraction, 2011, Proceedings of the 2011 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": [
+                    "Anthony Fader",
+                    "Stephen Soderland",
+                    "Oren Etzioni"
+                ],
+                "title": "Identifying relations for open information extraction",
+                "pub_date": "2011",
+                "pub_title": "Proceedings of the 2011 Conference on Empirical Methods in Natural Language Processing",
+                "pub": null
+            }
+        },
+        {
+            "ix": "320-ARR_v2_50",
+            "content": "Xuming Hu, Lijie Wen, Yusong Xu, Chenwei Zhang, Philip Yu, SelfORE: Self-supervised relational feature learning for open relation extraction, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "Xuming Hu",
+                    "Lijie Wen",
+                    "Yusong Xu",
+                    "Chenwei Zhang",
+                    "Philip Yu"
+                ],
+                "title": "SelfORE: Self-supervised relational feature learning for open relation extraction",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "320-ARR_v2_51",
+            "content": "Lawrence Hubert, Phipps Arabie, Comparing partitions, 1985, Journal of classification, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": [
+                    "Lawrence Hubert",
+                    "Phipps Arabie"
+                ],
+                "title": "Comparing partitions",
+                "pub_date": "1985",
+                "pub_title": "Journal of classification",
+                "pub": null
+            }
+        },
+        {
+            "ix": "320-ARR_v2_52",
+            "content": "UNKNOWN, None, 2014, Adam: A method for stochastic optimization, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": null,
+                "title": null,
+                "pub_date": "2014",
+                "pub_title": "Adam: A method for stochastic optimization",
+                "pub": null
+            }
+        },
+        {
+            "ix": "320-ARR_v2_53",
+            "content": "Fangchao Liu, Lingyong Yan, Hongyu Lin, Xianpei Han, Le Sun, Element intervention for open relation extraction, 2021, Proceedings of the 59th, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": [
+                    "Fangchao Liu",
+                    "Lingyong Yan",
+                    "Hongyu Lin",
+                    "Xianpei Han",
+                    "Le Sun"
+                ],
+                "title": "Element intervention for open relation extraction",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 59th",
+                "pub": null
+            }
+        },
+        {
+            "ix": "320-ARR_v2_54",
+            "content": "UNKNOWN, None, , Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Online. Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": "Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing",
+                "pub": "Online. Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_55",
+            "content": "Diego Marcheggiani, Ivan Titov, Discretestate variational autoencoders for joint discovery and factorization of relations, 2016, Transactions of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": [
+                    "Diego Marcheggiani",
+                    "Ivan Titov"
+                ],
+                "title": "Discretestate variational autoencoders for joint discovery and factorization of relations",
+                "pub_date": "2016",
+                "pub_title": "Transactions of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "320-ARR_v2_56",
+            "content": "Adam Paszke, Sam Gross, Soumith Chintala, Gregory Chanan, Edward Yang, Zachary Devito, Zeming Lin, Alban Desmaison, Luca Antiga, Adam Lerer, Automatic differentiation in pytorch, 2017, NIPS-W, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": [
+                    "Adam Paszke",
+                    "Sam Gross",
+                    "Soumith Chintala",
+                    "Gregory Chanan",
+                    "Edward Yang",
+                    "Zachary Devito",
+                    "Zeming Lin",
+                    "Alban Desmaison",
+                    "Luca Antiga",
+                    "Adam Lerer"
+                ],
+                "title": "Automatic differentiation in pytorch",
+                "pub_date": "2017",
+                "pub_title": "NIPS-W",
+                "pub": null
+            }
+        },
+        {
+            "ix": "320-ARR_v2_57",
+            "content": "UNKNOWN, None, 2019, Exploring the limits of transfer learning with a unified text-to-text transformer, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "Exploring the limits of transfer learning with a unified text-to-text transformer",
+                "pub": null
+            }
+        },
+        {
+            "ix": "320-ARR_v2_58",
+            "content": "Andrew Rosenberg, Julia Hirschberg, Vmeasure: A conditional entropy-based external cluster evaluation measure, 2007, Proceedings of the 2007 Joint Conference on Empirical Methods in Natural Language Processing and Computational Natural Language Learning (EMNLP-CoNLL), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": [
+                    "Andrew Rosenberg",
+                    "Julia Hirschberg"
+                ],
+                "title": "Vmeasure: A conditional entropy-based external cluster evaluation measure",
+                "pub_date": "2007",
+                "pub_title": "Proceedings of the 2007 Joint Conference on Empirical Methods in Natural Language Processing and Computational Natural Language Learning (EMNLP-CoNLL)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "320-ARR_v2_59",
+            "content": "\u00c9tienne Simon, Vincent Guigue, Benjamin Piwowarski, Unsupervised information extraction: Regularizing discriminative approaches with relation distribution losses, 2019, Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": [
+                    "\u00c9tienne Simon",
+                    "Vincent Guigue",
+                    "Benjamin Piwowarski"
+                ],
+                "title": "Unsupervised information extraction: Regularizing discriminative approaches with relation distribution losses",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_60",
+            "content": "Laurens Van Der Maaten, Geoffrey Hinton, Visualizing data using t-sne, 2008, Journal of machine learning research, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b15",
+                "authors": [
+                    "Laurens Van Der Maaten",
+                    "Geoffrey Hinton"
+                ],
+                "title": "Visualizing data using t-sne",
+                "pub_date": "2008",
+                "pub_title": "Journal of machine learning research",
+                "pub": null
+            }
+        },
+        {
+            "ix": "320-ARR_v2_61",
+            "content": "Thomas Wolf, Lysandre Debut, Victor Sanh, Julien Chaumond, Clement Delangue, Anthony Moi, Pierric Cistac, Tim Rault, Remi Louf, Morgan Funtowicz, Joe Davison, Sam Shleifer, Clara Patrick Von Platen, Yacine Ma, Julien Jernite, Canwen Plu, Teven Xu, Sylvain Scao, Mariama Gugger, Quentin Drame, Alexander Lhoest,  Rush, Transformers: State-of-the-art natural language processing, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing: System Demonstrations, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b16",
+                "authors": [
+                    "Thomas Wolf",
+                    "Lysandre Debut",
+                    "Victor Sanh",
+                    "Julien Chaumond",
+                    "Clement Delangue",
+                    "Anthony Moi",
+                    "Pierric Cistac",
+                    "Tim Rault",
+                    "Remi Louf",
+                    "Morgan Funtowicz",
+                    "Joe Davison",
+                    "Sam Shleifer",
+                    "Clara Patrick Von Platen",
+                    "Yacine Ma",
+                    "Julien Jernite",
+                    "Canwen Plu",
+                    "Teven Xu",
+                    "Sylvain Scao",
+                    "Mariama Gugger",
+                    "Quentin Drame",
+                    "Alexander Lhoest",
+                    " Rush"
+                ],
+                "title": "Transformers: State-of-the-art natural language processing",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing: System Demonstrations",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "320-ARR_v2_62",
+            "content": "Limin Yao, Aria Haghighi, Sebastian Riedel, Andrew Mccallum, Structured relation discovery using generative models, 2011, Proceedings of the 2011 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b17",
+                "authors": [
+                    "Limin Yao",
+                    "Aria Haghighi",
+                    "Sebastian Riedel",
+                    "Andrew Mccallum"
+                ],
+                "title": "Structured relation discovery using generative models",
+                "pub_date": "2011",
+                "pub_title": "Proceedings of the 2011 Conference on Empirical Methods in Natural Language Processing",
+                "pub": null
+            }
+        },
+        {
+            "ix": "320-ARR_v2_63",
+            "content": "Alexander Yates, Michele Banko, Matthew Broadhead, Michael Cafarella, Oren Etzioni, Stephen Soderland, TextRunner: Open information extraction on the web, 2007, Proceedings of Human Language Technologies: The Annual Conference of the North American Chapter of the Association for Computational Linguistics (NAACL-HLT), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b18",
+                "authors": [
+                    "Alexander Yates",
+                    "Michele Banko",
+                    "Matthew Broadhead",
+                    "Michael Cafarella",
+                    "Oren Etzioni",
+                    "Stephen Soderland"
+                ],
+                "title": "TextRunner: Open information extraction on the web",
+                "pub_date": "2007",
+                "pub_title": "Proceedings of Human Language Technologies: The Annual Conference of the North American Chapter of the Association for Computational Linguistics (NAACL-HLT)",
+                "pub": null
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "320-ARR_v2_0@0",
+            "content": "Learning Discriminative Representations for Open Relation Extraction with Instance Ranking and Label Calibration",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_0",
+            "start": 0,
+            "end": 111,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_2@0",
+            "content": "Open relation extraction is the task to extract relational facts without pre-defined relation types from open-domain corpora.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_2",
+            "start": 0,
+            "end": 124,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_2@1",
+            "content": "However, since there are some hard or semi-hard instances sharing similar context and entity information but belonging to different underlying relation, current OpenRE methods always cluster them into the same relation type.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_2",
+            "start": 126,
+            "end": 349,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_2@2",
+            "content": "In this paper, we propose a novel method based on Instance Ranking and Label Calibration strategies (IRLC) to learn discriminative representations for open relation extraction.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_2",
+            "start": 351,
+            "end": 526,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_2@3",
+            "content": "Due to lacking the original instance label, we provide three surrogate strategies to generate the positive, hard negative, and semi-hard negative instances for the original instance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_2",
+            "start": 528,
+            "end": 709,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_2@4",
+            "content": "Instance ranking aims to refine the relational feature space by pushing the hard and semi-hard negative instances apart from the original instance with different margins and pulling the original instance and its positive instance together.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_2",
+            "start": 711,
+            "end": 949,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_2@5",
+            "content": "To refine the cluster probability distributions of these instances, we introduce a label calibration strategy to model the constraint relationship between instances.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_2",
+            "start": 951,
+            "end": 1115,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_2@6",
+            "content": "Experimental results on two public datasets demonstrate that our proposed method can significantly outperform the previous state-of-the-art methods 1",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_2",
+            "start": 1117,
+            "end": 1265,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_4@0",
+            "content": "Open relation extraction (OpenRE) has been proposed to extract new relational facts where the types of target relations are not pre-defined.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_4",
+            "start": 0,
+            "end": 139,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_4@1",
+            "content": "Previous methods can be classified into two types: open information extraction (OpenIE) and unsupervised relation discovery.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_4",
+            "start": 141,
+            "end": 264,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_4@2",
+            "content": "For OpenIE (Yates et al., 2007;Etzioni et al., 2008;Fader et al., 2011), the relations are directly represented by relation phrases * The first three authors contribute equally.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_4",
+            "start": 266,
+            "end": 442,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_4@3",
+            "content": "Yajing Xu is the corresponding author.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_4",
+            "start": 444,
+            "end": 481,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_5@0",
+            "content": "1 Our code and implementation details are publicly available at https://github.com/ShusenWang/NAACL2022-IRLC The distribution refined by our method, where these negative instances are separated from the original instance and correctly predicted.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_5",
+            "start": 0,
+            "end": 244,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_6@0",
+            "content": "extracted in the sentence.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_6",
+            "start": 0,
+            "end": 25,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_6@1",
+            "content": "However, the generalization capabilities of these methods are limited since they severely rely on surface-form relations and a relation can be expressed by many surface forms.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_6",
+            "start": 27,
+            "end": 201,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_6@2",
+            "content": "Recently, much attention has been focused on unsupervised relation discovery, which is commonly formulated as a clustering task to learn effective relation representations and cluster them (Yao et al., 2011;Marcheggiani and Titov, 2016;Simon et al., 2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_6",
+            "start": 203,
+            "end": 458,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_6@3",
+            "content": "Hu et al. (2020) leverage BERT to extract relational feature and propose a self-supervised framework to learn relation representations from pseudo labels.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_6",
+            "start": 460,
+            "end": 613,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_6@4",
+            "content": "Because current methods are unstable and easily collapsed (Simon et al., 2019), Liu et al. (2021) solve above-mentioned problems from a causal view and propose element intervention to alleviate the spurious correlations in OpenRE models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_6",
+            "start": 615,
+            "end": 851,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_6@5",
+            "content": "However, there are still some hard or semi-hard samples wrongly predicted in the representation space due to the spurious correlations from entities and context to the relation type.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_6",
+            "start": 853,
+            "end": 1034,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_7@0",
+            "content": "As shown in Figure 1(a), there are two types of negative instances for the relation type BORN_IN_PLACE: Hard negative and Semihard negative.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_7",
+            "start": 0,
+            "end": 139,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_7@1",
+            "content": "For Semi-hard negative instances like S 4 , OpenRE models will assign S 1 and S 4 into the same relation type BORN_IN_PLACE since S 1 and S 4 share similar context information.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_7",
+            "start": 141,
+            "end": 316,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_7@2",
+            "content": "This problem can be even more severe if the representation space exists some hard negative instances like S 3 , because S 3 possesses a similar context \"was born in \"and similar entity \"Jon\" to S 1 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_7",
+            "start": 318,
+            "end": 516,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_7@3",
+            "content": "An intuitive way to solve this problem is to refine the relational feature space, as shown in Figure 1 (b).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_7",
+            "start": 518,
+            "end": 624,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_7@4",
+            "content": "Besides, all instances should follow the same relative relationship in the label semantic space which means the original and positive instances have a more similar cluster probability distribution than the hard and semi-hard negative instances.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_7",
+            "start": 626,
+            "end": 869,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_7@5",
+            "content": "Therefore, it is important to model the constraint relationship between these instances in the label semantic space.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_7",
+            "start": 871,
+            "end": 986,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_8@0",
+            "content": "In this paper, we propose a novel method based on Instance Ranking and Label Calibration strategies (IRLC) to better identify the hard and semihard negative instances by learning discriminative representations in relational feature and label semantic space simultaneously.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_8",
+            "start": 0,
+            "end": 271,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_8@1",
+            "content": "However, due to lacking of the instance label, we cannot directly obtain the positive, hard negative and semi-hard negative instances of the original instance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_8",
+            "start": 273,
+            "end": 431,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_8@2",
+            "content": "To solve this, we use three data augmentation strategies to generate the positive, hard negative and semi-hard negative instances for the original instance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_8",
+            "start": 433,
+            "end": 588,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_8@3",
+            "content": "To refine the relational feature space, we introduce instance ranking to make the original instance close to its positive instance and away from its hard and semi-hard negative instances.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_8",
+            "start": 590,
+            "end": 776,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_8@4",
+            "content": "To correct the cluster assignment probabilities of hard and semi-hard negative instances, and keep the probability distributions of the original and positive instances aligned, in the label semantic space, Label Calibration strategy is designed to model two constraint relationships between the original and hard negative instance, and between the hard and semi-hard negative instance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_8",
+            "start": 778,
+            "end": 1162,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_9@0",
+            "content": "To summarize, the major contributions of our work are as follows: (1) We propose a novel method based on instance ranking and label calibration to learn discriminative representations in relational feature and label semantic space simultaneously. (2) We introduce three surrogate strategies to generate the positive, hard negative and semi-hard negative instances under unsupervised manner.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_9",
+            "start": 0,
+            "end": 389,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_9@1",
+            "content": "(3) Experimental results show that our proposed method significantly outperforms the previous state-of-the-art models with the improvements of average performance of 11.1% and 11.8%, on two datasets respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_9",
+            "start": 391,
+            "end": 602,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_10@0",
+            "content": "Tokyo, Japan, contains many parks and gardens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_10",
+            "start": 0,
+            "end": 45,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_10@1",
+            "content": "Original Positive Hard Negative Semi-hard Negative In Tokyo, Japan, there are many parks and gardens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_10",
+            "start": 47,
+            "end": 147,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_10@2",
+            "content": "Kyoto, Japan contains many parks and gardens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_10",
+            "start": 149,
+            "end": 193,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_10@3",
+            "content": "Guangzhou, China contains many parks and gardens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_10",
+            "start": 195,
+            "end": 243,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_10@4",
+            "content": "Figure 2: Framework of our proposed method.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_10",
+            "start": 245,
+            "end": 287,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_11@0",
+            "content": "Method",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_11",
+            "start": 0,
+            "end": 5,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_12@0",
+            "content": "In this work, we propose a novel method to learn relation representations in feature and semantic space simultaneously.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_12",
+            "start": 0,
+            "end": 118,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_12@1",
+            "content": "As shown in Figure 2, our method mainly consists of three components: data augmentation, instance ranking, and label calibration modules.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_12",
+            "start": 120,
+            "end": 256,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_12@2",
+            "content": "We will introduce these module details in the following subsections.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_12",
+            "start": 258,
+            "end": 325,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_13@0",
+            "content": "Data Augmentation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_13",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_14@0",
+            "content": "Since there are no pre-defined relation types, it is difficult to directly obtain the positive, hard negative, and semi-hard negative instances of the original instance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_14",
+            "start": 0,
+            "end": 168,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_14@1",
+            "content": "To solve this problem, we introduce three surrogate data augmentation strategies to generate above-mentioned instances for the original instance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_14",
+            "start": 170,
+            "end": 314,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_14@2",
+            "content": "Specifically, for an original relation instance X i , we use the following strategies: Back Translation for Positive: To keep the relation type consistent with the original instance and introduce minimal semantic impact, we use back translation to generate the high-quality positive instance by first translating the original instance to another language and then back to English.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_14",
+            "start": 316,
+            "end": 695,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_14@3",
+            "content": "Entity Replacing for Hard Negative: We choose T5 (Raffel et al., 2019) to generate the most similar word to head or tail entity, and then replace the head or tail entity with its augmented word to obtain the hard negative instance, which possesses the similar entity and context to original instance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_14",
+            "start": 697,
+            "end": 996,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_14@4",
+            "content": "Entity Swap for Semi-Hard Negative: To construct a semi-hard negative instance for the original instance, we follow the setting of Entity Swap (Cao and Wang, 2021), which swaps the target entities with other randomly selected entities of the same entity type in the original instance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_14",
+            "start": 998,
+            "end": 1281,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_15@0",
+            "content": "Instance Ranking",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_15",
+            "start": 0,
+            "end": 15,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_16@0",
+            "content": "After instance construction, we obtain a group of augmented instances of the original instance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_16",
+            "start": 0,
+            "end": 94,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_16@1",
+            "content": "Instance Ranking aims to refine the relational feature space.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_16",
+            "start": 96,
+            "end": 156,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_16@2",
+            "content": "Specifically, given a group of instances (X i , X p i , X hn i , X sn i ), where X p i , X hn i , X sn i are positive, hard negative, and semi-hard negative instances respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_16",
+            "start": 158,
+            "end": 337,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_16@3",
+            "content": "We first encode them to obtain their relation representations (r i , r p i , r hn i , r sn i ), and then map these representations into the relational feature space with an instance-level head h to obtain a group of relational feature (t i , t p i , t hn i , t sn i ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_16",
+            "start": 339,
+            "end": 606,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_16@4",
+            "content": "Then we can obtain the instance-level ranking loss:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_16",
+            "start": 608,
+            "end": 658,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_17@0",
+            "content": "L IR i = max(0, D(t i , t p i ) \u2212 D(t i , t hn i ) + m H ) + max(0, D(t i , t hn i ) \u2212 D(t i , t sn i ) + m S )(1",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_17",
+            "start": 0,
+            "end": 112,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_18@0",
+            "content": ") where D(x, y) is the euclidean distance between x and y, m H and m S are two margins for instancelevel ranking loss.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_18",
+            "start": 0,
+            "end": 117,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_18@1",
+            "content": "Optimized by the objective L IR i , model can make the original relation instance closer to its positive instance and away from its correspondingly hard and semi-hard negative instances with different margins.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_18",
+            "start": 119,
+            "end": 327,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_19@0",
+            "content": "Label Calibration",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_19",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_20@0",
+            "content": "In addition to refining the feature space, we introduce Label Calibration to model the constraint relationship between instances to correct the cluster assignment probabilities of hard and semi-hard negative instances and keep the probability distributions of the original and positive instance aligned in the label semantic space.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_20",
+            "start": 0,
+            "end": 330,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_20@1",
+            "content": "With a group of relation representations (r i , r p i , r hn i , r sn i ) encoded from their corresponding instances, we first generate the group of cluster representations (z i , z p i , z hn i , z sn i ) by mapping them into the label semantic space with a cluster-level head g, and then obtain the cluster-level ranking loss:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_20",
+            "start": 332,
+            "end": 659,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_21@0",
+            "content": "L LC i = max(0, D(z i , z p i ) \u2212 D(z i , z hn i )) + max(0, D(z i , z hn i ) \u2212 D(z i , z sn i ) + m L )",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_21",
+            "start": 0,
+            "end": 103,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_22@0",
+            "content": "(2) where D(x, y) is the KL distance between x and y to measure the difference between the cluster assignment probabilities of the instances, m L is the margin for cluster-level ranking loss.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_22",
+            "start": 0,
+            "end": 190,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_22@1",
+            "content": "The first term is to model the constraint relationship between the original and hard negative instance, and the second term is to the constraint relationship between the hard and semi-hard negative instance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_22",
+            "start": 192,
+            "end": 398,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_22@2",
+            "content": "The final loss function is as follows:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_22",
+            "start": 400,
+            "end": 437,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_23@0",
+            "content": "L = \u2212 1 n n i=1 (L IR i + L LC i )(3)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_23",
+            "start": 0,
+            "end": 36,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_24@0",
+            "content": "3 Experiments",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_24",
+            "start": 0,
+            "end": 12,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_25@0",
+            "content": "Datasets",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_25",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_26@0",
+            "content": "To assess the performance of our method, we conduct experiments on",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_26",
+            "start": 0,
+            "end": 65,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_27@0",
+            "content": "Baselines",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_27",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_28@0",
+            "content": "For comparison, we consider the following baselines:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_28",
+            "start": 0,
+            "end": 51,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_29@0",
+            "content": "\u2022 rel-LDA A generative method proposed by Yao et al. (2011), which treats unsupervised relation discovery as a topic model. In our experiment, we choose the full rel-LDA to compare with our method. \u2022 March A method (Marcheggiani and Titov, 2016) based on self-supervised signal from entity link predictor to learn a VAE-based model. T-REx SPO rel-LDA-full (Yao et al., 2011) 18.5 14.3 26.1 19.4 16.1 24.5 8.6 15.5 March (Marcheggiani and Titov, 2016) 24.8 20.6 31.3 23.6 19.1 30.6 12.6 20.3 UIE-PCNN (Simon et al., 2019) 36.3 28.4 (Marcheggiani and Titov, 2016) 9.0 6.4 15.5 5.7 4.5 7.9 1.9 5.5 UIE-PCNN (Simon et al., 2019) 19",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_29",
+            "start": 0,
+            "end": 626,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_30@0",
+            "content": "Evaluation Metrics",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_30",
+            "start": 0,
+            "end": 17,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_31@0",
+            "content": "As the previous work (Simon et al., 2019;Hu et al., 2020;Liu et al., 2021), we adopt B 3 (Bagga and Baldwin, 1998), V-measure (Rosenberg and Hirschberg, 2007), and Adjusted Rand Index (ARI) (Hubert and Arabie, 1985) to evaluate different methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_31",
+            "start": 0,
+            "end": 245,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_31@1",
+            "content": "Considering that any of the three metrics can measure the clustering performance from different angles, we take the average of B 3 F1, Vmeasure F1 and ARI for comprehensive evaluation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_31",
+            "start": 247,
+            "end": 430,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_32@0",
+            "content": "Implementation Details",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_32",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_33@0",
+            "content": "For fair comparison, all model are trained and evaluated on 10 relation types, same as (Simon et al., 2019;Hu et al., 2020;Liu et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_33",
+            "start": 0,
+            "end": 140,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_33@1",
+            "content": "We implement our model in PyTorch 3 (Paszke et al., 2017) with transformers package 4 (Wolf et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_33",
+            "start": 142,
+            "end": 247,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_33@2",
+            "content": "We adopt bert-base-cased as backbone to generate contextual relation representations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_33",
+            "start": 249,
+            "end": 333,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_34@0",
+            "content": "The output size of the instance-level head in instance ranking is 128, while the size is set to 10 in the cluster-level head for label calibration, same as the number of relation types.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_34",
+            "start": 0,
+            "end": 184,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_34@1",
+            "content": "We use Adam (Kingma and Ba, 2014) as optimizer with a learning rate of 1e-5 for backbone and a learning rate of 1e-3 for two heads.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_34",
+            "start": 186,
+            "end": 316,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_34@2",
+            "content": "The max length of input sentence is 96 and the batch size is 32.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_34",
+            "start": 318,
+            "end": 381,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_34@3",
+            "content": "All experiments are conducted by using a GeForce RTX 3090Ti with 24 GB memory.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_34",
+            "start": 383,
+            "end": 460,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_35@0",
+            "content": "Main Results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_35",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_36@0",
+            "content": "We summarize the performances of the baselines and our method in Table 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_36",
+            "start": 0,
+            "end": 72,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_36@1",
+            "content": "From the experimental results, we can see that our method IRLC significantly outperforms baselines by a large margin and achieves new state-of-the-art results on both two datasets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_36",
+            "start": 74,
+            "end": 253,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_36@2",
+            "content": "For T-REx SPO, compared with the previous SOTA model, IRLC improves the average performance by 11.1%, B 3 F1-score by 12.4%, Vmeasure F1-score by 15.1%, and ARI by 5.7%.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_36",
+            "start": 255,
+            "end": 423,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_36@3",
+            "content": "The results confirm IRLC can learn discriminative representations to help model extract novel relations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_36",
+            "start": 425,
+            "end": 528,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_37@0",
+            "content": "For T-REx DS, our method IRLC outperforms the SOTA model with an average performance gain of 11.8%, proving the effectiveness of IRLC for OpenRE.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_37",
+            "start": 0,
+            "end": 144,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_38@0",
+            "content": "Ablation Study",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_38",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_39@0",
+            "content": "To study the effect of instance ranking and label calibration in the proposed method, we conduct ablation experiments on two datasets and report the results in Table 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_39",
+            "start": 0,
+            "end": 167,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_39@1",
+            "content": "We find that the performance of IRLC will severely degrade without instance ranking or label calibration.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_39",
+            "start": 169,
+            "end": 273,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_39@2",
+            "content": "SPO dataset, showing the effectiveness of these two strategies.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_39",
+            "start": 275,
+            "end": 337,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_40@0",
+            "content": "Qualitative Analysis",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_40",
+            "start": 0,
+            "end": 19,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_41@0",
+            "content": "In this section, we first analyse the representation distribution of novel relations on two datasets from two perspectives, intra-class and inter-class, to study how our method refines the representation space. And then we visualize the representations of novel relations to show the effectiveness of our method.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_41",
+            "start": 0,
+            "end": 311,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_42@0",
+            "content": "IRLC leads to smaller intra-class distance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_42",
+            "start": 0,
+            "end": 42,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_42@1",
+            "content": "Table 2 shows the intra-class variance statistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_42",
+            "start": 44,
+            "end": 93,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_42@2",
+            "content": "Specifically, we use intra-class variance to indicate the intra-class distance of relation type.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_42",
+            "start": 95,
+            "end": 190,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_43@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_43",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_44@0",
+            "content": "In this paper, we propose a novel method based on instance ranking and label calibration (IRLC) to learn discriminative representations for better identifying the hard and semi-hard negative intances, in the relational feature and label semantic space simultaneously.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_44",
+            "start": 0,
+            "end": 266,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_44@1",
+            "content": "Due to lacking the label of each instance, we introduce three surrogate strategies to generate the augmented views for the original instance. And then instance ranking is used to refine the relational feature space, and label calibration is designed to model the constraint relationship between instances.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_44",
+            "start": 268,
+            "end": 572,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_44@2",
+            "content": "Experiments and analysis confirm the effectiveness of IRLC for OpenRE.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_44",
+            "start": 574,
+            "end": 643,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_45@0",
+            "content": "Amit Bagga, Breck Baldwin, Entity-based cross-document coreferencing using the vector space model, 1998, 36th Annual Meeting of the Association for Computational Linguistics and 17th International Conference on Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_45",
+            "start": 0,
+            "end": 279,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_46@0",
+            "content": "UNKNOWN, None, 2021, Cliff: Contrastive learning for improving faithfulness and factuality in abstractive summarization, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_46",
+            "start": 0,
+            "end": 121,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_47@0",
+            "content": "Hady Elsahar, Pavlos Vougiouklis, Arslen Remaci, Christophe Gravier, Jonathon Hare, T-REx: A large scale alignment of natural language with knowledge base triples, 2018, Proceedings of the Eleventh International Conference on Language Resources and Evaluation (LREC 2018), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_47",
+            "start": 0,
+            "end": 273,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_48@0",
+            "content": "Oren Etzioni, Michele Banko, Stephen Soderland, Daniel Weld, Open information extraction from the web, 2008, Communications of the ACM, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_48",
+            "start": 0,
+            "end": 136,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_49@0",
+            "content": "Anthony Fader, Stephen Soderland, Oren Etzioni, Identifying relations for open information extraction, 2011, Proceedings of the 2011 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_49",
+            "start": 0,
+            "end": 197,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_50@0",
+            "content": "Xuming Hu, Lijie Wen, Yusong Xu, Chenwei Zhang, Philip Yu, SelfORE: Self-supervised relational feature learning for open relation extraction, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_50",
+            "start": 0,
+            "end": 244,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_51@0",
+            "content": "Lawrence Hubert, Phipps Arabie, Comparing partitions, 1985, Journal of classification, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_51",
+            "start": 0,
+            "end": 87,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_52@0",
+            "content": "UNKNOWN, None, 2014, Adam: A method for stochastic optimization, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_52",
+            "start": 0,
+            "end": 65,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_53@0",
+            "content": "Fangchao Liu, Lingyong Yan, Hongyu Lin, Xianpei Han, Le Sun, Element intervention for open relation extraction, 2021, Proceedings of the 59th, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_53",
+            "start": 0,
+            "end": 143,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_54@0",
+            "content": "UNKNOWN, None, , Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Online. Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_54",
+            "start": 0,
+            "end": 206,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_55@0",
+            "content": "Diego Marcheggiani, Ivan Titov, Discretestate variational autoencoders for joint discovery and factorization of relations, 2016, Transactions of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_55",
+            "start": 0,
+            "end": 192,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_56@0",
+            "content": "Adam Paszke, Sam Gross, Soumith Chintala, Gregory Chanan, Edward Yang, Zachary Devito, Zeming Lin, Alban Desmaison, Luca Antiga, Adam Lerer, Automatic differentiation in pytorch, 2017, NIPS-W, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_56",
+            "start": 0,
+            "end": 193,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_57@0",
+            "content": "UNKNOWN, None, 2019, Exploring the limits of transfer learning with a unified text-to-text transformer, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_57",
+            "start": 0,
+            "end": 104,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_58@0",
+            "content": "Andrew Rosenberg, Julia Hirschberg, Vmeasure: A conditional entropy-based external cluster evaluation measure, 2007, Proceedings of the 2007 Joint Conference on Empirical Methods in Natural Language Processing and Computational Natural Language Learning (EMNLP-CoNLL), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_58",
+            "start": 0,
+            "end": 269,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_59@0",
+            "content": "\u00c9tienne Simon, Vincent Guigue, Benjamin Piwowarski, Unsupervised information extraction: Regularizing discriminative approaches with relation distribution losses, 2019, Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_59",
+            "start": 0,
+            "end": 299,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_60@0",
+            "content": "Laurens Van Der Maaten, Geoffrey Hinton, Visualizing data using t-sne, 2008, Journal of machine learning research, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_60",
+            "start": 0,
+            "end": 115,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_61@0",
+            "content": "Thomas Wolf, Lysandre Debut, Victor Sanh, Julien Chaumond, Clement Delangue, Anthony Moi, Pierric Cistac, Tim Rault, Remi Louf, Morgan Funtowicz, Joe Davison, Sam Shleifer, Clara Patrick Von Platen, Yacine Ma, Julien Jernite, Canwen Plu, Teven Xu, Sylvain Scao, Mariama Gugger, Quentin Drame, Alexander Lhoest,  Rush, Transformers: State-of-the-art natural language processing, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing: System Demonstrations, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_61",
+            "start": 0,
+            "end": 536,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_62@0",
+            "content": "Limin Yao, Aria Haghighi, Sebastian Riedel, Andrew Mccallum, Structured relation discovery using generative models, 2011, Proceedings of the 2011 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_62",
+            "start": 0,
+            "end": 210,
+            "label": {}
+        },
+        {
+            "ix": "320-ARR_v2_63@0",
+            "content": "Alexander Yates, Michele Banko, Matthew Broadhead, Michael Cafarella, Oren Etzioni, Stephen Soderland, TextRunner: Open information extraction on the web, 2007, Proceedings of Human Language Technologies: The Annual Conference of the North American Chapter of the Association for Computational Linguistics (NAACL-HLT), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "320-ARR_v2_63",
+            "start": 0,
+            "end": 319,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "320-ARR_v2_0",
+            "tgt_ix": "320-ARR_v2_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_0",
+            "tgt_ix": "320-ARR_v2_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_1",
+            "tgt_ix": "320-ARR_v2_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_1",
+            "tgt_ix": "320-ARR_v2_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_0",
+            "tgt_ix": "320-ARR_v2_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_2",
+            "tgt_ix": "320-ARR_v2_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_4",
+            "tgt_ix": "320-ARR_v2_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_5",
+            "tgt_ix": "320-ARR_v2_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_6",
+            "tgt_ix": "320-ARR_v2_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_7",
+            "tgt_ix": "320-ARR_v2_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_8",
+            "tgt_ix": "320-ARR_v2_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_9",
+            "tgt_ix": "320-ARR_v2_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_3",
+            "tgt_ix": "320-ARR_v2_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_3",
+            "tgt_ix": "320-ARR_v2_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_3",
+            "tgt_ix": "320-ARR_v2_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_3",
+            "tgt_ix": "320-ARR_v2_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_3",
+            "tgt_ix": "320-ARR_v2_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_3",
+            "tgt_ix": "320-ARR_v2_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_3",
+            "tgt_ix": "320-ARR_v2_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_3",
+            "tgt_ix": "320-ARR_v2_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_0",
+            "tgt_ix": "320-ARR_v2_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_10",
+            "tgt_ix": "320-ARR_v2_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_11",
+            "tgt_ix": "320-ARR_v2_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_11",
+            "tgt_ix": "320-ARR_v2_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_11",
+            "tgt_ix": "320-ARR_v2_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_12",
+            "tgt_ix": "320-ARR_v2_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_13",
+            "tgt_ix": "320-ARR_v2_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_13",
+            "tgt_ix": "320-ARR_v2_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_11",
+            "tgt_ix": "320-ARR_v2_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_14",
+            "tgt_ix": "320-ARR_v2_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_16",
+            "tgt_ix": "320-ARR_v2_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_17",
+            "tgt_ix": "320-ARR_v2_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_15",
+            "tgt_ix": "320-ARR_v2_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_15",
+            "tgt_ix": "320-ARR_v2_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_15",
+            "tgt_ix": "320-ARR_v2_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_15",
+            "tgt_ix": "320-ARR_v2_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_11",
+            "tgt_ix": "320-ARR_v2_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_18",
+            "tgt_ix": "320-ARR_v2_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_20",
+            "tgt_ix": "320-ARR_v2_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_21",
+            "tgt_ix": "320-ARR_v2_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_22",
+            "tgt_ix": "320-ARR_v2_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_23",
+            "tgt_ix": "320-ARR_v2_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_19",
+            "tgt_ix": "320-ARR_v2_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_19",
+            "tgt_ix": "320-ARR_v2_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_19",
+            "tgt_ix": "320-ARR_v2_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_19",
+            "tgt_ix": "320-ARR_v2_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_19",
+            "tgt_ix": "320-ARR_v2_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_19",
+            "tgt_ix": "320-ARR_v2_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_0",
+            "tgt_ix": "320-ARR_v2_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_24",
+            "tgt_ix": "320-ARR_v2_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_25",
+            "tgt_ix": "320-ARR_v2_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_25",
+            "tgt_ix": "320-ARR_v2_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_0",
+            "tgt_ix": "320-ARR_v2_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_26",
+            "tgt_ix": "320-ARR_v2_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_28",
+            "tgt_ix": "320-ARR_v2_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_27",
+            "tgt_ix": "320-ARR_v2_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_27",
+            "tgt_ix": "320-ARR_v2_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_27",
+            "tgt_ix": "320-ARR_v2_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_0",
+            "tgt_ix": "320-ARR_v2_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_30",
+            "tgt_ix": "320-ARR_v2_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_30",
+            "tgt_ix": "320-ARR_v2_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_0",
+            "tgt_ix": "320-ARR_v2_32",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_31",
+            "tgt_ix": "320-ARR_v2_32",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_33",
+            "tgt_ix": "320-ARR_v2_34",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_32",
+            "tgt_ix": "320-ARR_v2_33",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_32",
+            "tgt_ix": "320-ARR_v2_34",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_32",
+            "tgt_ix": "320-ARR_v2_33",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_0",
+            "tgt_ix": "320-ARR_v2_35",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_34",
+            "tgt_ix": "320-ARR_v2_35",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_36",
+            "tgt_ix": "320-ARR_v2_37",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_35",
+            "tgt_ix": "320-ARR_v2_36",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_35",
+            "tgt_ix": "320-ARR_v2_37",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_35",
+            "tgt_ix": "320-ARR_v2_36",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_0",
+            "tgt_ix": "320-ARR_v2_38",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_37",
+            "tgt_ix": "320-ARR_v2_38",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_38",
+            "tgt_ix": "320-ARR_v2_39",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_38",
+            "tgt_ix": "320-ARR_v2_39",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_0",
+            "tgt_ix": "320-ARR_v2_40",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_39",
+            "tgt_ix": "320-ARR_v2_40",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_41",
+            "tgt_ix": "320-ARR_v2_42",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_40",
+            "tgt_ix": "320-ARR_v2_41",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_40",
+            "tgt_ix": "320-ARR_v2_42",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_40",
+            "tgt_ix": "320-ARR_v2_41",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_0",
+            "tgt_ix": "320-ARR_v2_43",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_42",
+            "tgt_ix": "320-ARR_v2_43",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_43",
+            "tgt_ix": "320-ARR_v2_44",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_43",
+            "tgt_ix": "320-ARR_v2_44",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "320-ARR_v2_0",
+            "tgt_ix": "320-ARR_v2_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_1",
+            "tgt_ix": "320-ARR_v2_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_2",
+            "tgt_ix": "320-ARR_v2_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_2",
+            "tgt_ix": "320-ARR_v2_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_2",
+            "tgt_ix": "320-ARR_v2_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_2",
+            "tgt_ix": "320-ARR_v2_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_2",
+            "tgt_ix": "320-ARR_v2_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_2",
+            "tgt_ix": "320-ARR_v2_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_2",
+            "tgt_ix": "320-ARR_v2_2@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_3",
+            "tgt_ix": "320-ARR_v2_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_4",
+            "tgt_ix": "320-ARR_v2_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_4",
+            "tgt_ix": "320-ARR_v2_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_4",
+            "tgt_ix": "320-ARR_v2_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_4",
+            "tgt_ix": "320-ARR_v2_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_5",
+            "tgt_ix": "320-ARR_v2_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_6",
+            "tgt_ix": "320-ARR_v2_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_6",
+            "tgt_ix": "320-ARR_v2_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_6",
+            "tgt_ix": "320-ARR_v2_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_6",
+            "tgt_ix": "320-ARR_v2_6@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_6",
+            "tgt_ix": "320-ARR_v2_6@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_6",
+            "tgt_ix": "320-ARR_v2_6@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_7",
+            "tgt_ix": "320-ARR_v2_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_7",
+            "tgt_ix": "320-ARR_v2_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_7",
+            "tgt_ix": "320-ARR_v2_7@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_7",
+            "tgt_ix": "320-ARR_v2_7@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_7",
+            "tgt_ix": "320-ARR_v2_7@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_7",
+            "tgt_ix": "320-ARR_v2_7@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_8",
+            "tgt_ix": "320-ARR_v2_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_8",
+            "tgt_ix": "320-ARR_v2_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_8",
+            "tgt_ix": "320-ARR_v2_8@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_8",
+            "tgt_ix": "320-ARR_v2_8@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_8",
+            "tgt_ix": "320-ARR_v2_8@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_9",
+            "tgt_ix": "320-ARR_v2_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_9",
+            "tgt_ix": "320-ARR_v2_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_10",
+            "tgt_ix": "320-ARR_v2_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_10",
+            "tgt_ix": "320-ARR_v2_10@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_10",
+            "tgt_ix": "320-ARR_v2_10@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_10",
+            "tgt_ix": "320-ARR_v2_10@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_10",
+            "tgt_ix": "320-ARR_v2_10@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_11",
+            "tgt_ix": "320-ARR_v2_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_12",
+            "tgt_ix": "320-ARR_v2_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_12",
+            "tgt_ix": "320-ARR_v2_12@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_12",
+            "tgt_ix": "320-ARR_v2_12@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_13",
+            "tgt_ix": "320-ARR_v2_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_14",
+            "tgt_ix": "320-ARR_v2_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_14",
+            "tgt_ix": "320-ARR_v2_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_14",
+            "tgt_ix": "320-ARR_v2_14@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_14",
+            "tgt_ix": "320-ARR_v2_14@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_14",
+            "tgt_ix": "320-ARR_v2_14@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_15",
+            "tgt_ix": "320-ARR_v2_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_16",
+            "tgt_ix": "320-ARR_v2_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_16",
+            "tgt_ix": "320-ARR_v2_16@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_16",
+            "tgt_ix": "320-ARR_v2_16@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_16",
+            "tgt_ix": "320-ARR_v2_16@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_16",
+            "tgt_ix": "320-ARR_v2_16@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_17",
+            "tgt_ix": "320-ARR_v2_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_18",
+            "tgt_ix": "320-ARR_v2_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_18",
+            "tgt_ix": "320-ARR_v2_18@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_19",
+            "tgt_ix": "320-ARR_v2_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_20",
+            "tgt_ix": "320-ARR_v2_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_20",
+            "tgt_ix": "320-ARR_v2_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_21",
+            "tgt_ix": "320-ARR_v2_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_22",
+            "tgt_ix": "320-ARR_v2_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_22",
+            "tgt_ix": "320-ARR_v2_22@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_22",
+            "tgt_ix": "320-ARR_v2_22@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_23",
+            "tgt_ix": "320-ARR_v2_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_24",
+            "tgt_ix": "320-ARR_v2_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_25",
+            "tgt_ix": "320-ARR_v2_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_26",
+            "tgt_ix": "320-ARR_v2_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_27",
+            "tgt_ix": "320-ARR_v2_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_28",
+            "tgt_ix": "320-ARR_v2_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_29",
+            "tgt_ix": "320-ARR_v2_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_30",
+            "tgt_ix": "320-ARR_v2_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_31",
+            "tgt_ix": "320-ARR_v2_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_31",
+            "tgt_ix": "320-ARR_v2_31@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_32",
+            "tgt_ix": "320-ARR_v2_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_33",
+            "tgt_ix": "320-ARR_v2_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_33",
+            "tgt_ix": "320-ARR_v2_33@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_33",
+            "tgt_ix": "320-ARR_v2_33@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_34",
+            "tgt_ix": "320-ARR_v2_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_34",
+            "tgt_ix": "320-ARR_v2_34@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_34",
+            "tgt_ix": "320-ARR_v2_34@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_34",
+            "tgt_ix": "320-ARR_v2_34@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_35",
+            "tgt_ix": "320-ARR_v2_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_36",
+            "tgt_ix": "320-ARR_v2_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_36",
+            "tgt_ix": "320-ARR_v2_36@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_36",
+            "tgt_ix": "320-ARR_v2_36@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_36",
+            "tgt_ix": "320-ARR_v2_36@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_37",
+            "tgt_ix": "320-ARR_v2_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_38",
+            "tgt_ix": "320-ARR_v2_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_39",
+            "tgt_ix": "320-ARR_v2_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_39",
+            "tgt_ix": "320-ARR_v2_39@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_39",
+            "tgt_ix": "320-ARR_v2_39@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_40",
+            "tgt_ix": "320-ARR_v2_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_41",
+            "tgt_ix": "320-ARR_v2_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_42",
+            "tgt_ix": "320-ARR_v2_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_42",
+            "tgt_ix": "320-ARR_v2_42@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_42",
+            "tgt_ix": "320-ARR_v2_42@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_43",
+            "tgt_ix": "320-ARR_v2_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_44",
+            "tgt_ix": "320-ARR_v2_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_44",
+            "tgt_ix": "320-ARR_v2_44@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_44",
+            "tgt_ix": "320-ARR_v2_44@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_45",
+            "tgt_ix": "320-ARR_v2_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_46",
+            "tgt_ix": "320-ARR_v2_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_47",
+            "tgt_ix": "320-ARR_v2_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_48",
+            "tgt_ix": "320-ARR_v2_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_49",
+            "tgt_ix": "320-ARR_v2_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_50",
+            "tgt_ix": "320-ARR_v2_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_51",
+            "tgt_ix": "320-ARR_v2_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_52",
+            "tgt_ix": "320-ARR_v2_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_53",
+            "tgt_ix": "320-ARR_v2_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_54",
+            "tgt_ix": "320-ARR_v2_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_55",
+            "tgt_ix": "320-ARR_v2_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_56",
+            "tgt_ix": "320-ARR_v2_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_57",
+            "tgt_ix": "320-ARR_v2_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_58",
+            "tgt_ix": "320-ARR_v2_58@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_59",
+            "tgt_ix": "320-ARR_v2_59@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_60",
+            "tgt_ix": "320-ARR_v2_60@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_61",
+            "tgt_ix": "320-ARR_v2_61@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_62",
+            "tgt_ix": "320-ARR_v2_62@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "320-ARR_v2_63",
+            "tgt_ix": "320-ARR_v2_63@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 411,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "doc_id": "320-ARR",
+        "version": 2
+    }
+}

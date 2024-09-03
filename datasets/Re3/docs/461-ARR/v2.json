@@ -1,0 +1,4901 @@
+{
+    "nodes": [
+        {
+            "ix": "461-ARR_v2_0",
+            "content": "Two Birds with One Stone: Unified Model Learning for Both Recall and Ranking in News Recommendation",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_2",
+            "content": "Recall and ranking are two critical steps in personalized news recommendation. Most existing news recommender systems conduct personalized news recall and ranking separately with different models. However, maintaining multiple models leads to high computational cost and poses great challenges to meeting the online latency requirement of news recommender systems. In order to handle this problem, in this paper we propose UniRec, a unified method for recall and ranking in news recommendation. In our method, we first infer user embedding for ranking from the historical news click behaviors of a user using a user encoder model. Then we derive the user embedding for recall from the obtained user embedding for ranking by using it as the attention query to select a set of basis user embeddings which encode different general user interests and synthesize them into a user embedding for recall. The extensive experiments on benchmark dataset demonstrate that our method can improve both efficiency and effectiveness for recall and ranking in news recommendation.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "461-ARR_v2_4",
+            "content": "News recommendation techniques are widely used by many online news websites and Apps to provide personalized news services (Wu et al., 2020b). Recall and ranking are two critical steps in personalized news recommender systems (Karimi et al., 2018;Wu et al., 2021a). As shown in Fig. 1, when a user visits a news platform, the recommender system first recalls a set of candidate news from a large-scale news pool, and then ranks candidate news for personalized news display (Wu et al., 2020b). Both news recall and ranking have been widely studied (Elkahky et al., 2015;Liu et al., 2019Wu et al., 2020a;Wang et al., 2020;Qi et al., 2021a,b,c,d). In online news recommender systems, recall and ranking are usually conducted separately with different models, as shown in Fig. 1. However, maintaining separate models for news recall and ranking in large-scale news recommender systems usually leads to heavy computation and memory cost (Tan et al., 2020), and it may be difficult to meet the latency requirement of online news services. Learning a unified model for personalized news recall and ranking would be greatly beneficial for alleviating the computation load of news recommender systems. However, it is a non-trivial task because the goals of recall and ranking are not the same (Covington et al., 2016;Malkov and Yashunin, 2018). Ranking usually aims to accurately rank candidates based on their relevance to user interests (Wu et al., 2019b;Ge et al., 2020;Wang et al., 2020), while recall mainly aims to form a candidate pool that can comprehensively cover user interests Qi et al., 2021d). Thus, the model needs to adapt to the different goals of recall and ranking without hurting their performance.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_5",
+            "content": "In this paper, we propose a news recommendation method named UniRec, which can learn a unified user model for personalized news recall and ranking. In our method, we first encode news into embeddings with a news encoder, and learn a user embedding for ranking from the embeddings of historical clicked news. We further derive the user embedding for recall by using the user embedding for ranking as the attention query to select a set of basis user embeddings that encode different general user interest aspects and synthesize them into a user embedding for recall. In the test phase, we only use the basis user embeddings with top attention weights to compose the user embedding for recall to filter noisy user interests. Extensive experiments on a real-world dataset demonstrate that our method can conduct personalized news recall and ranking with a unified model and meanwhile achieve promising recall and ranking performance.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_6",
+            "content": "Methodology",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "461-ARR_v2_7",
+            "content": "The overall framework of UniRec is shown in Fig. 2. We first learn a user embedding for ranking from the user's historical clicked news. We then derive a user embedding for recall from the user embedding for ranking and a set of basis user embeddings that encode different general interests. Their details are introduced as follows.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_8",
+            "content": "Ranking for News Recommendation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1"
+            }
+        },
+        {
+            "ix": "461-ARR_v2_9",
+            "content": "The ranking part aims to rank candidate news in a small candidate list according to user interests. Following (Wu et al., 2020b), UniRec uses a news encoder that learns news embeddings from news texts and a user encoder that learns user interest embedding for ranking from the embeddings of clicked news. The candidate news embedding and user embedding for ranking are used to compute a click score for personalized news ranking. More specifically, we denote a user u has N historical clicked news [D 1 , D 2 , ..., D N ]. These clicked news are encoded into a sequence of news embeddings, which is denoted as [r 1 , r 2 , ..., r N ]. The user encoder further takes this sequence as input, and outputs a user embedding u ra for ranking. For a candidate news D c i , we use the news encoder to obtain its embedding r c i . We follow (Okura et al., 2017) to compute the probability score of the user u clicking on the candidate news D c i via inner product, i.e., \u0177i ra = u ra \u2022 r c i . The click scores of the news in a candidate list are used for personalized ranking. Following (Wu et al., 2019c), we use multi-head self-attention networks in both news and user encoders to capture the contexts of words and click behaviors, respectively. In addition, following (Devlin et al., 2019) we add position embeddings to capture the orders of words and behaviors.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_10",
+            "content": "Recall for News Recommendation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2"
+            }
+        },
+        {
+            "ix": "461-ARR_v2_11",
+            "content": "The recall part aims to select candidate news from a large news pool based on their relevance to user interests. To efficiently exploit user interest information for personalized news recall, we take the user embedding for ranking as input instead of rebuilding user interest representations from original user click behaviors. However, since the goals of ranking and recall are not the same (Kang and McAuley, 2019), the user embedding for ranking may not be suitable for news recall. Thus, we propose a method to distill a user embedding for recall from the user embedding for ranking. More specifically, we maintain a basis user embedding memory that encodes different general user interest aspects. We denote the M basis user embeddings in the memory as [v 1 , v 2 , ..., v M ]. We use the user embedding for ranking as the attention query to select basis user embeddings. We denote the attention weight of the i-th basis user embedding as \u03b1 i , which is computed as:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_12",
+            "content": "\u03b1 i = exp(u ra \u2022 w i ) M j=1 exp(u ra \u2022 w j ) ,(1)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_13",
+            "content": "where the parameters w i are served as the attention keys. Different from additive attention (Yang et al., 2016) where the attention keys and values are equivalent, in our approach the keys (i.e., w i ) are different from the values (i.e., v i ). This is because we expect the basis user embeddings to have different spaces with the user embeddings for ranking to better adapt to the recall task. The basis user embeddings are further synthesized into a unified user embedding u re for recall by u re = M i=1 \u03b1 i v i . We use a news encoder that is shared with the ranking part to obtain the embedding r c of each candidate news D c in the news pool. The final recall relevance score \u0177re between user interest and candidate news is computed by \u0177re = u re \u2022 r c .",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_14",
+            "content": "Model Training",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3"
+            }
+        },
+        {
+            "ix": "461-ARR_v2_15",
+            "content": "Then we introduce the model training details of UniRec. We use a two-stage model training strategy to first learn the ranking part and then learn the recall part. Following prior works (Huang et al., 2013;Wu et al., 2019b,c), we use negative sampling techniques to construct samples for contrastive model learning (Oord et al., 2018). For learning the ranking part, we use clicked news in each impression as positive samples, and we randomly sample K non-clicked news that are displayed in the same impression as negative samples. The loss function is formulated as follows:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_16",
+            "content": "L ra = \u2212 log exp(\u0177 + ra ) exp(\u0177 + ra ) + K i=1 exp(\u0177 i\u2212 ra ) ,(2)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_17",
+            "content": "where \u0177+ ra and \u0177i\u2212 ra denote the predicted click scores of a positive sample and the corresponding i-th negative sample, respectively. By optimizing this loss function, the parameters of news and user encoders can be tuned. Motivated by (Ying et al., 2018), we fix the news encoder after the ranking model converges. Then, to learn the recall part, we also use clicked news of each user as positive samples, while we randomly select T non-clicked news from the entire news set as negative samples, which aims to simulate the news recall scenario. The loss function for recall part training is as follows:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_18",
+            "content": "L re = \u2212 log exp(\u0177 + re ) exp(\u0177 + re ) + T i=1 exp(\u0177 i\u2212 re ) ,(3)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_19",
+            "content": "where \u0177+ re and \u0177i\u2212 re represent the predicted recall relevance scores of a positive sample and the corresponding i-th negative sample, respectively.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_20",
+            "content": "However, not all basis user embeddings are relevant to the interests of a user. Thus, motivated by Principal Component Analysis (PCA), in the test phase we propose to only use the top P basis user embeddings with the highest attention weights to compose the user embedding for recall. We denote these basis user embeddings as",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_21",
+            "content": "[v t 1 , v t 2 , ..., v t P ].",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_22",
+            "content": "We re-normalize their attention weights as follows:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_23",
+            "content": "\u03b1 t i = exp(\u03b1 t i ) P j=1 exp(\u03b1 t j ) . (4",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_24",
+            "content": ")",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_25",
+            "content": "The user embedding u re for recall is built by u re = P i=1 \u03b1 t i v t i , which can attend more to the major interests of a user and filter noisy basis user embeddings for better news recall.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_26",
+            "content": "Complexity Analysis",
+            "ntype": "title",
+            "meta": {
+                "section": "2.4"
+            }
+        },
+        {
+            "ix": "461-ARR_v2_27",
+            "content": "We provide some discussions on the computational complexity. In existing news recommendation methods that conduct recall and ranking with separate models, the computational complexity of learning user embeddings for recall and ranking are both O(N ) at least, because they need to encode the entire user behavior sequence. UniRec has the same complexity in learning the user embedding for ranking, but the complexity of deriving the user embedding for recall is reduced to O(M ), where M is usually much smaller than N . In addition, the attention network used for synthesizing the user embedding for recall may also be lighter-weight than the user encoder. Thus, the total computational complexity can be effectively reduced.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_28",
+            "content": "Experiments",
+            "ntype": "title",
+            "meta": {
+                "section": "3"
+            }
+        },
+        {
+            "ix": "461-ARR_v2_29",
+            "content": "Dataset and Experimental Settings",
+            "ntype": "title",
+            "meta": {
+                "section": "3.1"
+            }
+        },
+        {
+            "ix": "461-ARR_v2_30",
+            "content": "We conduct experiments on a large-scale public dataset named MIND (Wu et al., 2020b) In our experiments, following (Wu et al., 2020b) we use news titles to learn news embeddings. The number of basis user embeddings is 20, and they are randomly initialized. The hyperparameter P that controls the number of basis user embeddings for composing the user embedding for recall in the test phase is 5. The number of negative samples associated with each positive one is 4 and 200 for the ranking and recall tasks, respectively. Adam (Bengio and LeCun, 2015) is used as the optimizer. The batch size is 32. These hyperparamters are selected on the validation set. Following (Wu et al., 2020b), we use AUC, MRR, nDCG@5 and nDCG@10 to evaluate news ranking performance. In addition, we use recall rate of the top 100, 200, 500 and 1000 ranked news to evaluate news recall performance. We repeat every experiment 5 times.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_31",
+            "content": "Performance Evaluation",
+            "ntype": "title",
+            "meta": {
+                "section": "3.2"
+            }
+        },
+        {
+            "ix": "461-ARR_v2_32",
+            "content": "We first compare the ranking performance of UniRec with several baseline methods, including:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_33",
+            "content": "(1) EBNR (Okura et al., 2017), GRU (Cho et al., 2014) network for user interest modeling in news recommendation; (2) DKN (Wang et al., 2018), deep knowledge network for news recommendation; (3) NPA (Wu et al., 2019b), news recommendation with personalized attention; (4) NAML (Wu et al., 2019a), news recommendation with attentive multi-view learning; (5) NRMS (Wu et al., 2019c), news recommendation with multi-head self-attention. The ranking performance of different methods is shown in Table 2. We find that UniRec outperforms several compared baseline methods like NAML and NPA. This may be because self-attention has stronger ability in modeling news and user interests. In addition, UniRec also slightly outperforms its basic model NRMS. This is because UniRec can capture the orders of words and behaviors via position embedding.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_34",
+            "content": "In the news recall task, we compare UniRec with top basis user embeddings (denoted as UniRec(top)) with the following baseline methods:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_35",
+            "content": "(1) YoutubeNet (Covington et al., 2016), using the average of clicked news embeddings for recall; (2) Pinnersage (Pal et al., 2020), an item recall method based on hierarchical clustering; (3) Octopus , learning elastic number of user embeddings for item recall; (4) UniRec(all), a variant of UniRec that uses all basis user embeddings to compose the user embedding for recall. We show the recall performance of different methods in Table 3. We find YoutubeNet is less performant than other recall methods. This may be because different user behaviors may have different importance in user interest modeling and simply average their embeddings may be suboptimal. In addition, both UniRec(top) and UniRec(all) outperform other baseline methods. This is because our approach can exploit the user interest information inferred from the ranking module to enhance news recall. In addition, our approach is a unified model for both recall and ranking, which has better efficiency in online systems than other methods. Besides, UniRec(top) outperforms its variant UniRec(all). It may be because selecting the basis user embeddings with top attention weights can learn accurate user interest embeddings by attending to major user interests and filtering noisy ones. The above results validate the effectiveness of our method in both news ranking and recall.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_36",
+            "content": "Case Study",
+            "ntype": "title",
+            "meta": {
+                "section": "3.3"
+            }
+        },
+        {
+            "ix": "461-ARR_v2_37",
+            "content": "We verify the effectiveness of UniRec in news recall via several case studies. Fig. 3 shows the clicked news of a random user and several top news recalled by UniRec. From the user's clicked news, we can infer that this user may be interested in finance, sports and TV shows. We find the recall result of UniRec covers user interest categories of clicked news, but also keeps some diversity with them. It shows that UniRec can generate accurate and diverse personalized news recall results.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_38",
+            "content": "Hyperparameter Analysis",
+            "ntype": "title",
+            "meta": {
+                "section": "3.4"
+            }
+        },
+        {
+            "ix": "461-ARR_v2_39",
+            "content": "Finally, we study the influence of two important hyperparameters in our UniRec method, including the total number M of basis user embeddings and the number P of basis user embeddings for composing the user embeddings for recall. We first set P = M and tune the value of M . The recall performance is shown in Fig. 4. We find the performance is suboptimal when M is too small, which may be due to the diverse user interests cannot be covered by a few basis user embeddings. However, the performance also descends when M is large.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_40",
+            "content": "This may be because it is difficult to accurately select informative basis user embeddings for user interest modeling. In addition, the computation and memory costs also increase. Thus, we set M to a medium value (i.e., 20) that yields the best performance. We then tune the value of P under M = 20. The results are shown in Fig. 5. We find the performance is suboptimal when P is very small. This is intuitive because the user interests cannot be fully covered. However, the performance also declines when P is relatively large. This may be because basis user embeddings with relatively low attention weights are redundant or even noisy for user interest modeling. Thus, we choose to use 5 basis user embeddings to compose the user embedding for recall.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_41",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "461-ARR_v2_42",
+            "content": "In this paper, we present a unified approach for recall and ranking in news recommendation. In our method, we first infer a user embedding for ranking from historical news click behaviors via a user encoder model. Then we derive a user embedding for recall from the obtained user embedding for ranking by regarding it as attention query to select a set of basis user embeddings that encode different general user interests. Extensive experiments on a benchmark dataset validate the effectiveness of our approach in both news ranking and recall.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "461-ARR_v2_43",
+            "content": "UNKNOWN, None, 2015, Adam: A method for stochastic optimization, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": null,
+                "title": null,
+                "pub_date": "2015",
+                "pub_title": "Adam: A method for stochastic optimization",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_44",
+            "content": "Kyunghyun Cho, Bart Van Merri\u00ebnboer, Caglar Gulcehre, Dzmitry Bahdanau, Fethi Bougares, Holger Schwenk, Yoshua Bengio, Learning phrase representations using rnn encoder-decoder for statistical machine translation, 2014, EMNLP, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": [
+                    "Kyunghyun Cho",
+                    "Bart Van Merri\u00ebnboer",
+                    "Caglar Gulcehre",
+                    "Dzmitry Bahdanau",
+                    "Fethi Bougares",
+                    "Holger Schwenk",
+                    "Yoshua Bengio"
+                ],
+                "title": "Learning phrase representations using rnn encoder-decoder for statistical machine translation",
+                "pub_date": "2014",
+                "pub_title": "EMNLP",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_45",
+            "content": "UNKNOWN, None, 2016, Deep neural networks for youtube recommendations, ACM.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": null,
+                "title": null,
+                "pub_date": "2016",
+                "pub_title": "Deep neural networks for youtube recommendations",
+                "pub": "ACM"
+            }
+        },
+        {
+            "ix": "461-ARR_v2_46",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, Bert: Pre-training of deep bidirectional transformers for language understanding, 2019, NAACL-HLT, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": [
+                    "Jacob Devlin",
+                    "Ming-Wei Chang",
+                    "Kenton Lee",
+                    "Kristina Toutanova"
+                ],
+                "title": "Bert: Pre-training of deep bidirectional transformers for language understanding",
+                "pub_date": "2019",
+                "pub_title": "NAACL-HLT",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_47",
+            "content": "Ali Mamdouh Elkahky, Yang Song, Xiaodong He, A multi-view deep learning approach for cross domain user modeling in recommendation systems, 2015, WWW, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": [
+                    "Ali Mamdouh Elkahky",
+                    "Yang Song",
+                    "Xiaodong He"
+                ],
+                "title": "A multi-view deep learning approach for cross domain user modeling in recommendation systems",
+                "pub_date": "2015",
+                "pub_title": "WWW",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_48",
+            "content": "Chuhan Suyu Ge, Fangzhao Wu, Tao Wu, Yongfeng Qi,  Huang, Graph enhanced representation learning for news recommendation, 2020, WWW, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "Chuhan Suyu Ge",
+                    "Fangzhao Wu",
+                    "Tao Wu",
+                    "Yongfeng Qi",
+                    " Huang"
+                ],
+                "title": "Graph enhanced representation learning for news recommendation",
+                "pub_date": "2020",
+                "pub_title": "WWW",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_49",
+            "content": "Po-Sen Huang, Xiaodong He, Jianfeng Gao, Li Deng, Alex Acero, Larry Heck, Learning deep structured semantic models for web search using clickthrough data, 2013, CIKM, ACM.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": [
+                    "Po-Sen Huang",
+                    "Xiaodong He",
+                    "Jianfeng Gao",
+                    "Li Deng",
+                    "Alex Acero",
+                    "Larry Heck"
+                ],
+                "title": "Learning deep structured semantic models for web search using clickthrough data",
+                "pub_date": "2013",
+                "pub_title": "CIKM",
+                "pub": "ACM"
+            }
+        },
+        {
+            "ix": "461-ARR_v2_50",
+            "content": "Wang-Cheng Kang, Julian Mcauley, Candidate generation with binary codes for large-scale top-n recommendation, 2019, CIKM, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": [
+                    "Wang-Cheng Kang",
+                    "Julian Mcauley"
+                ],
+                "title": "Candidate generation with binary codes for large-scale top-n recommendation",
+                "pub_date": "2019",
+                "pub_title": "CIKM",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_51",
+            "content": "Mozhgan Karimi, Dietmar Jannach, Michael Jugovac, News recommender systems-survey and roads ahead, 2018, Information Processing & Management, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": [
+                    "Mozhgan Karimi",
+                    "Dietmar Jannach",
+                    "Michael Jugovac"
+                ],
+                "title": "News recommender systems-survey and roads ahead",
+                "pub_date": "2018",
+                "pub_title": "Information Processing & Management",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_52",
+            "content": "Zheng Liu, Jianxun Lian, Junhan Yang, Defu Lian, Xing Xie, Octopus: Comprehensive and elastic user representation for the generation of recommendation candidates, 2020, SIGIR, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    "Zheng Liu",
+                    "Jianxun Lian",
+                    "Junhan Yang",
+                    "Defu Lian",
+                    "Xing Xie"
+                ],
+                "title": "Octopus: Comprehensive and elastic user representation for the generation of recommendation candidates",
+                "pub_date": "2020",
+                "pub_title": "SIGIR",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_53",
+            "content": "Zheng Liu, Yu Xing, Fangzhao Wu, Mingxiao An, Xing Xie, Hi-fi ark: Deep user representation via high-fidelity archive network, 2019, IJCAI, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": [
+                    "Zheng Liu",
+                    "Yu Xing",
+                    "Fangzhao Wu",
+                    "Mingxiao An",
+                    "Xing Xie"
+                ],
+                "title": "Hi-fi ark: Deep user representation via high-fidelity archive network",
+                "pub_date": "2019",
+                "pub_title": "IJCAI",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_54",
+            "content": "A Yu,  Malkov,  Dmitry A Yashunin, Efficient and robust approximate nearest neighbor search using hierarchical navigable small world graphs, 2018, TPAMI, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": [
+                    "A Yu",
+                    " Malkov",
+                    " Dmitry A Yashunin"
+                ],
+                "title": "Efficient and robust approximate nearest neighbor search using hierarchical navigable small world graphs",
+                "pub_date": "2018",
+                "pub_title": "TPAMI",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_55",
+            "content": "Shumpei Okura, Yukihiro Tagami, Shingo Ono, Akira Tajima, Embedding-based news recommendation for millions of users, 2017, KDD, ACM.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": [
+                    "Shumpei Okura",
+                    "Yukihiro Tagami",
+                    "Shingo Ono",
+                    "Akira Tajima"
+                ],
+                "title": "Embedding-based news recommendation for millions of users",
+                "pub_date": "2017",
+                "pub_title": "KDD",
+                "pub": "ACM"
+            }
+        },
+        {
+            "ix": "461-ARR_v2_56",
+            "content": "UNKNOWN, None, 2018, Representation learning with contrastive predictive coding, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": null,
+                "title": null,
+                "pub_date": "2018",
+                "pub_title": "Representation learning with contrastive predictive coding",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_57",
+            "content": "Aditya Pal, Chantat Eksombatchai, Yitong Zhou, Bo Zhao, Charles Rosenberg, Jure Leskovec, Pinnersage: Multi-modal user embedding framework for recommendations at pinterest, 2020, KDD, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": [
+                    "Aditya Pal",
+                    "Chantat Eksombatchai",
+                    "Yitong Zhou",
+                    "Bo Zhao",
+                    "Charles Rosenberg",
+                    "Jure Leskovec"
+                ],
+                "title": "Pinnersage: Multi-modal user embedding framework for recommendations at pinterest",
+                "pub_date": "2020",
+                "pub_title": "KDD",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_58",
+            "content": "Tao Qi, Fangzhao Wu, Chuhan Wu, Yongfeng Huang, Personalized news recommendation with knowledge-aware interactive matching, 2021, SI-GIR, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b15",
+                "authors": [
+                    "Tao Qi",
+                    "Fangzhao Wu",
+                    "Chuhan Wu",
+                    "Yongfeng Huang"
+                ],
+                "title": "Personalized news recommendation with knowledge-aware interactive matching",
+                "pub_date": "2021",
+                "pub_title": "SI-GIR",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_59",
+            "content": "Tao Qi, Fangzhao Wu, Chuhan Wu, Yongfeng Huang, Pp-rec: News recommendation with personalized user interest and time-aware news popularity, 2021, ACL, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b16",
+                "authors": [
+                    "Tao Qi",
+                    "Fangzhao Wu",
+                    "Chuhan Wu",
+                    "Yongfeng Huang"
+                ],
+                "title": "Pp-rec: News recommendation with personalized user interest and time-aware news popularity",
+                "pub_date": "2021",
+                "pub_title": "ACL",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_60",
+            "content": "Tao Qi, Fangzhao Wu, Chuhan Wu, Yongfeng Huang, Xing Xie, Uni-fedrec: A unified privacypreserving news recommendation framework for model training and online serving, 2021, EMNLP Findings, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b17",
+                "authors": [
+                    "Tao Qi",
+                    "Fangzhao Wu",
+                    "Chuhan Wu",
+                    "Yongfeng Huang",
+                    "Xing Xie"
+                ],
+                "title": "Uni-fedrec: A unified privacypreserving news recommendation framework for model training and online serving",
+                "pub_date": "2021",
+                "pub_title": "EMNLP Findings",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_61",
+            "content": "Tao Qi, Fangzhao Wu, Chuhan Wu, Peiru Yang, Yang Yu, Xing Xie, Yongfeng Huang, Hierec: Hierarchical user interest modeling for personalized news recommendation, 2021, ACL, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b18",
+                "authors": [
+                    "Tao Qi",
+                    "Fangzhao Wu",
+                    "Chuhan Wu",
+                    "Peiru Yang",
+                    "Yang Yu",
+                    "Xing Xie",
+                    "Yongfeng Huang"
+                ],
+                "title": "Hierec: Hierarchical user interest modeling for personalized news recommendation",
+                "pub_date": "2021",
+                "pub_title": "ACL",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_62",
+            "content": "Qiaoyu Tan, Ninghao Liu, Xing Zhao, Hongxia Yang, Jingren Zhou, Xia Hu, Learning to hash with graph neural networks for recommender systems, 2020, WWW, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b19",
+                "authors": [
+                    "Qiaoyu Tan",
+                    "Ninghao Liu",
+                    "Xing Zhao",
+                    "Hongxia Yang",
+                    "Jingren Zhou",
+                    "Xia Hu"
+                ],
+                "title": "Learning to hash with graph neural networks for recommender systems",
+                "pub_date": "2020",
+                "pub_title": "WWW",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_63",
+            "content": "Heyuan Wang, Fangzhao Wu, Zheng Liu, Xing Xie, 2020. Fine-grained interest matching for neural news recommendation, , ACL, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b20",
+                "authors": [
+                    "Heyuan Wang",
+                    "Fangzhao Wu",
+                    "Zheng Liu",
+                    "Xing Xie"
+                ],
+                "title": "2020. Fine-grained interest matching for neural news recommendation",
+                "pub_date": null,
+                "pub_title": "ACL",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_64",
+            "content": "Hongwei Wang, Fuzheng Zhang, Xing Xie, Minyi Guo, Dkn: Deep knowledge-aware network for news recommendation, 2018, WWW, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b21",
+                "authors": [
+                    "Hongwei Wang",
+                    "Fuzheng Zhang",
+                    "Xing Xie",
+                    "Minyi Guo"
+                ],
+                "title": "Dkn: Deep knowledge-aware network for news recommendation",
+                "pub_date": "2018",
+                "pub_title": "WWW",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_65",
+            "content": "Chuhan Wu, Fangzhao Wu, Mingxiao An, Jianqiang Huang, Yongfeng Huang, Xing Xie, Neural news recommendation with attentive multi-view learning, 2019, IJCAI, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b22",
+                "authors": [
+                    "Chuhan Wu",
+                    "Fangzhao Wu",
+                    "Mingxiao An",
+                    "Jianqiang Huang",
+                    "Yongfeng Huang",
+                    "Xing Xie"
+                ],
+                "title": "Neural news recommendation with attentive multi-view learning",
+                "pub_date": "2019",
+                "pub_title": "IJCAI",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_66",
+            "content": "Chuhan Wu, Fangzhao Wu, Mingxiao An, Jianqiang Huang, Yongfeng Huang, Xing Xie, Npa: Neural news recommendation with personalized attention, 2019, KDD, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b23",
+                "authors": [
+                    "Chuhan Wu",
+                    "Fangzhao Wu",
+                    "Mingxiao An",
+                    "Jianqiang Huang",
+                    "Yongfeng Huang",
+                    "Xing Xie"
+                ],
+                "title": "Npa: Neural news recommendation with personalized attention",
+                "pub_date": "2019",
+                "pub_title": "KDD",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_67",
+            "content": "Chuhan Wu, Fangzhao Wu, Suyu Ge, Tao Qi, Yongfeng Huang, Xing Xie, Neural news recommendation with multi-head self-attention, 2019, EMNLP, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b24",
+                "authors": [
+                    "Chuhan Wu",
+                    "Fangzhao Wu",
+                    "Suyu Ge",
+                    "Tao Qi",
+                    "Yongfeng Huang",
+                    "Xing Xie"
+                ],
+                "title": "Neural news recommendation with multi-head self-attention",
+                "pub_date": "2019",
+                "pub_title": "EMNLP",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_68",
+            "content": "UNKNOWN, None, , Yongfeng Huang, and Xing Xie. 2021a. Personalized news recommendation: A survey, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b25",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": "Yongfeng Huang, and Xing Xie. 2021a. Personalized news recommendation: A survey",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_69",
+            "content": "Chuhan Wu, Fangzhao Wu, Yongfeng Huang, Xing Xie, User-as-graph: User modeling with heterogeneous graph pooling for news recommendation, 2021, IJCAI, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b26",
+                "authors": [
+                    "Chuhan Wu",
+                    "Fangzhao Wu",
+                    "Yongfeng Huang",
+                    "Xing Xie"
+                ],
+                "title": "User-as-graph: User modeling with heterogeneous graph pooling for news recommendation",
+                "pub_date": "2021",
+                "pub_title": "IJCAI",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_70",
+            "content": "Chuhan Wu, Fangzhao Wu, Tao Qi, Yongfeng Huang, User modeling with click preference and reading satisfaction for news recommendation, 2020, IJCAI, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b27",
+                "authors": [
+                    "Chuhan Wu",
+                    "Fangzhao Wu",
+                    "Tao Qi",
+                    "Yongfeng Huang"
+                ],
+                "title": "User modeling with click preference and reading satisfaction for news recommendation",
+                "pub_date": "2020",
+                "pub_title": "IJCAI",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_71",
+            "content": "UNKNOWN, None, 2021, Feedrec: News feed recommendation with various user feedbacks, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b28",
+                "authors": null,
+                "title": null,
+                "pub_date": "2021",
+                "pub_title": "Feedrec: News feed recommendation with various user feedbacks",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_72",
+            "content": "Fangzhao Wu, Ying Qiao, Jiun-Hung Chen, Chuhan Wu, Tao Qi, Jianxun Lian, Danyang Liu, Xing Xie, Jianfeng Gao, Winnie Wu, Mind: A large-scale dataset for news recommendation, 2020, ACL, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b29",
+                "authors": [
+                    "Fangzhao Wu",
+                    "Ying Qiao",
+                    "Jiun-Hung Chen",
+                    "Chuhan Wu",
+                    "Tao Qi",
+                    "Jianxun Lian",
+                    "Danyang Liu",
+                    "Xing Xie",
+                    "Jianfeng Gao",
+                    "Winnie Wu"
+                ],
+                "title": "Mind: A large-scale dataset for news recommendation",
+                "pub_date": "2020",
+                "pub_title": "ACL",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_73",
+            "content": "Zichao Yang, Diyi Yang, Chris Dyer, Xiaodong He, Alex Smola, Eduard Hovy, Hierarchical attention networks for document classification, 2016, NAACL-HLT, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b30",
+                "authors": [
+                    "Zichao Yang",
+                    "Diyi Yang",
+                    "Chris Dyer",
+                    "Xiaodong He",
+                    "Alex Smola",
+                    "Eduard Hovy"
+                ],
+                "title": "Hierarchical attention networks for document classification",
+                "pub_date": "2016",
+                "pub_title": "NAACL-HLT",
+                "pub": null
+            }
+        },
+        {
+            "ix": "461-ARR_v2_74",
+            "content": "Rex Ying, Ruining He, Kaifeng Chen, Pong Eksombatchai, L William, Jure Hamilton,  Leskovec, Graph convolutional neural networks for web-scale recommender systems, 2018, In KDD, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b31",
+                "authors": [
+                    "Rex Ying",
+                    "Ruining He",
+                    "Kaifeng Chen",
+                    "Pong Eksombatchai",
+                    "L William",
+                    "Jure Hamilton",
+                    " Leskovec"
+                ],
+                "title": "Graph convolutional neural networks for web-scale recommender systems",
+                "pub_date": "2018",
+                "pub_title": "In KDD",
+                "pub": null
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "461-ARR_v2_0@0",
+            "content": "Two Birds with One Stone: Unified Model Learning for Both Recall and Ranking in News Recommendation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_0",
+            "start": 0,
+            "end": 98,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_2@0",
+            "content": "Recall and ranking are two critical steps in personalized news recommendation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_2",
+            "start": 0,
+            "end": 77,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_2@1",
+            "content": "Most existing news recommender systems conduct personalized news recall and ranking separately with different models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_2",
+            "start": 79,
+            "end": 195,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_2@2",
+            "content": "However, maintaining multiple models leads to high computational cost and poses great challenges to meeting the online latency requirement of news recommender systems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_2",
+            "start": 197,
+            "end": 363,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_2@3",
+            "content": "In order to handle this problem, in this paper we propose UniRec, a unified method for recall and ranking in news recommendation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_2",
+            "start": 365,
+            "end": 493,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_2@4",
+            "content": "In our method, we first infer user embedding for ranking from the historical news click behaviors of a user using a user encoder model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_2",
+            "start": 495,
+            "end": 629,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_2@5",
+            "content": "Then we derive the user embedding for recall from the obtained user embedding for ranking by using it as the attention query to select a set of basis user embeddings which encode different general user interests and synthesize them into a user embedding for recall.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_2",
+            "start": 631,
+            "end": 895,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_2@6",
+            "content": "The extensive experiments on benchmark dataset demonstrate that our method can improve both efficiency and effectiveness for recall and ranking in news recommendation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_2",
+            "start": 897,
+            "end": 1063,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_4@0",
+            "content": "News recommendation techniques are widely used by many online news websites and Apps to provide personalized news services (Wu et al., 2020b).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_4",
+            "start": 0,
+            "end": 141,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_4@1",
+            "content": "Recall and ranking are two critical steps in personalized news recommender systems (Karimi et al., 2018;Wu et al., 2021a).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_4",
+            "start": 143,
+            "end": 264,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_4@2",
+            "content": "As shown in Fig. 1, when a user visits a news platform, the recommender system first recalls a set of candidate news from a large-scale news pool, and then ranks candidate news for personalized news display (Wu et al., 2020b).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_4",
+            "start": 266,
+            "end": 491,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_4@3",
+            "content": "Both news recall and ranking have been widely studied (Elkahky et al., 2015;Liu et al., 2019Wu et al., 2020a;Wang et al., 2020;Qi et al., 2021a,b,c,d).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_4",
+            "start": 493,
+            "end": 643,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_4@4",
+            "content": "In online news recommender systems, recall and ranking are usually conducted separately with different models, as shown in Fig. 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_4",
+            "start": 645,
+            "end": 774,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_4@5",
+            "content": "However, maintaining separate models for news recall and ranking in large-scale news recommender systems usually leads to heavy computation and memory cost (Tan et al., 2020), and it may be difficult to meet the latency requirement of online news services.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_4",
+            "start": 776,
+            "end": 1031,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_4@6",
+            "content": "Learning a unified model for personalized news recall and ranking would be greatly beneficial for alleviating the computation load of news recommender systems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_4",
+            "start": 1033,
+            "end": 1191,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_4@7",
+            "content": "However, it is a non-trivial task because the goals of recall and ranking are not the same (Covington et al., 2016;Malkov and Yashunin, 2018).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_4",
+            "start": 1193,
+            "end": 1334,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_4@8",
+            "content": "Ranking usually aims to accurately rank candidates based on their relevance to user interests (Wu et al., 2019b;Ge et al., 2020;Wang et al., 2020), while recall mainly aims to form a candidate pool that can comprehensively cover user interests Qi et al., 2021d).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_4",
+            "start": 1336,
+            "end": 1597,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_4@9",
+            "content": "Thus, the model needs to adapt to the different goals of recall and ranking without hurting their performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_4",
+            "start": 1599,
+            "end": 1708,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_5@0",
+            "content": "In this paper, we propose a news recommendation method named UniRec, which can learn a unified user model for personalized news recall and ranking.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_5",
+            "start": 0,
+            "end": 146,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_5@1",
+            "content": "In our method, we first encode news into embeddings with a news encoder, and learn a user embedding for ranking from the embeddings of historical clicked news.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_5",
+            "start": 148,
+            "end": 306,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_5@2",
+            "content": "We further derive the user embedding for recall by using the user embedding for ranking as the attention query to select a set of basis user embeddings that encode different general user interest aspects and synthesize them into a user embedding for recall.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_5",
+            "start": 308,
+            "end": 564,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_5@3",
+            "content": "In the test phase, we only use the basis user embeddings with top attention weights to compose the user embedding for recall to filter noisy user interests.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_5",
+            "start": 566,
+            "end": 721,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_5@4",
+            "content": "Extensive experiments on a real-world dataset demonstrate that our method can conduct personalized news recall and ranking with a unified model and meanwhile achieve promising recall and ranking performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_5",
+            "start": 723,
+            "end": 929,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_6@0",
+            "content": "Methodology",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_6",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_7@0",
+            "content": "The overall framework of UniRec is shown in Fig. 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_7",
+            "start": 0,
+            "end": 50,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_7@1",
+            "content": "We first learn a user embedding for ranking from the user's historical clicked news.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_7",
+            "start": 52,
+            "end": 135,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_7@2",
+            "content": "We then derive a user embedding for recall from the user embedding for ranking and a set of basis user embeddings that encode different general interests.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_7",
+            "start": 137,
+            "end": 290,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_7@3",
+            "content": "Their details are introduced as follows.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_7",
+            "start": 292,
+            "end": 331,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_8@0",
+            "content": "Ranking for News Recommendation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_8",
+            "start": 0,
+            "end": 30,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_9@0",
+            "content": "The ranking part aims to rank candidate news in a small candidate list according to user interests.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_9",
+            "start": 0,
+            "end": 98,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_9@1",
+            "content": "Following (Wu et al., 2020b), UniRec uses a news encoder that learns news embeddings from news texts and a user encoder that learns user interest embedding for ranking from the embeddings of clicked news.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_9",
+            "start": 100,
+            "end": 303,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_9@2",
+            "content": "The candidate news embedding and user embedding for ranking are used to compute a click score for personalized news ranking.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_9",
+            "start": 305,
+            "end": 428,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_9@3",
+            "content": "More specifically, we denote a user u has N historical clicked news [D 1 , D 2 , ..., D N ].",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_9",
+            "start": 430,
+            "end": 521,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_9@4",
+            "content": "These clicked news are encoded into a sequence of news embeddings, which is denoted as [r 1 , r 2 , ..., r N ].",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_9",
+            "start": 523,
+            "end": 633,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_9@5",
+            "content": "The user encoder further takes this sequence as input, and outputs a user embedding u ra for ranking.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_9",
+            "start": 635,
+            "end": 735,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_9@6",
+            "content": "For a candidate news D c i , we use the news encoder to obtain its embedding r c i .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_9",
+            "start": 737,
+            "end": 820,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_9@7",
+            "content": "We follow (Okura et al., 2017) to compute the probability score of the user u clicking on the candidate news D c i via inner product, i.e., \u0177i ra = u ra \u2022 r c i .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_9",
+            "start": 822,
+            "end": 983,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_9@8",
+            "content": "The click scores of the news in a candidate list are used for personalized ranking.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_9",
+            "start": 985,
+            "end": 1067,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_9@9",
+            "content": "Following (Wu et al., 2019c), we use multi-head self-attention networks in both news and user encoders to capture the contexts of words and click behaviors, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_9",
+            "start": 1069,
+            "end": 1238,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_9@10",
+            "content": "In addition, following (Devlin et al., 2019) we add position embeddings to capture the orders of words and behaviors.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_9",
+            "start": 1240,
+            "end": 1356,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_10@0",
+            "content": "Recall for News Recommendation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_10",
+            "start": 0,
+            "end": 29,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_11@0",
+            "content": "The recall part aims to select candidate news from a large news pool based on their relevance to user interests.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_11",
+            "start": 0,
+            "end": 111,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_11@1",
+            "content": "To efficiently exploit user interest information for personalized news recall, we take the user embedding for ranking as input instead of rebuilding user interest representations from original user click behaviors.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_11",
+            "start": 113,
+            "end": 326,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_11@2",
+            "content": "However, since the goals of ranking and recall are not the same (Kang and McAuley, 2019), the user embedding for ranking may not be suitable for news recall.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_11",
+            "start": 328,
+            "end": 484,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_11@3",
+            "content": "Thus, we propose a method to distill a user embedding for recall from the user embedding for ranking.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_11",
+            "start": 486,
+            "end": 586,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_11@4",
+            "content": "More specifically, we maintain a basis user embedding memory that encodes different general user interest aspects.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_11",
+            "start": 588,
+            "end": 701,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_11@5",
+            "content": "We denote the M basis user embeddings in the memory as [v 1 , v 2 , ..., v M ].",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_11",
+            "start": 703,
+            "end": 781,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_11@6",
+            "content": "We use the user embedding for ranking as the attention query to select basis user embeddings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_11",
+            "start": 783,
+            "end": 875,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_11@7",
+            "content": "We denote the attention weight of the i-th basis user embedding as \u03b1 i , which is computed as:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_11",
+            "start": 877,
+            "end": 970,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_12@0",
+            "content": "\u03b1 i = exp(u ra \u2022 w i ) M j=1 exp(u ra \u2022 w j ) ,(1)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_12",
+            "start": 0,
+            "end": 49,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_13@0",
+            "content": "where the parameters w i are served as the attention keys.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_13",
+            "start": 0,
+            "end": 57,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_13@1",
+            "content": "Different from additive attention (Yang et al., 2016) where the attention keys and values are equivalent, in our approach the keys (i.e., w i ) are different from the values (i.e., v i ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_13",
+            "start": 59,
+            "end": 245,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_13@2",
+            "content": "This is because we expect the basis user embeddings to have different spaces with the user embeddings for ranking to better adapt to the recall task.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_13",
+            "start": 247,
+            "end": 395,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_13@3",
+            "content": "The basis user embeddings are further synthesized into a unified user embedding u re for recall by u re = M i=1 \u03b1 i v i .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_13",
+            "start": 397,
+            "end": 517,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_13@4",
+            "content": "We use a news encoder that is shared with the ranking part to obtain the embedding r c of each candidate news D c in the news pool.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_13",
+            "start": 519,
+            "end": 649,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_13@5",
+            "content": "The final recall relevance score \u0177re between user interest and candidate news is computed by \u0177re = u re \u2022 r c .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_13",
+            "start": 651,
+            "end": 761,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_14@0",
+            "content": "Model Training",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_14",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_15@0",
+            "content": "Then we introduce the model training details of UniRec.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_15",
+            "start": 0,
+            "end": 54,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_15@1",
+            "content": "We use a two-stage model training strategy to first learn the ranking part and then learn the recall part.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_15",
+            "start": 56,
+            "end": 161,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_15@2",
+            "content": "Following prior works (Huang et al., 2013;Wu et al., 2019b,c), we use negative sampling techniques to construct samples for contrastive model learning (Oord et al., 2018).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_15",
+            "start": 163,
+            "end": 333,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_15@3",
+            "content": "For learning the ranking part, we use clicked news in each impression as positive samples, and we randomly sample K non-clicked news that are displayed in the same impression as negative samples.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_15",
+            "start": 335,
+            "end": 529,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_15@4",
+            "content": "The loss function is formulated as follows:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_15",
+            "start": 531,
+            "end": 573,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_16@0",
+            "content": "L ra = \u2212 log exp(\u0177 + ra ) exp(\u0177 + ra ) + K i=1 exp(\u0177 i\u2212 ra ) ,(2)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_16",
+            "start": 0,
+            "end": 64,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_17@0",
+            "content": "where \u0177+ ra and \u0177i\u2212 ra denote the predicted click scores of a positive sample and the corresponding i-th negative sample, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_17",
+            "start": 0,
+            "end": 134,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_17@1",
+            "content": "By optimizing this loss function, the parameters of news and user encoders can be tuned.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_17",
+            "start": 136,
+            "end": 223,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_17@2",
+            "content": "Motivated by (Ying et al., 2018), we fix the news encoder after the ranking model converges.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_17",
+            "start": 225,
+            "end": 316,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_17@3",
+            "content": "Then, to learn the recall part, we also use clicked news of each user as positive samples, while we randomly select T non-clicked news from the entire news set as negative samples, which aims to simulate the news recall scenario.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_17",
+            "start": 318,
+            "end": 546,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_17@4",
+            "content": "The loss function for recall part training is as follows:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_17",
+            "start": 548,
+            "end": 604,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_18@0",
+            "content": "L re = \u2212 log exp(\u0177 + re ) exp(\u0177 + re ) + T i=1 exp(\u0177 i\u2212 re ) ,(3)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_18",
+            "start": 0,
+            "end": 64,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_19@0",
+            "content": "where \u0177+ re and \u0177i\u2212 re represent the predicted recall relevance scores of a positive sample and the corresponding i-th negative sample, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_19",
+            "start": 0,
+            "end": 148,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_20@0",
+            "content": "However, not all basis user embeddings are relevant to the interests of a user.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_20",
+            "start": 0,
+            "end": 78,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_20@1",
+            "content": "Thus, motivated by Principal Component Analysis (PCA), in the test phase we propose to only use the top P basis user embeddings with the highest attention weights to compose the user embedding for recall.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_20",
+            "start": 80,
+            "end": 283,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_20@2",
+            "content": "We denote these basis user embeddings as",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_20",
+            "start": 285,
+            "end": 324,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_21@0",
+            "content": "[v t 1 , v t 2 , ..., v t P ].",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_21",
+            "start": 0,
+            "end": 29,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_22@0",
+            "content": "We re-normalize their attention weights as follows:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_22",
+            "start": 0,
+            "end": 50,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_23@0",
+            "content": "\u03b1 t i = exp(\u03b1 t i ) P j=1 exp(\u03b1 t j ) . (4",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_23",
+            "start": 0,
+            "end": 41,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_24@0",
+            "content": ")",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_24",
+            "start": 0,
+            "end": 0,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_25@0",
+            "content": "The user embedding u re for recall is built by u re = P i=1 \u03b1 t i v t i , which can attend more to the major interests of a user and filter noisy basis user embeddings for better news recall.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_25",
+            "start": 0,
+            "end": 190,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_26@0",
+            "content": "Complexity Analysis",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_26",
+            "start": 0,
+            "end": 18,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_27@0",
+            "content": "We provide some discussions on the computational complexity.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_27",
+            "start": 0,
+            "end": 59,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_27@1",
+            "content": "In existing news recommendation methods that conduct recall and ranking with separate models, the computational complexity of learning user embeddings for recall and ranking are both O(N ) at least, because they need to encode the entire user behavior sequence.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_27",
+            "start": 61,
+            "end": 321,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_27@2",
+            "content": "UniRec has the same complexity in learning the user embedding for ranking, but the complexity of deriving the user embedding for recall is reduced to O(M ), where M is usually much smaller than N .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_27",
+            "start": 323,
+            "end": 519,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_27@3",
+            "content": "In addition, the attention network used for synthesizing the user embedding for recall may also be lighter-weight than the user encoder.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_27",
+            "start": 521,
+            "end": 656,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_27@4",
+            "content": "Thus, the total computational complexity can be effectively reduced.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_27",
+            "start": 658,
+            "end": 725,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_28@0",
+            "content": "Experiments",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_28",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_29@0",
+            "content": "Dataset and Experimental Settings",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_29",
+            "start": 0,
+            "end": 32,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_30@0",
+            "content": "We conduct experiments on a large-scale public dataset named MIND (Wu et al., 2020b) In our experiments, following (Wu et al., 2020b) we use news titles to learn news embeddings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_30",
+            "start": 0,
+            "end": 177,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_30@1",
+            "content": "The number of basis user embeddings is 20, and they are randomly initialized.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_30",
+            "start": 179,
+            "end": 255,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_30@2",
+            "content": "The hyperparameter P that controls the number of basis user embeddings for composing the user embedding for recall in the test phase is 5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_30",
+            "start": 257,
+            "end": 394,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_30@3",
+            "content": "The number of negative samples associated with each positive one is 4 and 200 for the ranking and recall tasks, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_30",
+            "start": 396,
+            "end": 520,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_30@4",
+            "content": "Adam (Bengio and LeCun, 2015) is used as the optimizer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_30",
+            "start": 522,
+            "end": 576,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_30@5",
+            "content": "The batch size is 32.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_30",
+            "start": 578,
+            "end": 598,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_30@6",
+            "content": "These hyperparamters are selected on the validation set.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_30",
+            "start": 600,
+            "end": 655,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_30@7",
+            "content": "Following (Wu et al., 2020b), we use AUC, MRR, nDCG@5 and nDCG@10 to evaluate news ranking performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_30",
+            "start": 657,
+            "end": 759,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_30@8",
+            "content": "In addition, we use recall rate of the top 100, 200, 500 and 1000 ranked news to evaluate news recall performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_30",
+            "start": 761,
+            "end": 874,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_30@9",
+            "content": "We repeat every experiment 5 times.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_30",
+            "start": 876,
+            "end": 910,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_31@0",
+            "content": "Performance Evaluation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_31",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_32@0",
+            "content": "We first compare the ranking performance of UniRec with several baseline methods, including:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_32",
+            "start": 0,
+            "end": 91,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_33@0",
+            "content": "(1) EBNR (Okura et al., 2017), GRU (Cho et al., 2014) network for user interest modeling in news recommendation; (2) DKN (Wang et al., 2018), deep knowledge network for news recommendation; (3) NPA (Wu et al., 2019b), news recommendation with personalized attention; (4) NAML (Wu et al., 2019a), news recommendation with attentive multi-view learning; (5) NRMS (Wu et al., 2019c), news recommendation with multi-head self-attention.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_33",
+            "start": 0,
+            "end": 431,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_33@1",
+            "content": "The ranking performance of different methods is shown in Table 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_33",
+            "start": 433,
+            "end": 497,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_33@2",
+            "content": "We find that UniRec outperforms several compared baseline methods like NAML and NPA.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_33",
+            "start": 499,
+            "end": 582,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_33@3",
+            "content": "This may be because self-attention has stronger ability in modeling news and user interests.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_33",
+            "start": 584,
+            "end": 675,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_33@4",
+            "content": "In addition, UniRec also slightly outperforms its basic model NRMS.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_33",
+            "start": 677,
+            "end": 743,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_33@5",
+            "content": "This is because UniRec can capture the orders of words and behaviors via position embedding.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_33",
+            "start": 745,
+            "end": 836,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_34@0",
+            "content": "In the news recall task, we compare UniRec with top basis user embeddings (denoted as UniRec(top)) with the following baseline methods:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_34",
+            "start": 0,
+            "end": 134,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_35@0",
+            "content": "(1) YoutubeNet (Covington et al., 2016), using the average of clicked news embeddings for recall; (2) Pinnersage (Pal et al., 2020), an item recall method based on hierarchical clustering; (3) Octopus , learning elastic number of user embeddings for item recall; (4) UniRec(all), a variant of UniRec that uses all basis user embeddings to compose the user embedding for recall.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_35",
+            "start": 0,
+            "end": 376,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_35@1",
+            "content": "We show the recall performance of different methods in Table 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_35",
+            "start": 378,
+            "end": 440,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_35@2",
+            "content": "We find YoutubeNet is less performant than other recall methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_35",
+            "start": 442,
+            "end": 505,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_35@3",
+            "content": "This may be because different user behaviors may have different importance in user interest modeling and simply average their embeddings may be suboptimal.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_35",
+            "start": 507,
+            "end": 661,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_35@4",
+            "content": "In addition, both UniRec(top) and UniRec(all) outperform other baseline methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_35",
+            "start": 663,
+            "end": 742,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_35@5",
+            "content": "This is because our approach can exploit the user interest information inferred from the ranking module to enhance news recall.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_35",
+            "start": 744,
+            "end": 870,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_35@6",
+            "content": "In addition, our approach is a unified model for both recall and ranking, which has better efficiency in online systems than other methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_35",
+            "start": 872,
+            "end": 1010,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_35@7",
+            "content": "Besides, UniRec(top) outperforms its variant UniRec(all).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_35",
+            "start": 1012,
+            "end": 1068,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_35@8",
+            "content": "It may be because selecting the basis user embeddings with top attention weights can learn accurate user interest embeddings by attending to major user interests and filtering noisy ones.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_35",
+            "start": 1070,
+            "end": 1256,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_35@9",
+            "content": "The above results validate the effectiveness of our method in both news ranking and recall.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_35",
+            "start": 1258,
+            "end": 1348,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_36@0",
+            "content": "Case Study",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_36",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_37@0",
+            "content": "We verify the effectiveness of UniRec in news recall via several case studies.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_37",
+            "start": 0,
+            "end": 77,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_37@1",
+            "content": "Fig. 3 shows the clicked news of a random user and several top news recalled by UniRec.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_37",
+            "start": 79,
+            "end": 165,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_37@2",
+            "content": "From the user's clicked news, we can infer that this user may be interested in finance, sports and TV shows.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_37",
+            "start": 167,
+            "end": 274,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_37@3",
+            "content": "We find the recall result of UniRec covers user interest categories of clicked news, but also keeps some diversity with them.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_37",
+            "start": 276,
+            "end": 400,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_37@4",
+            "content": "It shows that UniRec can generate accurate and diverse personalized news recall results.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_37",
+            "start": 402,
+            "end": 489,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_38@0",
+            "content": "Hyperparameter Analysis",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_38",
+            "start": 0,
+            "end": 22,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_39@0",
+            "content": "Finally, we study the influence of two important hyperparameters in our UniRec method, including the total number M of basis user embeddings and the number P of basis user embeddings for composing the user embeddings for recall.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_39",
+            "start": 0,
+            "end": 227,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_39@1",
+            "content": "We first set P = M and tune the value of M .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_39",
+            "start": 229,
+            "end": 272,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_39@2",
+            "content": "The recall performance is shown in Fig. 4.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_39",
+            "start": 274,
+            "end": 315,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_39@3",
+            "content": "We find the performance is suboptimal when M is too small, which may be due to the diverse user interests cannot be covered by a few basis user embeddings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_39",
+            "start": 317,
+            "end": 471,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_39@4",
+            "content": "However, the performance also descends when M is large.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_39",
+            "start": 473,
+            "end": 527,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_40@0",
+            "content": "This may be because it is difficult to accurately select informative basis user embeddings for user interest modeling.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_40",
+            "start": 0,
+            "end": 117,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_40@1",
+            "content": "In addition, the computation and memory costs also increase.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_40",
+            "start": 119,
+            "end": 178,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_40@2",
+            "content": "Thus, we set M to a medium value (i.e., 20) that yields the best performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_40",
+            "start": 180,
+            "end": 256,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_40@3",
+            "content": "We then tune the value of P under M = 20.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_40",
+            "start": 258,
+            "end": 298,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_40@4",
+            "content": "The results are shown in Fig. 5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_40",
+            "start": 300,
+            "end": 331,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_40@5",
+            "content": "We find the performance is suboptimal when P is very small.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_40",
+            "start": 333,
+            "end": 391,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_40@6",
+            "content": "This is intuitive because the user interests cannot be fully covered.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_40",
+            "start": 393,
+            "end": 461,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_40@7",
+            "content": "However, the performance also declines when P is relatively large.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_40",
+            "start": 463,
+            "end": 528,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_40@8",
+            "content": "This may be because basis user embeddings with relatively low attention weights are redundant or even noisy for user interest modeling.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_40",
+            "start": 530,
+            "end": 664,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_40@9",
+            "content": "Thus, we choose to use 5 basis user embeddings to compose the user embedding for recall.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_40",
+            "start": 666,
+            "end": 753,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_41@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_41",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_42@0",
+            "content": "In this paper, we present a unified approach for recall and ranking in news recommendation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_42",
+            "start": 0,
+            "end": 90,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_42@1",
+            "content": "In our method, we first infer a user embedding for ranking from historical news click behaviors via a user encoder model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_42",
+            "start": 92,
+            "end": 212,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_42@2",
+            "content": "Then we derive a user embedding for recall from the obtained user embedding for ranking by regarding it as attention query to select a set of basis user embeddings that encode different general user interests.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_42",
+            "start": 214,
+            "end": 422,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_42@3",
+            "content": "Extensive experiments on a benchmark dataset validate the effectiveness of our approach in both news ranking and recall.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_42",
+            "start": 424,
+            "end": 543,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_43@0",
+            "content": "UNKNOWN, None, 2015, Adam: A method for stochastic optimization, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_43",
+            "start": 0,
+            "end": 65,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_44@0",
+            "content": "Kyunghyun Cho, Bart Van Merri\u00ebnboer, Caglar Gulcehre, Dzmitry Bahdanau, Fethi Bougares, Holger Schwenk, Yoshua Bengio, Learning phrase representations using rnn encoder-decoder for statistical machine translation, 2014, EMNLP, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_44",
+            "start": 0,
+            "end": 227,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_45@0",
+            "content": "UNKNOWN, None, 2016, Deep neural networks for youtube recommendations, ACM.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_45",
+            "start": 0,
+            "end": 74,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_46@0",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, Bert: Pre-training of deep bidirectional transformers for language understanding, 2019, NAACL-HLT, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_46",
+            "start": 0,
+            "end": 161,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_47@0",
+            "content": "Ali Mamdouh Elkahky, Yang Song, Xiaodong He, A multi-view deep learning approach for cross domain user modeling in recommendation systems, 2015, WWW, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_47",
+            "start": 0,
+            "end": 150,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_48@0",
+            "content": "Chuhan Suyu Ge, Fangzhao Wu, Tao Wu, Yongfeng Qi,  Huang, Graph enhanced representation learning for news recommendation, 2020, WWW, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_48",
+            "start": 0,
+            "end": 133,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_49@0",
+            "content": "Po-Sen Huang, Xiaodong He, Jianfeng Gao, Li Deng, Alex Acero, Larry Heck, Learning deep structured semantic models for web search using clickthrough data, 2013, CIKM, ACM.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_49",
+            "start": 0,
+            "end": 170,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_50@0",
+            "content": "Wang-Cheng Kang, Julian Mcauley, Candidate generation with binary codes for large-scale top-n recommendation, 2019, CIKM, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_50",
+            "start": 0,
+            "end": 122,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_51@0",
+            "content": "Mozhgan Karimi, Dietmar Jannach, Michael Jugovac, News recommender systems-survey and roads ahead, 2018, Information Processing & Management, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_51",
+            "start": 0,
+            "end": 142,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_52@0",
+            "content": "Zheng Liu, Jianxun Lian, Junhan Yang, Defu Lian, Xing Xie, Octopus: Comprehensive and elastic user representation for the generation of recommendation candidates, 2020, SIGIR, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_52",
+            "start": 0,
+            "end": 176,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_53@0",
+            "content": "Zheng Liu, Yu Xing, Fangzhao Wu, Mingxiao An, Xing Xie, Hi-fi ark: Deep user representation via high-fidelity archive network, 2019, IJCAI, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_53",
+            "start": 0,
+            "end": 140,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_54@0",
+            "content": "A Yu,  Malkov,  Dmitry A Yashunin, Efficient and robust approximate nearest neighbor search using hierarchical navigable small world graphs, 2018, TPAMI, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_54",
+            "start": 0,
+            "end": 154,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_55@0",
+            "content": "Shumpei Okura, Yukihiro Tagami, Shingo Ono, Akira Tajima, Embedding-based news recommendation for millions of users, 2017, KDD, ACM.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_55",
+            "start": 0,
+            "end": 131,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_56@0",
+            "content": "UNKNOWN, None, 2018, Representation learning with contrastive predictive coding, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_56",
+            "start": 0,
+            "end": 81,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_57@0",
+            "content": "Aditya Pal, Chantat Eksombatchai, Yitong Zhou, Bo Zhao, Charles Rosenberg, Jure Leskovec, Pinnersage: Multi-modal user embedding framework for recommendations at pinterest, 2020, KDD, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_57",
+            "start": 0,
+            "end": 184,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_58@0",
+            "content": "Tao Qi, Fangzhao Wu, Chuhan Wu, Yongfeng Huang, Personalized news recommendation with knowledge-aware interactive matching, 2021, SI-GIR, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_58",
+            "start": 0,
+            "end": 138,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_59@0",
+            "content": "Tao Qi, Fangzhao Wu, Chuhan Wu, Yongfeng Huang, Pp-rec: News recommendation with personalized user interest and time-aware news popularity, 2021, ACL, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_59",
+            "start": 0,
+            "end": 151,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_60@0",
+            "content": "Tao Qi, Fangzhao Wu, Chuhan Wu, Yongfeng Huang, Xing Xie, Uni-fedrec: A unified privacypreserving news recommendation framework for model training and online serving, 2021, EMNLP Findings, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_60",
+            "start": 0,
+            "end": 189,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_61@0",
+            "content": "Tao Qi, Fangzhao Wu, Chuhan Wu, Peiru Yang, Yang Yu, Xing Xie, Yongfeng Huang, Hierec: Hierarchical user interest modeling for personalized news recommendation, 2021, ACL, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_61",
+            "start": 0,
+            "end": 172,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_62@0",
+            "content": "Qiaoyu Tan, Ninghao Liu, Xing Zhao, Hongxia Yang, Jingren Zhou, Xia Hu, Learning to hash with graph neural networks for recommender systems, 2020, WWW, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_62",
+            "start": 0,
+            "end": 152,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_63@0",
+            "content": "Heyuan Wang, Fangzhao Wu, Zheng Liu, Xing Xie, 2020. Fine-grained interest matching for neural news recommendation, , ACL, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_63",
+            "start": 0,
+            "end": 123,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_64@0",
+            "content": "Hongwei Wang, Fuzheng Zhang, Xing Xie, Minyi Guo, Dkn: Deep knowledge-aware network for news recommendation, 2018, WWW, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_64",
+            "start": 0,
+            "end": 120,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_65@0",
+            "content": "Chuhan Wu, Fangzhao Wu, Mingxiao An, Jianqiang Huang, Yongfeng Huang, Xing Xie, Neural news recommendation with attentive multi-view learning, 2019, IJCAI, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_65",
+            "start": 0,
+            "end": 156,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_66@0",
+            "content": "Chuhan Wu, Fangzhao Wu, Mingxiao An, Jianqiang Huang, Yongfeng Huang, Xing Xie, Npa: Neural news recommendation with personalized attention, 2019, KDD, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_66",
+            "start": 0,
+            "end": 152,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_67@0",
+            "content": "Chuhan Wu, Fangzhao Wu, Suyu Ge, Tao Qi, Yongfeng Huang, Xing Xie, Neural news recommendation with multi-head self-attention, 2019, EMNLP, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_67",
+            "start": 0,
+            "end": 139,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_68@0",
+            "content": "UNKNOWN, None, , Yongfeng Huang, and Xing Xie. 2021a. Personalized news recommendation: A survey, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_68",
+            "start": 0,
+            "end": 98,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_69@0",
+            "content": "Chuhan Wu, Fangzhao Wu, Yongfeng Huang, Xing Xie, User-as-graph: User modeling with heterogeneous graph pooling for news recommendation, 2021, IJCAI, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_69",
+            "start": 0,
+            "end": 150,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_70@0",
+            "content": "Chuhan Wu, Fangzhao Wu, Tao Qi, Yongfeng Huang, User modeling with click preference and reading satisfaction for news recommendation, 2020, IJCAI, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_70",
+            "start": 0,
+            "end": 147,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_71@0",
+            "content": "UNKNOWN, None, 2021, Feedrec: News feed recommendation with various user feedbacks, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_71",
+            "start": 0,
+            "end": 84,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_72@0",
+            "content": "Fangzhao Wu, Ying Qiao, Jiun-Hung Chen, Chuhan Wu, Tao Qi, Jianxun Lian, Danyang Liu, Xing Xie, Jianfeng Gao, Winnie Wu, Mind: A large-scale dataset for news recommendation, 2020, ACL, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_72",
+            "start": 0,
+            "end": 185,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_73@0",
+            "content": "Zichao Yang, Diyi Yang, Chris Dyer, Xiaodong He, Alex Smola, Eduard Hovy, Hierarchical attention networks for document classification, 2016, NAACL-HLT, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_73",
+            "start": 0,
+            "end": 152,
+            "label": {}
+        },
+        {
+            "ix": "461-ARR_v2_74@0",
+            "content": "Rex Ying, Ruining He, Kaifeng Chen, Pong Eksombatchai, L William, Jure Hamilton,  Leskovec, Graph convolutional neural networks for web-scale recommender systems, 2018, In KDD, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "461-ARR_v2_74",
+            "start": 0,
+            "end": 177,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "461-ARR_v2_0",
+            "tgt_ix": "461-ARR_v2_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_0",
+            "tgt_ix": "461-ARR_v2_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_1",
+            "tgt_ix": "461-ARR_v2_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_1",
+            "tgt_ix": "461-ARR_v2_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_0",
+            "tgt_ix": "461-ARR_v2_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_2",
+            "tgt_ix": "461-ARR_v2_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_4",
+            "tgt_ix": "461-ARR_v2_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_3",
+            "tgt_ix": "461-ARR_v2_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_3",
+            "tgt_ix": "461-ARR_v2_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_3",
+            "tgt_ix": "461-ARR_v2_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_0",
+            "tgt_ix": "461-ARR_v2_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_5",
+            "tgt_ix": "461-ARR_v2_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_6",
+            "tgt_ix": "461-ARR_v2_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_6",
+            "tgt_ix": "461-ARR_v2_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_6",
+            "tgt_ix": "461-ARR_v2_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_7",
+            "tgt_ix": "461-ARR_v2_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_8",
+            "tgt_ix": "461-ARR_v2_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_8",
+            "tgt_ix": "461-ARR_v2_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_6",
+            "tgt_ix": "461-ARR_v2_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_9",
+            "tgt_ix": "461-ARR_v2_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_11",
+            "tgt_ix": "461-ARR_v2_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_12",
+            "tgt_ix": "461-ARR_v2_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_10",
+            "tgt_ix": "461-ARR_v2_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_10",
+            "tgt_ix": "461-ARR_v2_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_10",
+            "tgt_ix": "461-ARR_v2_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_10",
+            "tgt_ix": "461-ARR_v2_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_6",
+            "tgt_ix": "461-ARR_v2_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_13",
+            "tgt_ix": "461-ARR_v2_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_15",
+            "tgt_ix": "461-ARR_v2_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_16",
+            "tgt_ix": "461-ARR_v2_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_17",
+            "tgt_ix": "461-ARR_v2_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_18",
+            "tgt_ix": "461-ARR_v2_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_19",
+            "tgt_ix": "461-ARR_v2_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_20",
+            "tgt_ix": "461-ARR_v2_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_21",
+            "tgt_ix": "461-ARR_v2_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_22",
+            "tgt_ix": "461-ARR_v2_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_23",
+            "tgt_ix": "461-ARR_v2_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_24",
+            "tgt_ix": "461-ARR_v2_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_14",
+            "tgt_ix": "461-ARR_v2_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_14",
+            "tgt_ix": "461-ARR_v2_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_14",
+            "tgt_ix": "461-ARR_v2_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_14",
+            "tgt_ix": "461-ARR_v2_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_14",
+            "tgt_ix": "461-ARR_v2_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_14",
+            "tgt_ix": "461-ARR_v2_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_14",
+            "tgt_ix": "461-ARR_v2_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_14",
+            "tgt_ix": "461-ARR_v2_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_14",
+            "tgt_ix": "461-ARR_v2_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_14",
+            "tgt_ix": "461-ARR_v2_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_14",
+            "tgt_ix": "461-ARR_v2_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_14",
+            "tgt_ix": "461-ARR_v2_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_6",
+            "tgt_ix": "461-ARR_v2_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_25",
+            "tgt_ix": "461-ARR_v2_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_26",
+            "tgt_ix": "461-ARR_v2_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_26",
+            "tgt_ix": "461-ARR_v2_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_0",
+            "tgt_ix": "461-ARR_v2_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_27",
+            "tgt_ix": "461-ARR_v2_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_28",
+            "tgt_ix": "461-ARR_v2_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_28",
+            "tgt_ix": "461-ARR_v2_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_29",
+            "tgt_ix": "461-ARR_v2_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_29",
+            "tgt_ix": "461-ARR_v2_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_28",
+            "tgt_ix": "461-ARR_v2_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_30",
+            "tgt_ix": "461-ARR_v2_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_32",
+            "tgt_ix": "461-ARR_v2_33",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_33",
+            "tgt_ix": "461-ARR_v2_34",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_34",
+            "tgt_ix": "461-ARR_v2_35",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_31",
+            "tgt_ix": "461-ARR_v2_32",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_31",
+            "tgt_ix": "461-ARR_v2_33",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_31",
+            "tgt_ix": "461-ARR_v2_34",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_31",
+            "tgt_ix": "461-ARR_v2_35",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_31",
+            "tgt_ix": "461-ARR_v2_32",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_28",
+            "tgt_ix": "461-ARR_v2_36",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_35",
+            "tgt_ix": "461-ARR_v2_36",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_36",
+            "tgt_ix": "461-ARR_v2_37",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_36",
+            "tgt_ix": "461-ARR_v2_37",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_28",
+            "tgt_ix": "461-ARR_v2_38",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_37",
+            "tgt_ix": "461-ARR_v2_38",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_39",
+            "tgt_ix": "461-ARR_v2_40",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_38",
+            "tgt_ix": "461-ARR_v2_39",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_38",
+            "tgt_ix": "461-ARR_v2_40",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_38",
+            "tgt_ix": "461-ARR_v2_39",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_0",
+            "tgt_ix": "461-ARR_v2_41",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_40",
+            "tgt_ix": "461-ARR_v2_41",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_41",
+            "tgt_ix": "461-ARR_v2_42",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_41",
+            "tgt_ix": "461-ARR_v2_42",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "461-ARR_v2_0",
+            "tgt_ix": "461-ARR_v2_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_1",
+            "tgt_ix": "461-ARR_v2_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_2",
+            "tgt_ix": "461-ARR_v2_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_2",
+            "tgt_ix": "461-ARR_v2_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_2",
+            "tgt_ix": "461-ARR_v2_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_2",
+            "tgt_ix": "461-ARR_v2_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_2",
+            "tgt_ix": "461-ARR_v2_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_2",
+            "tgt_ix": "461-ARR_v2_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_2",
+            "tgt_ix": "461-ARR_v2_2@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_3",
+            "tgt_ix": "461-ARR_v2_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_4",
+            "tgt_ix": "461-ARR_v2_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_4",
+            "tgt_ix": "461-ARR_v2_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_4",
+            "tgt_ix": "461-ARR_v2_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_4",
+            "tgt_ix": "461-ARR_v2_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_4",
+            "tgt_ix": "461-ARR_v2_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_4",
+            "tgt_ix": "461-ARR_v2_4@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_4",
+            "tgt_ix": "461-ARR_v2_4@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_4",
+            "tgt_ix": "461-ARR_v2_4@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_4",
+            "tgt_ix": "461-ARR_v2_4@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_4",
+            "tgt_ix": "461-ARR_v2_4@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_5",
+            "tgt_ix": "461-ARR_v2_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_5",
+            "tgt_ix": "461-ARR_v2_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_5",
+            "tgt_ix": "461-ARR_v2_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_5",
+            "tgt_ix": "461-ARR_v2_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_5",
+            "tgt_ix": "461-ARR_v2_5@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_6",
+            "tgt_ix": "461-ARR_v2_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_7",
+            "tgt_ix": "461-ARR_v2_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_7",
+            "tgt_ix": "461-ARR_v2_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_7",
+            "tgt_ix": "461-ARR_v2_7@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_7",
+            "tgt_ix": "461-ARR_v2_7@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_8",
+            "tgt_ix": "461-ARR_v2_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_9",
+            "tgt_ix": "461-ARR_v2_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_9",
+            "tgt_ix": "461-ARR_v2_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_9",
+            "tgt_ix": "461-ARR_v2_9@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_9",
+            "tgt_ix": "461-ARR_v2_9@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_9",
+            "tgt_ix": "461-ARR_v2_9@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_9",
+            "tgt_ix": "461-ARR_v2_9@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_9",
+            "tgt_ix": "461-ARR_v2_9@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_9",
+            "tgt_ix": "461-ARR_v2_9@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_9",
+            "tgt_ix": "461-ARR_v2_9@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_9",
+            "tgt_ix": "461-ARR_v2_9@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_9",
+            "tgt_ix": "461-ARR_v2_9@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_10",
+            "tgt_ix": "461-ARR_v2_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_11",
+            "tgt_ix": "461-ARR_v2_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_11",
+            "tgt_ix": "461-ARR_v2_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_11",
+            "tgt_ix": "461-ARR_v2_11@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_11",
+            "tgt_ix": "461-ARR_v2_11@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_11",
+            "tgt_ix": "461-ARR_v2_11@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_11",
+            "tgt_ix": "461-ARR_v2_11@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_11",
+            "tgt_ix": "461-ARR_v2_11@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_11",
+            "tgt_ix": "461-ARR_v2_11@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_12",
+            "tgt_ix": "461-ARR_v2_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_13",
+            "tgt_ix": "461-ARR_v2_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_13",
+            "tgt_ix": "461-ARR_v2_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_13",
+            "tgt_ix": "461-ARR_v2_13@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_13",
+            "tgt_ix": "461-ARR_v2_13@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_13",
+            "tgt_ix": "461-ARR_v2_13@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_13",
+            "tgt_ix": "461-ARR_v2_13@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_14",
+            "tgt_ix": "461-ARR_v2_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_15",
+            "tgt_ix": "461-ARR_v2_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_15",
+            "tgt_ix": "461-ARR_v2_15@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_15",
+            "tgt_ix": "461-ARR_v2_15@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_15",
+            "tgt_ix": "461-ARR_v2_15@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_15",
+            "tgt_ix": "461-ARR_v2_15@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_16",
+            "tgt_ix": "461-ARR_v2_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_17",
+            "tgt_ix": "461-ARR_v2_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_17",
+            "tgt_ix": "461-ARR_v2_17@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_17",
+            "tgt_ix": "461-ARR_v2_17@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_17",
+            "tgt_ix": "461-ARR_v2_17@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_17",
+            "tgt_ix": "461-ARR_v2_17@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_18",
+            "tgt_ix": "461-ARR_v2_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_19",
+            "tgt_ix": "461-ARR_v2_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_20",
+            "tgt_ix": "461-ARR_v2_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_20",
+            "tgt_ix": "461-ARR_v2_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_20",
+            "tgt_ix": "461-ARR_v2_20@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_21",
+            "tgt_ix": "461-ARR_v2_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_22",
+            "tgt_ix": "461-ARR_v2_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_23",
+            "tgt_ix": "461-ARR_v2_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_24",
+            "tgt_ix": "461-ARR_v2_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_25",
+            "tgt_ix": "461-ARR_v2_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_26",
+            "tgt_ix": "461-ARR_v2_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_27",
+            "tgt_ix": "461-ARR_v2_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_27",
+            "tgt_ix": "461-ARR_v2_27@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_27",
+            "tgt_ix": "461-ARR_v2_27@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_27",
+            "tgt_ix": "461-ARR_v2_27@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_27",
+            "tgt_ix": "461-ARR_v2_27@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_28",
+            "tgt_ix": "461-ARR_v2_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_29",
+            "tgt_ix": "461-ARR_v2_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_30",
+            "tgt_ix": "461-ARR_v2_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_30",
+            "tgt_ix": "461-ARR_v2_30@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_30",
+            "tgt_ix": "461-ARR_v2_30@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_30",
+            "tgt_ix": "461-ARR_v2_30@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_30",
+            "tgt_ix": "461-ARR_v2_30@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_30",
+            "tgt_ix": "461-ARR_v2_30@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_30",
+            "tgt_ix": "461-ARR_v2_30@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_30",
+            "tgt_ix": "461-ARR_v2_30@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_30",
+            "tgt_ix": "461-ARR_v2_30@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_30",
+            "tgt_ix": "461-ARR_v2_30@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_31",
+            "tgt_ix": "461-ARR_v2_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_32",
+            "tgt_ix": "461-ARR_v2_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_33",
+            "tgt_ix": "461-ARR_v2_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_33",
+            "tgt_ix": "461-ARR_v2_33@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_33",
+            "tgt_ix": "461-ARR_v2_33@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_33",
+            "tgt_ix": "461-ARR_v2_33@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_33",
+            "tgt_ix": "461-ARR_v2_33@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_33",
+            "tgt_ix": "461-ARR_v2_33@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_34",
+            "tgt_ix": "461-ARR_v2_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_35",
+            "tgt_ix": "461-ARR_v2_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_35",
+            "tgt_ix": "461-ARR_v2_35@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_35",
+            "tgt_ix": "461-ARR_v2_35@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_35",
+            "tgt_ix": "461-ARR_v2_35@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_35",
+            "tgt_ix": "461-ARR_v2_35@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_35",
+            "tgt_ix": "461-ARR_v2_35@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_35",
+            "tgt_ix": "461-ARR_v2_35@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_35",
+            "tgt_ix": "461-ARR_v2_35@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_35",
+            "tgt_ix": "461-ARR_v2_35@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_35",
+            "tgt_ix": "461-ARR_v2_35@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_36",
+            "tgt_ix": "461-ARR_v2_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_37",
+            "tgt_ix": "461-ARR_v2_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_37",
+            "tgt_ix": "461-ARR_v2_37@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_37",
+            "tgt_ix": "461-ARR_v2_37@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_37",
+            "tgt_ix": "461-ARR_v2_37@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_37",
+            "tgt_ix": "461-ARR_v2_37@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_38",
+            "tgt_ix": "461-ARR_v2_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_39",
+            "tgt_ix": "461-ARR_v2_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_39",
+            "tgt_ix": "461-ARR_v2_39@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_39",
+            "tgt_ix": "461-ARR_v2_39@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_39",
+            "tgt_ix": "461-ARR_v2_39@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_39",
+            "tgt_ix": "461-ARR_v2_39@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_40",
+            "tgt_ix": "461-ARR_v2_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_40",
+            "tgt_ix": "461-ARR_v2_40@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_40",
+            "tgt_ix": "461-ARR_v2_40@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_40",
+            "tgt_ix": "461-ARR_v2_40@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_40",
+            "tgt_ix": "461-ARR_v2_40@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_40",
+            "tgt_ix": "461-ARR_v2_40@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_40",
+            "tgt_ix": "461-ARR_v2_40@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_40",
+            "tgt_ix": "461-ARR_v2_40@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_40",
+            "tgt_ix": "461-ARR_v2_40@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_40",
+            "tgt_ix": "461-ARR_v2_40@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_41",
+            "tgt_ix": "461-ARR_v2_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_42",
+            "tgt_ix": "461-ARR_v2_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_42",
+            "tgt_ix": "461-ARR_v2_42@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_42",
+            "tgt_ix": "461-ARR_v2_42@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_42",
+            "tgt_ix": "461-ARR_v2_42@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_43",
+            "tgt_ix": "461-ARR_v2_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_44",
+            "tgt_ix": "461-ARR_v2_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_45",
+            "tgt_ix": "461-ARR_v2_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_46",
+            "tgt_ix": "461-ARR_v2_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_47",
+            "tgt_ix": "461-ARR_v2_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_48",
+            "tgt_ix": "461-ARR_v2_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_49",
+            "tgt_ix": "461-ARR_v2_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_50",
+            "tgt_ix": "461-ARR_v2_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_51",
+            "tgt_ix": "461-ARR_v2_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_52",
+            "tgt_ix": "461-ARR_v2_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_53",
+            "tgt_ix": "461-ARR_v2_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_54",
+            "tgt_ix": "461-ARR_v2_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_55",
+            "tgt_ix": "461-ARR_v2_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_56",
+            "tgt_ix": "461-ARR_v2_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_57",
+            "tgt_ix": "461-ARR_v2_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_58",
+            "tgt_ix": "461-ARR_v2_58@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_59",
+            "tgt_ix": "461-ARR_v2_59@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_60",
+            "tgt_ix": "461-ARR_v2_60@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_61",
+            "tgt_ix": "461-ARR_v2_61@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_62",
+            "tgt_ix": "461-ARR_v2_62@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_63",
+            "tgt_ix": "461-ARR_v2_63@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_64",
+            "tgt_ix": "461-ARR_v2_64@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_65",
+            "tgt_ix": "461-ARR_v2_65@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_66",
+            "tgt_ix": "461-ARR_v2_66@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_67",
+            "tgt_ix": "461-ARR_v2_67@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_68",
+            "tgt_ix": "461-ARR_v2_68@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_69",
+            "tgt_ix": "461-ARR_v2_69@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_70",
+            "tgt_ix": "461-ARR_v2_70@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_71",
+            "tgt_ix": "461-ARR_v2_71@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_72",
+            "tgt_ix": "461-ARR_v2_72@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_73",
+            "tgt_ix": "461-ARR_v2_73@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "461-ARR_v2_74",
+            "tgt_ix": "461-ARR_v2_74@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 531,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "doc_id": "461-ARR",
+        "version": 2
+    }
+}

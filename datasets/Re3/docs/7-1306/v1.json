@@ -1,0 +1,3532 @@
+{
+    "nodes": [
+        {
+            "ix": "7-1306_v1_0",
+            "content": "An accessible, interactive GenePattern Notebook for analysis and exploration of single-cell transcriptomic data",
+            "ntype": "article-title",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_2",
+            "content": "Single-cell RNA sequencing (scRNA-seq) has emerged as a popular method to profile gene expression at the resolution of individual cells. While there have been methods and software specifically developed to analyze scRNA-seq data, they are most accessible to users who program. We have created a scRNA-seq clustering analysis GenePattern Notebook that provides an interactive, easy-to-use interface for data analysis and exploration of scRNA-Seq data, without the need to write or view any code. The notebook provides a standard scRNA-seq analysis workflow for pre-processing data, identification of sub-populations of cells by clustering, and exploration of biomarkers to characterize heterogeneous cell populations and delineate cell types.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1",
+                "sec-type": "intro",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_4",
+            "content": "Single-cell RNA sequencing (scRNA-seq) is a powerful tool to measure genome-wide gene expression at the resolution of individual cells. Compared to traditional RNA-seq collected from bulk cells or tissue, scRNA-seq enables users to capture cell-by-cell transcriptomic variability. This information can then be used to define and characterize heterogeneity within a population of cells, from identifying known cell types to discovering novel ones. A number of high-throughput scRNA-seq protocols have been developed to simultaneously sequence thousands to hundreds of thousands of cells while retaining the origin of each transcript, including SMART-seq2 ( Picelli et al. , 2014 ), CEL-seq ( Hashimshony et al. , 2012 ), Drop-seq ( Macosko et al. , 2015 ), and the commercial 10X Genomics scRNA-seq protocol. Despite the power of this approach, analysis of scRNA-seq data presents a unique set of challenges centered on the discrimination of technical variation from the biological signal. The variability in efficiency of capturing individual transcripts is compounded by the variability in the number of transcripts per cell, anywhere between 50,000 to 300,000 ( Marinov et al. , 2014 ). Conversely, reads for multiple cells may be captured together, artificially inflating the number of reads for a single cell. Comprehensive methods and software have been developed for proper data pre-processing, normalization, quality control, and clustering analysis including Seurat ( Satija et al. , 2015 ), Scanpy ( Wolf et al. , 2018 ), and the 10X Genomics Cell Ranger pipeline. These methods take raw read counts as input and are downstream of read alignment and quantification. They have been used successfully in studies across many cell types to analyze tens of thousands of cells in parallel ( Macosko et al. , 2015 ; Svensson et al. , 2018 ; Villani et al. , 2017 ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_5",
+            "content": "While these tools are readily available for those with computational expertise who are comfortable programming in Python or R, they are less accessible to non-coding users due to a steep learning curve. In order to enable analysis of scRNA-seq data, regardless of programming expertise, we have created an interactive analysis notebook using the GenePattern Notebook Environment that does not require coding by the user ( Reich et al. , 2017 ). The GenePattern Notebook Environment integrates an easy-to-use graphical user interface with the Jupyter notebook's rich text, media, executable code, and results, to present the entire narrative in a single notebook document.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_6",
+            "content": "The notebook presented here aims to provide a standard pre-processing and clustering analysis workflow for scRNA-seq datasets. We based the workflow on the Seurat R tutorial and perform the below analysis steps using methods implemented in the Scanpy Python package .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_7",
+            "content": "Methods",
+            "ntype": "title",
+            "meta": {
+                "section": "2",
+                "sec-type": "methods",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_8",
+            "content": "Setup analysis",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_9",
+            "content": "The workflow begins with an expression data matrix already derived from alignment of reads and quantification of RNA transcripts. Each row of the matrix should represent a gene and each column represents a cell. Gene by cell matrices generated by the 10X Genomics Cell Ranger pipeline and flat text files from read count quantification tools like HTSeq ( Anders et al. , 2015 ) and kallisto ( Bray et al. , 2016 ) are supported as input.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_10",
+            "content": "Once the expression matrix is loaded into the notebook using a GenePattern cell ( Figure 1A ), the notebook presents a series of plots to compare quality metrics across cells ( Figure 1B ). There are 3 metrics including: the number of genes detected in each cell, the total counts in each cell, and the percentage of counts mapped to mitochondrial genes. A high percentage of mitochondrial genes indicates the cell may have lysed before isolation, losing cytoplasmic RNA and retaining RNA enclosed in the mitochondria. The user can interactively set thresholds to see how the number of cells below the threshold change ( Figure 1B ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_11",
+            "content": "Figure 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "f1",
+                "caption": "Cell quality metrics. ( A ) The \u201cSetup Analysis\u201d function is presented using the GenePattern UI Builder. ( B ) The quality metric distributions are shown as kernel density estimation fitted curves. The values of the mean, 3 standard deviations (SDs) above the mean and 4 SDs above the mean are indicated to help identify outlier cells with abnormally large metric values. Interactive sliders under each plot allow the user to see how many cells are included under a threshold.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17278/45282c15-acde-4701-a926-be9d7c9f526a_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_12",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f1\" position=\"float\"> <caption> <title>Cell quality metrics.</title> <p>( <bold>A</bold>) The &#8220;Setup Analysis&#8221; function is presented using the GenePattern UI Builder. ( <bold>B</bold>) The quality metric distributions are shown as kernel density estimation fitted curves. The values of the mean, 3 standard deviations (SDs) above the mean and 4 SDs above the mean are indicated to help identify outlier cells with abnormally large metric values. Interactive sliders under each plot allow the user to see how many cells are included under a threshold.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/17278/45282c15-acde-4701-a926-be9d7c9f526a_figure1.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f1",
+                "caption": "Cell quality metrics. ( A ) The \u201cSetup Analysis\u201d function is presented using the GenePattern UI Builder. ( B ) The quality metric distributions are shown as kernel density estimation fitted curves. The values of the mean, 3 standard deviations (SDs) above the mean and 4 SDs above the mean are indicated to help identify outlier cells with abnormally large metric values. Interactive sliders under each plot allow the user to see how many cells are included under a threshold.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17278/45282c15-acde-4701-a926-be9d7c9f526a_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_13",
+            "content": "Preprocess counts",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_14",
+            "content": "We encourage the user to visually inspect their data across several parameters, using the quality metric plots provided prior to proceeding with further analysis. Furthermore, we enable the user to determine appropriate filtering thresholds for each of the metrics to exclude low quality cells and outliers by inputting thresholds in the GenePattern cell interface ( Figure 2A ). We have also provided an option to filter for genes expressed in a minimum number of cells. All preprocessing steps follow the Seurat and Scanpy workflows. Counts are scaled to have the same total counts for each cell. Highly variable genes are identified for downstream analysis by selecting genes with a minimum mean expression and dispersion; where dispersion is calculated as the log of the mean to variance ratio. Counts are then log-transformed to reduce the distribution skew and bring it closer to a normal distribution. To remove sources of technical variation, linear regression is used to diminish the effects of the number of detected molecules and the percentage of counts mapped to mitochondrial genes. Finally, the counts for highly variable genes in each cell are scaled to unit variance and a mean of zero. For clustering cells in the next step, dimensionality reduction is performed using principal component analysis (PCA) on highly variable genes. A plot showing the standard deviation of each principal component is then displayed so the user may choose a reasonable number of principal components for use in clustering ( Figure 2B ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_15",
+            "content": "Figure 2.",
+            "ntype": "label",
+            "meta": {
+                "id": "f2",
+                "caption": "Preprocessing count data. ( A ) The \u201cPreprocess Counts\u201d function is presented using the GenePattern UI Builder. Here the user specifies thresholds for filtering samples and for performing log normalization. ( B ) A scatterplot showing the percent variance explained by each individual principal component.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17278/45282c15-acde-4701-a926-be9d7c9f526a_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_16",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f2\" position=\"float\"> <caption> <title>Preprocessing count data.</title> <p>( <bold>A</bold>) The &#8220;Preprocess Counts&#8221; function is presented using the GenePattern UI Builder. Here the user specifies thresholds for filtering samples and for performing log normalization. ( <bold>B</bold>) A scatterplot showing the percent variance explained by each individual principal component.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/17278/45282c15-acde-4701-a926-be9d7c9f526a_figure2.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f2",
+                "caption": "Preprocessing count data. ( A ) The \u201cPreprocess Counts\u201d function is presented using the GenePattern UI Builder. Here the user specifies thresholds for filtering samples and for performing log normalization. ( B ) A scatterplot showing the percent variance explained by each individual principal component.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17278/45282c15-acde-4701-a926-be9d7c9f526a_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_17",
+            "content": "Cluster cells",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_18",
+            "content": "As suggested in Satija et al. , 2015 , and followed in the Seurat and Scanpy workflows, we cluster cells using a graph-based clustering approach. With the selected principal components as features, the cells are embedded in a K-nearest neighbor graph where cells are grouped using the Louvain community detection method ( Blondel et al. , 2008 ). Then t-distributed stochastic neighbor embedding (t-SNE), a standard dimensionality reduction technique suited for visualizing high-dimensional data, is used to project and visualize the cells in the space of the first two t-SNE components ( Figure 3 ) ( Maaten & Hinton, 2008 ). Cells are represented as points colored by clustering assignment. Select parameters including the number of principal components, Louvain clustering resolution, and t-SNE perplexity are exposed for users to iteratively adjust the clustering results using the visualization for feedback ( Figure 3 ). Setting a higher resolution results in more and smaller clusters. The perplexity parameter loosely models the number of close neighbors each cell will have.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_19",
+            "content": "Figure 3.",
+            "ntype": "label",
+            "meta": {
+                "id": "f3",
+                "caption": "t-SNE plot visualizing cluster assignments of cells. The clustering parameters can be changed using the sliders and re-plotted with the \u201cPlot\u201d button. Cells are projected into t-SNE space, with the first two t-SNE components as the axes of the plot. Cluster assignments of cells are defined by Louvain clustering and denoted as distinct colors.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17278/45282c15-acde-4701-a926-be9d7c9f526a_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_20",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f3\" position=\"float\"> <caption> <title>t-SNE plot visualizing cluster assignments of cells.</title> <p>The clustering parameters can be changed using the sliders and re-plotted with the &#8220;Plot&#8221; button. Cells are projected into t-SNE space, with the first two t-SNE components as the axes of the plot. Cluster assignments of cells are defined by Louvain clustering and denoted as distinct colors.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/17278/45282c15-acde-4701-a926-be9d7c9f526a_figure3.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f3",
+                "caption": "t-SNE plot visualizing cluster assignments of cells. The clustering parameters can be changed using the sliders and re-plotted with the \u201cPlot\u201d button. Cells are projected into t-SNE space, with the first two t-SNE components as the axes of the plot. Cluster assignments of cells are defined by Louvain clustering and denoted as distinct colors.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17278/45282c15-acde-4701-a926-be9d7c9f526a_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_21",
+            "content": "Visualize cluster markers",
+            "ntype": "title",
+            "meta": {
+                "section": "2.4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_22",
+            "content": "The application of proper visualization tools is an important aid to interpret the complexity and depth of scRNA-seq data. We provide various visualizations within the notebook to explore differentially expressed genes, which can be used to identify specific cell types or highlight heterogeneous gene expression across clusters ( Figure 4A and B , Figure 5 ). There is also an interface to query for differentially expressed genes that are higher in one cluster compared to the rest ( Figure 4C ). The Wilcoxon-Rank-Sum test statistic is used to rank genes by default. This test is performed in a one-versus-all setup for each of the clusters, providing unique markers for each individual cluster. We also include the option to perform pairwise cluster comparisons. Additional statistical information about each gene is provided as an interactive table, such as the log-fold change comparing the average expression of a gene in one cluster versus the average expression in all other cells, the percentage of cells within the cluster that express the gene, and the percentage of cells in other clusters that express the gene. The percent expression metric shows whether a reasonable fraction of cells expresses the gene.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_23",
+            "content": "Figure 4.",
+            "ntype": "label",
+            "meta": {
+                "id": "f4",
+                "caption": "Relative expression of marker genes. ( A ) A heatmap showing the expression of the top 10 differentially expressed markers of each cluster across all cells. ( B ) A violin plot illustrating the distribution of expression of the gene MS4A1 in each cluster. Expression of MS4A1 is a canonical marker of B cells, which clearly has a positive distribution higher expression in cluster 2 compared to the other clusters. ( C ) An interface to perform differential expression between one cluster versus the rest. Results are shown in the table.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17278/45282c15-acde-4701-a926-be9d7c9f526a_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_24",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f4\" position=\"float\"> <caption> <title>Relative expression of marker genes.</title> <p>( <bold>A</bold>) A heatmap showing the expression of the top 10 differentially expressed markers of each cluster across all cells. ( <bold>B</bold>) A violin plot illustrating the distribution of expression of the gene MS4A1 in each cluster. Expression of MS4A1 is a canonical marker of B cells, which clearly has a positive distribution higher expression in cluster 2 compared to the other clusters. ( <bold>C</bold>) An interface to perform differential expression between one cluster versus the rest. Results are shown in the table.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/17278/45282c15-acde-4701-a926-be9d7c9f526a_figure4.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f4",
+                "caption": "Relative expression of marker genes. ( A ) A heatmap showing the expression of the top 10 differentially expressed markers of each cluster across all cells. ( B ) A violin plot illustrating the distribution of expression of the gene MS4A1 in each cluster. Expression of MS4A1 is a canonical marker of B cells, which clearly has a positive distribution higher expression in cluster 2 compared to the other clusters. ( C ) An interface to perform differential expression between one cluster versus the rest. Results are shown in the table.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17278/45282c15-acde-4701-a926-be9d7c9f526a_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_25",
+            "content": "Figure 5.",
+            "ntype": "label",
+            "meta": {
+                "id": "f5",
+                "caption": "Marker gene expression projected on t-SNE plot. Cells are projected into t-SNE space, as in Figure 2 , but are colored by the relative expression of a given gene instead of cluster assignment. Colors span a gradient from red (high expression) to grey (low expression). Genes shown here are indicative of known cell types; MS4A1: B cells, GNLY: NK cells, CD3E: T cells, CD14: CD14+ monocytes, FCER1A: dendritic cells, FCGR3A: FCGR3A+ monocytes, LYZ: CD14+ monocytes, PPBP: megakaryocytes, and CD8A: CD8 T cells.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17278/45282c15-acde-4701-a926-be9d7c9f526a_figure5.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_26",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f5\" position=\"float\"> <caption> <title>Marker gene expression projected on t-SNE plot.</title> <p>Cells are projected into t-SNE space, as in <xref ref-type=\"fig\" rid=\"f2\">Figure 2</xref>, but are colored by the relative expression of a given gene instead of cluster assignment. Colors span a gradient from red (high expression) to grey (low expression). Genes shown here are indicative of known cell types; MS4A1: B cells, GNLY: NK cells, CD3E: T cells, CD14: CD14+ monocytes, FCER1A: dendritic cells, FCGR3A: FCGR3A+ monocytes, LYZ: CD14+ monocytes, PPBP: megakaryocytes, and CD8A: CD8 T cells.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/17278/45282c15-acde-4701-a926-be9d7c9f526a_figure5.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f5",
+                "caption": "Marker gene expression projected on t-SNE plot. Cells are projected into t-SNE space, as in Figure 2 , but are colored by the relative expression of a given gene instead of cluster assignment. Colors span a gradient from red (high expression) to grey (low expression). Genes shown here are indicative of known cell types; MS4A1: B cells, GNLY: NK cells, CD3E: T cells, CD14: CD14+ monocytes, FCER1A: dendritic cells, FCGR3A: FCGR3A+ monocytes, LYZ: CD14+ monocytes, PPBP: megakaryocytes, and CD8A: CD8 T cells.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17278/45282c15-acde-4701-a926-be9d7c9f526a_figure5.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_27",
+            "content": "Export analysis data",
+            "ntype": "title",
+            "meta": {
+                "section": "2.5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_28",
+            "content": "Data generated by the analysis can be exported in two ways. First, as a set of CSV (comma separated values) files suited for further independent analysis and data sharing. We provide a description of the exported CSV files, which include the preprocessed expression matrix, cell annotations, dimensional reduction outputs, and gene rankings generated during the analysis. Second, as an H5AD file that can be re-imported into this notebook\u2019s workflow, retaining the generated results. The parameters for each step in the analyses are automatically saved in the notebook once executed, ensuring the entire workflow is documented. Notably, the entire notebook can be shared with other users rather than exporting output files.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_29",
+            "content": "Operation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_30",
+            "content": "To run the notebook, the user is required to have a GenePattern account that can be created on the GenePattern Notebook site . After logging in, the notebook can be found in the \u201cFeatured\u201d section of the \u201cPublic Notebooks\u201d page.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_31",
+            "content": "Use case",
+            "ntype": "title",
+            "meta": {
+                "section": "3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_32",
+            "content": "An example notebook ( https://github.com/genepattern/single_cell_clustering_notebook ) employs a scRNA-seq gene expression dataset for 2700 peripheral blood mononuclear cells (PBMCs) from a healthy donor as a demonstration of its use. We can recapitulate cell types identified using Seurat and Scanpy; the clusters can be characterized by visualizing the expression of canonical markers of these cell types on the 2D t-SNE projection plot. We also find that many of these markers are highly ranked when looking at significant differentially expressed genes between clusters ( Figure 4 ). In Figure 4 we examine cluster markers to understand why some larger groups of cells are divided into sub clusters.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_33",
+            "content": "For example, LYZ is overexpressed in a cloud of samples that clustering separates as two distinct clusters, 1 and 5. The LYZ gene encodes for human lysozyme, an antimicrobial agent associated with blood monocytes. Using the cluster comparison tool ( Figure 4C ), we can see that cluster 1 exhibits high relative expression of CD14 while cluster 5 exhibits high relative expression of FCGR3A, also known as the CD16 receptor gene ( Figure 5 ). These two genes characterize two known subtypes of blood monocytes respectively; classical and non-classical monocytes.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_34",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "4",
+                "sec-type": "conclusions",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_35",
+            "content": "As single-cell RNA-seq continues to grow in popularity, this GenePattern Notebook will provide an accessible and reproducible way to preprocess the data and perform clustering analysis without having to interact with any code. We plan to continually review the notebook as single-cell RNA-seq protocols evolve to be even more high-throughput and as algorithms adapt to accommodate growing amounts of single-cell data. As the GenePattern Notebook user interface gains more features, the notebook will also grow to take advantage of these features. Future notebooks such as those for multi-experiment aggregation (multiple sequencing runs) and pseudotime analysis are being considered to grow a compendium of single-cell sequencing analysis notebooks.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_36",
+            "content": "Software and data availability",
+            "ntype": "title",
+            "meta": {
+                "section": "5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_37",
+            "content": "GenePattern Notebook is available from: https://genepattern-notebook.org/ .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_38",
+            "content": "GenePattern Notebook source code is available from: https://github.com/genepattern/seurat_python_notebook .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_39",
+            "content": "Archived source code as at time of publication: https://doi.org/10.5281/zenodo.1326656 ( Mah, 2018 ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_40",
+            "content": "License: BSD 3-Clause",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_41",
+            "content": "The 3k PBMCs from a Healthy Donor dataset is publicly available via the 10X Genomics website after user registration: https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_42",
+            "content": "Anders S Pyl PT Huber W : HTSeq--a Python framework to work with high-throughput sequencing data. Bioinformatics. 2015 ; 31 ( 2 ): 166 \u2013 169 . 25260700 10.1093/bioinformatics/btu638 4287950",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_43",
+            "content": "Blondel VD Guillaume JL Lambiotte R : Fast unfolding of communities in large networks. Journal of Statistical Mechanics: Theory and Experiment. 2008 ; 2008 ( 10 ): P10008 . 10.1088/1742-5468/2008/10/P10008",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_44",
+            "content": "Bray NL Pimentel H Melsted P : Near-optimal probabilistic RNA-seq quantification. Nat Biotechnol. 2016 ; 34 ( 5 ): 525 \u2013 527 . 27043002 10.1038/nbt.3519",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_45",
+            "content": "Hashimshony T Wagner F Sher N : CEL-Seq: single-cell RNA-Seq by multiplexed linear amplification. Cell Rep. 2012 ; 2 ( 3 ): 666 \u2013 673 . 22939981 10.1016/j.celrep.2012.08.003",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_46",
+            "content": "Maaten LJP Hinton GE : Visualizing High-Dimensional Data Using t-SNE. J Mach Learn Res. 2008 ; 9 : 2579 \u2013 2605 . Reference Source",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_47",
+            "content": "Macosko EZ Basu A Satija R : Highly Parallel Genome-wide Expression Profiling of Individual Cells Using Nanoliter Droplets. Cell. 2015 ; 161 ( 5 ): 1202 \u2013 1214 . 26000488 10.1016/j.cell.2015.05.002 4481139",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_48",
+            "content": "Mah C : genepattern/single_cell_clustering_notebook: v1.0.2 (Version v1.0.2). Zenodo. 2018 . http://www.doi.org/10.5281/zenodo.1328256",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-7",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_49",
+            "content": "Marinov GK Williams BA McCue K : From single-cell to cell-pool transcriptomes: stochasticity in gene expression and RNA splicing. Genome Res. 2014 ; 24 ( 3 ): 496 \u2013 510 . 24299736 10.1101/gr.161034.113 3941114",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-8",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_50",
+            "content": "Picelli S Faridani OR Bj\u00f6rklund \u00c5K : Full-length RNA-seq from single cells using Smart-seq2. Nat Protoc. 2014 ; 9 ( 1 ): 171 \u2013 181 . 24385147 10.1038/nprot.2014.006",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-9",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_51",
+            "content": "Reich M Tabor T Liefeld T : The GenePattern Notebook Environment. Cell Syst. 2017 ; 5 ( 2 ): 149 \u2013 151.e1 . 28822753 10.1016/j.cels.2017.07.003 5572818",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-10",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_52",
+            "content": "Satija R Farrell JA Gennert D : Spatial reconstruction of single-cell gene expression data. Nat Biotechnol. 2015 ; 33 ( 5 ): 495 \u2013 502 . 25867923 10.1038/nbt.3192 4430369",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-11",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_53",
+            "content": "Svensson V Teichmann SA Stegle O : SpatialDE: identification of spatially variable genes. Nat Methods. 2018 ; 15 ( 5 ): 343 \u2013 346 . 29553579 10.1038/nmeth.4636",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-12",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_54",
+            "content": "Villani AC Satija R Reynolds G : Single-cell RNA-seq reveals new types of human blood dendritic cells, monocytes, and progenitors. Science. 2017 ; 356 ( 6335 ): pii: eaah4573. 28428369 10.1126/science.aah4573 5775029",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-13",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1306_v1_55",
+            "content": "Wolf FA Angerer P Theis FJ : SCANPY: large-scale single-cell gene expression data analysis. Genome Biol. 2018 ; 19 ( 1 ): 15 . 29409532 10.1186/s13059-017-1382-0 5802054",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-14",
+                "created_by": "F1000XMLParser"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "7-1306_v1_0@0",
+            "content": "An accessible, interactive GenePattern Notebook for analysis and exploration of single-cell transcriptomic data",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_0",
+            "start": 0,
+            "end": 110,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_2@0",
+            "content": "Single-cell RNA sequencing (scRNA-seq) has emerged as a popular method to profile gene expression at the resolution of individual cells.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_2",
+            "start": 0,
+            "end": 135,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_2@1",
+            "content": "While there have been methods and software specifically developed to analyze scRNA-seq data, they are most accessible to users who program.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_2",
+            "start": 137,
+            "end": 275,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_2@2",
+            "content": "We have created a scRNA-seq clustering analysis GenePattern Notebook that provides an interactive, easy-to-use interface for data analysis and exploration of scRNA-Seq data, without the need to write or view any code.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_2",
+            "start": 277,
+            "end": 493,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_2@3",
+            "content": "The notebook provides a standard scRNA-seq analysis workflow for pre-processing data, identification of sub-populations of cells by clustering, and exploration of biomarkers to characterize heterogeneous cell populations and delineate cell types.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_2",
+            "start": 495,
+            "end": 740,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_4@0",
+            "content": "Single-cell RNA sequencing (scRNA-seq) is a powerful tool to measure genome-wide gene expression at the resolution of individual cells.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_4",
+            "start": 0,
+            "end": 134,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_4@1",
+            "content": "Compared to traditional RNA-seq collected from bulk cells or tissue, scRNA-seq enables users to capture cell-by-cell transcriptomic variability.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_4",
+            "start": 136,
+            "end": 279,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_4@2",
+            "content": "This information can then be used to define and characterize heterogeneity within a population of cells, from identifying known cell types to discovering novel ones.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_4",
+            "start": 281,
+            "end": 445,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_4@3",
+            "content": "A number of high-throughput scRNA-seq protocols have been developed to simultaneously sequence thousands to hundreds of thousands of cells while retaining the origin of each transcript, including SMART-seq2 ( Picelli et al. , 2014 ), CEL-seq ( Hashimshony et al. , 2012 ), Drop-seq ( Macosko et al. , 2015 ), and the commercial 10X Genomics scRNA-seq protocol.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_4",
+            "start": 447,
+            "end": 806,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_4@4",
+            "content": "Despite the power of this approach, analysis of scRNA-seq data presents a unique set of challenges centered on the discrimination of technical variation from the biological signal.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_4",
+            "start": 808,
+            "end": 987,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_4@5",
+            "content": "The variability in efficiency of capturing individual transcripts is compounded by the variability in the number of transcripts per cell, anywhere between 50,000 to 300,000 ( Marinov et al. , 2014 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_4",
+            "start": 989,
+            "end": 1187,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_4@6",
+            "content": "Conversely, reads for multiple cells may be captured together, artificially inflating the number of reads for a single cell.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_4",
+            "start": 1189,
+            "end": 1312,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_4@7",
+            "content": "Comprehensive methods and software have been developed for proper data pre-processing, normalization, quality control, and clustering analysis including Seurat ( Satija et al. , 2015 ), Scanpy ( Wolf et al. , 2018 ), and the 10X Genomics Cell Ranger pipeline.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_4",
+            "start": 1314,
+            "end": 1572,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_4@8",
+            "content": "These methods take raw read counts as input and are downstream of read alignment and quantification.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_4",
+            "start": 1574,
+            "end": 1673,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_4@9",
+            "content": "They have been used successfully in studies across many cell types to analyze tens of thousands of cells in parallel ( Macosko et al. , 2015 ; Svensson et al. , 2018 ; Villani et al. , 2017 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_4",
+            "start": 1675,
+            "end": 1866,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_5@0",
+            "content": "While these tools are readily available for those with computational expertise who are comfortable programming in Python or R, they are less accessible to non-coding users due to a steep learning curve.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_5",
+            "start": 0,
+            "end": 201,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_5@1",
+            "content": "In order to enable analysis of scRNA-seq data, regardless of programming expertise, we have created an interactive analysis notebook using the GenePattern Notebook Environment that does not require coding by the user ( Reich et al. , 2017 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_5",
+            "start": 203,
+            "end": 443,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_5@2",
+            "content": "The GenePattern Notebook Environment integrates an easy-to-use graphical user interface with the Jupyter notebook's rich text, media, executable code, and results, to present the entire narrative in a single notebook document.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_5",
+            "start": 445,
+            "end": 670,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_6@0",
+            "content": "The notebook presented here aims to provide a standard pre-processing and clustering analysis workflow for scRNA-seq datasets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_6",
+            "start": 0,
+            "end": 125,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_6@1",
+            "content": "We based the workflow on the Seurat R tutorial and perform the below analysis steps using methods implemented in the Scanpy Python package .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_6",
+            "start": 127,
+            "end": 266,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_7@0",
+            "content": "Methods",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_7",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_8@0",
+            "content": "Setup analysis",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_8",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_9@0",
+            "content": "The workflow begins with an expression data matrix already derived from alignment of reads and quantification of RNA transcripts.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_9",
+            "start": 0,
+            "end": 128,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_9@1",
+            "content": "Each row of the matrix should represent a gene and each column represents a cell.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_9",
+            "start": 130,
+            "end": 210,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_9@2",
+            "content": "Gene by cell matrices generated by the 10X Genomics Cell Ranger pipeline and flat text files from read count quantification tools like HTSeq ( Anders et al. , 2015 ) and kallisto ( Bray et al. , 2016 ) are supported as input.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_9",
+            "start": 212,
+            "end": 436,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_10@0",
+            "content": "Once the expression matrix is loaded into the notebook using a GenePattern cell ( Figure 1A ), the notebook presents a series of plots to compare quality metrics across cells ( Figure 1B ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_10",
+            "start": 0,
+            "end": 188,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_10@1",
+            "content": "There are 3 metrics including: the number of genes detected in each cell, the total counts in each cell, and the percentage of counts mapped to mitochondrial genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_10",
+            "start": 190,
+            "end": 353,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_10@2",
+            "content": "A high percentage of mitochondrial genes indicates the cell may have lysed before isolation, losing cytoplasmic RNA and retaining RNA enclosed in the mitochondria.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_10",
+            "start": 355,
+            "end": 517,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_10@3",
+            "content": "The user can interactively set thresholds to see how the number of cells below the threshold change ( Figure 1B ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_10",
+            "start": 519,
+            "end": 632,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_11@0",
+            "content": "Figure 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_11",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_13@0",
+            "content": "Preprocess counts",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_13",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_14@0",
+            "content": "We encourage the user to visually inspect their data across several parameters, using the quality metric plots provided prior to proceeding with further analysis.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_14",
+            "start": 0,
+            "end": 161,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_14@1",
+            "content": "Furthermore, we enable the user to determine appropriate filtering thresholds for each of the metrics to exclude low quality cells and outliers by inputting thresholds in the GenePattern cell interface ( Figure 2A ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_14",
+            "start": 163,
+            "end": 378,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_14@2",
+            "content": "We have also provided an option to filter for genes expressed in a minimum number of cells.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_14",
+            "start": 380,
+            "end": 470,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_14@3",
+            "content": "All preprocessing steps follow the Seurat and Scanpy workflows.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_14",
+            "start": 472,
+            "end": 534,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_14@4",
+            "content": "Counts are scaled to have the same total counts for each cell.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_14",
+            "start": 536,
+            "end": 597,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_14@5",
+            "content": "Highly variable genes are identified for downstream analysis by selecting genes with a minimum mean expression and dispersion; where dispersion is calculated as the log of the mean to variance ratio.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_14",
+            "start": 599,
+            "end": 797,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_14@6",
+            "content": "Counts are then log-transformed to reduce the distribution skew and bring it closer to a normal distribution.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_14",
+            "start": 799,
+            "end": 907,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_14@7",
+            "content": "To remove sources of technical variation, linear regression is used to diminish the effects of the number of detected molecules and the percentage of counts mapped to mitochondrial genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_14",
+            "start": 909,
+            "end": 1095,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_14@8",
+            "content": "Finally, the counts for highly variable genes in each cell are scaled to unit variance and a mean of zero.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_14",
+            "start": 1097,
+            "end": 1202,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_14@9",
+            "content": "For clustering cells in the next step, dimensionality reduction is performed using principal component analysis (PCA) on highly variable genes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_14",
+            "start": 1204,
+            "end": 1346,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_14@10",
+            "content": "A plot showing the standard deviation of each principal component is then displayed so the user may choose a reasonable number of principal components for use in clustering ( Figure 2B ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_14",
+            "start": 1348,
+            "end": 1534,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_15@0",
+            "content": "Figure 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_15",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_17@0",
+            "content": "Cluster cells",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_17",
+            "start": 0,
+            "end": 12,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_18@0",
+            "content": "As suggested in Satija et al. , 2015 , and followed in the Seurat and Scanpy workflows, we cluster cells using a graph-based clustering approach.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_18",
+            "start": 0,
+            "end": 144,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_18@1",
+            "content": "With the selected principal components as features, the cells are embedded in a K-nearest neighbor graph where cells are grouped using the Louvain community detection method ( Blondel et al. , 2008 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_18",
+            "start": 146,
+            "end": 345,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_18@2",
+            "content": "Then t-distributed stochastic neighbor embedding (t-SNE), a standard dimensionality reduction technique suited for visualizing high-dimensional data, is used to project and visualize the cells in the space of the first two t-SNE components ( Figure 3 ) ( Maaten & Hinton, 2008 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_18",
+            "start": 347,
+            "end": 625,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_18@3",
+            "content": "Cells are represented as points colored by clustering assignment.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_18",
+            "start": 627,
+            "end": 691,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_18@4",
+            "content": "Select parameters including the number of principal components, Louvain clustering resolution, and t-SNE perplexity are exposed for users to iteratively adjust the clustering results using the visualization for feedback ( Figure 3 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_18",
+            "start": 693,
+            "end": 925,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_18@5",
+            "content": "Setting a higher resolution results in more and smaller clusters.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_18",
+            "start": 927,
+            "end": 991,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_18@6",
+            "content": "The perplexity parameter loosely models the number of close neighbors each cell will have.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_18",
+            "start": 993,
+            "end": 1082,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_19@0",
+            "content": "Figure 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_19",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_21@0",
+            "content": "Visualize cluster markers",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_21",
+            "start": 0,
+            "end": 24,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_22@0",
+            "content": "The application of proper visualization tools is an important aid to interpret the complexity and depth of scRNA-seq data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_22",
+            "start": 0,
+            "end": 121,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_22@1",
+            "content": "We provide various visualizations within the notebook to explore differentially expressed genes, which can be used to identify specific cell types or highlight heterogeneous gene expression across clusters ( Figure 4A and B , Figure 5 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_22",
+            "start": 123,
+            "end": 359,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_22@2",
+            "content": "There is also an interface to query for differentially expressed genes that are higher in one cluster compared to the rest ( Figure 4C ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_22",
+            "start": 361,
+            "end": 497,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_22@3",
+            "content": "The Wilcoxon-Rank-Sum test statistic is used to rank genes by default.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_22",
+            "start": 499,
+            "end": 568,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_22@4",
+            "content": "This test is performed in a one-versus-all setup for each of the clusters, providing unique markers for each individual cluster.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_22",
+            "start": 570,
+            "end": 697,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_22@5",
+            "content": "We also include the option to perform pairwise cluster comparisons.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_22",
+            "start": 699,
+            "end": 765,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_22@6",
+            "content": "Additional statistical information about each gene is provided as an interactive table, such as the log-fold change comparing the average expression of a gene in one cluster versus the average expression in all other cells, the percentage of cells within the cluster that express the gene, and the percentage of cells in other clusters that express the gene.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_22",
+            "start": 767,
+            "end": 1124,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_22@7",
+            "content": "The percent expression metric shows whether a reasonable fraction of cells expresses the gene.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_22",
+            "start": 1126,
+            "end": 1219,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_23@0",
+            "content": "Figure 4.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_23",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_25@0",
+            "content": "Figure 5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_25",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_27@0",
+            "content": "Export analysis data",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_27",
+            "start": 0,
+            "end": 19,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_28@0",
+            "content": "Data generated by the analysis can be exported in two ways.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_28",
+            "start": 0,
+            "end": 58,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_28@1",
+            "content": "First, as a set of CSV (comma separated values) files suited for further independent analysis and data sharing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_28",
+            "start": 60,
+            "end": 170,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_28@2",
+            "content": "We provide a description of the exported CSV files, which include the preprocessed expression matrix, cell annotations, dimensional reduction outputs, and gene rankings generated during the analysis.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_28",
+            "start": 172,
+            "end": 370,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_28@3",
+            "content": "Second, as an H5AD file that can be re-imported into this notebook\u2019s workflow, retaining the generated results.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_28",
+            "start": 372,
+            "end": 482,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_28@4",
+            "content": "The parameters for each step in the analyses are automatically saved in the notebook once executed, ensuring the entire workflow is documented.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_28",
+            "start": 484,
+            "end": 626,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_28@5",
+            "content": "Notably, the entire notebook can be shared with other users rather than exporting output files.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_28",
+            "start": 628,
+            "end": 722,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_29@0",
+            "content": "Operation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_29",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_30@0",
+            "content": "To run the notebook, the user is required to have a GenePattern account that can be created on the GenePattern Notebook site .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_30",
+            "start": 0,
+            "end": 125,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_30@1",
+            "content": "After logging in, the notebook can be found in the \u201cFeatured\u201d section of the \u201cPublic Notebooks\u201d page.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_30",
+            "start": 127,
+            "end": 227,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_31@0",
+            "content": "Use case",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_31",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_32@0",
+            "content": "An example notebook ( https://github.com/genepattern/single_cell_clustering_notebook ) employs a scRNA-seq gene expression dataset for 2700 peripheral blood mononuclear cells (PBMCs) from a healthy donor as a demonstration of its use.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_32",
+            "start": 0,
+            "end": 233,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_32@1",
+            "content": "We can recapitulate cell types identified using Seurat and Scanpy; the clusters can be characterized by visualizing the expression of canonical markers of these cell types on the 2D t-SNE projection plot.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_32",
+            "start": 235,
+            "end": 438,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_32@2",
+            "content": "We also find that many of these markers are highly ranked when looking at significant differentially expressed genes between clusters ( Figure 4 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_32",
+            "start": 440,
+            "end": 586,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_32@3",
+            "content": "In Figure 4 we examine cluster markers to understand why some larger groups of cells are divided into sub clusters.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_32",
+            "start": 588,
+            "end": 702,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_33@0",
+            "content": "For example, LYZ is overexpressed in a cloud of samples that clustering separates as two distinct clusters, 1 and 5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_33",
+            "start": 0,
+            "end": 115,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_33@1",
+            "content": "The LYZ gene encodes for human lysozyme, an antimicrobial agent associated with blood monocytes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_33",
+            "start": 117,
+            "end": 212,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_33@2",
+            "content": "Using the cluster comparison tool ( Figure 4C ), we can see that cluster 1 exhibits high relative expression of CD14 while cluster 5 exhibits high relative expression of FCGR3A, also known as the CD16 receptor gene ( Figure 5 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_33",
+            "start": 214,
+            "end": 441,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_33@3",
+            "content": "These two genes characterize two known subtypes of blood monocytes respectively; classical and non-classical monocytes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_33",
+            "start": 443,
+            "end": 561,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_34@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_34",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_35@0",
+            "content": "As single-cell RNA-seq continues to grow in popularity, this GenePattern Notebook will provide an accessible and reproducible way to preprocess the data and perform clustering analysis without having to interact with any code.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_35",
+            "start": 0,
+            "end": 225,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_35@1",
+            "content": "We plan to continually review the notebook as single-cell RNA-seq protocols evolve to be even more high-throughput and as algorithms adapt to accommodate growing amounts of single-cell data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_35",
+            "start": 227,
+            "end": 416,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_35@2",
+            "content": "As the GenePattern Notebook user interface gains more features, the notebook will also grow to take advantage of these features.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_35",
+            "start": 418,
+            "end": 545,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_35@3",
+            "content": "Future notebooks such as those for multi-experiment aggregation (multiple sequencing runs) and pseudotime analysis are being considered to grow a compendium of single-cell sequencing analysis notebooks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_35",
+            "start": 547,
+            "end": 748,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_36@0",
+            "content": "Software and data availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_36",
+            "start": 0,
+            "end": 29,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_37@0",
+            "content": "GenePattern Notebook is available from: https://genepattern-notebook.org/ .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_37",
+            "start": 0,
+            "end": 74,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_38@0",
+            "content": "GenePattern Notebook source code is available from: https://github.com/genepattern/seurat_python_notebook .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_38",
+            "start": 0,
+            "end": 106,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_39@0",
+            "content": "Archived source code as at time of publication: https://doi.org/10.5281/zenodo.1326656 ( Mah, 2018 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_39",
+            "start": 0,
+            "end": 100,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_40@0",
+            "content": "License: BSD 3-Clause",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_40",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_41@0",
+            "content": "The 3k PBMCs from a Healthy Donor dataset is publicly available via the 10X Genomics website after user registration: https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_41",
+            "start": 0,
+            "end": 200,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_42@0",
+            "content": "Anders S Pyl PT Huber W : HTSeq--a Python framework to work with high-throughput sequencing data. Bioinformatics. 2015 ; 31 ( 2 ): 166 \u2013 169 . 25260700 10.1093/bioinformatics/btu638 4287950",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_42",
+            "start": 0,
+            "end": 188,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_43@0",
+            "content": "Blondel VD Guillaume JL Lambiotte R : Fast unfolding of communities in large networks. Journal of Statistical Mechanics: Theory and Experiment. 2008 ; 2008 ( 10 ): P10008 . 10.1088/1742-5468/2008/10/P10008",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_43",
+            "start": 0,
+            "end": 204,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_44@0",
+            "content": "Bray NL Pimentel H Melsted P : Near-optimal probabilistic RNA-seq quantification. Nat Biotechnol. 2016 ; 34 ( 5 ): 525 \u2013 527 . 27043002 10.1038/nbt.3519",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_44",
+            "start": 0,
+            "end": 151,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_45@0",
+            "content": "Hashimshony T Wagner F Sher N : CEL-Seq: single-cell RNA-Seq by multiplexed linear amplification. Cell Rep. 2012 ; 2 ( 3 ): 666 \u2013 673 . 22939981 10.1016/j.celrep.2012.08.003",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_45",
+            "start": 0,
+            "end": 172,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_46@0",
+            "content": "Maaten LJP Hinton GE : Visualizing High-Dimensional Data Using t-SNE. J Mach Learn Res. 2008 ; 9 : 2579 \u2013 2605 . Reference Source",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_46",
+            "start": 0,
+            "end": 128,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_47@0",
+            "content": "Macosko EZ Basu A Satija R : Highly Parallel Genome-wide Expression Profiling of Individual Cells Using Nanoliter Droplets. Cell. 2015 ; 161 ( 5 ): 1202 \u2013 1214 . 26000488 10.1016/j.cell.2015.05.002 4481139",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_47",
+            "start": 0,
+            "end": 204,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_48@0",
+            "content": "Mah C : genepattern/single_cell_clustering_notebook: v1.0.2 (Version v1.0.2). Zenodo. 2018 . http://www.doi.org/10.5281/zenodo.1328256",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_48",
+            "start": 0,
+            "end": 133,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_49@0",
+            "content": "Marinov GK Williams BA McCue K : From single-cell to cell-pool transcriptomes: stochasticity in gene expression and RNA splicing. Genome Res. 2014 ; 24 ( 3 ): 496 \u2013 510 . 24299736 10.1101/gr.161034.113 3941114",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_49",
+            "start": 0,
+            "end": 208,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_50@0",
+            "content": "Picelli S Faridani OR Bj\u00f6rklund \u00c5K : Full-length RNA-seq from single cells using Smart-seq2. Nat Protoc. 2014 ; 9 ( 1 ): 171 \u2013 181 . 24385147 10.1038/nprot.2014.006",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_50",
+            "start": 0,
+            "end": 163,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_51@0",
+            "content": "Reich M Tabor T Liefeld T : The GenePattern Notebook Environment. Cell Syst. 2017 ; 5 ( 2 ): 149 \u2013 151.e1 . 28822753 10.1016/j.cels.2017.07.003 5572818",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_51",
+            "start": 0,
+            "end": 150,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_52@0",
+            "content": "Satija R Farrell JA Gennert D : Spatial reconstruction of single-cell gene expression data. Nat Biotechnol. 2015 ; 33 ( 5 ): 495 \u2013 502 . 25867923 10.1038/nbt.3192 4430369",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_52",
+            "start": 0,
+            "end": 169,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_53@0",
+            "content": "Svensson V Teichmann SA Stegle O : SpatialDE: identification of spatially variable genes. Nat Methods. 2018 ; 15 ( 5 ): 343 \u2013 346 . 29553579 10.1038/nmeth.4636",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_53",
+            "start": 0,
+            "end": 158,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_54@0",
+            "content": "Villani AC Satija R Reynolds G : Single-cell RNA-seq reveals new types of human blood dendritic cells, monocytes, and progenitors. Science. 2017 ; 356 ( 6335 ): pii: eaah4573. 28428369 10.1126/science.aah4573 5775029",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_54",
+            "start": 0,
+            "end": 215,
+            "label": {}
+        },
+        {
+            "ix": "7-1306_v1_55@0",
+            "content": "Wolf FA Angerer P Theis FJ : SCANPY: large-scale single-cell gene expression data analysis. Genome Biol. 2018 ; 19 ( 1 ): 15 . 29409532 10.1186/s13059-017-1382-0 5802054",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1306_v1_55",
+            "start": 0,
+            "end": 168,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "7-1306_v1_0",
+            "tgt_ix": "7-1306_v1_1",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_1",
+            "tgt_ix": "7-1306_v1_2",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_0",
+            "tgt_ix": "7-1306_v1_3",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_3",
+            "tgt_ix": "7-1306_v1_4",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_3",
+            "tgt_ix": "7-1306_v1_5",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_3",
+            "tgt_ix": "7-1306_v1_6",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_0",
+            "tgt_ix": "7-1306_v1_7",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_7",
+            "tgt_ix": "7-1306_v1_8",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_8",
+            "tgt_ix": "7-1306_v1_9",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_8",
+            "tgt_ix": "7-1306_v1_10",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_8",
+            "tgt_ix": "7-1306_v1_11",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_11",
+            "tgt_ix": "7-1306_v1_12",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_7",
+            "tgt_ix": "7-1306_v1_13",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_13",
+            "tgt_ix": "7-1306_v1_14",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_13",
+            "tgt_ix": "7-1306_v1_15",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_15",
+            "tgt_ix": "7-1306_v1_16",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_7",
+            "tgt_ix": "7-1306_v1_17",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_17",
+            "tgt_ix": "7-1306_v1_18",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_17",
+            "tgt_ix": "7-1306_v1_19",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_19",
+            "tgt_ix": "7-1306_v1_20",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_7",
+            "tgt_ix": "7-1306_v1_21",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_21",
+            "tgt_ix": "7-1306_v1_22",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_21",
+            "tgt_ix": "7-1306_v1_23",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_23",
+            "tgt_ix": "7-1306_v1_24",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_21",
+            "tgt_ix": "7-1306_v1_25",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_25",
+            "tgt_ix": "7-1306_v1_26",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_7",
+            "tgt_ix": "7-1306_v1_27",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_27",
+            "tgt_ix": "7-1306_v1_28",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_7",
+            "tgt_ix": "7-1306_v1_29",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_29",
+            "tgt_ix": "7-1306_v1_30",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_0",
+            "tgt_ix": "7-1306_v1_31",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_31",
+            "tgt_ix": "7-1306_v1_32",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_31",
+            "tgt_ix": "7-1306_v1_33",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_0",
+            "tgt_ix": "7-1306_v1_34",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_34",
+            "tgt_ix": "7-1306_v1_35",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_0",
+            "tgt_ix": "7-1306_v1_36",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_36",
+            "tgt_ix": "7-1306_v1_37",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_36",
+            "tgt_ix": "7-1306_v1_38",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_36",
+            "tgt_ix": "7-1306_v1_39",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_36",
+            "tgt_ix": "7-1306_v1_40",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_36",
+            "tgt_ix": "7-1306_v1_41",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_0",
+            "tgt_ix": "7-1306_v1_1",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_1",
+            "tgt_ix": "7-1306_v1_2",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_2",
+            "tgt_ix": "7-1306_v1_3",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_3",
+            "tgt_ix": "7-1306_v1_4",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_5",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_5",
+            "tgt_ix": "7-1306_v1_6",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_6",
+            "tgt_ix": "7-1306_v1_7",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_7",
+            "tgt_ix": "7-1306_v1_8",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_8",
+            "tgt_ix": "7-1306_v1_9",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_9",
+            "tgt_ix": "7-1306_v1_10",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_10",
+            "tgt_ix": "7-1306_v1_11",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_11",
+            "tgt_ix": "7-1306_v1_12",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_12",
+            "tgt_ix": "7-1306_v1_13",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_13",
+            "tgt_ix": "7-1306_v1_14",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_14",
+            "tgt_ix": "7-1306_v1_15",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_15",
+            "tgt_ix": "7-1306_v1_16",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_16",
+            "tgt_ix": "7-1306_v1_17",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_17",
+            "tgt_ix": "7-1306_v1_18",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_18",
+            "tgt_ix": "7-1306_v1_19",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_19",
+            "tgt_ix": "7-1306_v1_20",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_20",
+            "tgt_ix": "7-1306_v1_21",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_21",
+            "tgt_ix": "7-1306_v1_22",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_22",
+            "tgt_ix": "7-1306_v1_23",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_23",
+            "tgt_ix": "7-1306_v1_24",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_24",
+            "tgt_ix": "7-1306_v1_25",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_25",
+            "tgt_ix": "7-1306_v1_26",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_26",
+            "tgt_ix": "7-1306_v1_27",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_27",
+            "tgt_ix": "7-1306_v1_28",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_28",
+            "tgt_ix": "7-1306_v1_29",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_29",
+            "tgt_ix": "7-1306_v1_30",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_30",
+            "tgt_ix": "7-1306_v1_31",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_31",
+            "tgt_ix": "7-1306_v1_32",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_32",
+            "tgt_ix": "7-1306_v1_33",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_33",
+            "tgt_ix": "7-1306_v1_34",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_34",
+            "tgt_ix": "7-1306_v1_35",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_35",
+            "tgt_ix": "7-1306_v1_36",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_36",
+            "tgt_ix": "7-1306_v1_37",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_37",
+            "tgt_ix": "7-1306_v1_38",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_38",
+            "tgt_ix": "7-1306_v1_39",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_39",
+            "tgt_ix": "7-1306_v1_40",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_40",
+            "tgt_ix": "7-1306_v1_41",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_9",
+            "tgt_ix": "7-1306_v1_42",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_18",
+            "tgt_ix": "7-1306_v1_43",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_9",
+            "tgt_ix": "7-1306_v1_44",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_45",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_18",
+            "tgt_ix": "7-1306_v1_46",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_47",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_39",
+            "tgt_ix": "7-1306_v1_48",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_49",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_50",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_5",
+            "tgt_ix": "7-1306_v1_51",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_52",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_53",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_54",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_55",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_10",
+            "tgt_ix": "7-1306_v1_12",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_14",
+            "tgt_ix": "7-1306_v1_16",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_18",
+            "tgt_ix": "7-1306_v1_20",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_22",
+            "tgt_ix": "7-1306_v1_24",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_22",
+            "tgt_ix": "7-1306_v1_26",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_0",
+            "tgt_ix": "7-1306_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_1",
+            "tgt_ix": "7-1306_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_2",
+            "tgt_ix": "7-1306_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_2",
+            "tgt_ix": "7-1306_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_2",
+            "tgt_ix": "7-1306_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_2",
+            "tgt_ix": "7-1306_v1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_3",
+            "tgt_ix": "7-1306_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_4@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_4@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_4@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_4@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_4",
+            "tgt_ix": "7-1306_v1_4@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_5",
+            "tgt_ix": "7-1306_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_5",
+            "tgt_ix": "7-1306_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_5",
+            "tgt_ix": "7-1306_v1_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_6",
+            "tgt_ix": "7-1306_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_6",
+            "tgt_ix": "7-1306_v1_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_7",
+            "tgt_ix": "7-1306_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_8",
+            "tgt_ix": "7-1306_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_9",
+            "tgt_ix": "7-1306_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_9",
+            "tgt_ix": "7-1306_v1_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_9",
+            "tgt_ix": "7-1306_v1_9@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_10",
+            "tgt_ix": "7-1306_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_10",
+            "tgt_ix": "7-1306_v1_10@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_10",
+            "tgt_ix": "7-1306_v1_10@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_10",
+            "tgt_ix": "7-1306_v1_10@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_11",
+            "tgt_ix": "7-1306_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_13",
+            "tgt_ix": "7-1306_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_14",
+            "tgt_ix": "7-1306_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_14",
+            "tgt_ix": "7-1306_v1_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_14",
+            "tgt_ix": "7-1306_v1_14@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_14",
+            "tgt_ix": "7-1306_v1_14@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_14",
+            "tgt_ix": "7-1306_v1_14@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_14",
+            "tgt_ix": "7-1306_v1_14@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_14",
+            "tgt_ix": "7-1306_v1_14@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_14",
+            "tgt_ix": "7-1306_v1_14@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_14",
+            "tgt_ix": "7-1306_v1_14@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_14",
+            "tgt_ix": "7-1306_v1_14@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_14",
+            "tgt_ix": "7-1306_v1_14@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_15",
+            "tgt_ix": "7-1306_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_17",
+            "tgt_ix": "7-1306_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_18",
+            "tgt_ix": "7-1306_v1_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_18",
+            "tgt_ix": "7-1306_v1_18@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_18",
+            "tgt_ix": "7-1306_v1_18@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_18",
+            "tgt_ix": "7-1306_v1_18@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_18",
+            "tgt_ix": "7-1306_v1_18@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_18",
+            "tgt_ix": "7-1306_v1_18@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_18",
+            "tgt_ix": "7-1306_v1_18@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_19",
+            "tgt_ix": "7-1306_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_21",
+            "tgt_ix": "7-1306_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_22",
+            "tgt_ix": "7-1306_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_22",
+            "tgt_ix": "7-1306_v1_22@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_22",
+            "tgt_ix": "7-1306_v1_22@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_22",
+            "tgt_ix": "7-1306_v1_22@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_22",
+            "tgt_ix": "7-1306_v1_22@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_22",
+            "tgt_ix": "7-1306_v1_22@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_22",
+            "tgt_ix": "7-1306_v1_22@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_22",
+            "tgt_ix": "7-1306_v1_22@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_23",
+            "tgt_ix": "7-1306_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_25",
+            "tgt_ix": "7-1306_v1_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_27",
+            "tgt_ix": "7-1306_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_28",
+            "tgt_ix": "7-1306_v1_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_28",
+            "tgt_ix": "7-1306_v1_28@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_28",
+            "tgt_ix": "7-1306_v1_28@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_28",
+            "tgt_ix": "7-1306_v1_28@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_28",
+            "tgt_ix": "7-1306_v1_28@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_28",
+            "tgt_ix": "7-1306_v1_28@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_29",
+            "tgt_ix": "7-1306_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_30",
+            "tgt_ix": "7-1306_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_30",
+            "tgt_ix": "7-1306_v1_30@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_31",
+            "tgt_ix": "7-1306_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_32",
+            "tgt_ix": "7-1306_v1_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_32",
+            "tgt_ix": "7-1306_v1_32@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_32",
+            "tgt_ix": "7-1306_v1_32@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_32",
+            "tgt_ix": "7-1306_v1_32@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_33",
+            "tgt_ix": "7-1306_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_33",
+            "tgt_ix": "7-1306_v1_33@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_33",
+            "tgt_ix": "7-1306_v1_33@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_33",
+            "tgt_ix": "7-1306_v1_33@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_34",
+            "tgt_ix": "7-1306_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_35",
+            "tgt_ix": "7-1306_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_35",
+            "tgt_ix": "7-1306_v1_35@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_35",
+            "tgt_ix": "7-1306_v1_35@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_35",
+            "tgt_ix": "7-1306_v1_35@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_36",
+            "tgt_ix": "7-1306_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_37",
+            "tgt_ix": "7-1306_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_38",
+            "tgt_ix": "7-1306_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_39",
+            "tgt_ix": "7-1306_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_40",
+            "tgt_ix": "7-1306_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_41",
+            "tgt_ix": "7-1306_v1_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_42",
+            "tgt_ix": "7-1306_v1_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_43",
+            "tgt_ix": "7-1306_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_44",
+            "tgt_ix": "7-1306_v1_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_45",
+            "tgt_ix": "7-1306_v1_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_46",
+            "tgt_ix": "7-1306_v1_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_47",
+            "tgt_ix": "7-1306_v1_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_48",
+            "tgt_ix": "7-1306_v1_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_49",
+            "tgt_ix": "7-1306_v1_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_50",
+            "tgt_ix": "7-1306_v1_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_51",
+            "tgt_ix": "7-1306_v1_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_52",
+            "tgt_ix": "7-1306_v1_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_53",
+            "tgt_ix": "7-1306_v1_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_54",
+            "tgt_ix": "7-1306_v1_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1306_v1_55",
+            "tgt_ix": "7-1306_v1_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "7-1306_v1",
+    "meta": {
+        "parser": "F1000XMLParser",
+        "intertext-graph": "N/A",
+        "doi": "10.12688/f1000research.15830.1",
+        "atype": "software-tool",
+        "license": "http://creativecommons.org/licenses/by/4.0/",
+        "title": "An accessible, interactive GenePattern Notebook for analysis and exploration of single-cell transcriptomic data",
+        "abstract": "Single-cell RNA sequencing (scRNA-seq) has emerged as a popular method to profile gene expression at the resolution of individual cells. While there have been methods and software specifically developed to analyze scRNA-seq data, they are most accessible to users who program. We have created a scRNA-seq clustering analysis GenePattern Notebook that provides an interactive, easy-to-use interface for data analysis and exploration of scRNA-Seq data, without the need to write or view any code. The notebook provides a standard scRNA-seq analysis workflow for pre-processing data, identification of sub-populations of cells by clustering, and exploration of biomarkers to characterize heterogeneous cell populations and delineate cell types.",
+        "contributors": [
+            {
+                "surname": "Mah",
+                "given-names": "Clarence K."
+            },
+            {
+                "surname": "Tabor",
+                "given-names": "Thorin"
+            },
+            {
+                "surname": "Mesirov",
+                "given-names": "Jill P."
+            }
+        ],
+        "url": "https://f1000research.com/articles/7-1306/v1/",
+        "doc_id": "7-1306",
+        "version": 1,
+        "ix_counter": 220,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy"
+    }
+}

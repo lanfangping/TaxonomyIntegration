@@ -1,0 +1,4013 @@
+{
+    "nodes": [
+        {
+            "ix": "57-ARR_v1_0",
+            "content": "Mining Clues from Incomplete Utterance: A Query-enhanced Network for Incomplete Utterance Rewriting",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_2",
+            "content": "Incomplete utterance rewriting has recently raised wide attention. However, previous works do not consider the semantic structural information in utterances or use it implicitly. We propose a QUEry-Enhanced Network (QUEEN) to solve this problem. Firstly, our proposed query template explicitly brings guided semantic structural knowledge between the incomplete utterance and the rewritten utterance. Then, we adopt a fast and effective edit operation scoring network for decoding. Benefiting from extra semantic structural information and the well-designed network, QUEEN achieves state-of-the-art performance on several public datasets.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "57-ARR_v1_4",
+            "content": "Multi-turn dialogue modeling, a classic research topic in the field of human-machine interaction, serves as an important application area for pragmatics (Leech, 2003) and Turing Test. The major challenge in this task is that interlocutors tend to use incomplete utterances for brevity, such as referring back to (i.e., coreference) or omitting (i.e., ellipsis) entities or concepts that appear in dialogue history. As shown in Table 1, the incomplete utterance u 3 refers to \"Smith\" (''\u53f2\u5bc6\u65af\") from u 1 and u 2 using a pronoun \"He\" (''\u4ed6\") and omits \"the type of cuisine\" (''\u83dc\u80b4\u7684\u7c7b\u578b\") from u 2 . This may cause referential ambiguity and semantic incompleteness problems if we only read this single utterance u 3 , which is a common case of downstream applications like retrieval-based dialogue systems (Boussaha et al., 2019). Moreover, previous studies (Su et al., 2019;Pan et al., 2019) also find that coreference and ellipsis exist in more than 70% of the utterances, especially in pro-drop languages like Chinese. These phenomena make it imperative to effectively model dialogue in incomplete utterance scenarios.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_5",
+            "content": "To cope with this problem, previous works (Kumar and Joshi, 2016a; Elgohary et al., 2019; No, Smith does not care about the type of cuisine. \u4e0d\uff0c\u53f2\u5bc6\u65af\u4e0d\u5173\u5fc3\u83dc\u80b4\u7684\u7c7b\u578b\u3002 Table 1: An example in multi-turn dialogue including dialogue utterance history u 1 and u 2 , incomplete utterance u 3 and rewritten utterance u \u2032 3 .",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_6",
+            "content": "et al., 2019) propose the Incomplete Utterance Rewriting (IUR) task. It aims to rewrite an incomplete utterance into a semantically equivalent but self-contained utterance by mining semantic clues from the dialogue history. Then the generated utterance can be understood without reading dialogue history. For example, in Table 1, after recovering the referred and omitted information from u 3 into u \u2032 3 , we could better understand this utterance comprehensively than before.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_7",
+            "content": "Early works use coreference resolution methods (Clark and Manning, 2016) to identify the entity that a pronoun refers to. However, they ignore the more common cases of ellipsis. So the text generation-based methods (Su et al., 2019;Pan et al., 2019) are introduced to generate the rewritten sequence from the incomplete sequence by jointly considering coreference and ellipsis problems. Though effective, generation models neglect a key trait of the IUR task, where the main semantic structure of a rewritten utterance is usually similar to the original incomplete utterance. So the inherent structure-unawareness and uncontrollable feature of generation-based models impede their performances. For semantic structure-aware methods, utilize an edit operation matrix (e.g., substitution, insertion operations) to convert an incomplete utterance into a complete one. They formulate this task as a semantic segmentation problem with a CNN-based model (Ronneberger et al., 2015) on the matrix to capture the semantic structural relations between words implicitly. Xu et al. (2020) attempt to add additional semantic information to language models (Devlin et al., 2019) by annotating semantic role information but it is time-consuming and costly. propose a semi-autoregressive generator using a tagger to integrate semantic textual information from rare words or phrases yet ignoring structural information from incomplete utterances. Therefore, there are still limitations of existing methods for IUR task, especially in jointly considering coreference and ellipsis cases and better utilizing semantic structural information.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_8",
+            "content": "This paper proposes a simple yet effective QUEry-Enhanced Network (QUEEN) to solve the IUR task. QUEEN jointly considers coreference and ellipsis problems that frequently happen in multi-turn utterances. Specifically, we propose a straightforward query template featuring two linguistic properties and concatenate this query with utterances as input text. This query explicitly brings semantic structural guided information shared between the incomplete and the rewritten utterances, i.e., making model perceive where to refer back to or recover omitted tokens. We regard the rewritten utterance as the output from a series of edit operations on the incomplete utterance by constructing a token-pair edit operation matrix. Different from , we adopt a well-designed edit operation scoring network on the matrix to perform incomplete utterance rewriting, which is faster and more effective. QUEEN brings semantic structural information from linguistics into the model more explicitly and avoids unnecessary overheads of labeled data from other tasks. Experiments on several IUR benchmarks show that QUEEN outperforms previous state-ofthe-art methods. Extensive ablation studies also confirm that the proposed query template makes key contributions to the improvements of QUEEN.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_9",
+            "content": "Methodology",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "57-ARR_v1_10",
+            "content": "Overview Our QUEEN mainly consists of two modules: query template construction module (Sec. 2.1) and edit operation scoring network module (Sec. 2.2). From two linguistic perspectives, the former module aims to generate a query template for each incomplete utterance, i.e., coreference-ellipsis-oriented query template, to cope with coreference and ellipsis problems. This query template explicitly hints the model where to refer back and recover omitted tokens. The latter module tries to capture the semantic structural relations between words by constructing an edit operation matrix. As shown in Figure 1, our goal is to learn a model to generate correct edit operations on this matrix and compute edit operation scores between token pairs so as to convert the incomplete utterance into the complete one.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_11",
+            "content": "Query Template Construction Module",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1"
+            }
+        },
+        {
+            "ix": "57-ARR_v1_12",
+            "content": "By observing incomplete and rewritten utterance pairs in existing datasets, we find that pronouns and referential noun phrases in the incomplete utterance often need to be substituted by text spans in dialogue history. And ellipsis often occurs in some specific positions of incomplete utterance, conforming to a certain syntactic structure. In this module, we expect to encode these linguistic prior knowledge into the input of QUEEN. The query template is constructed as follows: Coreference-oriented Query Template In order to make QUEEN perceive the positions of coreference that need to be substituted by text spans from dialogue history, we use a special token [COREF] to replace pronouns and referential noun phrases in the incomplete utterance so as to get our coreference-oriented query template. For example, the coreference-oriented query template of the incomplete utterance \"No, he does not care\" (''\u4e0d, \u4ed6 \u4e0d \u5173 \u5fc3\") is \"No, [COREF] does not care\" (''\u4e0d,[COREF] \u4e0d\u5173\u5fc3\") . To get the target complete utterance, this query explicitly tells the model we should replace the \"He\" (''\u4ed6\") with text spans (such as 'Smith'(''\u53f2\u5bc6\u65af\") ) from dialogue history, rather than replacing other words. Here, we find all pronouns that required to be replaced using a predefined pronoun collection.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_13",
+            "content": "To make QUEEN perceive the positions of ellipsis that need to be inserted by text spans from dialogue history, we define a special token [ELLIP] and put it in a linguistically right place of the incomplete utterance. Since a self-contained utterance usually contains a complete S-V-O (Subject-Verb-Object) structure, if an incomplete utterance lack any of these key elements, we could assume there is a case of ellipsis in its corresponding text position. So we perform dependency parsing on the incomplete utterance to get the structure of the incom- Then we fuse these two query templates into the final coreference-ellipsis-oriented query template. For incomplete utterance \"No, he does not care\" (''\u4e0d, \u4ed6\u4e0d\u5173\u5fc3\"), we get \"No, [COREF] does not care [ELLIP]' (''\u4e0d,[COREF] \u4e0d \u5173 \u5fc3 [ELLIP]\") as our final query template. Under supervised setting, the models will perceive the positions to refer back and recover omitted tokens for this utterance. For a multi-turn dialogue d = (u 1 , ..., u N \u22121 , u N ) containing N utterances where u 1 \u223c u N \u22121 are dialogue history and the last utterance u N needs to be rewritten, we could get the dialogue history text s = (w 1 1 , ..., w n i , ..., w N L N ) where w n i is the i-th token in the n-th utterance and L n is the length of n-th utterance. We then concatenate our coreference-ellipsis-oriented query template with the dialogue history text to get our final input text s \u2032 = (w q 1 , ..., w q k , ..., w q M , w 1 1 , ..., w n i , ..., w N L N ) where w q k is the k-th token of the query template and M is the length of query template.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_14",
+            "content": "Edit Operation Scoring Network Module",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2"
+            }
+        },
+        {
+            "ix": "57-ARR_v1_15",
+            "content": "Since pre-trained language models have been proven to be effective on several NLP tasks, we employ BERT (Devlin et al., 2019) to encoding our input text to get the contextualized hidden representation H = (h q 1 , ..., h q k , ..., h q M , h 1 1 , ..., h n i , ..., h N L N )) for each token. Our model attempts to predict whether there is an edit operation between each token pair. To this end, we define an operation scoring function as follows. Since the order of utterance is also important for dialogue, we further use RoPE (Su et al., 2021) to provide relative position information :",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_16",
+            "content": "q \u03b1 i = W \u03b1 h i + b \u03b1 (1) k \u03b1 j = W \u03b1 h j + b \u03b1 (2) s \u03b1 ij = (R i q \u03b1 i ) T (R j k \u03b1 j )(3)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_17",
+            "content": "where \u03b1 is edit operation type including Substitution and Pre-Insertion. For different operations, we use different trainable parameters W \u03b1 and b \u03b1 . R i is a transformation matrix from RoPE to inject position information and s \u03b1 ij is the score for \u03b1-th edit operation from i-th token in dialogue history to j-th token in incomplete utterance.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_18",
+            "content": "During decoding for \u03b1-th operation, edit operation label Y \u03b1 ij satisfies:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_19",
+            "content": "Y \u03b1 ij = { 1 s \u03b1 ij >= \u03b8 0 s \u03b1 ij < \u03b8 (4)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_20",
+            "content": "where \u03b8 is a hyperparameter. Once Y \u03b1 ij equals to 1, the edit operation \u03b1 should be performed between token i and token j.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_21",
+            "content": "Since the label distribution of edit operation is very unbalanced (most elements are zeros), we employed a Circle Loss (Sun et al., 2020) as our objective function to mitigate this problem : 3 Experiments",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_22",
+            "content": "log(1 + \u2211 (i,j)\u2208\u2126pos e \u2212s \u03b1 i,j ) + log(1 + \u2211 (i,j)\u2208\u2126neg e s \u03b1 i,j ) (5) Model EM B2 B4 R2 R L T-",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_23",
+            "content": "Experimental Setup",
+            "ntype": "title",
+            "meta": {
+                "section": "3.1"
+            }
+        },
+        {
+            "ix": "57-ARR_v1_24",
+            "content": "We evaluate our model on four IUR benchmarks from different domains and languages: REWRITE (Chinese, Su et al., 2019), Restoration-200K (Chinese, Pan et al., 2019), TASK (English, Quan et al., 2019), CANARD (English, Elgohary et al., 2019). More statistical details for datasets are shown in the Appendix.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_25",
+            "content": "We use BLEU (Papineni et al., 2002), ROUGE (Lin, 2004) and the exact match (EM score) as our evaluation metrics. Baseline Models We compare our model with a large number of baselines detailed in the Appendix.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_26",
+            "content": "Results and Analysis",
+            "ntype": "title",
+            "meta": {
+                "section": "3.2"
+            }
+        },
+        {
+            "ix": "57-ARR_v1_27",
+            "content": "We report the experiment results in Table 2, Table 3, Table4 and Table 5 all datasets with different languages and evaluation metrics, our approach outperforms all previous state-of-the-art methods. The improvement in EM shows that our model has a stronger ability to find the correct span, due to our model making full use of the prior information of semantic structure from our coreference-ellipsis-oriented query template. On the Chinese datasets Table 2",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_28",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "57-ARR_v1_29",
+            "content": "We propose a simple yet effective query-enhanced network for IUR task. Our well-designed query template explicitly brings semantic structural information to improve the ability to predict correct edit operations between incomplete utterance and complete one. Experiments have shown that our model with this well-designed query achieves promising results than previous methods.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_30",
+            "content": "A.1 Constructing Supervision",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_31",
+            "content": "The expected supervision for our model is the edit operation matrix, but existing datasets only contain rewritten utterances. So we adopt Longest Common Subsequence (LCS) and 'Distant Supervision' to get correct supervision, which contains edit operations Substitute and Pre-Insert.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_32",
+            "content": "Coreference-oriented Query During the training, we use the ground truth of pronouns and referential noun phrases to construct the coreferenceoriented query. During the inference, we use the constructed pronoun collection to construct the coreference-oriented query, which contains pronouns and referential noun phrases from training data and common pronouns (except ''\u6211\", \"me\" etc. ).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_33",
+            "content": "Ellipsis-oriented Query Construction If the parsing result of the incomplete utterance is an S-V (Subject-Verb) structure and lacks subject element, we insert an [ELLIP] at the end of the incomplete utterance as the query. When there is not the S-V structure after parsing, we insert an [ELLIP] at the beginning of the incomplete utterance as the query. In other cases, we insert",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_34",
+            "content": "[ELLIP] at both the beginning and end of the incomplete utterance as the query. We use spaCy 1 for English and LTP (Che et al., 2020) (See et al., 2017a), the basic transformer model (T-Gen) (Vaswani et al., 2017) and the transformerbased pointer generator (T-Ptr-Gen) (See et al., 2017a), Syntactic (Kumar and Joshi, 2016b), PAC (Pan et al., 2019), L-Ptr-\u03bb and T-Ptr-\u03bb (Su et al., 2019), GECOR (Quan et al., 2019). Above methods need to generate rewritten utterances from scratch, neglecting the main semantic structure of rewritten utterances. (ii) Structure-aware models include CSRL (Xu et al., 2020), RUN , SARG .",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_35",
+            "content": "Table 9 gives 3 examples that indicate the representative situations as Hao et al. (2021). The first example illustrates the cases when RUN inserts unexpected characters into the wrong places. T-Ptr-Gen just copies the incomplete utterance. Due to our generated query, the position that needs to be inserted has been explicitly promoted by the query. The second example shows a common situation for generation-based models. T-Ptr-Gen messes up by repeating stupidly. However, this situation doesn't happen to our model, as it is not a generation-based model. The last example refers to a long and complex entity. For these cases, it is easier for our model to get the correct span. This is because our model learns the span boundaries from the edit operation matrix. Compared to the generation-based model, we don't generate sentences from scratch and this reduces the difficulty. Meanwhile, our model is not based on CNN as RUN, which suffers from the limitation of receptive-field to find a longer span.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_36",
+            "content": "One limitation of current edit-based IUR models, is that only tokens that have appeared in the history dialogue can be selected. Therefore, these models, including ours, cannot generate novel words, e.g., conjunctions and prepositions, to cater to other metrics, like fluency. However, this can be alleviated by incorporating an additional word dictionary as See et al. (2017b) and deals with the out-of-vocabulary (OOV) words to improve fluency. For fairness, we keep the same words during the experiment as RUN to mitigat it. We will consider this question as a promising direction for future works.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_37",
+            "content": "Example",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "57-ARR_v1_38",
+            "content": "UNKNOWN, None, 2014, Neural machine translation by jointly learning to align and translate, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": null,
+                "title": null,
+                "pub_date": "2014",
+                "pub_title": "Neural machine translation by jointly learning to align and translate",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_39",
+            "content": "UNKNOWN, None, 1907, Deep retrieval-based dialogue systems: A short review, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": null,
+                "title": null,
+                "pub_date": "1907",
+                "pub_title": "Deep retrieval-based dialogue systems: A short review",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_40",
+            "content": "UNKNOWN, None, 2020, N-ltp: A open-source neural chinese language technology platform with pretrained models, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": null,
+                "title": null,
+                "pub_date": "2020",
+                "pub_title": "N-ltp: A open-source neural chinese language technology platform with pretrained models",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_41",
+            "content": "Kevin Clark, Christopher Manning, Improving coreference resolution by learning entitylevel distributed representations, 2016, Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": [
+                    "Kevin Clark",
+                    "Christopher Manning"
+                ],
+                "title": "Improving coreference resolution by learning entitylevel distributed representations",
+                "pub_date": "2016",
+                "pub_title": "Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "57-ARR_v1_42",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: pre-training of deep bidirectional transformers for language understanding, 2019-06-02, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, NAACL-HLT 2019, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": [
+                    "Jacob Devlin",
+                    "Ming-Wei Chang",
+                    "Kenton Lee",
+                    "Kristina Toutanova"
+                ],
+                "title": "BERT: pre-training of deep bidirectional transformers for language understanding",
+                "pub_date": "2019-06-02",
+                "pub_title": "Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, NAACL-HLT 2019",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_43",
+            "content": "Ahmed Elgohary, Denis Peskov, Jordan Boyd-Graber, Can you unpack that? learning to rewrite questions-in-context, 2019, Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP), Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "Ahmed Elgohary",
+                    "Denis Peskov",
+                    "Jordan Boyd-Graber"
+                ],
+                "title": "Can you unpack that? learning to rewrite questions-in-context",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "57-ARR_v1_44",
+            "content": "Jie Hao, Linfeng Song, Liwei Wang, Kun Xu, Zhaopeng Tu, Dong Yu, RAST: Domainrobust dialogue rewriting as sequence tagging, 2021, Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": [
+                    "Jie Hao",
+                    "Linfeng Song",
+                    "Liwei Wang",
+                    "Kun Xu",
+                    "Zhaopeng Tu",
+                    "Dong Yu"
+                ],
+                "title": "RAST: Domainrobust dialogue rewriting as sequence tagging",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "57-ARR_v1_45",
+            "content": "Mengzuo Huang, Feng Li, Wuhe Zou, Weidong Zhang, SARG: A novel semi autoregressive generator for multi-turn incomplete utterance restoration, 2021-02-02, Thirty-Fifth AAAI Conference on Artificial Intelligence, AAAI 2021, Thirty-Third Conference on Innovative Applications of Artificial Intelligence, IAAI 2021, The Eleventh Symposium on Educational Advances in Artificial Intelligence, AAAI Press.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": [
+                    "Mengzuo Huang",
+                    "Feng Li",
+                    "Wuhe Zou",
+                    "Weidong Zhang"
+                ],
+                "title": "SARG: A novel semi autoregressive generator for multi-turn incomplete utterance restoration",
+                "pub_date": "2021-02-02",
+                "pub_title": "Thirty-Fifth AAAI Conference on Artificial Intelligence, AAAI 2021, Thirty-Third Conference on Innovative Applications of Artificial Intelligence, IAAI 2021, The Eleventh Symposium on Educational Advances in Artificial Intelligence",
+                "pub": "AAAI Press"
+            }
+        },
+        {
+            "ix": "57-ARR_v1_46",
+            "content": "P Diederik, Jimmy Kingma,  Ba, Adam: A method for stochastic optimization, 2015-05-07, 3rd International Conference on Learning Representations, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": [
+                    "P Diederik",
+                    "Jimmy Kingma",
+                    " Ba"
+                ],
+                "title": "Adam: A method for stochastic optimization",
+                "pub_date": "2015-05-07",
+                "pub_title": "3rd International Conference on Learning Representations",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_47",
+            "content": "Vineet Kumar, Sachindra Joshi, Nonsentential question resolution using sequence to sequence learning, 2016, Proceedings of COLING 2016, the 26th International Conference on Computational Linguistics: Technical Papers, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    "Vineet Kumar",
+                    "Sachindra Joshi"
+                ],
+                "title": "Nonsentential question resolution using sequence to sequence learning",
+                "pub_date": "2016",
+                "pub_title": "Proceedings of COLING 2016, the 26th International Conference on Computational Linguistics: Technical Papers",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_48",
+            "content": "Vineet Kumar, Sachindra Joshi, Nonsentential question resolution using sequence to sequence learning, 2016, Proceedings of COLING 2016, the 26th International Conference on Computational Linguistics: Technical Papers, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": [
+                    "Vineet Kumar",
+                    "Sachindra Joshi"
+                ],
+                "title": "Nonsentential question resolution using sequence to sequence learning",
+                "pub_date": "2016",
+                "pub_title": "Proceedings of COLING 2016, the 26th International Conference on Computational Linguistics: Technical Papers",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_49",
+            "content": "Geoffrey Leech, Pragmatics and dialogue, 2003, The Oxford handbook of computational linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": [
+                    "Geoffrey Leech"
+                ],
+                "title": "Pragmatics and dialogue",
+                "pub_date": "2003",
+                "pub_title": "The Oxford handbook of computational linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_50",
+            "content": "Chin-Yew Lin, Rouge: A package for automatic evaluation of summaries, 2004, Text summarization branches out, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": [
+                    "Chin-Yew Lin"
+                ],
+                "title": "Rouge: A package for automatic evaluation of summaries",
+                "pub_date": "2004",
+                "pub_title": "Text summarization branches out",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_51",
+            "content": "Qian Liu, Bei Chen, Jian-Guang Lou, Bin Zhou, Dongmei Zhang, Incomplete utterance rewriting as semantic segmentation, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": [
+                    "Qian Liu",
+                    "Bei Chen",
+                    "Jian-Guang Lou",
+                    "Bin Zhou",
+                    "Dongmei Zhang"
+                ],
+                "title": "Incomplete utterance rewriting as semantic segmentation",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_52",
+            "content": "Zhufeng Pan, Kun Bai, Yan Wang, Lianqiang Zhou, Xiaojiang Liu, Improving open-domain dialogue systems via multi-turn incomplete utterance restoration, 2019, Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": [
+                    "Zhufeng Pan",
+                    "Kun Bai",
+                    "Yan Wang",
+                    "Lianqiang Zhou",
+                    "Xiaojiang Liu"
+                ],
+                "title": "Improving open-domain dialogue systems via multi-turn incomplete utterance restoration",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_53",
+            "content": "Kishore Papineni, Salim Roukos, Todd Ward, Wei-Jing Zhu, Bleu: a method for automatic evaluation of machine translation, 2002, Proceedings of the 40th Annual Meeting of the Association for Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b15",
+                "authors": [
+                    "Kishore Papineni",
+                    "Salim Roukos",
+                    "Todd Ward",
+                    "Wei-Jing Zhu"
+                ],
+                "title": "Bleu: a method for automatic evaluation of machine translation",
+                "pub_date": "2002",
+                "pub_title": "Proceedings of the 40th Annual Meeting of the Association for Computational Linguistics",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "57-ARR_v1_54",
+            "content": "Jun Quan, Deyi Xiong, Bonnie Webber, Changjian Hu, Gecor: An end-to-end generative ellipsis and co-reference resolution model for task-oriented dialogue, 2019, Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b16",
+                "authors": [
+                    "Jun Quan",
+                    "Deyi Xiong",
+                    "Bonnie Webber",
+                    "Changjian Hu"
+                ],
+                "title": "Gecor: An end-to-end generative ellipsis and co-reference resolution model for task-oriented dialogue",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_55",
+            "content": "Olaf Ronneberger, Philipp Fischer, Thomas Brox, U-net: Convolutional networks for biomedical image segmentation, 2015, International Conference on Medical image computing and computerassisted intervention, Springer.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b17",
+                "authors": [
+                    "Olaf Ronneberger",
+                    "Philipp Fischer",
+                    "Thomas Brox"
+                ],
+                "title": "U-net: Convolutional networks for biomedical image segmentation",
+                "pub_date": "2015",
+                "pub_title": "International Conference on Medical image computing and computerassisted intervention",
+                "pub": "Springer"
+            }
+        },
+        {
+            "ix": "57-ARR_v1_56",
+            "content": "Abigail See, J Peter, Christopher Liu,  Manning, Get to the point: Summarization with pointer-generator networks, 2017-07-30, Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics, Long Papers.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b18",
+                "authors": [
+                    "Abigail See",
+                    "J Peter",
+                    "Christopher Liu",
+                    " Manning"
+                ],
+                "title": "Get to the point: Summarization with pointer-generator networks",
+                "pub_date": "2017-07-30",
+                "pub_title": "Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics",
+                "pub": "Long Papers"
+            }
+        },
+        {
+            "ix": "57-ARR_v1_57",
+            "content": "UNKNOWN, None, 2017, Get to the point: Summarization with pointer-generator networks, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b19",
+                "authors": null,
+                "title": null,
+                "pub_date": "2017",
+                "pub_title": "Get to the point: Summarization with pointer-generator networks",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_58",
+            "content": "Hui Su, Xiaoyu Shen, Rongzhi Zhang, Fei Sun, Pengwei Hu, Cheng Niu, Jie Zhou, Improving multi-turn dialogue modelling with utterance ReWriter, 2019, Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b20",
+                "authors": [
+                    "Hui Su",
+                    "Xiaoyu Shen",
+                    "Rongzhi Zhang",
+                    "Fei Sun",
+                    "Pengwei Hu",
+                    "Cheng Niu",
+                    "Jie Zhou"
+                ],
+                "title": "Improving multi-turn dialogue modelling with utterance ReWriter",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "57-ARR_v1_59",
+            "content": "UNKNOWN, None, 2021, Roformer: Enhanced transformer with rotary position embedding, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b21",
+                "authors": null,
+                "title": null,
+                "pub_date": "2021",
+                "pub_title": "Roformer: Enhanced transformer with rotary position embedding",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_60",
+            "content": "Yifan Sun, Changmao Cheng, Yuhan Zhang, Chi Zhang, Liang Zheng, Zhongdao Wang, Yichen Wei, Circle loss: A unified perspective of pair similarity optimization, 2020, Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b22",
+                "authors": [
+                    "Yifan Sun",
+                    "Changmao Cheng",
+                    "Yuhan Zhang",
+                    "Chi Zhang",
+                    "Liang Zheng",
+                    "Zhongdao Wang",
+                    "Yichen Wei"
+                ],
+                "title": "Circle loss: A unified perspective of pair similarity optimization",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_61",
+            "content": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan Gomez, Lukasz Kaiser, Illia Polosukhin, Attention is all you need, 2017-12-04, Advances in Neural Information Processing Systems 30: Annual Conference on Neural Information Processing Systems, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b23",
+                "authors": [
+                    "Ashish Vaswani",
+                    "Noam Shazeer",
+                    "Niki Parmar",
+                    "Jakob Uszkoreit",
+                    "Llion Jones",
+                    "Aidan Gomez",
+                    "Lukasz Kaiser",
+                    "Illia Polosukhin"
+                ],
+                "title": "Attention is all you need",
+                "pub_date": "2017-12-04",
+                "pub_title": "Advances in Neural Information Processing Systems 30: Annual Conference on Neural Information Processing Systems",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_62",
+            "content": "Kun Xu, Haochen Tan, Linfeng Song, Han Wu, Haisong Zhang, Linqi Song, Dong Yu, Semantic Role Labeling Guided Multi-turn Dialogue ReWriter, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b24",
+                "authors": [
+                    "Kun Xu",
+                    "Haochen Tan",
+                    "Linfeng Song",
+                    "Han Wu",
+                    "Haisong Zhang",
+                    "Linqi Song",
+                    "Dong Yu"
+                ],
+                "title": "Semantic Role Labeling Guided Multi-turn Dialogue ReWriter",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "57-ARR_v1_63",
+            "content": "Ningyu Zhang, Xiang Chen, Xin Xie, Shumin Deng, Chuanqi Tan, Mosha Chen, Fei Huang, Luo Si, Huajun Chen, Document-level relation extraction as semantic segmentation, 2021-08-27, Proceedings of the Thirtieth International Joint Conference on Artificial Intelligence, IJCAI 2021, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b25",
+                "authors": [
+                    "Ningyu Zhang",
+                    "Xiang Chen",
+                    "Xin Xie",
+                    "Shumin Deng",
+                    "Chuanqi Tan",
+                    "Mosha Chen",
+                    "Fei Huang",
+                    "Luo Si",
+                    "Huajun Chen"
+                ],
+                "title": "Document-level relation extraction as semantic segmentation",
+                "pub_date": "2021-08-27",
+                "pub_title": "Proceedings of the Thirtieth International Joint Conference on Artificial Intelligence, IJCAI 2021",
+                "pub": null
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "57-ARR_v1_0@0",
+            "content": "Mining Clues from Incomplete Utterance: A Query-enhanced Network for Incomplete Utterance Rewriting",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_0",
+            "start": 0,
+            "end": 98,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_2@0",
+            "content": "Incomplete utterance rewriting has recently raised wide attention.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_2",
+            "start": 0,
+            "end": 65,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_2@1",
+            "content": "However, previous works do not consider the semantic structural information in utterances or use it implicitly.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_2",
+            "start": 67,
+            "end": 177,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_2@2",
+            "content": "We propose a QUEry-Enhanced Network (QUEEN) to solve this problem.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_2",
+            "start": 179,
+            "end": 244,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_2@3",
+            "content": "Firstly, our proposed query template explicitly brings guided semantic structural knowledge between the incomplete utterance and the rewritten utterance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_2",
+            "start": 246,
+            "end": 398,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_2@4",
+            "content": "Then, we adopt a fast and effective edit operation scoring network for decoding.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_2",
+            "start": 400,
+            "end": 479,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_2@5",
+            "content": "Benefiting from extra semantic structural information and the well-designed network, QUEEN achieves state-of-the-art performance on several public datasets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_2",
+            "start": 481,
+            "end": 636,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_4@0",
+            "content": "Multi-turn dialogue modeling, a classic research topic in the field of human-machine interaction, serves as an important application area for pragmatics (Leech, 2003) and Turing Test.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_4",
+            "start": 0,
+            "end": 182,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_4@1",
+            "content": "The major challenge in this task is that interlocutors tend to use incomplete utterances for brevity, such as referring back to (i.e., coreference) or omitting (i.e., ellipsis) entities or concepts that appear in dialogue history.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_4",
+            "start": 184,
+            "end": 413,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_4@2",
+            "content": "As shown in Table 1, the incomplete utterance u 3 refers to \"Smith\" (''\u53f2\u5bc6\u65af\") from u 1 and u 2 using a pronoun \"He\" (''\u4ed6\") and omits \"the type of cuisine\" (''\u83dc\u80b4\u7684\u7c7b\u578b\") from u 2 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_4",
+            "start": 415,
+            "end": 589,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_4@3",
+            "content": "This may cause referential ambiguity and semantic incompleteness problems if we only read this single utterance u 3 , which is a common case of downstream applications like retrieval-based dialogue systems (Boussaha et al., 2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_4",
+            "start": 591,
+            "end": 820,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_4@4",
+            "content": "Moreover, previous studies (Su et al., 2019;Pan et al., 2019) also find that coreference and ellipsis exist in more than 70% of the utterances, especially in pro-drop languages like Chinese.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_4",
+            "start": 822,
+            "end": 1011,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_4@5",
+            "content": "These phenomena make it imperative to effectively model dialogue in incomplete utterance scenarios.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_4",
+            "start": 1013,
+            "end": 1111,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_5@0",
+            "content": "To cope with this problem, previous works (Kumar and Joshi, 2016a; Elgohary et al., 2019; No, Smith does not care about the type of cuisine.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_5",
+            "start": 0,
+            "end": 139,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_5@1",
+            "content": "\u4e0d\uff0c\u53f2\u5bc6\u65af\u4e0d\u5173\u5fc3\u83dc\u80b4\u7684\u7c7b\u578b\u3002 Table 1: An example in multi-turn dialogue including dialogue utterance history u 1 and u 2 , incomplete utterance u 3 and rewritten utterance u \u2032 3 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_5",
+            "start": 141,
+            "end": 305,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_6@0",
+            "content": "et al., 2019) propose the Incomplete Utterance Rewriting (IUR) task.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_6",
+            "start": 0,
+            "end": 67,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_6@1",
+            "content": "It aims to rewrite an incomplete utterance into a semantically equivalent but self-contained utterance by mining semantic clues from the dialogue history.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_6",
+            "start": 69,
+            "end": 222,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_6@2",
+            "content": "Then the generated utterance can be understood without reading dialogue history.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_6",
+            "start": 224,
+            "end": 303,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_6@3",
+            "content": "For example, in Table 1, after recovering the referred and omitted information from u 3 into u \u2032 3 , we could better understand this utterance comprehensively than before.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_6",
+            "start": 305,
+            "end": 475,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_7@0",
+            "content": "Early works use coreference resolution methods (Clark and Manning, 2016) to identify the entity that a pronoun refers to.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_7",
+            "start": 0,
+            "end": 120,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_7@1",
+            "content": "However, they ignore the more common cases of ellipsis.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_7",
+            "start": 122,
+            "end": 176,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_7@2",
+            "content": "So the text generation-based methods (Su et al., 2019;Pan et al., 2019) are introduced to generate the rewritten sequence from the incomplete sequence by jointly considering coreference and ellipsis problems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_7",
+            "start": 178,
+            "end": 385,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_7@3",
+            "content": "Though effective, generation models neglect a key trait of the IUR task, where the main semantic structure of a rewritten utterance is usually similar to the original incomplete utterance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_7",
+            "start": 387,
+            "end": 574,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_7@4",
+            "content": "So the inherent structure-unawareness and uncontrollable feature of generation-based models impede their performances.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_7",
+            "start": 576,
+            "end": 693,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_7@5",
+            "content": "For semantic structure-aware methods, utilize an edit operation matrix (e.g., substitution, insertion operations) to convert an incomplete utterance into a complete one.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_7",
+            "start": 695,
+            "end": 863,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_7@6",
+            "content": "They formulate this task as a semantic segmentation problem with a CNN-based model (Ronneberger et al., 2015) on the matrix to capture the semantic structural relations between words implicitly.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_7",
+            "start": 865,
+            "end": 1058,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_7@7",
+            "content": "Xu et al. (2020) attempt to add additional semantic information to language models (Devlin et al., 2019) by annotating semantic role information but it is time-consuming and costly.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_7",
+            "start": 1060,
+            "end": 1240,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_7@8",
+            "content": "propose a semi-autoregressive generator using a tagger to integrate semantic textual information from rare words or phrases yet ignoring structural information from incomplete utterances.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_7",
+            "start": 1242,
+            "end": 1428,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_7@9",
+            "content": "Therefore, there are still limitations of existing methods for IUR task, especially in jointly considering coreference and ellipsis cases and better utilizing semantic structural information.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_7",
+            "start": 1430,
+            "end": 1620,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_8@0",
+            "content": "This paper proposes a simple yet effective QUEry-Enhanced Network (QUEEN) to solve the IUR task.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_8",
+            "start": 0,
+            "end": 95,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_8@1",
+            "content": "QUEEN jointly considers coreference and ellipsis problems that frequently happen in multi-turn utterances.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_8",
+            "start": 97,
+            "end": 202,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_8@2",
+            "content": "Specifically, we propose a straightforward query template featuring two linguistic properties and concatenate this query with utterances as input text.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_8",
+            "start": 204,
+            "end": 354,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_8@3",
+            "content": "This query explicitly brings semantic structural guided information shared between the incomplete and the rewritten utterances, i.e., making model perceive where to refer back to or recover omitted tokens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_8",
+            "start": 356,
+            "end": 560,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_8@4",
+            "content": "We regard the rewritten utterance as the output from a series of edit operations on the incomplete utterance by constructing a token-pair edit operation matrix.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_8",
+            "start": 562,
+            "end": 721,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_8@5",
+            "content": "Different from , we adopt a well-designed edit operation scoring network on the matrix to perform incomplete utterance rewriting, which is faster and more effective.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_8",
+            "start": 723,
+            "end": 887,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_8@6",
+            "content": "QUEEN brings semantic structural information from linguistics into the model more explicitly and avoids unnecessary overheads of labeled data from other tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_8",
+            "start": 889,
+            "end": 1047,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_8@7",
+            "content": "Experiments on several IUR benchmarks show that QUEEN outperforms previous state-ofthe-art methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_8",
+            "start": 1049,
+            "end": 1147,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_8@8",
+            "content": "Extensive ablation studies also confirm that the proposed query template makes key contributions to the improvements of QUEEN.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_8",
+            "start": 1149,
+            "end": 1274,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_9@0",
+            "content": "Methodology",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_9",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_10@0",
+            "content": "Overview Our QUEEN mainly consists of two modules: query template construction module (Sec. 2.1) and edit operation scoring network module (Sec. 2.2).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_10",
+            "start": 0,
+            "end": 149,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_10@1",
+            "content": "From two linguistic perspectives, the former module aims to generate a query template for each incomplete utterance, i.e., coreference-ellipsis-oriented query template, to cope with coreference and ellipsis problems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_10",
+            "start": 151,
+            "end": 366,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_10@2",
+            "content": "This query template explicitly hints the model where to refer back and recover omitted tokens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_10",
+            "start": 368,
+            "end": 461,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_10@3",
+            "content": "The latter module tries to capture the semantic structural relations between words by constructing an edit operation matrix.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_10",
+            "start": 463,
+            "end": 586,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_10@4",
+            "content": "As shown in Figure 1, our goal is to learn a model to generate correct edit operations on this matrix and compute edit operation scores between token pairs so as to convert the incomplete utterance into the complete one.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_10",
+            "start": 588,
+            "end": 807,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_11@0",
+            "content": "Query Template Construction Module",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_11",
+            "start": 0,
+            "end": 33,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_12@0",
+            "content": "By observing incomplete and rewritten utterance pairs in existing datasets, we find that pronouns and referential noun phrases in the incomplete utterance often need to be substituted by text spans in dialogue history. And ellipsis often occurs in some specific positions of incomplete utterance, conforming to a certain syntactic structure.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_12",
+            "start": 0,
+            "end": 340,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_12@1",
+            "content": "In this module, we expect to encode these linguistic prior knowledge into the input of QUEEN.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_12",
+            "start": 342,
+            "end": 434,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_12@2",
+            "content": "The query template is constructed as follows: Coreference-oriented Query Template In order to make QUEEN perceive the positions of coreference that need to be substituted by text spans from dialogue history, we use a special token [COREF] to replace pronouns and referential noun phrases in the incomplete utterance so as to get our coreference-oriented query template.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_12",
+            "start": 436,
+            "end": 804,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_12@3",
+            "content": "For example, the coreference-oriented query template of the incomplete utterance \"No, he does not care\" (''\u4e0d, \u4ed6 \u4e0d \u5173 \u5fc3\") is \"No, [COREF] does not care\" (''\u4e0d,[COREF] \u4e0d\u5173\u5fc3\") .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_12",
+            "start": 806,
+            "end": 976,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_12@4",
+            "content": "To get the target complete utterance, this query explicitly tells the model we should replace the \"He\" (''\u4ed6\") with text spans (such as 'Smith'(''\u53f2\u5bc6\u65af\") ) from dialogue history, rather than replacing other words.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_12",
+            "start": 978,
+            "end": 1187,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_12@5",
+            "content": "Here, we find all pronouns that required to be replaced using a predefined pronoun collection.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_12",
+            "start": 1189,
+            "end": 1282,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_13@0",
+            "content": "To make QUEEN perceive the positions of ellipsis that need to be inserted by text spans from dialogue history, we define a special token [ELLIP] and put it in a linguistically right place of the incomplete utterance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_13",
+            "start": 0,
+            "end": 215,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_13@1",
+            "content": "Since a self-contained utterance usually contains a complete S-V-O (Subject-Verb-Object) structure, if an incomplete utterance lack any of these key elements, we could assume there is a case of ellipsis in its corresponding text position.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_13",
+            "start": 217,
+            "end": 454,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_13@2",
+            "content": "So we perform dependency parsing on the incomplete utterance to get the structure of the incom- Then we fuse these two query templates into the final coreference-ellipsis-oriented query template.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_13",
+            "start": 456,
+            "end": 650,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_13@3",
+            "content": "For incomplete utterance \"No, he does not care\" (''\u4e0d, \u4ed6\u4e0d\u5173\u5fc3\"), we get \"No, [COREF] does not care [ELLIP]' (''\u4e0d,[COREF] \u4e0d \u5173 \u5fc3 [ELLIP]\") as our final query template.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_13",
+            "start": 652,
+            "end": 813,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_13@4",
+            "content": "Under supervised setting, the models will perceive the positions to refer back and recover omitted tokens for this utterance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_13",
+            "start": 815,
+            "end": 939,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_13@5",
+            "content": "For a multi-turn dialogue d = (u 1 , ..., u N \u22121 , u N ) containing N utterances where u 1 \u223c u N \u22121 are dialogue history and the last utterance u N needs to be rewritten, we could get the dialogue history text s = (w 1 1 , ..., w n i , ..., w N L N ) where w n i is the i-th token in the n-th utterance and L n is the length of n-th utterance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_13",
+            "start": 941,
+            "end": 1283,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_13@6",
+            "content": "We then concatenate our coreference-ellipsis-oriented query template with the dialogue history text to get our final input text s \u2032 = (w q 1 , ..., w q k , ..., w q M , w 1 1 , ..., w n i , ..., w N L N ) where w q k is the k-th token of the query template and M is the length of query template.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_13",
+            "start": 1285,
+            "end": 1579,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_14@0",
+            "content": "Edit Operation Scoring Network Module",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_14",
+            "start": 0,
+            "end": 36,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_15@0",
+            "content": "Since pre-trained language models have been proven to be effective on several NLP tasks, we employ BERT (Devlin et al., 2019) to encoding our input text to get the contextualized hidden representation H = (h q 1 , ..., h q k , ..., h q M , h 1 1 , ..., h n i , ..., h N L N )) for each token.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_15",
+            "start": 0,
+            "end": 291,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_15@1",
+            "content": "Our model attempts to predict whether there is an edit operation between each token pair.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_15",
+            "start": 293,
+            "end": 381,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_15@2",
+            "content": "To this end, we define an operation scoring function as follows.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_15",
+            "start": 383,
+            "end": 446,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_15@3",
+            "content": "Since the order of utterance is also important for dialogue, we further use RoPE (Su et al., 2021) to provide relative position information :",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_15",
+            "start": 448,
+            "end": 588,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_16@0",
+            "content": "q \u03b1 i = W \u03b1 h i + b \u03b1 (1) k \u03b1 j = W \u03b1 h j + b \u03b1 (2) s \u03b1 ij = (R i q \u03b1 i ) T (R j k \u03b1 j )(3)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_16",
+            "start": 0,
+            "end": 90,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_17@0",
+            "content": "where \u03b1 is edit operation type including Substitution and Pre-Insertion.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_17",
+            "start": 0,
+            "end": 71,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_17@1",
+            "content": "For different operations, we use different trainable parameters W \u03b1 and b \u03b1 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_17",
+            "start": 73,
+            "end": 149,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_17@2",
+            "content": "R i is a transformation matrix from RoPE to inject position information and s \u03b1 ij is the score for \u03b1-th edit operation from i-th token in dialogue history to j-th token in incomplete utterance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_17",
+            "start": 151,
+            "end": 344,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_18@0",
+            "content": "During decoding for \u03b1-th operation, edit operation label Y \u03b1 ij satisfies:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_18",
+            "start": 0,
+            "end": 73,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_19@0",
+            "content": "Y \u03b1 ij = { 1 s \u03b1 ij >= \u03b8 0 s \u03b1 ij < \u03b8 (4)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_19",
+            "start": 0,
+            "end": 40,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_20@0",
+            "content": "where \u03b8 is a hyperparameter.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_20",
+            "start": 0,
+            "end": 27,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_20@1",
+            "content": "Once Y \u03b1 ij equals to 1, the edit operation \u03b1 should be performed between token i and token j.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_20",
+            "start": 29,
+            "end": 122,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_21@0",
+            "content": "Since the label distribution of edit operation is very unbalanced (most elements are zeros), we employed a Circle Loss (Sun et al., 2020) as our objective function to mitigate this problem : 3 Experiments",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_21",
+            "start": 0,
+            "end": 203,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_22@0",
+            "content": "log(1 + \u2211 (i,j)\u2208\u2126pos e \u2212s \u03b1 i,j ) + log(1 + \u2211 (i,j)\u2208\u2126neg e s \u03b1 i,j ) (5) Model EM B2 B4 R2 R L T-",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_22",
+            "start": 0,
+            "end": 96,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_23@0",
+            "content": "Experimental Setup",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_23",
+            "start": 0,
+            "end": 17,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_24@0",
+            "content": "We evaluate our model on four IUR benchmarks from different domains and languages: REWRITE (Chinese, Su et al., 2019), Restoration-200K (Chinese, Pan et al., 2019), TASK (English, Quan et al., 2019), CANARD (English, Elgohary et al., 2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_24",
+            "start": 0,
+            "end": 239,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_24@1",
+            "content": "More statistical details for datasets are shown in the Appendix.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_24",
+            "start": 241,
+            "end": 304,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_25@0",
+            "content": "We use BLEU (Papineni et al., 2002), ROUGE (Lin, 2004) and the exact match (EM score) as our evaluation metrics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_25",
+            "start": 0,
+            "end": 111,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_25@1",
+            "content": "Baseline Models We compare our model with a large number of baselines detailed in the Appendix.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_25",
+            "start": 113,
+            "end": 207,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_26@0",
+            "content": "Results and Analysis",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_26",
+            "start": 0,
+            "end": 19,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_27@0",
+            "content": "We report the experiment results in Table 2, Table 3, Table4 and Table 5 all datasets with different languages and evaluation metrics, our approach outperforms all previous state-of-the-art methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_27",
+            "start": 0,
+            "end": 197,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_27@1",
+            "content": "The improvement in EM shows that our model has a stronger ability to find the correct span, due to our model making full use of the prior information of semantic structure from our coreference-ellipsis-oriented query template.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_27",
+            "start": 199,
+            "end": 424,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_27@2",
+            "content": "On the Chinese datasets Table 2",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_27",
+            "start": 426,
+            "end": 456,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_28@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_28",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_29@0",
+            "content": "We propose a simple yet effective query-enhanced network for IUR task.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_29",
+            "start": 0,
+            "end": 69,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_29@1",
+            "content": "Our well-designed query template explicitly brings semantic structural information to improve the ability to predict correct edit operations between incomplete utterance and complete one.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_29",
+            "start": 71,
+            "end": 257,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_29@2",
+            "content": "Experiments have shown that our model with this well-designed query achieves promising results than previous methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_29",
+            "start": 259,
+            "end": 375,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_30@0",
+            "content": "A.1 Constructing Supervision",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_30",
+            "start": 0,
+            "end": 27,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_31@0",
+            "content": "The expected supervision for our model is the edit operation matrix, but existing datasets only contain rewritten utterances.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_31",
+            "start": 0,
+            "end": 124,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_31@1",
+            "content": "So we adopt Longest Common Subsequence (LCS) and 'Distant Supervision' to get correct supervision, which contains edit operations Substitute and Pre-Insert.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_31",
+            "start": 126,
+            "end": 281,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_32@0",
+            "content": "Coreference-oriented Query During the training, we use the ground truth of pronouns and referential noun phrases to construct the coreferenceoriented query.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_32",
+            "start": 0,
+            "end": 155,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_32@1",
+            "content": "During the inference, we use the constructed pronoun collection to construct the coreference-oriented query, which contains pronouns and referential noun phrases from training data and common pronouns (except ''\u6211\", \"me\" etc. ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_32",
+            "start": 157,
+            "end": 383,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_33@0",
+            "content": "Ellipsis-oriented Query Construction If the parsing result of the incomplete utterance is an S-V (Subject-Verb) structure and lacks subject element, we insert an [ELLIP] at the end of the incomplete utterance as the query. When there is not the S-V structure after parsing, we insert an [ELLIP] at the beginning of the incomplete utterance as the query.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_33",
+            "start": 0,
+            "end": 352,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_33@1",
+            "content": "In other cases, we insert",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_33",
+            "start": 354,
+            "end": 378,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_34@0",
+            "content": "[ELLIP] at both the beginning and end of the incomplete utterance as the query.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_34",
+            "start": 0,
+            "end": 78,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_34@1",
+            "content": "We use spaCy 1 for English and LTP (Che et al., 2020) (See et al., 2017a), the basic transformer model (T-Gen) (Vaswani et al., 2017) and the transformerbased pointer generator (T-Ptr-Gen) (See et al., 2017a), Syntactic (Kumar and Joshi, 2016b), PAC (Pan et al., 2019), L-Ptr-\u03bb and T-Ptr-\u03bb (Su et al., 2019), GECOR (Quan et al., 2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_34",
+            "start": 80,
+            "end": 414,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_34@2",
+            "content": "Above methods need to generate rewritten utterances from scratch, neglecting the main semantic structure of rewritten utterances.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_34",
+            "start": 416,
+            "end": 544,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_34@3",
+            "content": "(ii) Structure-aware models include CSRL (Xu et al., 2020), RUN , SARG .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_34",
+            "start": 546,
+            "end": 617,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_35@0",
+            "content": "Table 9 gives 3 examples that indicate the representative situations as Hao et al. (2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_35",
+            "start": 0,
+            "end": 89,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_35@1",
+            "content": "The first example illustrates the cases when RUN inserts unexpected characters into the wrong places.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_35",
+            "start": 91,
+            "end": 191,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_35@2",
+            "content": "T-Ptr-Gen just copies the incomplete utterance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_35",
+            "start": 193,
+            "end": 239,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_35@3",
+            "content": "Due to our generated query, the position that needs to be inserted has been explicitly promoted by the query.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_35",
+            "start": 241,
+            "end": 349,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_35@4",
+            "content": "The second example shows a common situation for generation-based models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_35",
+            "start": 351,
+            "end": 422,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_35@5",
+            "content": "T-Ptr-Gen messes up by repeating stupidly.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_35",
+            "start": 424,
+            "end": 465,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_35@6",
+            "content": "However, this situation doesn't happen to our model, as it is not a generation-based model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_35",
+            "start": 467,
+            "end": 557,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_35@7",
+            "content": "The last example refers to a long and complex entity.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_35",
+            "start": 559,
+            "end": 611,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_35@8",
+            "content": "For these cases, it is easier for our model to get the correct span.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_35",
+            "start": 613,
+            "end": 680,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_35@9",
+            "content": "This is because our model learns the span boundaries from the edit operation matrix.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_35",
+            "start": 682,
+            "end": 765,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_35@10",
+            "content": "Compared to the generation-based model, we don't generate sentences from scratch and this reduces the difficulty.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_35",
+            "start": 767,
+            "end": 879,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_35@11",
+            "content": "Meanwhile, our model is not based on CNN as RUN, which suffers from the limitation of receptive-field to find a longer span.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_35",
+            "start": 881,
+            "end": 1004,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_36@0",
+            "content": "One limitation of current edit-based IUR models, is that only tokens that have appeared in the history dialogue can be selected.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_36",
+            "start": 0,
+            "end": 127,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_36@1",
+            "content": "Therefore, these models, including ours, cannot generate novel words, e.g., conjunctions and prepositions, to cater to other metrics, like fluency.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_36",
+            "start": 129,
+            "end": 275,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_36@2",
+            "content": "However, this can be alleviated by incorporating an additional word dictionary as See et al. (2017b) and deals with the out-of-vocabulary (OOV) words to improve fluency.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_36",
+            "start": 277,
+            "end": 445,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_36@3",
+            "content": "For fairness, we keep the same words during the experiment as RUN to mitigat it.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_36",
+            "start": 447,
+            "end": 526,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_36@4",
+            "content": "We will consider this question as a promising direction for future works.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_36",
+            "start": 528,
+            "end": 600,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_37@0",
+            "content": "Example",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_37",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_38@0",
+            "content": "UNKNOWN, None, 2014, Neural machine translation by jointly learning to align and translate, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_38",
+            "start": 0,
+            "end": 92,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_39@0",
+            "content": "UNKNOWN, None, 1907, Deep retrieval-based dialogue systems: A short review, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_39",
+            "start": 0,
+            "end": 76,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_40@0",
+            "content": "UNKNOWN, None, 2020, N-ltp: A open-source neural chinese language technology platform with pretrained models, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_40",
+            "start": 0,
+            "end": 110,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_41@0",
+            "content": "Kevin Clark, Christopher Manning, Improving coreference resolution by learning entitylevel distributed representations, 2016, Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_41",
+            "start": 0,
+            "end": 256,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_42@0",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: pre-training of deep bidirectional transformers for language understanding, 2019-06-02, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, NAACL-HLT 2019, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_42",
+            "start": 0,
+            "end": 316,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_43@0",
+            "content": "Ahmed Elgohary, Denis Peskov, Jordan Boyd-Graber, Can you unpack that? learning to rewrite questions-in-context, 2019, Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP), Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_43",
+            "start": 0,
+            "end": 337,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_44@0",
+            "content": "Jie Hao, Linfeng Song, Liwei Wang, Kun Xu, Zhaopeng Tu, Dong Yu, RAST: Domainrobust dialogue rewriting as sequence tagging, 2021, Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_44",
+            "start": 0,
+            "end": 259,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_45@0",
+            "content": "Mengzuo Huang, Feng Li, Wuhe Zou, Weidong Zhang, SARG: A novel semi autoregressive generator for multi-turn incomplete utterance restoration, 2021-02-02, Thirty-Fifth AAAI Conference on Artificial Intelligence, AAAI 2021, Thirty-Third Conference on Innovative Applications of Artificial Intelligence, IAAI 2021, The Eleventh Symposium on Educational Advances in Artificial Intelligence, AAAI Press.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_45",
+            "start": 0,
+            "end": 397,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_46@0",
+            "content": "P Diederik, Jimmy Kingma,  Ba, Adam: A method for stochastic optimization, 2015-05-07, 3rd International Conference on Learning Representations, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_46",
+            "start": 0,
+            "end": 145,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_47@0",
+            "content": "Vineet Kumar, Sachindra Joshi, Nonsentential question resolution using sequence to sequence learning, 2016, Proceedings of COLING 2016, the 26th International Conference on Computational Linguistics: Technical Papers, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_47",
+            "start": 0,
+            "end": 218,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_48@0",
+            "content": "Vineet Kumar, Sachindra Joshi, Nonsentential question resolution using sequence to sequence learning, 2016, Proceedings of COLING 2016, the 26th International Conference on Computational Linguistics: Technical Papers, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_48",
+            "start": 0,
+            "end": 218,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_49@0",
+            "content": "Geoffrey Leech, Pragmatics and dialogue, 2003, The Oxford handbook of computational linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_49",
+            "start": 0,
+            "end": 97,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_50@0",
+            "content": "Chin-Yew Lin, Rouge: A package for automatic evaluation of summaries, 2004, Text summarization branches out, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_50",
+            "start": 0,
+            "end": 109,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_51@0",
+            "content": "Qian Liu, Bei Chen, Jian-Guang Lou, Bin Zhou, Dongmei Zhang, Incomplete utterance rewriting as semantic segmentation, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_51",
+            "start": 0,
+            "end": 212,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_52@0",
+            "content": "Zhufeng Pan, Kun Bai, Yan Wang, Lianqiang Zhou, Xiaojiang Liu, Improving open-domain dialogue systems via multi-turn incomplete utterance restoration, 2019, Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_52",
+            "start": 0,
+            "end": 334,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_53@0",
+            "content": "Kishore Papineni, Salim Roukos, Todd Ward, Wei-Jing Zhu, Bleu: a method for automatic evaluation of machine translation, 2002, Proceedings of the 40th Annual Meeting of the Association for Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_53",
+            "start": 0,
+            "end": 257,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_54@0",
+            "content": "Jun Quan, Deyi Xiong, Bonnie Webber, Changjian Hu, Gecor: An end-to-end generative ellipsis and co-reference resolution model for task-oriented dialogue, 2019, Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_54",
+            "start": 0,
+            "end": 337,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_55@0",
+            "content": "Olaf Ronneberger, Philipp Fischer, Thomas Brox, U-net: Convolutional networks for biomedical image segmentation, 2015, International Conference on Medical image computing and computerassisted intervention, Springer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_55",
+            "start": 0,
+            "end": 214,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_56@0",
+            "content": "Abigail See, J Peter, Christopher Liu,  Manning, Get to the point: Summarization with pointer-generator networks, 2017-07-30, Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics, Long Papers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_56",
+            "start": 0,
+            "end": 226,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_57@0",
+            "content": "UNKNOWN, None, 2017, Get to the point: Summarization with pointer-generator networks, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_57",
+            "start": 0,
+            "end": 86,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_58@0",
+            "content": "Hui Su, Xiaoyu Shen, Rongzhi Zhang, Fei Sun, Pengwei Hu, Cheng Niu, Jie Zhou, Improving multi-turn dialogue modelling with utterance ReWriter, 2019, Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_58",
+            "start": 0,
+            "end": 279,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_59@0",
+            "content": "UNKNOWN, None, 2021, Roformer: Enhanced transformer with rotary position embedding, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_59",
+            "start": 0,
+            "end": 84,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_60@0",
+            "content": "Yifan Sun, Changmao Cheng, Yuhan Zhang, Chi Zhang, Liang Zheng, Zhongdao Wang, Yichen Wei, Circle loss: A unified perspective of pair similarity optimization, 2020, Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_60",
+            "start": 0,
+            "end": 248,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_61@0",
+            "content": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan Gomez, Lukasz Kaiser, Illia Polosukhin, Attention is all you need, 2017-12-04, Advances in Neural Information Processing Systems 30: Annual Conference on Neural Information Processing Systems, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_61",
+            "start": 0,
+            "end": 272,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_62@0",
+            "content": "Kun Xu, Haochen Tan, Linfeng Song, Han Wu, Haisong Zhang, Linqi Song, Dong Yu, Semantic Role Labeling Guided Multi-turn Dialogue ReWriter, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_62",
+            "start": 0,
+            "end": 241,
+            "label": {}
+        },
+        {
+            "ix": "57-ARR_v1_63@0",
+            "content": "Ningyu Zhang, Xiang Chen, Xin Xie, Shumin Deng, Chuanqi Tan, Mosha Chen, Fei Huang, Luo Si, Huajun Chen, Document-level relation extraction as semantic segmentation, 2021-08-27, Proceedings of the Thirtieth International Joint Conference on Artificial Intelligence, IJCAI 2021, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "57-ARR_v1_63",
+            "start": 0,
+            "end": 278,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "57-ARR_v1_0",
+            "tgt_ix": "57-ARR_v1_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_0",
+            "tgt_ix": "57-ARR_v1_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_1",
+            "tgt_ix": "57-ARR_v1_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_1",
+            "tgt_ix": "57-ARR_v1_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_0",
+            "tgt_ix": "57-ARR_v1_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_2",
+            "tgt_ix": "57-ARR_v1_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_4",
+            "tgt_ix": "57-ARR_v1_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_5",
+            "tgt_ix": "57-ARR_v1_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_6",
+            "tgt_ix": "57-ARR_v1_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_7",
+            "tgt_ix": "57-ARR_v1_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_3",
+            "tgt_ix": "57-ARR_v1_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_3",
+            "tgt_ix": "57-ARR_v1_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_3",
+            "tgt_ix": "57-ARR_v1_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_3",
+            "tgt_ix": "57-ARR_v1_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_3",
+            "tgt_ix": "57-ARR_v1_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_3",
+            "tgt_ix": "57-ARR_v1_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_0",
+            "tgt_ix": "57-ARR_v1_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_8",
+            "tgt_ix": "57-ARR_v1_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_9",
+            "tgt_ix": "57-ARR_v1_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_9",
+            "tgt_ix": "57-ARR_v1_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_9",
+            "tgt_ix": "57-ARR_v1_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_10",
+            "tgt_ix": "57-ARR_v1_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_11",
+            "tgt_ix": "57-ARR_v1_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_11",
+            "tgt_ix": "57-ARR_v1_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_11",
+            "tgt_ix": "57-ARR_v1_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_12",
+            "tgt_ix": "57-ARR_v1_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_9",
+            "tgt_ix": "57-ARR_v1_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_13",
+            "tgt_ix": "57-ARR_v1_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_15",
+            "tgt_ix": "57-ARR_v1_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_16",
+            "tgt_ix": "57-ARR_v1_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_17",
+            "tgt_ix": "57-ARR_v1_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_18",
+            "tgt_ix": "57-ARR_v1_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_19",
+            "tgt_ix": "57-ARR_v1_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_20",
+            "tgt_ix": "57-ARR_v1_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_21",
+            "tgt_ix": "57-ARR_v1_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_14",
+            "tgt_ix": "57-ARR_v1_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_14",
+            "tgt_ix": "57-ARR_v1_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_14",
+            "tgt_ix": "57-ARR_v1_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_14",
+            "tgt_ix": "57-ARR_v1_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_14",
+            "tgt_ix": "57-ARR_v1_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_14",
+            "tgt_ix": "57-ARR_v1_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_14",
+            "tgt_ix": "57-ARR_v1_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_14",
+            "tgt_ix": "57-ARR_v1_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_14",
+            "tgt_ix": "57-ARR_v1_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_0",
+            "tgt_ix": "57-ARR_v1_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_22",
+            "tgt_ix": "57-ARR_v1_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_23",
+            "tgt_ix": "57-ARR_v1_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_23",
+            "tgt_ix": "57-ARR_v1_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_23",
+            "tgt_ix": "57-ARR_v1_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_24",
+            "tgt_ix": "57-ARR_v1_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_0",
+            "tgt_ix": "57-ARR_v1_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_25",
+            "tgt_ix": "57-ARR_v1_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_26",
+            "tgt_ix": "57-ARR_v1_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_26",
+            "tgt_ix": "57-ARR_v1_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_0",
+            "tgt_ix": "57-ARR_v1_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_27",
+            "tgt_ix": "57-ARR_v1_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_28",
+            "tgt_ix": "57-ARR_v1_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_28",
+            "tgt_ix": "57-ARR_v1_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_30",
+            "tgt_ix": "57-ARR_v1_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_28",
+            "tgt_ix": "57-ARR_v1_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_28",
+            "tgt_ix": "57-ARR_v1_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_29",
+            "tgt_ix": "57-ARR_v1_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_32",
+            "tgt_ix": "57-ARR_v1_33",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_33",
+            "tgt_ix": "57-ARR_v1_34",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_28",
+            "tgt_ix": "57-ARR_v1_32",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_28",
+            "tgt_ix": "57-ARR_v1_33",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_28",
+            "tgt_ix": "57-ARR_v1_34",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_31",
+            "tgt_ix": "57-ARR_v1_32",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_28",
+            "tgt_ix": "57-ARR_v1_35",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_34",
+            "tgt_ix": "57-ARR_v1_35",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_36",
+            "tgt_ix": "57-ARR_v1_37",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_28",
+            "tgt_ix": "57-ARR_v1_36",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_28",
+            "tgt_ix": "57-ARR_v1_37",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_35",
+            "tgt_ix": "57-ARR_v1_36",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "57-ARR_v1_0",
+            "tgt_ix": "57-ARR_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_1",
+            "tgt_ix": "57-ARR_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_2",
+            "tgt_ix": "57-ARR_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_2",
+            "tgt_ix": "57-ARR_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_2",
+            "tgt_ix": "57-ARR_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_2",
+            "tgt_ix": "57-ARR_v1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_2",
+            "tgt_ix": "57-ARR_v1_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_2",
+            "tgt_ix": "57-ARR_v1_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_3",
+            "tgt_ix": "57-ARR_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_4",
+            "tgt_ix": "57-ARR_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_4",
+            "tgt_ix": "57-ARR_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_4",
+            "tgt_ix": "57-ARR_v1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_4",
+            "tgt_ix": "57-ARR_v1_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_4",
+            "tgt_ix": "57-ARR_v1_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_4",
+            "tgt_ix": "57-ARR_v1_4@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_5",
+            "tgt_ix": "57-ARR_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_5",
+            "tgt_ix": "57-ARR_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_6",
+            "tgt_ix": "57-ARR_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_6",
+            "tgt_ix": "57-ARR_v1_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_6",
+            "tgt_ix": "57-ARR_v1_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_6",
+            "tgt_ix": "57-ARR_v1_6@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_7",
+            "tgt_ix": "57-ARR_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_7",
+            "tgt_ix": "57-ARR_v1_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_7",
+            "tgt_ix": "57-ARR_v1_7@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_7",
+            "tgt_ix": "57-ARR_v1_7@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_7",
+            "tgt_ix": "57-ARR_v1_7@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_7",
+            "tgt_ix": "57-ARR_v1_7@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_7",
+            "tgt_ix": "57-ARR_v1_7@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_7",
+            "tgt_ix": "57-ARR_v1_7@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_7",
+            "tgt_ix": "57-ARR_v1_7@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_7",
+            "tgt_ix": "57-ARR_v1_7@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_8",
+            "tgt_ix": "57-ARR_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_8",
+            "tgt_ix": "57-ARR_v1_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_8",
+            "tgt_ix": "57-ARR_v1_8@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_8",
+            "tgt_ix": "57-ARR_v1_8@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_8",
+            "tgt_ix": "57-ARR_v1_8@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_8",
+            "tgt_ix": "57-ARR_v1_8@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_8",
+            "tgt_ix": "57-ARR_v1_8@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_8",
+            "tgt_ix": "57-ARR_v1_8@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_8",
+            "tgt_ix": "57-ARR_v1_8@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_9",
+            "tgt_ix": "57-ARR_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_10",
+            "tgt_ix": "57-ARR_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_10",
+            "tgt_ix": "57-ARR_v1_10@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_10",
+            "tgt_ix": "57-ARR_v1_10@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_10",
+            "tgt_ix": "57-ARR_v1_10@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_10",
+            "tgt_ix": "57-ARR_v1_10@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_11",
+            "tgt_ix": "57-ARR_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_12",
+            "tgt_ix": "57-ARR_v1_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_12",
+            "tgt_ix": "57-ARR_v1_12@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_12",
+            "tgt_ix": "57-ARR_v1_12@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_12",
+            "tgt_ix": "57-ARR_v1_12@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_12",
+            "tgt_ix": "57-ARR_v1_12@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_12",
+            "tgt_ix": "57-ARR_v1_12@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_13",
+            "tgt_ix": "57-ARR_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_13",
+            "tgt_ix": "57-ARR_v1_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_13",
+            "tgt_ix": "57-ARR_v1_13@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_13",
+            "tgt_ix": "57-ARR_v1_13@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_13",
+            "tgt_ix": "57-ARR_v1_13@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_13",
+            "tgt_ix": "57-ARR_v1_13@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_13",
+            "tgt_ix": "57-ARR_v1_13@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_14",
+            "tgt_ix": "57-ARR_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_15",
+            "tgt_ix": "57-ARR_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_15",
+            "tgt_ix": "57-ARR_v1_15@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_15",
+            "tgt_ix": "57-ARR_v1_15@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_15",
+            "tgt_ix": "57-ARR_v1_15@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_16",
+            "tgt_ix": "57-ARR_v1_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_17",
+            "tgt_ix": "57-ARR_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_17",
+            "tgt_ix": "57-ARR_v1_17@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_17",
+            "tgt_ix": "57-ARR_v1_17@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_18",
+            "tgt_ix": "57-ARR_v1_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_19",
+            "tgt_ix": "57-ARR_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_20",
+            "tgt_ix": "57-ARR_v1_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_20",
+            "tgt_ix": "57-ARR_v1_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_21",
+            "tgt_ix": "57-ARR_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_22",
+            "tgt_ix": "57-ARR_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_23",
+            "tgt_ix": "57-ARR_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_24",
+            "tgt_ix": "57-ARR_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_24",
+            "tgt_ix": "57-ARR_v1_24@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_25",
+            "tgt_ix": "57-ARR_v1_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_25",
+            "tgt_ix": "57-ARR_v1_25@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_26",
+            "tgt_ix": "57-ARR_v1_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_27",
+            "tgt_ix": "57-ARR_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_27",
+            "tgt_ix": "57-ARR_v1_27@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_27",
+            "tgt_ix": "57-ARR_v1_27@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_28",
+            "tgt_ix": "57-ARR_v1_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_29",
+            "tgt_ix": "57-ARR_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_29",
+            "tgt_ix": "57-ARR_v1_29@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_29",
+            "tgt_ix": "57-ARR_v1_29@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_30",
+            "tgt_ix": "57-ARR_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_31",
+            "tgt_ix": "57-ARR_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_31",
+            "tgt_ix": "57-ARR_v1_31@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_32",
+            "tgt_ix": "57-ARR_v1_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_32",
+            "tgt_ix": "57-ARR_v1_32@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_33",
+            "tgt_ix": "57-ARR_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_33",
+            "tgt_ix": "57-ARR_v1_33@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_34",
+            "tgt_ix": "57-ARR_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_34",
+            "tgt_ix": "57-ARR_v1_34@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_34",
+            "tgt_ix": "57-ARR_v1_34@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_34",
+            "tgt_ix": "57-ARR_v1_34@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_35",
+            "tgt_ix": "57-ARR_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_35",
+            "tgt_ix": "57-ARR_v1_35@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_35",
+            "tgt_ix": "57-ARR_v1_35@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_35",
+            "tgt_ix": "57-ARR_v1_35@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_35",
+            "tgt_ix": "57-ARR_v1_35@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_35",
+            "tgt_ix": "57-ARR_v1_35@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_35",
+            "tgt_ix": "57-ARR_v1_35@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_35",
+            "tgt_ix": "57-ARR_v1_35@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_35",
+            "tgt_ix": "57-ARR_v1_35@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_35",
+            "tgt_ix": "57-ARR_v1_35@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_35",
+            "tgt_ix": "57-ARR_v1_35@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_35",
+            "tgt_ix": "57-ARR_v1_35@11",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_36",
+            "tgt_ix": "57-ARR_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_36",
+            "tgt_ix": "57-ARR_v1_36@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_36",
+            "tgt_ix": "57-ARR_v1_36@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_36",
+            "tgt_ix": "57-ARR_v1_36@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_36",
+            "tgt_ix": "57-ARR_v1_36@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_37",
+            "tgt_ix": "57-ARR_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_38",
+            "tgt_ix": "57-ARR_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_39",
+            "tgt_ix": "57-ARR_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_40",
+            "tgt_ix": "57-ARR_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_41",
+            "tgt_ix": "57-ARR_v1_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_42",
+            "tgt_ix": "57-ARR_v1_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_43",
+            "tgt_ix": "57-ARR_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_44",
+            "tgt_ix": "57-ARR_v1_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_45",
+            "tgt_ix": "57-ARR_v1_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_46",
+            "tgt_ix": "57-ARR_v1_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_47",
+            "tgt_ix": "57-ARR_v1_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_48",
+            "tgt_ix": "57-ARR_v1_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_49",
+            "tgt_ix": "57-ARR_v1_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_50",
+            "tgt_ix": "57-ARR_v1_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_51",
+            "tgt_ix": "57-ARR_v1_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_52",
+            "tgt_ix": "57-ARR_v1_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_53",
+            "tgt_ix": "57-ARR_v1_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_54",
+            "tgt_ix": "57-ARR_v1_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_55",
+            "tgt_ix": "57-ARR_v1_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_56",
+            "tgt_ix": "57-ARR_v1_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_57",
+            "tgt_ix": "57-ARR_v1_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_58",
+            "tgt_ix": "57-ARR_v1_58@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_59",
+            "tgt_ix": "57-ARR_v1_59@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_60",
+            "tgt_ix": "57-ARR_v1_60@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_61",
+            "tgt_ix": "57-ARR_v1_61@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_62",
+            "tgt_ix": "57-ARR_v1_62@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "57-ARR_v1_63",
+            "tgt_ix": "57-ARR_v1_63@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 666,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "position_tag_type": "from_draft",
+        "doc_id": "57-ARR",
+        "version": 1
+    }
+}

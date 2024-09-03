@@ -1,0 +1,5566 @@
+{
+    "nodes": [
+        {
+            "ix": "276-ARR_v1_0",
+            "content": "How reparametrization trick broke differentially-private text representation leaning",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_2",
+            "content": "As privacy gains traction in the NLP community, researchers have started adopting various approaches to privacy-preserving methods. One of the favorite privacy frameworks, differential privacy (DP), is perhaps the most compelling thanks to its fundamental theoretical guarantees. Despite the apparent simplicity of the general concept of differential privacy, it seems non-trivial to get it right when applying it to NLP. In this short paper, we formally analyze two recent NLP papers proposing text representation learning using DPText (Alnasser et al., 2021;Beigi et al., 2019b) and reveal their false claims of being differentially private. Furthermore, we also show a simple yet general empirical sanity check to determine whether a given implementation of a DP mechanism almost certainly violates the privacy loss guarantees. Our main goal is to raise awareness and help the community understand potential pitfalls of applying differential privacy to text representation learning.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_4",
+            "content": "Differential privacy (DP), a formal mathematical treatment of privacy protection, is making its way to NLP. Unlike other approaches to protect privacy of individuals' text documents, such as redacting named entities (Lison et al., 2021) or learning text representation with a GAN attacker (Li et al., 2018), DP has the advantage of quantifying and guaranteeing how much privacy can be lost in the worst case. However, as Habernal (2021) showed, adapting DP mechanisms to NLP properly is a non-trivial task.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_5",
+            "content": "Representation learning with protecting privacy in an end-to-end fashion has been recently proposed in DPText (Beigi et al., 2019b,a;Alnasser et al., 2021). DPText consists of an auto-encoder for text representation, a differential-privacy-based noise adder, and private attribute discriminators, among others. The latent text representation is claimed to be differentially private and thus can be shared with data consumers for a given downstream task. Unlike using a pre-determined privacy budget \u03b5, DPText takes \u03b5 as a learnable parameter and utilizes the reparametrization trick (Kingma and Welling, 2014) for random sampling. However, the downstream task results look too good to be true for such low \u03b5 values. We thus asked whether DPText is really differentially private.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_6",
+            "content": "This paper makes two important contributions to the community. First, we formally analyze the heart of DPText and prove that the employed reparametrization trick based on inverse continuous density function in DPText is wrong and the model violates the DP guarantees. This shows that extreme care should be taken when implementing DP algorithms in end-to-end differentiable deep neural networks. Second, we propose an empirical sanity check which simulates the actual privacy loss on a carefully crafted dataset and a reconstruction attack. This supports our theoretical analysis of non-privacy of DPText and also confirms previous findings of breaking privacy of another system ADePT. 1 2 Differential privacy primer Suppose we have a dataset (database) where each element belongs to an individual, for example Alice, Bob, Charlie, up to m. Each person's entry, denoted with a generic variable x, could be an arbitrary object, but for simplicity consider it a real valued vector x \u2208 R k . An important premise is that this vector contains some sensitive information we aim to protect, for example an income (x \u2208 R), a binary value whether or not the person has a certain disease (x \u2208 {0.0, 1.0}), or a dense representation from SentenceBERT containing the person's latest medical record (x \u2208 R k ). This dataset is held by someone we trust to protect the information, the trusted curator. 2 This dataset is a set from which we can create 2 m subsets, for instance X 1 = {Alice}, X 2 = {Alice, Bob}, etc. All these subsets form a universe X , that is X 1 , X 2 , \u2022 \u2022 \u2022 \u2208 X , and each of them is also called (a bit ambiguously) a dataset.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_7",
+            "content": "Definition 2.1. Any two datasets X, X \u2208 X are called neighboring, if they differ in one person.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_8",
+            "content": "For example, X = {Alice}, X = {Bob} or X = {Alice, Bob}, X = {Bob} are neighboring, while X = {Alice}, X = {Alice, Bob, Charlie} are not.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_9",
+            "content": "Definition 2.2. Numeric query is any function f applied to a dataset X and outputting a real-valued vector, formally f : X \u2192 R k .",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_10",
+            "content": "For example, numeric queries might return an average income (f \u2192 R), number of persons in the database (f \u2192 R), or a textual summary of medical records of all persons in the database represented as a dense vector (f \u2192 R k ). The query is simply something we want to learn from the dataset. A query might be also an identity function that just 'copies' the input, e.g., f",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_11",
+            "content": "(X = {(1, 0)}) \u2192 (1, 0) for a real-valued dataset X = {(1, 0)}.",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_12",
+            "content": "An attacker who knows everything about Bob, Charlie, and others would be able to reveal Alice's private information by querying the dataset and combining it with what they know already. Differentially private algorithm (or mechanism) M(X; f ) thus randomly modifies the query output in order to minimize and quantify such attacks. Smith and Ullman (2021) formulate the principle of differential privacy as follows: \"No matter what they know ahead of time, an attacker seeing the output of a differentially private algorithm would draw (almost) the same conclusions about Alice whether or not her data were used.\"",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_13",
+            "content": "Let a DP-mechanism M(X; f ) have an arbitrary range R (a generalization of our case of numeric queries, for which we would have R = R k ). Differential privacy is then defined as",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_14",
+            "content": "Pr(X|M(X; f ) = z) Pr(X |M(X; f ) = z) \u2264 exp(\u03b5) \u2022 Pr(X) Pr(X )(1)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_15",
+            "content": "for all neighboring datasets X, X and all z \u2208 R, where Pr(X) and Pr(X ) is our prior knowledge of X and X . In words, our posterior knowledge of X or X after observing z can only grow by factor exp(\u03b5) (Mironov, 2017), where \u03b5 is a privacy budget (Dwork and Roth, 2013). 3",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_16",
+            "content": "Analysis of DPText",
+            "ntype": "title",
+            "meta": {
+                "section": "3"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_17",
+            "content": "In the heart of the model, DPText relies on the standard Laplace mechanism which takes a real-valued vector and perturbs each element by a random draw from the Laplace distribution.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_18",
+            "content": "Formally, let z be a real-valued d-dimensional vector. Then the Laplace mechanism outputs a vector z such that for each index i = 1, . . . , d",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_19",
+            "content": "zi = z i + s i (2)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_20",
+            "content": "where each s i is drawn independently from a Laplace distribution with zero mean and scale b that is proportional to the 1 sensitivity \u2206 and the privacy budget \u03b5, namely",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_21",
+            "content": "s i \u223c Lap \u00b5 = 0; b = \u2206 \u03b5(3)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_22",
+            "content": "The Laplace mechanism satisfies differential privacy (Dwork and Roth, 2013).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_23",
+            "content": "Reparametrization trick and inverse CDF sampling",
+            "ntype": "title",
+            "meta": {
+                "section": "3.1"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_24",
+            "content": "DPText employs the variational autoencoder architecture in order to directly optimize the amount of noise added in the latent layer parametrized by \u03b5.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_25",
+            "content": "In other words, the scale of the Laplace distribution becomes a trainable parameter of the network. As directly sampling from a distribution is known to be problematic for end-to-end differentiable deep networks, DPText borrows the reparametrization trick from Kingma and Welling (2014). In a nutshell, the reparametrization trick decouples drawing a random sample from a desired distribution (such as Exponential, Laplace, or Gaussian) into two steps: First draw a value from another distribution (such as Uniform), and then transform it using a particular function, mainly the inverse continuous density function (CDF).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_26",
+            "content": "As a matter of fact, sampling using the inverse CDF is a well-known and widely used method (Devroye, 1986;Ross, 2012) and forms the backbone of probability distribution generators in many popular frameworks.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_27",
+            "content": "Inverse CDF of Laplace distribution",
+            "ntype": "title",
+            "meta": {
+                "section": "3.2"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_28",
+            "content": "The inverse cumulative distribution function of Laplace distribution Lap(\u00b5; b) is:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_29",
+            "content": "F \u22121 (u) = \u00b5 \u2212 b sgn(u \u2212 0.5) ln(1 \u2212 2|u \u2212 0.5|)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_30",
+            "content": "(4) where u \u223c Uni(0, 1) is drawn from a standard uniform distribution (Sugiyama, 2016, p. 210), (Nahmias and Olsen, 2015, p. 303). An equivalent expression without the sgn and absolute functions is derived, e.g., by Li et al. (2019, p. 166) as",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_31",
+            "content": "F \u22121 (u) = b ln(2u) + \u00b5 if u < 0.5 \u00b5 \u2212 b ln(2(1 \u2212 u))",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_32",
+            "content": "if u \u2265 0.5 (5) where again u \u223c Uni(0, 1). 4 An alternative sampling strategy, as shown, e.g., by Al-Shuhail and Al-Dossary (2020, p. 62), assumes that the random variable is drawn from a shifted, zero-centered uniform distribution v \u223c Uni (\u22120.5, +0.5)",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_33",
+            "content": "and transformed through the following function",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_34",
+            "content": "F \u22121 (v) = \u00b5 \u2212 b sgn(v) ln(1 \u2212 2|v|) (7)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_35",
+            "content": "While both (4) and ( 7) generate samples from Lap(\u00b5; b), note the substantial difference between u and v, since each is drawn from a different uniform distribution.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_36",
+            "content": "Proofs of DPText violating DP",
+            "ntype": "title",
+            "meta": {
+                "section": "3.3"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_37",
+            "content": "According to Eq. 3 in (Alnasser et al., 2021), Eq. 9 in (Beigi et al., 2019a) which is an extended version of (Beigi et al., 2019b), and personal communication to confirm the formulas, the main claim of DPText is as follows (rephrased):",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_38",
+            "content": "DPText utilizes the Laplace mechanism, which is DP (Dwork and Roth, 2013). It implements the mechanism as follows: Sampling a value from standard uniform",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_39",
+            "content": "v \u223c Uni(0, 1)(8)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_40",
+            "content": "and transforming using",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_41",
+            "content": "F \u22121 (v) = \u00b5 \u2212 b sgn(v) ln(1 \u2212 2|v|)(9)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_42",
+            "content": "is equivalent to sampling noise from Lap(b).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_43",
+            "content": "This claim is unfortunately false, as it mixes up both approaches introduced in Sec. 3.2. As a consequence, the Laplace mechanism using such sampling is not DP, which we will first prove formally.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_44",
+            "content": "Theorem 3.1. Sampling using inverse CDF as in DPText using ( 8) and ( 9) does not produce Laplace distribution.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_45",
+            "content": "See Appendix B for proof. As a consequence, the output ln(v \u2264 0) arbitrarily depends on the particular implementation. In numpy, it is NaN with a warning only. Therefore this function samples only positive or NaN numbers. Since DPText sources are not publicly available, we can only assume that NaN numbers are either replaced by zero, or the sampling proceeds as long as the desired number of samples is reached (discarding NaNs). In either case, no negative values can be obtained. See 8) and ( 9) fails to guarantee differential privacy.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_46",
+            "content": "See Appendix C for proof.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_47",
+            "content": "Empirical sanity check algorithm",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_48",
+            "content": "It is impossible to empirically verify that a given DP-mechanism implementation is actually DP (Ding et al., 2018). However, it is possible to detect a DP-violating mechanism with a fair degree of certainty. We propose a general sanity check applicable to any real-valued DP mechanism, such as the Laplace mechanism, DPText, or any other. 5 We start by constructing two neighboring datasets X (Alice) and X (Bob) such that X = (0, . . . , 0 n ) consists of n zeros and X = (1, . . . , 1 n ) consists of n ones. The dimensionality n \u2208 {1, 2, . . . } is a hyperparameter of the experiment. We employ a synthetic data release mechanism (also called local DP). The mechanism takes X or X and outputs its privatized version of the same dimensionality n, so that the zeros or ones are 'noisified' real numbers. The query sensitivity \u2206 is n.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_49",
+            "content": "Figure 1: Area under the green line: Our attack does not reveal more than allowed by the desired privacy budget. Note that it does not guarantee DP, the reconstruction attack might be just weak. Area above the green line:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_50",
+            "content": "The algorithm almost certainly violates DP as our attack caused bigger privacy loss than allowed by \u03b5. Extreme baselines show two extreme scenarios, as random output is absolutely private (but provides zero utility) and copy input provides maximal utility but no privacy by revealing the data in full.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_51",
+            "content": "Thanks to the post-processing lemma, any postprocessing of DP output remains DP. We can thus turn the output real vector back to all zeros or all ones, simply by rounding to closest 0 or 1 and applying majority voting. This process is in fact our reconstruction attack: given a privatized vector, we try to guess what the original values were, either all zeros or all ones.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_52",
+            "content": "What our attacker is doing, and what DP protects, is that if Alice gives us her privatized data, we cannot tell whether her private values were all zeros or all ones (up to a given factor); the same for Bob.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_53",
+            "content": "By definition (1) and having no prior knowledge over X and X apart from the fact that the values are correlated, our attacker cannot exceed the guaranteed privacy loss exp(\u03b5):",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_54",
+            "content": "Pr(X|M(X; f ) = z) Pr(X |M(X; f ) = z) \u2264 exp(\u03b5)(10)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_55",
+            "content": "We can estimate the conditional probability Pr(X|M(X; f ) = z) using maximum likelihood estimation (MLE) simply as our attacker's precision: How many times the attacker reconstructed true X values given the observed privatized vector. We can do the same for estimating the conditional probability of X . In particular, we repeatedly run each DP mechanism over X and X 10 million times each, which gives very precise MLE estimates even for small \u03b5. 7 For example, we repeated the full experiment on ADePT (n = 2, \u03b5 = 0.1) 100 times which results in standard deviation 0.0008 from the mean value 0.195. Better MLE precision can be simply obtained by increasing the 10 million repeats per experiment. All source codes are attached/will go on Github.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_56",
+            "content": "Results and discussion",
+            "ntype": "title",
+            "meta": {
+                "section": "5"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_57",
+            "content": "For the sake of completeness, we implemented two extreme baselines: One that simply copies input (no privacy) and other one completely random regardless of the input (maximum privacy); these are shown in Figure 1 left. The vanilla Laplace mechanism behaves as expected; all empirical losses for all dimensions (1 up to 128) are bounded by \u03b5. We re-implemented the Laplace mechanism from ADePT (Krishna et al., 2021) that, due to wrong sensitivity, has been shown theoretically as DP-violating (Habernal, 2021). We empirically confirm that ADePT suffered from the curse of dimensionality as the privacy loss explodes for larger dimensions. The last panel confirms our previous theoretical DPText results, which (regardless of dimensionality) has infinite privacy loss.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_58",
+            "content": "Note that we constructed the dataset carefully as two neighboring multidimensional correlated data that are as distant from each other as possible in the (0, 1) n space. However, DP must guarantee privacy for any datapoints, even the worst case scenario, as shown by the correct Laplace mechanism.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_59",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "6"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_60",
+            "content": "We formally proved that DPText (Alnasser et al., 2021;Beigi et al., 2019b,a) is not differentially private due to wrong sampling in its reparametrization trick. We also proposed an empirical sanity check that confirmed our findings and can help to reveal potential errors in DP mechanism implementations for NLP.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_61",
+            "content": "Important fact 1: A random variable U is uniformly distributed on [0, 1] if the following holds U \u223c Uni(0, 1) \u21d0\u21d2 Pr(U \u2264 u) = u. (11) Important fact 2: For any function g(\u2022) with an inverse function g \u22121 (\u2022), the following holds g(g \u22121 (x)) = x; g \u22121 (g(x)) = x.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_62",
+            "content": "(12)",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_63",
+            "content": "Important fact 3: For any increasing function g(\u2022), we have by definition x \u2264 y =\u21d2 g(x) \u2264 g(y).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_64",
+            "content": "We know that Pr(X \u2264 a) is a shortcut for probability of event E 1 defined using the set-builder notation as E 1 = {s \u2208 \u2126 : X(s) \u2264 a}. Then by plugging ( 13) into the predicate of E 1 , we obtain an equal set, namely event E 2 = {s \u2208 \u2126 : g(X(s)) \u2264 g(a)}, for which the probability must be the same. Therefore for any random variable X and increasing function g(\u2022) we have",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_65",
+            "content": "Pr(X \u2264 a) = Pr(g(X) \u2264 g(a)).(14)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_66",
+            "content": "Theorem A.1. Let U be a uniform random variable on [0, 1]. Let X be a continuous random variable with CDF (cumulative distribution function) F (\u2022). Let Y be defined such that Y = F \u22121 (U ).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_67",
+            "content": "Then Y has CDF F (\u2022).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_68",
+            "content": "Proof. Function F (\u2022) is the CDF of a continuous random variable X, and as a CDF its range is",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_69",
+            "content": "[0, 1]. Also, if F (\u2022) is strictly increasing, it has a unique inverse function F \u22121 (\u2022) defined on [0, 1]. We defined Y = F \u22121 (U ), so consider Pr(Y \u2264 y) = Pr F \u22121 (U ) \u2264 y .(15)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_70",
+            "content": "Since F (\u2022) is increasing, using ( 14) we get",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_71",
+            "content": "Pr(Y \u2264 y) = Pr F (F \u22121 (U )) \u2264 F (y) . (16",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_72",
+            "content": ")",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_73",
+            "content": "Now plugging (12) we obtain",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_74",
+            "content": "Pr(Y \u2264 y) = Pr(U \u2264 F (y)),(17)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_75",
+            "content": "and finally by ( 11)",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_76",
+            "content": "Pr(Y \u2264 y) = F (y).(18)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_77",
+            "content": "B Proof of Theorem 3.1",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_78",
+            "content": "Proof. We will rely on the standard proof of sampling from inverse CDF (see Appendix A). The essential step of that proof is that the CDF is increasing on the support of the uniform distribution, that is on [0, 1]. However, F \u22121 as used in ( 9) is increasing only on interval [0, 0.5]. For v \u2265 0.5, we get negative argument to ln which yields a complex function, whose real parts is even decreasing. Therefore ( 9) is not CDF of any probability distribution, if used with Uni(0, 1).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_79",
+            "content": "C Proof of Theorem 3.2",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_80",
+            "content": "Proof. We rely on the standard proof of the Laplace mechanism as shown, e.g, by (Dwork and Roth, 2013;Habernal, 2021). Let X = 0 and X = 1 be two neighboring datasets, and the query f being the identity query, such that it outputs simply the value of X. Let the DPText mechanism M(X; f ) outputs a particular value z.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_81",
+            "content": "In order to being differentially private, mechanism M(X; f ) has to fulfill the following bound of the privacy loss:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_82",
+            "content": "Pr(M(X) = z) Pr(M(X ) = z) \u2264 exp(\u03b5)(19)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_83",
+            "content": "for all neighboring datasets X, X \u2208 X and all outputs z \u2208 R from the range of M, provided that our priors over X and X are uniform (cf. Eq. 1). Fix z = 0.1. Then Pr(M(X) = 0.1) will have a positive probability (recall it takes the query output f (X = 0) = 0 and adds a random number drawn from the probability distribution, which is always positive as shown in Theorem 3.1.) However Pr(M(X ) = 0.1) will be zero, as the query output f (X = 1) = 1 will be added again only a positive random number and thus never be less then 1. By plugging this into (19), we obtain Pr(M(X) = 0.1) Pr(M(X ) = 0.1) = Pr > 0 Pr = 0 exp(\u03b5) (20) which results in an infinity privacy loss and violates differential privacy.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_84",
+            "content": "See Figure 2.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "276-ARR_v1_85",
+            "content": "UNKNOWN, None, 2020, Robust Filter-Dealing with Impulse Noise, Springer International Publishing.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": null,
+                "title": null,
+                "pub_date": "2020",
+                "pub_title": "Robust Filter-Dealing with Impulse Noise",
+                "pub": "Springer International Publishing"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_86",
+            "content": "Walaa Alnasser, Ghazaleh Beigi, Huan Liu, Privacy Preserving Text Representation Learning Using BERT, 2021, Proceedings of the 14th International Conference on Social, Cultural, and Behavioral Modeling (SBP-BRiMS), Springer International Publishing.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": [
+                    "Walaa Alnasser",
+                    "Ghazaleh Beigi",
+                    "Huan Liu"
+                ],
+                "title": "Privacy Preserving Text Representation Learning Using BERT",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 14th International Conference on Social, Cultural, and Behavioral Modeling (SBP-BRiMS)",
+                "pub": "Springer International Publishing"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_87",
+            "content": "UNKNOWN, None, , Suhang Wang, and Huan Liu. 2019a. I Am Not What I Write: Privacy Preserving Text Representation Learning, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": "Suhang Wang, and Huan Liu. 2019a. I Am Not What I Write: Privacy Preserving Text Representation Learning",
+                "pub": null
+            }
+        },
+        {
+            "ix": "276-ARR_v1_88",
+            "content": "Ghazaleh Beigi, Kai Shu, Ruocheng Guo, Suhang Wang, Huan Liu, Privacy Preserving Text Representation Learning, 2019, Proceedings of the 30th ACM Conference on Hypertext and Social Media, ACM.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": [
+                    "Ghazaleh Beigi",
+                    "Kai Shu",
+                    "Ruocheng Guo",
+                    "Suhang Wang",
+                    "Huan Liu"
+                ],
+                "title": "Privacy Preserving Text Representation Learning",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 30th ACM Conference on Hypertext and Social Media",
+                "pub": "ACM"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_89",
+            "content": "UNKNOWN, None, 1986, Non-uniform random variate generation, Springer-Verlag New York Inc.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": null,
+                "title": null,
+                "pub_date": "1986",
+                "pub_title": "Non-uniform random variate generation",
+                "pub": "Springer-Verlag New York Inc"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_90",
+            "content": "Zeyu Ding, Yuxin Wang, Guanhong Wang, Danfeng Zhang, Daniel Kifer, Detecting Violations of Differential Privacy, 2018, Proceedings of the 2018 ACM SIGSAC Conference on Computer and Communications Security, ACM.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "Zeyu Ding",
+                    "Yuxin Wang",
+                    "Guanhong Wang",
+                    "Danfeng Zhang",
+                    "Daniel Kifer"
+                ],
+                "title": "Detecting Violations of Differential Privacy",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the 2018 ACM SIGSAC Conference on Computer and Communications Security",
+                "pub": "ACM"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_91",
+            "content": "UNKNOWN, None, 2013, The Algorithmic Foundations of Differential Privacy. Foundations and Trends\u00ae in Theoretical Computer Science, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": null,
+                "title": null,
+                "pub_date": "2013",
+                "pub_title": "The Algorithmic Foundations of Differential Privacy. Foundations and Trends\u00ae in Theoretical Computer Science",
+                "pub": null
+            }
+        },
+        {
+            "ix": "276-ARR_v1_92",
+            "content": "Ivan Habernal, When differential privacy meets NLP: The devil is in the detail, 2021, Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": [
+                    "Ivan Habernal"
+                ],
+                "title": "When differential privacy meets NLP: The devil is in the detail",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing",
+                "pub": null
+            }
+        },
+        {
+            "ix": "276-ARR_v1_93",
+            "content": "P Diederik, Max Kingma,  Welling, Auto-Encoding Variational Bayes, 2014, Proceedings of the 2nd International Conference on Learning Representations (ICLR), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": [
+                    "P Diederik",
+                    "Max Kingma",
+                    " Welling"
+                ],
+                "title": "Auto-Encoding Variational Bayes",
+                "pub_date": "2014",
+                "pub_title": "Proceedings of the 2nd International Conference on Learning Representations (ICLR)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "276-ARR_v1_94",
+            "content": "Satyapriya Krishna, Rahul Gupta, Christophe Dupuy, ADePT: Auto-encoder based Differentially Private Text Transformation, 2021, Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    "Satyapriya Krishna",
+                    "Rahul Gupta",
+                    "Christophe Dupuy"
+                ],
+                "title": "ADePT: Auto-encoder based Differentially Private Text Transformation",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume",
+                "pub": null
+            }
+        },
+        {
+            "ix": "276-ARR_v1_95",
+            "content": "Xianxian Li, Huaxing Zhao, Dongran Yu, Li-E Wang, Peng Liu, Multidimensional Correlation Hierarchical Differential Privacy for Medical Data with Multiple Privacy Requirements, 2019, Proceedings of the 2nd International Conference on Healthcare Science and Engineering, Springer.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": [
+                    "Xianxian Li",
+                    "Huaxing Zhao",
+                    "Dongran Yu",
+                    "Li-E Wang",
+                    "Peng Liu"
+                ],
+                "title": "Multidimensional Correlation Hierarchical Differential Privacy for Medical Data with Multiple Privacy Requirements",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2nd International Conference on Healthcare Science and Engineering",
+                "pub": "Springer"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_96",
+            "content": "Yitong Li, Timothy Baldwin, Trevor Cohn, Towards Robust and Privacy-preserving Text Representations, 2018, Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics, Short Papers.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": [
+                    "Yitong Li",
+                    "Timothy Baldwin",
+                    "Trevor Cohn"
+                ],
+                "title": "Towards Robust and Privacy-preserving Text Representations",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics",
+                "pub": "Short Papers"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_97",
+            "content": "Pierre Lison, Ildik\u00f3 Pil\u00e1n, David Sanchez, Montserrat Batet, Lilja \u00d8vrelid, Anonymisation Models for Text Data: State of the art, Challenges and Future Directions, 2021, Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Long Papers.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": [
+                    "Pierre Lison",
+                    "Ildik\u00f3 Pil\u00e1n",
+                    "David Sanchez",
+                    "Montserrat Batet",
+                    "Lilja \u00d8vrelid"
+                ],
+                "title": "Anonymisation Models for Text Data: State of the art, Challenges and Future Directions",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing",
+                "pub": "Long Papers"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_98",
+            "content": "Ilya Mironov, R\u00e9nyi Differential Privacy, 2017, 2017 IEEE 30th Computer Security Foundations Symposium (CSF), IEEE.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": [
+                    "Ilya Mironov"
+                ],
+                "title": "R\u00e9nyi Differential Privacy",
+                "pub_date": "2017",
+                "pub_title": "2017 IEEE 30th Computer Security Foundations Symposium (CSF)",
+                "pub": "IEEE"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_99",
+            "content": "UNKNOWN, None, 2015, Production and Operations Analysis, Waveland Press, Inc.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": null,
+                "title": null,
+                "pub_date": "2015",
+                "pub_title": "Production and Operations Analysis",
+                "pub": "Waveland Press, Inc"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_100",
+            "content": "Sheldon Ross, None, 2012, Simulation, Academic Press.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b15",
+                "authors": [
+                    "Sheldon Ross"
+                ],
+                "title": null,
+                "pub_date": "2012",
+                "pub_title": "Simulation",
+                "pub": "Academic Press"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_101",
+            "content": "Adam Smith, Jonathan Ullman, None, 2021, Differential Privacy II, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b16",
+                "authors": [
+                    "Adam Smith",
+                    "Jonathan Ullman"
+                ],
+                "title": null,
+                "pub_date": "2021",
+                "pub_title": "Differential Privacy II",
+                "pub": null
+            }
+        },
+        {
+            "ix": "276-ARR_v1_102",
+            "content": "UNKNOWN, None, 2016, Introduction to Statistical Machine Learning, Morgan Kaufmann.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b17",
+                "authors": null,
+                "title": null,
+                "pub_date": "2016",
+                "pub_title": "Introduction to Statistical Machine Learning",
+                "pub": "Morgan Kaufmann"
+            }
+        },
+        {
+            "ix": "276-ARR_v1_103",
+            "content": "Yuxin Wang, Zeyu Ding, Daniel Kifer, Danfeng Zhang, CheckDP: An Automated and Integrated Approach for Proving Differential Privacy or Finding Precise Counterexamples, 2020, Proceedings of the 2020 ACM SIGSAC Conference on Computer and Communications Security, ACM.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b18",
+                "authors": [
+                    "Yuxin Wang",
+                    "Zeyu Ding",
+                    "Daniel Kifer",
+                    "Danfeng Zhang"
+                ],
+                "title": "CheckDP: An Automated and Integrated Approach for Proving Differential Privacy or Finding Precise Counterexamples",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 2020 ACM SIGSAC Conference on Computer and Communications Security",
+                "pub": "ACM"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "276-ARR_v1_0@0",
+            "content": "How reparametrization trick broke differentially-private text representation leaning",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_0",
+            "start": 0,
+            "end": 83,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_2@0",
+            "content": "As privacy gains traction in the NLP community, researchers have started adopting various approaches to privacy-preserving methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_2",
+            "start": 0,
+            "end": 130,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_2@1",
+            "content": "One of the favorite privacy frameworks, differential privacy (DP), is perhaps the most compelling thanks to its fundamental theoretical guarantees.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_2",
+            "start": 132,
+            "end": 278,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_2@2",
+            "content": "Despite the apparent simplicity of the general concept of differential privacy, it seems non-trivial to get it right when applying it to NLP.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_2",
+            "start": 280,
+            "end": 420,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_2@3",
+            "content": "In this short paper, we formally analyze two recent NLP papers proposing text representation learning using DPText (Alnasser et al., 2021;Beigi et al., 2019b) and reveal their false claims of being differentially private.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_2",
+            "start": 422,
+            "end": 642,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_2@4",
+            "content": "Furthermore, we also show a simple yet general empirical sanity check to determine whether a given implementation of a DP mechanism almost certainly violates the privacy loss guarantees.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_2",
+            "start": 644,
+            "end": 829,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_2@5",
+            "content": "Our main goal is to raise awareness and help the community understand potential pitfalls of applying differential privacy to text representation learning.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_2",
+            "start": 831,
+            "end": 984,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_4@0",
+            "content": "Differential privacy (DP), a formal mathematical treatment of privacy protection, is making its way to NLP.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_4",
+            "start": 0,
+            "end": 106,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_4@1",
+            "content": "Unlike other approaches to protect privacy of individuals' text documents, such as redacting named entities (Lison et al., 2021) or learning text representation with a GAN attacker (Li et al., 2018), DP has the advantage of quantifying and guaranteeing how much privacy can be lost in the worst case.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_4",
+            "start": 108,
+            "end": 407,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_4@2",
+            "content": "However, as Habernal (2021) showed, adapting DP mechanisms to NLP properly is a non-trivial task.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_4",
+            "start": 409,
+            "end": 505,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_5@0",
+            "content": "Representation learning with protecting privacy in an end-to-end fashion has been recently proposed in DPText (Beigi et al., 2019b,a;Alnasser et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_5",
+            "start": 0,
+            "end": 155,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_5@1",
+            "content": "DPText consists of an auto-encoder for text representation, a differential-privacy-based noise adder, and private attribute discriminators, among others.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_5",
+            "start": 157,
+            "end": 309,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_5@2",
+            "content": "The latent text representation is claimed to be differentially private and thus can be shared with data consumers for a given downstream task.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_5",
+            "start": 311,
+            "end": 452,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_5@3",
+            "content": "Unlike using a pre-determined privacy budget \u03b5, DPText takes \u03b5 as a learnable parameter and utilizes the reparametrization trick (Kingma and Welling, 2014) for random sampling.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_5",
+            "start": 454,
+            "end": 629,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_5@4",
+            "content": "However, the downstream task results look too good to be true for such low \u03b5 values.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_5",
+            "start": 631,
+            "end": 714,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_5@5",
+            "content": "We thus asked whether DPText is really differentially private.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_5",
+            "start": 716,
+            "end": 777,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_6@0",
+            "content": "This paper makes two important contributions to the community.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_6",
+            "start": 0,
+            "end": 61,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_6@1",
+            "content": "First, we formally analyze the heart of DPText and prove that the employed reparametrization trick based on inverse continuous density function in DPText is wrong and the model violates the DP guarantees.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_6",
+            "start": 63,
+            "end": 266,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_6@2",
+            "content": "This shows that extreme care should be taken when implementing DP algorithms in end-to-end differentiable deep neural networks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_6",
+            "start": 268,
+            "end": 394,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_6@3",
+            "content": "Second, we propose an empirical sanity check which simulates the actual privacy loss on a carefully crafted dataset and a reconstruction attack.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_6",
+            "start": 396,
+            "end": 539,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_6@4",
+            "content": "This supports our theoretical analysis of non-privacy of DPText and also confirms previous findings of breaking privacy of another system ADePT.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_6",
+            "start": 541,
+            "end": 684,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_6@5",
+            "content": "1 2 Differential privacy primer Suppose we have a dataset (database) where each element belongs to an individual, for example Alice, Bob, Charlie, up to m.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_6",
+            "start": 686,
+            "end": 840,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_6@6",
+            "content": "Each person's entry, denoted with a generic variable x, could be an arbitrary object, but for simplicity consider it a real valued vector x \u2208 R k .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_6",
+            "start": 842,
+            "end": 988,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_6@7",
+            "content": "An important premise is that this vector contains some sensitive information we aim to protect, for example an income (x \u2208 R), a binary value whether or not the person has a certain disease (x \u2208 {0.0, 1.0}), or a dense representation from SentenceBERT containing the person's latest medical record (x \u2208 R k ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_6",
+            "start": 990,
+            "end": 1298,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_6@8",
+            "content": "This dataset is held by someone we trust to protect the information, the trusted curator.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_6",
+            "start": 1300,
+            "end": 1388,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_6@9",
+            "content": "2 This dataset is a set from which we can create 2 m subsets, for instance X 1 = {Alice}, X 2 = {Alice, Bob}, etc.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_6",
+            "start": 1390,
+            "end": 1503,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_6@10",
+            "content": "All these subsets form a universe X , that is X 1 , X 2 , \u2022 \u2022 \u2022 \u2208 X , and each of them is also called (a bit ambiguously) a dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_6",
+            "start": 1505,
+            "end": 1636,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_7@0",
+            "content": "Definition 2.1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_7",
+            "start": 0,
+            "end": 14,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_7@1",
+            "content": "Any two datasets X, X \u2208 X are called neighboring, if they differ in one person.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_7",
+            "start": 16,
+            "end": 94,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_8@0",
+            "content": "For example, X = {Alice}, X = {Bob} or X = {Alice, Bob}, X = {Bob} are neighboring, while X = {Alice}, X = {Alice, Bob, Charlie} are not.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_8",
+            "start": 0,
+            "end": 136,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_9@0",
+            "content": "Definition 2.2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_9",
+            "start": 0,
+            "end": 14,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_9@1",
+            "content": "Numeric query is any function f applied to a dataset X and outputting a real-valued vector, formally f : X \u2192 R k .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_9",
+            "start": 16,
+            "end": 129,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_10@0",
+            "content": "For example, numeric queries might return an average income (f \u2192 R), number of persons in the database (f \u2192 R), or a textual summary of medical records of all persons in the database represented as a dense vector (f \u2192 R k ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_10",
+            "start": 0,
+            "end": 223,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_10@1",
+            "content": "The query is simply something we want to learn from the dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_10",
+            "start": 225,
+            "end": 288,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_10@2",
+            "content": "A query might be also an identity function that just 'copies' the input, e.g., f",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_10",
+            "start": 290,
+            "end": 369,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_11@0",
+            "content": "(X = {(1, 0)}) \u2192 (1, 0) for a real-valued dataset X = {(1, 0)}.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_11",
+            "start": 0,
+            "end": 62,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_12@0",
+            "content": "An attacker who knows everything about Bob, Charlie, and others would be able to reveal Alice's private information by querying the dataset and combining it with what they know already.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_12",
+            "start": 0,
+            "end": 184,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_12@1",
+            "content": "Differentially private algorithm (or mechanism) M(X; f ) thus randomly modifies the query output in order to minimize and quantify such attacks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_12",
+            "start": 186,
+            "end": 329,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_12@2",
+            "content": "Smith and Ullman (2021) formulate the principle of differential privacy as follows: \"No matter what they know ahead of time, an attacker seeing the output of a differentially private algorithm would draw (almost) the same conclusions about Alice whether or not her data were used.\"",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_12",
+            "start": 331,
+            "end": 611,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_13@0",
+            "content": "Let a DP-mechanism M(X; f ) have an arbitrary range R (a generalization of our case of numeric queries, for which we would have R = R k ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_13",
+            "start": 0,
+            "end": 137,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_13@1",
+            "content": "Differential privacy is then defined as",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_13",
+            "start": 139,
+            "end": 177,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_14@0",
+            "content": "Pr(X|M(X; f ) = z) Pr(X |M(X; f ) = z) \u2264 exp(\u03b5) \u2022 Pr(X) Pr(X )(1)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_14",
+            "start": 0,
+            "end": 64,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_15@0",
+            "content": "for all neighboring datasets X, X and all z \u2208 R, where Pr(X) and Pr(X ) is our prior knowledge of X and X .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_15",
+            "start": 0,
+            "end": 106,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_15@1",
+            "content": "In words, our posterior knowledge of X or X after observing z can only grow by factor exp(\u03b5) (Mironov, 2017), where \u03b5 is a privacy budget (Dwork and Roth, 2013).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_15",
+            "start": 108,
+            "end": 268,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_15@2",
+            "content": "3",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_15",
+            "start": 270,
+            "end": 270,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_16@0",
+            "content": "Analysis of DPText",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_16",
+            "start": 0,
+            "end": 17,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_17@0",
+            "content": "In the heart of the model, DPText relies on the standard Laplace mechanism which takes a real-valued vector and perturbs each element by a random draw from the Laplace distribution.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_17",
+            "start": 0,
+            "end": 180,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_18@0",
+            "content": "Formally, let z be a real-valued d-dimensional vector.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_18",
+            "start": 0,
+            "end": 53,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_18@1",
+            "content": "Then the Laplace mechanism outputs a vector z such that for each index i = 1, . . . , d",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_18",
+            "start": 55,
+            "end": 141,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_19@0",
+            "content": "zi = z i + s i (2)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_19",
+            "start": 0,
+            "end": 17,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_20@0",
+            "content": "where each s i is drawn independently from a Laplace distribution with zero mean and scale b that is proportional to the 1 sensitivity \u2206 and the privacy budget \u03b5, namely",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_20",
+            "start": 0,
+            "end": 168,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_21@0",
+            "content": "s i \u223c Lap \u00b5 = 0; b = \u2206 \u03b5(3)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_21",
+            "start": 0,
+            "end": 26,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_22@0",
+            "content": "The Laplace mechanism satisfies differential privacy (Dwork and Roth, 2013).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_22",
+            "start": 0,
+            "end": 75,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_23@0",
+            "content": "Reparametrization trick and inverse CDF sampling",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_23",
+            "start": 0,
+            "end": 47,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_24@0",
+            "content": "DPText employs the variational autoencoder architecture in order to directly optimize the amount of noise added in the latent layer parametrized by \u03b5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_24",
+            "start": 0,
+            "end": 149,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_25@0",
+            "content": "In other words, the scale of the Laplace distribution becomes a trainable parameter of the network.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_25",
+            "start": 0,
+            "end": 98,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_25@1",
+            "content": "As directly sampling from a distribution is known to be problematic for end-to-end differentiable deep networks, DPText borrows the reparametrization trick from Kingma and Welling (2014).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_25",
+            "start": 100,
+            "end": 286,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_25@2",
+            "content": "In a nutshell, the reparametrization trick decouples drawing a random sample from a desired distribution (such as Exponential, Laplace, or Gaussian) into two steps: First draw a value from another distribution (such as Uniform), and then transform it using a particular function, mainly the inverse continuous density function (CDF).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_25",
+            "start": 288,
+            "end": 620,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_26@0",
+            "content": "As a matter of fact, sampling using the inverse CDF is a well-known and widely used method (Devroye, 1986;Ross, 2012) and forms the backbone of probability distribution generators in many popular frameworks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_26",
+            "start": 0,
+            "end": 206,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_27@0",
+            "content": "Inverse CDF of Laplace distribution",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_27",
+            "start": 0,
+            "end": 34,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_28@0",
+            "content": "The inverse cumulative distribution function of Laplace distribution Lap(\u00b5; b) is:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_28",
+            "start": 0,
+            "end": 81,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_29@0",
+            "content": "F \u22121 (u) = \u00b5 \u2212 b sgn(u \u2212 0.5) ln(1 \u2212 2|u \u2212 0.5|)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_29",
+            "start": 0,
+            "end": 47,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_30@0",
+            "content": "(4) where u \u223c Uni(0, 1) is drawn from a standard uniform distribution (Sugiyama, 2016, p. 210), (Nahmias and Olsen, 2015, p. 303).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_30",
+            "start": 0,
+            "end": 129,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_30@1",
+            "content": "An equivalent expression without the sgn and absolute functions is derived, e.g., by Li et al. (2019, p. 166) as",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_30",
+            "start": 131,
+            "end": 242,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_31@0",
+            "content": "F \u22121 (u) = b ln(2u) + \u00b5 if u < 0.5 \u00b5 \u2212 b ln(2(1 \u2212 u))",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_31",
+            "start": 0,
+            "end": 52,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_32@0",
+            "content": "if u \u2265 0.5 (5) where again u \u223c Uni(0, 1).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_32",
+            "start": 0,
+            "end": 40,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_32@1",
+            "content": "4 An alternative sampling strategy, as shown, e.g., by Al-Shuhail and Al-Dossary (2020, p. 62), assumes that the random variable is drawn from a shifted, zero-centered uniform distribution v \u223c Uni (\u22120.5, +0.5)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_32",
+            "start": 42,
+            "end": 250,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_33@0",
+            "content": "and transformed through the following function",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_33",
+            "start": 0,
+            "end": 45,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_34@0",
+            "content": "F \u22121 (v) = \u00b5 \u2212 b sgn(v) ln(1 \u2212 2|v|) (7)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_34",
+            "start": 0,
+            "end": 39,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_35@0",
+            "content": "While both (4) and ( 7) generate samples from Lap(\u00b5; b), note the substantial difference between u and v, since each is drawn from a different uniform distribution.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_35",
+            "start": 0,
+            "end": 163,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_36@0",
+            "content": "Proofs of DPText violating DP",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_36",
+            "start": 0,
+            "end": 28,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_37@0",
+            "content": "According to Eq. 3 in (Alnasser et al., 2021), Eq. 9 in (Beigi et al., 2019a) which is an extended version of (Beigi et al., 2019b), and personal communication to confirm the formulas, the main claim of DPText is as follows (rephrased):",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_37",
+            "start": 0,
+            "end": 235,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_38@0",
+            "content": "DPText utilizes the Laplace mechanism, which is DP (Dwork and Roth, 2013).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_38",
+            "start": 0,
+            "end": 73,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_38@1",
+            "content": "It implements the mechanism as follows: Sampling a value from standard uniform",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_38",
+            "start": 75,
+            "end": 152,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_39@0",
+            "content": "v \u223c Uni(0, 1)(8)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_39",
+            "start": 0,
+            "end": 15,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_40@0",
+            "content": "and transforming using",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_40",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_41@0",
+            "content": "F \u22121 (v) = \u00b5 \u2212 b sgn(v) ln(1 \u2212 2|v|)(9)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_41",
+            "start": 0,
+            "end": 38,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_42@0",
+            "content": "is equivalent to sampling noise from Lap(b).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_42",
+            "start": 0,
+            "end": 43,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_43@0",
+            "content": "This claim is unfortunately false, as it mixes up both approaches introduced in Sec. 3.2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_43",
+            "start": 0,
+            "end": 88,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_43@1",
+            "content": "As a consequence, the Laplace mechanism using such sampling is not DP, which we will first prove formally.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_43",
+            "start": 90,
+            "end": 195,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_44@0",
+            "content": "Theorem 3.1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_44",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_44@1",
+            "content": "Sampling using inverse CDF as in DPText using ( 8) and ( 9) does not produce Laplace distribution.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_44",
+            "start": 13,
+            "end": 110,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_45@0",
+            "content": "See Appendix B for proof.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_45",
+            "start": 0,
+            "end": 24,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_45@1",
+            "content": "As a consequence, the output ln(v \u2264 0) arbitrarily depends on the particular implementation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_45",
+            "start": 26,
+            "end": 117,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_45@2",
+            "content": "In numpy, it is NaN with a warning only.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_45",
+            "start": 119,
+            "end": 158,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_45@3",
+            "content": "Therefore this function samples only positive or NaN numbers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_45",
+            "start": 160,
+            "end": 220,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_45@4",
+            "content": "Since DPText sources are not publicly available, we can only assume that NaN numbers are either replaced by zero, or the sampling proceeds as long as the desired number of samples is reached (discarding NaNs).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_45",
+            "start": 222,
+            "end": 430,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_45@5",
+            "content": "In either case, no negative values can be obtained.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_45",
+            "start": 432,
+            "end": 482,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_45@6",
+            "content": "See 8) and ( 9) fails to guarantee differential privacy.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_45",
+            "start": 484,
+            "end": 539,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_46@0",
+            "content": "See Appendix C for proof.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_46",
+            "start": 0,
+            "end": 24,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_47@0",
+            "content": "Empirical sanity check algorithm",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_47",
+            "start": 0,
+            "end": 31,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_48@0",
+            "content": "It is impossible to empirically verify that a given DP-mechanism implementation is actually DP (Ding et al., 2018).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_48",
+            "start": 0,
+            "end": 114,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_48@1",
+            "content": "However, it is possible to detect a DP-violating mechanism with a fair degree of certainty.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_48",
+            "start": 116,
+            "end": 206,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_48@2",
+            "content": "We propose a general sanity check applicable to any real-valued DP mechanism, such as the Laplace mechanism, DPText, or any other.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_48",
+            "start": 208,
+            "end": 337,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_48@3",
+            "content": "5 We start by constructing two neighboring datasets X (Alice) and X (Bob) such that X = (0, . . . , 0 n ) consists of n zeros and X = (1, . . . , 1 n ) consists of n ones.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_48",
+            "start": 339,
+            "end": 509,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_48@4",
+            "content": "The dimensionality n \u2208 {1, 2, . . . } is a hyperparameter of the experiment.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_48",
+            "start": 511,
+            "end": 586,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_48@5",
+            "content": "We employ a synthetic data release mechanism (also called local DP).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_48",
+            "start": 588,
+            "end": 655,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_48@6",
+            "content": "The mechanism takes X or X and outputs its privatized version of the same dimensionality n, so that the zeros or ones are 'noisified' real numbers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_48",
+            "start": 657,
+            "end": 803,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_48@7",
+            "content": "The query sensitivity \u2206 is n.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_48",
+            "start": 805,
+            "end": 833,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_49@0",
+            "content": "Figure 1: Area under the green line: Our attack does not reveal more than allowed by the desired privacy budget.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_49",
+            "start": 0,
+            "end": 111,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_49@1",
+            "content": "Note that it does not guarantee DP, the reconstruction attack might be just weak.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_49",
+            "start": 113,
+            "end": 193,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_49@2",
+            "content": "Area above the green line:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_49",
+            "start": 195,
+            "end": 220,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_50@0",
+            "content": "The algorithm almost certainly violates DP as our attack caused bigger privacy loss than allowed by \u03b5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_50",
+            "start": 0,
+            "end": 101,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_50@1",
+            "content": "Extreme baselines show two extreme scenarios, as random output is absolutely private (but provides zero utility) and copy input provides maximal utility but no privacy by revealing the data in full.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_50",
+            "start": 103,
+            "end": 300,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_51@0",
+            "content": "Thanks to the post-processing lemma, any postprocessing of DP output remains DP.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_51",
+            "start": 0,
+            "end": 79,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_51@1",
+            "content": "We can thus turn the output real vector back to all zeros or all ones, simply by rounding to closest 0 or 1 and applying majority voting.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_51",
+            "start": 81,
+            "end": 217,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_51@2",
+            "content": "This process is in fact our reconstruction attack: given a privatized vector, we try to guess what the original values were, either all zeros or all ones.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_51",
+            "start": 219,
+            "end": 372,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_52@0",
+            "content": "What our attacker is doing, and what DP protects, is that if Alice gives us her privatized data, we cannot tell whether her private values were all zeros or all ones (up to a given factor); the same for Bob.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_52",
+            "start": 0,
+            "end": 206,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_53@0",
+            "content": "By definition (1) and having no prior knowledge over X and X apart from the fact that the values are correlated, our attacker cannot exceed the guaranteed privacy loss exp(\u03b5):",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_53",
+            "start": 0,
+            "end": 174,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_54@0",
+            "content": "Pr(X|M(X; f ) = z) Pr(X |M(X; f ) = z) \u2264 exp(\u03b5)(10)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_54",
+            "start": 0,
+            "end": 50,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_55@0",
+            "content": "We can estimate the conditional probability Pr(X|M(X; f ) = z) using maximum likelihood estimation (MLE) simply as our attacker's precision: How many times the attacker reconstructed true X values given the observed privatized vector.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_55",
+            "start": 0,
+            "end": 233,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_55@1",
+            "content": "We can do the same for estimating the conditional probability of X .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_55",
+            "start": 235,
+            "end": 302,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_55@2",
+            "content": "In particular, we repeatedly run each DP mechanism over X and X 10 million times each, which gives very precise MLE estimates even for small \u03b5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_55",
+            "start": 304,
+            "end": 446,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_55@3",
+            "content": "7 For example, we repeated the full experiment on ADePT (n = 2, \u03b5 = 0.1) 100 times which results in standard deviation 0.0008 from the mean value 0.195.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_55",
+            "start": 448,
+            "end": 599,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_55@4",
+            "content": "Better MLE precision can be simply obtained by increasing the 10 million repeats per experiment.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_55",
+            "start": 601,
+            "end": 696,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_55@5",
+            "content": "All source codes are attached/will go on Github.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_55",
+            "start": 698,
+            "end": 745,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_56@0",
+            "content": "Results and discussion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_56",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_57@0",
+            "content": "For the sake of completeness, we implemented two extreme baselines: One that simply copies input (no privacy) and other one completely random regardless of the input (maximum privacy); these are shown in Figure 1 left.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_57",
+            "start": 0,
+            "end": 217,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_57@1",
+            "content": "The vanilla Laplace mechanism behaves as expected; all empirical losses for all dimensions (1 up to 128) are bounded by \u03b5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_57",
+            "start": 219,
+            "end": 340,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_57@2",
+            "content": "We re-implemented the Laplace mechanism from ADePT (Krishna et al., 2021) that, due to wrong sensitivity, has been shown theoretically as DP-violating (Habernal, 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_57",
+            "start": 342,
+            "end": 509,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_57@3",
+            "content": "We empirically confirm that ADePT suffered from the curse of dimensionality as the privacy loss explodes for larger dimensions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_57",
+            "start": 511,
+            "end": 637,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_57@4",
+            "content": "The last panel confirms our previous theoretical DPText results, which (regardless of dimensionality) has infinite privacy loss.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_57",
+            "start": 639,
+            "end": 766,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_58@0",
+            "content": "Note that we constructed the dataset carefully as two neighboring multidimensional correlated data that are as distant from each other as possible in the (0, 1) n space.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_58",
+            "start": 0,
+            "end": 168,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_58@1",
+            "content": "However, DP must guarantee privacy for any datapoints, even the worst case scenario, as shown by the correct Laplace mechanism.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_58",
+            "start": 170,
+            "end": 296,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_59@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_59",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_60@0",
+            "content": "We formally proved that DPText (Alnasser et al., 2021;Beigi et al., 2019b,a) is not differentially private due to wrong sampling in its reparametrization trick.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_60",
+            "start": 0,
+            "end": 159,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_60@1",
+            "content": "We also proposed an empirical sanity check that confirmed our findings and can help to reveal potential errors in DP mechanism implementations for NLP.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_60",
+            "start": 161,
+            "end": 311,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_61@0",
+            "content": "Important fact 1: A random variable U is uniformly distributed on [0, 1] if the following holds U \u223c Uni(0, 1) \u21d0\u21d2 Pr(U \u2264 u) = u. (11) Important fact 2: For any function g(\u2022) with an inverse function g \u22121 (\u2022), the following holds g(g \u22121 (x)) = x; g \u22121 (g(x)) = x.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_61",
+            "start": 0,
+            "end": 260,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_62@0",
+            "content": "(12)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_62",
+            "start": 0,
+            "end": 3,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_63@0",
+            "content": "Important fact 3: For any increasing function g(\u2022), we have by definition x \u2264 y =\u21d2 g(x) \u2264 g(y).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_63",
+            "start": 0,
+            "end": 94,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_64@0",
+            "content": "We know that Pr(X \u2264 a) is a shortcut for probability of event E 1 defined using the set-builder notation as E 1 = {s \u2208 \u2126 : X(s) \u2264 a}. Then by plugging ( 13) into the predicate of E 1 , we obtain an equal set, namely event E 2 = {s \u2208 \u2126 : g(X(s)) \u2264 g(a)}, for which the probability must be the same.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_64",
+            "start": 0,
+            "end": 296,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_64@1",
+            "content": "Therefore for any random variable X and increasing function g(\u2022) we have",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_64",
+            "start": 298,
+            "end": 369,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_65@0",
+            "content": "Pr(X \u2264 a) = Pr(g(X) \u2264 g(a)).(14)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_65",
+            "start": 0,
+            "end": 31,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_66@0",
+            "content": "Theorem A.1. Let U be a uniform random variable on [0, 1].",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_66",
+            "start": 0,
+            "end": 57,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_66@1",
+            "content": "Let X be a continuous random variable with CDF (cumulative distribution function) F (\u2022).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_66",
+            "start": 59,
+            "end": 146,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_66@2",
+            "content": "Let Y be defined such that Y = F \u22121 (U ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_66",
+            "start": 148,
+            "end": 188,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_67@0",
+            "content": "Then Y has CDF F (\u2022).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_67",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_68@0",
+            "content": "Proof.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_68",
+            "start": 0,
+            "end": 5,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_68@1",
+            "content": "Function F (\u2022) is the CDF of a continuous random variable X, and as a CDF its range is",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_68",
+            "start": 7,
+            "end": 92,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_69@0",
+            "content": "[0, 1]. Also, if F (\u2022) is strictly increasing, it has a unique inverse function F \u22121 (\u2022) defined on [0, 1]. We defined Y = F \u22121 (U ), so consider Pr(Y \u2264 y) = Pr F \u22121 (U ) \u2264 y .(15)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_69",
+            "start": 0,
+            "end": 179,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_70@0",
+            "content": "Since F (\u2022) is increasing, using ( 14) we get",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_70",
+            "start": 0,
+            "end": 44,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_71@0",
+            "content": "Pr(Y \u2264 y) = Pr F (F \u22121 (U )) \u2264 F (y) . (16",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_71",
+            "start": 0,
+            "end": 41,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_72@0",
+            "content": ")",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_72",
+            "start": 0,
+            "end": 0,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_73@0",
+            "content": "Now plugging (12) we obtain",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_73",
+            "start": 0,
+            "end": 26,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_74@0",
+            "content": "Pr(Y \u2264 y) = Pr(U \u2264 F (y)),(17)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_74",
+            "start": 0,
+            "end": 29,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_75@0",
+            "content": "and finally by ( 11)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_75",
+            "start": 0,
+            "end": 19,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_76@0",
+            "content": "Pr(Y \u2264 y) = F (y).(18)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_76",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_77@0",
+            "content": "B Proof of Theorem 3.1",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_77",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_78@0",
+            "content": "Proof.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_78",
+            "start": 0,
+            "end": 5,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_78@1",
+            "content": "We will rely on the standard proof of sampling from inverse CDF (see Appendix A).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_78",
+            "start": 7,
+            "end": 87,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_78@2",
+            "content": "The essential step of that proof is that the CDF is increasing on the support of the uniform distribution, that is on [0, 1].",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_78",
+            "start": 89,
+            "end": 213,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_78@3",
+            "content": "However, F \u22121 as used in ( 9) is increasing only on interval [0, 0.5].",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_78",
+            "start": 215,
+            "end": 284,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_78@4",
+            "content": "For v \u2265 0.5, we get negative argument to ln which yields a complex function, whose real parts is even decreasing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_78",
+            "start": 286,
+            "end": 398,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_78@5",
+            "content": "Therefore ( 9) is not CDF of any probability distribution, if used with Uni(0, 1).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_78",
+            "start": 400,
+            "end": 481,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_79@0",
+            "content": "C Proof of Theorem 3.2",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_79",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_80@0",
+            "content": "Proof.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_80",
+            "start": 0,
+            "end": 5,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_80@1",
+            "content": "We rely on the standard proof of the Laplace mechanism as shown, e.g, by (Dwork and Roth, 2013;Habernal, 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_80",
+            "start": 7,
+            "end": 117,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_80@2",
+            "content": "Let X = 0 and X = 1 be two neighboring datasets, and the query f being the identity query, such that it outputs simply the value of X. Let the DPText mechanism M(X; f ) outputs a particular value z.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_80",
+            "start": 119,
+            "end": 316,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_81@0",
+            "content": "In order to being differentially private, mechanism M(X; f ) has to fulfill the following bound of the privacy loss:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_81",
+            "start": 0,
+            "end": 115,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_82@0",
+            "content": "Pr(M(X) = z) Pr(M(X ) = z) \u2264 exp(\u03b5)(19)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_82",
+            "start": 0,
+            "end": 38,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_83@0",
+            "content": "for all neighboring datasets X, X \u2208 X and all outputs z \u2208 R from the range of M, provided that our priors over X and X are uniform (cf. Eq. 1).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_83",
+            "start": 0,
+            "end": 142,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_83@1",
+            "content": "Fix z = 0.1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_83",
+            "start": 144,
+            "end": 155,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_83@2",
+            "content": "Then Pr(M(X) = 0.1) will have a positive probability (recall it takes the query output f (X = 0) = 0 and adds a random number drawn from the probability distribution, which is always positive as shown in Theorem 3.1.) However Pr(M(X ) = 0.1) will be zero, as the query output f (X = 1) = 1 will be added again only a positive random number and thus never be less then 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_83",
+            "start": 157,
+            "end": 526,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_83@3",
+            "content": "By plugging this into (19), we obtain Pr(M(X) = 0.1) Pr(M(X ) = 0.1) = Pr > 0 Pr = 0 exp(\u03b5) (20) which results in an infinity privacy loss and violates differential privacy.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_83",
+            "start": 528,
+            "end": 700,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_84@0",
+            "content": "See Figure 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_84",
+            "start": 0,
+            "end": 12,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_85@0",
+            "content": "UNKNOWN, None, 2020, Robust Filter-Dealing with Impulse Noise, Springer International Publishing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_85",
+            "start": 0,
+            "end": 96,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_86@0",
+            "content": "Walaa Alnasser, Ghazaleh Beigi, Huan Liu, Privacy Preserving Text Representation Learning Using BERT, 2021, Proceedings of the 14th International Conference on Social, Cultural, and Behavioral Modeling (SBP-BRiMS), Springer International Publishing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_86",
+            "start": 0,
+            "end": 248,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_87@0",
+            "content": "UNKNOWN, None, , Suhang Wang, and Huan Liu. 2019a. I Am Not What I Write: Privacy Preserving Text Representation Learning, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_87",
+            "start": 0,
+            "end": 123,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_88@0",
+            "content": "Ghazaleh Beigi, Kai Shu, Ruocheng Guo, Suhang Wang, Huan Liu, Privacy Preserving Text Representation Learning, 2019, Proceedings of the 30th ACM Conference on Hypertext and Social Media, ACM.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_88",
+            "start": 0,
+            "end": 190,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_89@0",
+            "content": "UNKNOWN, None, 1986, Non-uniform random variate generation, Springer-Verlag New York Inc.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_89",
+            "start": 0,
+            "end": 88,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_90@0",
+            "content": "Zeyu Ding, Yuxin Wang, Guanhong Wang, Danfeng Zhang, Daniel Kifer, Detecting Violations of Differential Privacy, 2018, Proceedings of the 2018 ACM SIGSAC Conference on Computer and Communications Security, ACM.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_90",
+            "start": 0,
+            "end": 209,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_91@0",
+            "content": "UNKNOWN, None, 2013, The Algorithmic Foundations of Differential Privacy. Foundations and Trends\u00ae in Theoretical Computer Science, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_91",
+            "start": 0,
+            "end": 131,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_92@0",
+            "content": "Ivan Habernal, When differential privacy meets NLP: The devil is in the detail, 2021, Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_92",
+            "start": 0,
+            "end": 174,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_93@0",
+            "content": "P Diederik, Max Kingma,  Welling, Auto-Encoding Variational Bayes, 2014, Proceedings of the 2nd International Conference on Learning Representations (ICLR), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_93",
+            "start": 0,
+            "end": 157,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_94@0",
+            "content": "Satyapriya Krishna, Rahul Gupta, Christophe Dupuy, ADePT: Auto-encoder based Differentially Private Text Transformation, 2021, Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_94",
+            "start": 0,
+            "end": 249,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_95@0",
+            "content": "Xianxian Li, Huaxing Zhao, Dongran Yu, Li-E Wang, Peng Liu, Multidimensional Correlation Hierarchical Differential Privacy for Medical Data with Multiple Privacy Requirements, 2019, Proceedings of the 2nd International Conference on Healthcare Science and Engineering, Springer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_95",
+            "start": 0,
+            "end": 277,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_96@0",
+            "content": "Yitong Li, Timothy Baldwin, Trevor Cohn, Towards Robust and Privacy-preserving Text Representations, 2018, Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics, Short Papers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_96",
+            "start": 0,
+            "end": 208,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_97@0",
+            "content": "Pierre Lison, Ildik\u00f3 Pil\u00e1n, David Sanchez, Montserrat Batet, Lilja \u00d8vrelid, Anonymisation Models for Text Data: State of the art, Challenges and Future Directions, 2021, Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Long Papers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_97",
+            "start": 0,
+            "end": 345,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_98@0",
+            "content": "Ilya Mironov, R\u00e9nyi Differential Privacy, 2017, 2017 IEEE 30th Computer Security Foundations Symposium (CSF), IEEE.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_98",
+            "start": 0,
+            "end": 114,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_99@0",
+            "content": "UNKNOWN, None, 2015, Production and Operations Analysis, Waveland Press, Inc.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_99",
+            "start": 0,
+            "end": 76,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_100@0",
+            "content": "Sheldon Ross, None, 2012, Simulation, Academic Press.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_100",
+            "start": 0,
+            "end": 52,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_101@0",
+            "content": "Adam Smith, Jonathan Ullman, None, 2021, Differential Privacy II, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_101",
+            "start": 0,
+            "end": 66,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_102@0",
+            "content": "UNKNOWN, None, 2016, Introduction to Statistical Machine Learning, Morgan Kaufmann.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_102",
+            "start": 0,
+            "end": 82,
+            "label": {}
+        },
+        {
+            "ix": "276-ARR_v1_103@0",
+            "content": "Yuxin Wang, Zeyu Ding, Daniel Kifer, Danfeng Zhang, CheckDP: An Automated and Integrated Approach for Proving Differential Privacy or Finding Precise Counterexamples, 2020, Proceedings of the 2020 ACM SIGSAC Conference on Computer and Communications Security, ACM.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "276-ARR_v1_103",
+            "start": 0,
+            "end": 263,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "276-ARR_v1_0",
+            "tgt_ix": "276-ARR_v1_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_0",
+            "tgt_ix": "276-ARR_v1_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_1",
+            "tgt_ix": "276-ARR_v1_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_1",
+            "tgt_ix": "276-ARR_v1_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_0",
+            "tgt_ix": "276-ARR_v1_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_2",
+            "tgt_ix": "276-ARR_v1_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_4",
+            "tgt_ix": "276-ARR_v1_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_5",
+            "tgt_ix": "276-ARR_v1_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_6",
+            "tgt_ix": "276-ARR_v1_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_7",
+            "tgt_ix": "276-ARR_v1_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_8",
+            "tgt_ix": "276-ARR_v1_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_9",
+            "tgt_ix": "276-ARR_v1_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_10",
+            "tgt_ix": "276-ARR_v1_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_11",
+            "tgt_ix": "276-ARR_v1_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_12",
+            "tgt_ix": "276-ARR_v1_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_13",
+            "tgt_ix": "276-ARR_v1_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_14",
+            "tgt_ix": "276-ARR_v1_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_3",
+            "tgt_ix": "276-ARR_v1_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_3",
+            "tgt_ix": "276-ARR_v1_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_3",
+            "tgt_ix": "276-ARR_v1_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_3",
+            "tgt_ix": "276-ARR_v1_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_3",
+            "tgt_ix": "276-ARR_v1_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_3",
+            "tgt_ix": "276-ARR_v1_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_3",
+            "tgt_ix": "276-ARR_v1_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_3",
+            "tgt_ix": "276-ARR_v1_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_3",
+            "tgt_ix": "276-ARR_v1_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_3",
+            "tgt_ix": "276-ARR_v1_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_3",
+            "tgt_ix": "276-ARR_v1_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_3",
+            "tgt_ix": "276-ARR_v1_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_3",
+            "tgt_ix": "276-ARR_v1_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_0",
+            "tgt_ix": "276-ARR_v1_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_15",
+            "tgt_ix": "276-ARR_v1_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_17",
+            "tgt_ix": "276-ARR_v1_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_18",
+            "tgt_ix": "276-ARR_v1_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_19",
+            "tgt_ix": "276-ARR_v1_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_20",
+            "tgt_ix": "276-ARR_v1_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_21",
+            "tgt_ix": "276-ARR_v1_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_16",
+            "tgt_ix": "276-ARR_v1_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_16",
+            "tgt_ix": "276-ARR_v1_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_16",
+            "tgt_ix": "276-ARR_v1_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_16",
+            "tgt_ix": "276-ARR_v1_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_16",
+            "tgt_ix": "276-ARR_v1_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_16",
+            "tgt_ix": "276-ARR_v1_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_16",
+            "tgt_ix": "276-ARR_v1_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_16",
+            "tgt_ix": "276-ARR_v1_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_22",
+            "tgt_ix": "276-ARR_v1_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_24",
+            "tgt_ix": "276-ARR_v1_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_25",
+            "tgt_ix": "276-ARR_v1_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_23",
+            "tgt_ix": "276-ARR_v1_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_23",
+            "tgt_ix": "276-ARR_v1_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_23",
+            "tgt_ix": "276-ARR_v1_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_23",
+            "tgt_ix": "276-ARR_v1_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_16",
+            "tgt_ix": "276-ARR_v1_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_26",
+            "tgt_ix": "276-ARR_v1_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_28",
+            "tgt_ix": "276-ARR_v1_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_29",
+            "tgt_ix": "276-ARR_v1_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_30",
+            "tgt_ix": "276-ARR_v1_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_31",
+            "tgt_ix": "276-ARR_v1_32",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_32",
+            "tgt_ix": "276-ARR_v1_33",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_33",
+            "tgt_ix": "276-ARR_v1_34",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_34",
+            "tgt_ix": "276-ARR_v1_35",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_27",
+            "tgt_ix": "276-ARR_v1_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_27",
+            "tgt_ix": "276-ARR_v1_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_27",
+            "tgt_ix": "276-ARR_v1_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_27",
+            "tgt_ix": "276-ARR_v1_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_27",
+            "tgt_ix": "276-ARR_v1_32",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_27",
+            "tgt_ix": "276-ARR_v1_33",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_27",
+            "tgt_ix": "276-ARR_v1_34",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_27",
+            "tgt_ix": "276-ARR_v1_35",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_27",
+            "tgt_ix": "276-ARR_v1_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_16",
+            "tgt_ix": "276-ARR_v1_36",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_35",
+            "tgt_ix": "276-ARR_v1_36",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_37",
+            "tgt_ix": "276-ARR_v1_38",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_38",
+            "tgt_ix": "276-ARR_v1_39",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_39",
+            "tgt_ix": "276-ARR_v1_40",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_40",
+            "tgt_ix": "276-ARR_v1_41",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_41",
+            "tgt_ix": "276-ARR_v1_42",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_42",
+            "tgt_ix": "276-ARR_v1_43",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_43",
+            "tgt_ix": "276-ARR_v1_44",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_44",
+            "tgt_ix": "276-ARR_v1_45",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_45",
+            "tgt_ix": "276-ARR_v1_46",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_36",
+            "tgt_ix": "276-ARR_v1_37",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_36",
+            "tgt_ix": "276-ARR_v1_38",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_36",
+            "tgt_ix": "276-ARR_v1_39",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_36",
+            "tgt_ix": "276-ARR_v1_40",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_36",
+            "tgt_ix": "276-ARR_v1_41",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_36",
+            "tgt_ix": "276-ARR_v1_42",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_36",
+            "tgt_ix": "276-ARR_v1_43",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_36",
+            "tgt_ix": "276-ARR_v1_44",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_36",
+            "tgt_ix": "276-ARR_v1_45",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_36",
+            "tgt_ix": "276-ARR_v1_46",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_36",
+            "tgt_ix": "276-ARR_v1_37",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_0",
+            "tgt_ix": "276-ARR_v1_47",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_46",
+            "tgt_ix": "276-ARR_v1_47",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_47",
+            "tgt_ix": "276-ARR_v1_48",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_47",
+            "tgt_ix": "276-ARR_v1_48",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_49",
+            "tgt_ix": "276-ARR_v1_50",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_50",
+            "tgt_ix": "276-ARR_v1_51",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_51",
+            "tgt_ix": "276-ARR_v1_52",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_52",
+            "tgt_ix": "276-ARR_v1_53",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_53",
+            "tgt_ix": "276-ARR_v1_54",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_54",
+            "tgt_ix": "276-ARR_v1_55",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_47",
+            "tgt_ix": "276-ARR_v1_49",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_47",
+            "tgt_ix": "276-ARR_v1_50",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_47",
+            "tgt_ix": "276-ARR_v1_51",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_47",
+            "tgt_ix": "276-ARR_v1_52",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_47",
+            "tgt_ix": "276-ARR_v1_53",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_47",
+            "tgt_ix": "276-ARR_v1_54",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_47",
+            "tgt_ix": "276-ARR_v1_55",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_48",
+            "tgt_ix": "276-ARR_v1_49",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_0",
+            "tgt_ix": "276-ARR_v1_56",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_55",
+            "tgt_ix": "276-ARR_v1_56",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_57",
+            "tgt_ix": "276-ARR_v1_58",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_56",
+            "tgt_ix": "276-ARR_v1_57",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_56",
+            "tgt_ix": "276-ARR_v1_58",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_56",
+            "tgt_ix": "276-ARR_v1_57",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_0",
+            "tgt_ix": "276-ARR_v1_59",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_58",
+            "tgt_ix": "276-ARR_v1_59",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_60",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_60",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_61",
+            "tgt_ix": "276-ARR_v1_62",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_63",
+            "tgt_ix": "276-ARR_v1_64",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_64",
+            "tgt_ix": "276-ARR_v1_65",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_65",
+            "tgt_ix": "276-ARR_v1_66",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_66",
+            "tgt_ix": "276-ARR_v1_67",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_67",
+            "tgt_ix": "276-ARR_v1_68",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_68",
+            "tgt_ix": "276-ARR_v1_69",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_69",
+            "tgt_ix": "276-ARR_v1_70",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_70",
+            "tgt_ix": "276-ARR_v1_71",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_71",
+            "tgt_ix": "276-ARR_v1_72",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_72",
+            "tgt_ix": "276-ARR_v1_73",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_73",
+            "tgt_ix": "276-ARR_v1_74",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_74",
+            "tgt_ix": "276-ARR_v1_75",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_75",
+            "tgt_ix": "276-ARR_v1_76",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_76",
+            "tgt_ix": "276-ARR_v1_77",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_77",
+            "tgt_ix": "276-ARR_v1_78",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_78",
+            "tgt_ix": "276-ARR_v1_79",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_79",
+            "tgt_ix": "276-ARR_v1_80",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_80",
+            "tgt_ix": "276-ARR_v1_81",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_81",
+            "tgt_ix": "276-ARR_v1_82",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_82",
+            "tgt_ix": "276-ARR_v1_83",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_61",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_62",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_63",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_64",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_65",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_66",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_67",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_68",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_69",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_70",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_71",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_72",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_73",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_74",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_75",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_76",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_77",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_78",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_79",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_80",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_81",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_82",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_83",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_60",
+            "tgt_ix": "276-ARR_v1_61",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_84",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_83",
+            "tgt_ix": "276-ARR_v1_84",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "276-ARR_v1_0",
+            "tgt_ix": "276-ARR_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_1",
+            "tgt_ix": "276-ARR_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_2",
+            "tgt_ix": "276-ARR_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_2",
+            "tgt_ix": "276-ARR_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_2",
+            "tgt_ix": "276-ARR_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_2",
+            "tgt_ix": "276-ARR_v1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_2",
+            "tgt_ix": "276-ARR_v1_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_2",
+            "tgt_ix": "276-ARR_v1_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_3",
+            "tgt_ix": "276-ARR_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_4",
+            "tgt_ix": "276-ARR_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_4",
+            "tgt_ix": "276-ARR_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_4",
+            "tgt_ix": "276-ARR_v1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_5",
+            "tgt_ix": "276-ARR_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_5",
+            "tgt_ix": "276-ARR_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_5",
+            "tgt_ix": "276-ARR_v1_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_5",
+            "tgt_ix": "276-ARR_v1_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_5",
+            "tgt_ix": "276-ARR_v1_5@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_5",
+            "tgt_ix": "276-ARR_v1_5@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_6",
+            "tgt_ix": "276-ARR_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_6",
+            "tgt_ix": "276-ARR_v1_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_6",
+            "tgt_ix": "276-ARR_v1_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_6",
+            "tgt_ix": "276-ARR_v1_6@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_6",
+            "tgt_ix": "276-ARR_v1_6@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_6",
+            "tgt_ix": "276-ARR_v1_6@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_6",
+            "tgt_ix": "276-ARR_v1_6@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_6",
+            "tgt_ix": "276-ARR_v1_6@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_6",
+            "tgt_ix": "276-ARR_v1_6@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_6",
+            "tgt_ix": "276-ARR_v1_6@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_6",
+            "tgt_ix": "276-ARR_v1_6@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_7",
+            "tgt_ix": "276-ARR_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_7",
+            "tgt_ix": "276-ARR_v1_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_8",
+            "tgt_ix": "276-ARR_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_9",
+            "tgt_ix": "276-ARR_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_9",
+            "tgt_ix": "276-ARR_v1_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_10",
+            "tgt_ix": "276-ARR_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_10",
+            "tgt_ix": "276-ARR_v1_10@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_10",
+            "tgt_ix": "276-ARR_v1_10@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_11",
+            "tgt_ix": "276-ARR_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_12",
+            "tgt_ix": "276-ARR_v1_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_12",
+            "tgt_ix": "276-ARR_v1_12@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_12",
+            "tgt_ix": "276-ARR_v1_12@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_13",
+            "tgt_ix": "276-ARR_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_13",
+            "tgt_ix": "276-ARR_v1_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_14",
+            "tgt_ix": "276-ARR_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_15",
+            "tgt_ix": "276-ARR_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_15",
+            "tgt_ix": "276-ARR_v1_15@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_15",
+            "tgt_ix": "276-ARR_v1_15@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_16",
+            "tgt_ix": "276-ARR_v1_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_17",
+            "tgt_ix": "276-ARR_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_18",
+            "tgt_ix": "276-ARR_v1_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_18",
+            "tgt_ix": "276-ARR_v1_18@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_19",
+            "tgt_ix": "276-ARR_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_20",
+            "tgt_ix": "276-ARR_v1_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_21",
+            "tgt_ix": "276-ARR_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_22",
+            "tgt_ix": "276-ARR_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_23",
+            "tgt_ix": "276-ARR_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_24",
+            "tgt_ix": "276-ARR_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_25",
+            "tgt_ix": "276-ARR_v1_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_25",
+            "tgt_ix": "276-ARR_v1_25@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_25",
+            "tgt_ix": "276-ARR_v1_25@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_26",
+            "tgt_ix": "276-ARR_v1_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_27",
+            "tgt_ix": "276-ARR_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_28",
+            "tgt_ix": "276-ARR_v1_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_29",
+            "tgt_ix": "276-ARR_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_30",
+            "tgt_ix": "276-ARR_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_30",
+            "tgt_ix": "276-ARR_v1_30@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_31",
+            "tgt_ix": "276-ARR_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_32",
+            "tgt_ix": "276-ARR_v1_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_32",
+            "tgt_ix": "276-ARR_v1_32@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_33",
+            "tgt_ix": "276-ARR_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_34",
+            "tgt_ix": "276-ARR_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_35",
+            "tgt_ix": "276-ARR_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_36",
+            "tgt_ix": "276-ARR_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_37",
+            "tgt_ix": "276-ARR_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_38",
+            "tgt_ix": "276-ARR_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_38",
+            "tgt_ix": "276-ARR_v1_38@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_39",
+            "tgt_ix": "276-ARR_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_40",
+            "tgt_ix": "276-ARR_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_41",
+            "tgt_ix": "276-ARR_v1_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_42",
+            "tgt_ix": "276-ARR_v1_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_43",
+            "tgt_ix": "276-ARR_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_43",
+            "tgt_ix": "276-ARR_v1_43@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_44",
+            "tgt_ix": "276-ARR_v1_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_44",
+            "tgt_ix": "276-ARR_v1_44@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_45",
+            "tgt_ix": "276-ARR_v1_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_45",
+            "tgt_ix": "276-ARR_v1_45@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_45",
+            "tgt_ix": "276-ARR_v1_45@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_45",
+            "tgt_ix": "276-ARR_v1_45@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_45",
+            "tgt_ix": "276-ARR_v1_45@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_45",
+            "tgt_ix": "276-ARR_v1_45@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_45",
+            "tgt_ix": "276-ARR_v1_45@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_46",
+            "tgt_ix": "276-ARR_v1_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_47",
+            "tgt_ix": "276-ARR_v1_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_48",
+            "tgt_ix": "276-ARR_v1_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_48",
+            "tgt_ix": "276-ARR_v1_48@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_48",
+            "tgt_ix": "276-ARR_v1_48@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_48",
+            "tgt_ix": "276-ARR_v1_48@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_48",
+            "tgt_ix": "276-ARR_v1_48@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_48",
+            "tgt_ix": "276-ARR_v1_48@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_48",
+            "tgt_ix": "276-ARR_v1_48@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_48",
+            "tgt_ix": "276-ARR_v1_48@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_49",
+            "tgt_ix": "276-ARR_v1_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_49",
+            "tgt_ix": "276-ARR_v1_49@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_49",
+            "tgt_ix": "276-ARR_v1_49@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_50",
+            "tgt_ix": "276-ARR_v1_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_50",
+            "tgt_ix": "276-ARR_v1_50@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_51",
+            "tgt_ix": "276-ARR_v1_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_51",
+            "tgt_ix": "276-ARR_v1_51@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_51",
+            "tgt_ix": "276-ARR_v1_51@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_52",
+            "tgt_ix": "276-ARR_v1_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_53",
+            "tgt_ix": "276-ARR_v1_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_54",
+            "tgt_ix": "276-ARR_v1_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_55",
+            "tgt_ix": "276-ARR_v1_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_55",
+            "tgt_ix": "276-ARR_v1_55@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_55",
+            "tgt_ix": "276-ARR_v1_55@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_55",
+            "tgt_ix": "276-ARR_v1_55@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_55",
+            "tgt_ix": "276-ARR_v1_55@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_55",
+            "tgt_ix": "276-ARR_v1_55@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_56",
+            "tgt_ix": "276-ARR_v1_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_57",
+            "tgt_ix": "276-ARR_v1_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_57",
+            "tgt_ix": "276-ARR_v1_57@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_57",
+            "tgt_ix": "276-ARR_v1_57@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_57",
+            "tgt_ix": "276-ARR_v1_57@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_57",
+            "tgt_ix": "276-ARR_v1_57@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_58",
+            "tgt_ix": "276-ARR_v1_58@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_58",
+            "tgt_ix": "276-ARR_v1_58@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_59",
+            "tgt_ix": "276-ARR_v1_59@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_60",
+            "tgt_ix": "276-ARR_v1_60@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_60",
+            "tgt_ix": "276-ARR_v1_60@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_61",
+            "tgt_ix": "276-ARR_v1_61@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_62",
+            "tgt_ix": "276-ARR_v1_62@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_63",
+            "tgt_ix": "276-ARR_v1_63@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_64",
+            "tgt_ix": "276-ARR_v1_64@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_64",
+            "tgt_ix": "276-ARR_v1_64@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_65",
+            "tgt_ix": "276-ARR_v1_65@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_66",
+            "tgt_ix": "276-ARR_v1_66@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_66",
+            "tgt_ix": "276-ARR_v1_66@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_66",
+            "tgt_ix": "276-ARR_v1_66@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_67",
+            "tgt_ix": "276-ARR_v1_67@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_68",
+            "tgt_ix": "276-ARR_v1_68@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_68",
+            "tgt_ix": "276-ARR_v1_68@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_69",
+            "tgt_ix": "276-ARR_v1_69@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_70",
+            "tgt_ix": "276-ARR_v1_70@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_71",
+            "tgt_ix": "276-ARR_v1_71@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_72",
+            "tgt_ix": "276-ARR_v1_72@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_73",
+            "tgt_ix": "276-ARR_v1_73@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_74",
+            "tgt_ix": "276-ARR_v1_74@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_75",
+            "tgt_ix": "276-ARR_v1_75@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_76",
+            "tgt_ix": "276-ARR_v1_76@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_77",
+            "tgt_ix": "276-ARR_v1_77@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_78",
+            "tgt_ix": "276-ARR_v1_78@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_78",
+            "tgt_ix": "276-ARR_v1_78@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_78",
+            "tgt_ix": "276-ARR_v1_78@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_78",
+            "tgt_ix": "276-ARR_v1_78@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_78",
+            "tgt_ix": "276-ARR_v1_78@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_78",
+            "tgt_ix": "276-ARR_v1_78@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_79",
+            "tgt_ix": "276-ARR_v1_79@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_80",
+            "tgt_ix": "276-ARR_v1_80@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_80",
+            "tgt_ix": "276-ARR_v1_80@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_80",
+            "tgt_ix": "276-ARR_v1_80@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_81",
+            "tgt_ix": "276-ARR_v1_81@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_82",
+            "tgt_ix": "276-ARR_v1_82@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_83",
+            "tgt_ix": "276-ARR_v1_83@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_83",
+            "tgt_ix": "276-ARR_v1_83@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_83",
+            "tgt_ix": "276-ARR_v1_83@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_83",
+            "tgt_ix": "276-ARR_v1_83@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_84",
+            "tgt_ix": "276-ARR_v1_84@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_85",
+            "tgt_ix": "276-ARR_v1_85@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_86",
+            "tgt_ix": "276-ARR_v1_86@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_87",
+            "tgt_ix": "276-ARR_v1_87@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_88",
+            "tgt_ix": "276-ARR_v1_88@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_89",
+            "tgt_ix": "276-ARR_v1_89@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_90",
+            "tgt_ix": "276-ARR_v1_90@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_91",
+            "tgt_ix": "276-ARR_v1_91@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_92",
+            "tgt_ix": "276-ARR_v1_92@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_93",
+            "tgt_ix": "276-ARR_v1_93@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_94",
+            "tgt_ix": "276-ARR_v1_94@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_95",
+            "tgt_ix": "276-ARR_v1_95@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_96",
+            "tgt_ix": "276-ARR_v1_96@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_97",
+            "tgt_ix": "276-ARR_v1_97@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_98",
+            "tgt_ix": "276-ARR_v1_98@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_99",
+            "tgt_ix": "276-ARR_v1_99@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_100",
+            "tgt_ix": "276-ARR_v1_100@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_101",
+            "tgt_ix": "276-ARR_v1_101@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_102",
+            "tgt_ix": "276-ARR_v1_102@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "276-ARR_v1_103",
+            "tgt_ix": "276-ARR_v1_103@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 852,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "position_tag_type": "from_draft",
+        "doc_id": "276-ARR",
+        "version": 1
+    }
+}

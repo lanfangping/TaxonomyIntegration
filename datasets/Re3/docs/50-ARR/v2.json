@@ -1,0 +1,4091 @@
+{
+    "nodes": [
+        {
+            "ix": "50-ARR_v2_0",
+            "content": "A Copy-Augmented Generative Model for Open-Domain Question Answering",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_2",
+            "content": "Open-domain question answering is a challenging task with a wide variety of practical applications. Existing modern approaches mostly follow a standard two-stage paradigm: retriever then reader. In this article, we focus on improving the effectiveness of the reader module and propose a novel copy-augmented generative approach that integrates the merits of both extractive and generative readers. In particular, our model is built upon the powerful generative model FiD (Izacard and Grave, 2021b). We enhance the original generative reader by incorporating a pointer network to encourage the model to directly copy words from the retrieved passages. We conduct experiments on the two benchmark datasets, NaturalQuestions and TriviaQA, and the empirical results demonstrate the performance gains of our proposed approach.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_4",
+            "content": "Open-domain question answering (ODQA) focuses on providing highly precise answers to natural language questions from a large collection of unstructured text data (Voorhees, 1999). With the pioneering work of DrQA (Chen et al., 2017), modern approaches to ODQA commonly adopt a simple two-stage retriever-reader pipeline, that firstly retrieve a relatively small number of support passages (Karpukhin et al., 2020;Min et al., 2021b;Yamada et al., 2021), followed by the reader identifying the answer.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_5",
+            "content": "The reader models can be broadly categorized into two classes: extractive (Chen et al., 2017;Asai et al., 2020;Karpukhin et al., 2020) and generative (Izacard and Grave, 2021b;Lewis et al., 2020b;Wu et al., 2021). Recently, benefiting from the powerful ability of large-scale pre-trained encoderdecoder language models (Lewis et al., 2020a;Raffel et al., 2019) and the capability of aggregating information from multiple passages (Izacard * This work was done when she was at AARC. and Grave, 2021b), generative approaches have achieved in general better performance than extractive methods.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_6",
+            "content": "Compared to extractive models, generative models generate text more freely, which makes it often suffer from the problem of producing hallucinated text that is factual inaccuracy or inconsistent to the input. This problem has been addressed in tasks like text summarization (Maynez et al., 2020) and machine translation (Zhou et al., 2021). We found that the phenomenon also happens in ODQA. As shown in Table 1, the answer \"Dubai in Germany\" produced by the generative model FiD (Izacard and Grave, 2021b) is factual incorrect and the answer \"33\" in the second example is not coherent to the question. While in both cases, the ground-truth answers are present in the retrieved passages. Thus, we hypothesize that if we could put a constraint on the produced words to the input text, the generated answer will be more faithful.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_7",
+            "content": "Inspired by the work of See et al. (2017), we enhance the generative model with a pointer net- Figure 1: The overall architecture of our proposed model. We add a linear layer to calculate the generation probability, which decides the weights of generating words from vocabulary or copying from source passages.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_8",
+            "content": "work , that enables the model to directly copy text from the retrieved passages while retains the ability of generating new words when the true answers are not explicitly present in the input. To be more specific, our model fusion-in-decoder pointer-generator network (FiD-PGN) is built upon the state-of-the-art model FiD. We reuse the encoder-decoder attention scores as the copy distribution to reduce the computational cost. Compared to FiD, we achieve comparative or even better accuracy on the NaturalQuestions (NQ) (Kwiatkowski et al., 2019) andTriviaQA (Joshi et al., 2017) benchmarks, with less passages used in training. Our experiments results show the effectiveness and efficiency of our model.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_9",
+            "content": "Related Work",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_10",
+            "content": "Open-Domain Question Answering",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_11",
+            "content": "In this era of data explosion, ODQA offers a way to rapidly and accurately fulfill user's information needs, and hence has recently received significant attention from both industry and academia (Min et al., 2021a). Following the work of DrQA (Chen et al., 2017), most recent works build a two-stage retriever-reader system to tackle the problem. The retriever aims at retrieving supportive passages to the given question from a large document corpus. The reader intends to find answer of the question from the first stage retrieved passages. Early work of Chen et al. (2017) adapts a BiLSTM architecture with various lexical and semantic features from the question and passages as inputs. Later, with the emergence of large-scale pre-trained language models, readers based on pre-trained models such as BERT and T5 (Raffel et al., 2019) have become a common approach (Yang et al., 2019;Izacard and Grave, 2021b;Karpukhin et al., 2020).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_12",
+            "content": "Generative Readers",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_13",
+            "content": "Compared to extractive models which extract spans from the retrieved passages, generative models are able to produce new words out of the retrieved passages, and thus provide a more flexible modeling framework. and Lewis et al. (2020b) concatenate the given question with top retrieved passages and feed the concatenation to the BART model (Lewis et al., 2020a). Izacard and Grave (2021b) separately encodes the question with each top retrieved passage, then takes the concatenation of the encoder outputs as input to the decoder. Their method provide a way to better aggregate evidence from multiple passages and improve the performance significantly. FiD-KD (Izacard and Grave, 2021a) is an extension of FiD model that increases the accuracy of passage retrieval by training the dense retriever with the guidance of the FiD reader iteratively.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_14",
+            "content": "Pointer-Generator Network",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_15",
+            "content": "Pointer-Generator Network (See et al., 2017) is an extension of the sequence-to-sequence model by integrating a copy mechanism into the generator. At each decoding stage, the model is able to either directly copy a word from the input or generate one with certain probability, and thus can be viewed as a combination of extractive and generative approaches. It has been frequently used in natural language tasks like summarization (Gu et al., 2016;See al., 2017;Gehrmann et al., 2018) and neural machine translation (Luong et al., 2015;Gu et al., 2018), but its application to ODQA has been less explored.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_16",
+            "content": "Method",
+            "ntype": "title",
+            "meta": {
+                "section": "3"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_17",
+            "content": "Our model follows the standard two-stage retrieverreader framework with a focus on the enhancement of the reader module built upon the FiD reader. We adopt the retriever results of FiD-KD, where a dense retriever similar to DPR (Karpukhin et al., 2020) is used. A pointer network is integrated into the FiD reader to facilitate copying words from the retrieved passages. The overall reader architecture is depicted in Figure 1.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_18",
+            "content": "Reader Encoder. The reader encoder of our model is identical to the one of FiD reader. We firstly concatenate the given question q with each retrieved passage p i as x i = [q; p i ]. Next, we pass each x i individually to the reader encoder, i.e., the encoder of T5 or BART model, and obtain the hidden representations h i = (h i,1 , h i,2 , . . . , h i,n ) of the questionpassage pair where h i,j \u2208 R d and d is the model dimension. Finally, we concatenate all the hidden representations of top-k passages {h 1 , . . . , h k } as input to the decoder.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_19",
+            "content": "Reader Decoder. Our approach mainly differs from FiD reader in the decoder module by adding a pointer network. Specifically, at each decoding step t, let e t \u2208 R d be the embedding vector of the input token at this step, and denote s L t \u2208 R d as the output representation of the last layer L of transformer decoder, then the probability of generation is given as follows,",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_20",
+            "content": "p gen = \u03c3(w T e e t + w T s s L t + b)(1)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_21",
+            "content": "where w e \u2208 R d , w s \u2208 R d and b \u2208 R are all learnable parameters and \u03c3(\u2022) represents the sigmoid function. In addition, the probability of copying is 1 \u2212 p gen . Next, let V denote the vocabulary containing words for the generative model and |V| be the size of the vocabulary. Then at step t, the probability distribution of words generation over the vocabulary is computed as,",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_22",
+            "content": "P vocab = softmax(W E s L t )(2)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_23",
+            "content": "where W E \u2208 R |V |\u00d7d is a learnable weight matrix.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_24",
+            "content": "Benefiting from the encoder-decoder attention layer in transformer architecture, we directly utilize the cross-attention score \u03b1 L t of the last decoder layer L over the source tokens for the target token y t as copy distribution. Then the probability of selecting y t in source sequence is calculated as,",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_25",
+            "content": "P ctx (y t ) = j:x 1:k,j =yt \u03b1 L t,j(3)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_26",
+            "content": "where x 1:k denotes the concatenation of the top-k retrieved passages, x 1:k,j is the j-th token of x 1:k , and \u03b1 L t,j is the j-th element of \u03b1 L t . If y t is not present in the top-k retrieved passages, P ctx (y t ) will be zero.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_27",
+            "content": "Finally, put all the above together, the target token y t could both be generated from vocabulary with probability p gen , and copy from the source passages. The final prediction probability is defined as",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_28",
+            "content": "P (y t ) = p gen P vocab (y t ) + (1 \u2212 p gen )P ctx (y t ). (4)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_29",
+            "content": "Experiments",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_30",
+            "content": "Datasets",
+            "ntype": "title",
+            "meta": {
+                "section": "4.1"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_31",
+            "content": "We evaluate the performance of our approach on two standard ODQA datasets, NQ and TriviaQA. The NQ dataset comprises real queries that user issued on Google search engine along with answers. The TriviaQA dataset consists of question-answer pairs collected from trivia and quiz-league websites. The details of data statistics are listed in Table 2. It can be seen that TriviaQA has on average longer question length than NQ, indicating that questions in TriviaQA are relatively more complex. We use the data released on the repository of FiD 1 , containing question-answer pairs and top-100 passages retrieved by FiD-KD.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_32",
+            "content": "Implementation Details",
+            "ntype": "title",
+            "meta": {
+                "section": "4.2"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_33",
+            "content": "We follow the experimental settings as in FiD.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_34",
+            "content": "Our model is initialized with a pre-trained T5-base model, and trained using AdamW (Loshchilov and Hutter, 2017) algorithm with a learning rate of 10 \u22124 , linear scheduling with 15k total steps and 1k warm-up steps. Moreover, we train our model using the top-25 retrieved passages for each question and set the batch size as 64 due to computational limitation. All experiments are run on eight Nvidia V100 32GB GPUs.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_35",
+            "content": "Results",
+            "ntype": "title",
+            "meta": {
+                "section": "4.3"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_36",
+            "content": "Table 3 shows the experimental results of our model and other approaches on the test sets, evaluated with the standard exact match (EM) score (Rajpurkar et al., 2016). For a fair comparison, we retrained the FiD reader on the top-25 retrieved passages to match our experimental settings.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_37",
+            "content": "As shown in Table 3, our model outperforms FiD-KD on both NQ and TriviaQA datasets under the same setting. This demonstrates that the pointer network could help to generate answers more accurately. It is worth noting that, compared with FiD-KD trained with the top-100 retrieved passages, our model achieves comparative or even better results with only 1/4 of the input data and without introducing many parameters (only 1537 extra parameters are added), indicating the efficiency of our model.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_38",
+            "content": "Analysis",
+            "ntype": "title",
+            "meta": {
+                "section": "5"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_39",
+            "content": "Generation Probability. We explore the probability of generation during training to further investigate the effects of the pointer module. As shown in Figure 2, the generation probability p gen in TriviaQA is always higher than the one in NQ. Note that a higher generation probability means that more tokens are produced from the vocabulary instead of copying from the input. We conjecture that this phenomenon is caused by the different Compared to the information-seeking questions in NQ, probing questions tend to need more complex reasoning, and thus it is difficult to directly extract relevant tokens from input texts. Moreover, this observation is also consistent with the results that the improvements of our model over FiD reader is smaller in TriviaQA than the one in NQ (0.9 vs. 2.9 EM for TriviaQA and NQ, respectively).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_40",
+            "content": "Test-Train Overlap Evaluation. The study of test-train overlap (Lewis et al., 2021) provides valuable insights into the model's question answering behavior. We evaluate our model on the same test data splits as in Lewis et al. (2021). Table 4 reports the results with respect to three kinds of test-train overlaps. It can be seen that our approach improves most over FiD reader on \"No Overlap\" category, the most challenging setting, indicating a better generalization ability to question answering. sages. We can observe that the matching scores of both models increase with respect to the number of passages used in training, consistent with the findings in Izacard and Grave (2021b) that sequence-tosequence model is capable of gathering information across multiple retrieved passages. Moreover, the two models show comparative performance when the number of training passages is small, but when more passages are included, our model outperforms FiD, especially on the NQ dataset.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_41",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "6"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_42",
+            "content": "In this article, we propose a novel FiD-PGN approach for the reader module of ODQA under the standard retriever-reader framework. Specifically, we integrate a pointer network into the FiD reader to allow the model to directly select words from the retrieved passages. Experimental results show that our model outperforms FiD-KD on two benchmark datasets under the same setting, demonstrating the advantages of our method.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "50-ARR_v2_43",
+            "content": "Akari Asai, Kazuma Hashimoto, Hannaneh Hajishirzi, Richard Socher, Caiming Xiong, Learning to retrieve reasoning paths over wikipedia graph for question answering, 2020-04-26, 8th International Conference on Learning Representations, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": [
+                    "Akari Asai",
+                    "Kazuma Hashimoto",
+                    "Hannaneh Hajishirzi",
+                    "Richard Socher",
+                    "Caiming Xiong"
+                ],
+                "title": "Learning to retrieve reasoning paths over wikipedia graph for question answering",
+                "pub_date": "2020-04-26",
+                "pub_title": "8th International Conference on Learning Representations",
+                "pub": null
+            }
+        },
+        {
+            "ix": "50-ARR_v2_44",
+            "content": "Danqi Chen, Adam Fisch, Jason Weston, Antoine Bordes, Reading Wikipedia to answer opendomain questions, 2017, Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": [
+                    "Danqi Chen",
+                    "Adam Fisch",
+                    "Jason Weston",
+                    "Antoine Bordes"
+                ],
+                "title": "Reading Wikipedia to answer opendomain questions",
+                "pub_date": "2017",
+                "pub_title": "Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_45",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: Pre-training of deep bidirectional transformers for language understanding, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": [
+                    "Jacob Devlin",
+                    "Ming-Wei Chang",
+                    "Kenton Lee",
+                    "Kristina Toutanova"
+                ],
+                "title": "BERT: Pre-training of deep bidirectional transformers for language understanding",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_46",
+            "content": "Sebastian Gehrmann, Yuntian Deng, Alexander Rush, Bottom-up abstractive summarization, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": [
+                    "Sebastian Gehrmann",
+                    "Yuntian Deng",
+                    "Alexander Rush"
+                ],
+                "title": "Bottom-up abstractive summarization",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing",
+                "pub": null
+            }
+        },
+        {
+            "ix": "50-ARR_v2_47",
+            "content": "Jiatao Gu, James Bradbury, Caiming Xiong, O Victor, Richard Li,  Socher, Non-autoregressive neural machine translation, 2018-04-30, 6th International Conference on Learning Representations, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": [
+                    "Jiatao Gu",
+                    "James Bradbury",
+                    "Caiming Xiong",
+                    "O Victor",
+                    "Richard Li",
+                    " Socher"
+                ],
+                "title": "Non-autoregressive neural machine translation",
+                "pub_date": "2018-04-30",
+                "pub_title": "6th International Conference on Learning Representations",
+                "pub": null
+            }
+        },
+        {
+            "ix": "50-ARR_v2_48",
+            "content": "Jiatao Gu, Zhengdong Lu, Hang Li, O Victor,  Li, Incorporating copying mechanism in sequenceto-sequence learning, 2016, Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics, Long Papers.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "Jiatao Gu",
+                    "Zhengdong Lu",
+                    "Hang Li",
+                    "O Victor",
+                    " Li"
+                ],
+                "title": "Incorporating copying mechanism in sequenceto-sequence learning",
+                "pub_date": "2016",
+                "pub_title": "Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics",
+                "pub": "Long Papers"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_49",
+            "content": "Gautier Izacard, Edouard Grave, Distilling knowledge from reader to retriever for question answering, 2021-05-03, 9th International Conference on Learning Representations, ICLR 2021, Virtual Event, Austria, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": [
+                    "Gautier Izacard",
+                    "Edouard Grave"
+                ],
+                "title": "Distilling knowledge from reader to retriever for question answering",
+                "pub_date": "2021-05-03",
+                "pub_title": "9th International Conference on Learning Representations, ICLR 2021, Virtual Event, Austria",
+                "pub": null
+            }
+        },
+        {
+            "ix": "50-ARR_v2_50",
+            "content": "Gautier Izacard, Edouard Grave, Leveraging passage retrieval with generative models for open domain question answering, 2021, Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": [
+                    "Gautier Izacard",
+                    "Edouard Grave"
+                ],
+                "title": "Leveraging passage retrieval with generative models for open domain question answering",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume",
+                "pub": null
+            }
+        },
+        {
+            "ix": "50-ARR_v2_51",
+            "content": "Barlas Karpukhin, Sewon Oguz, Patrick Min, Ledell Lewis, Sergey Wu, Danqi Edunov, Wen-Tau Chen,  Yih, Dense passage retrieval for opendomain question answering, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), Online. Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": [
+                    "Barlas Karpukhin",
+                    "Sewon Oguz",
+                    "Patrick Min",
+                    "Ledell Lewis",
+                    "Sergey Wu",
+                    "Danqi Edunov",
+                    "Wen-Tau Chen",
+                    " Yih"
+                ],
+                "title": "Dense passage retrieval for opendomain question answering",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+                "pub": "Online. Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_52",
+            "content": "UNKNOWN, None, 2019, Natural questions: A benchmark for question answering research. Transactions of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "Natural questions: A benchmark for question answering research. Transactions of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "50-ARR_v2_53",
+            "content": "Mike Lewis, Yinhan Liu, Naman Goyal, Marjan Ghazvininejad, Abdelrahman Mohamed, Omer Levy, Veselin Stoyanov, Luke Zettlemoyer, BART: Denoising sequence-to-sequence pre-training for natural language generation, translation, and comprehension, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": [
+                    "Mike Lewis",
+                    "Yinhan Liu",
+                    "Naman Goyal",
+                    "Marjan Ghazvininejad",
+                    "Abdelrahman Mohamed",
+                    "Omer Levy",
+                    "Veselin Stoyanov",
+                    "Luke Zettlemoyer"
+                ],
+                "title": "BART: Denoising sequence-to-sequence pre-training for natural language generation, translation, and comprehension",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "50-ARR_v2_54",
+            "content": "Patrick Lewis, Pontus Stenetorp, Sebastian Riedel, Question and answer test-train overlap in opendomain question answering datasets, 2021, Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume, Online. Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": [
+                    "Patrick Lewis",
+                    "Pontus Stenetorp",
+                    "Sebastian Riedel"
+                ],
+                "title": "Question and answer test-train overlap in opendomain question answering datasets",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume",
+                "pub": "Online. Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_55",
+            "content": "S Patrick, Ethan Lewis, Aleksandra Perez, Fabio Piktus, Vladimir Petroni, Naman Karpukhin, Heinrich Goyal, Mike K\u00fcttler, Wen-Tau Lewis, Tim Yih, Sebastian Rockt\u00e4schel, Douwe Riedel,  Kiela, Retrieval-augmented generation for knowledge-intensive NLP tasks, 2020-12-06, Advances in Neural Information Processing Systems 33: Annual Conference on Neural Information Processing Systems 2020, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": [
+                    "S Patrick",
+                    "Ethan Lewis",
+                    "Aleksandra Perez",
+                    "Fabio Piktus",
+                    "Vladimir Petroni",
+                    "Naman Karpukhin",
+                    "Heinrich Goyal",
+                    "Mike K\u00fcttler",
+                    "Wen-Tau Lewis",
+                    "Tim Yih",
+                    "Sebastian Rockt\u00e4schel",
+                    "Douwe Riedel",
+                    " Kiela"
+                ],
+                "title": "Retrieval-augmented generation for knowledge-intensive NLP tasks",
+                "pub_date": "2020-12-06",
+                "pub_title": "Advances in Neural Information Processing Systems 33: Annual Conference on Neural Information Processing Systems 2020",
+                "pub": null
+            }
+        },
+        {
+            "ix": "50-ARR_v2_56",
+            "content": "UNKNOWN, None, 2017, Fixing weight decay regularization in adam, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": null,
+                "title": null,
+                "pub_date": "2017",
+                "pub_title": "Fixing weight decay regularization in adam",
+                "pub": null
+            }
+        },
+        {
+            "ix": "50-ARR_v2_57",
+            "content": "Thang Luong, Ilya Sutskever, Quoc Le, Oriol Vinyals, Wojciech Zaremba, Addressing the rare word problem in neural machine translation, 2015, Proceedings of the 53rd Annual Meeting of the Association for Computational Linguistics and the 7th International Joint Conference on Natural Language Processing, Long Papers.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": [
+                    "Thang Luong",
+                    "Ilya Sutskever",
+                    "Quoc Le",
+                    "Oriol Vinyals",
+                    "Wojciech Zaremba"
+                ],
+                "title": "Addressing the rare word problem in neural machine translation",
+                "pub_date": "2015",
+                "pub_title": "Proceedings of the 53rd Annual Meeting of the Association for Computational Linguistics and the 7th International Joint Conference on Natural Language Processing",
+                "pub": "Long Papers"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_58",
+            "content": "Joshua Maynez, Shashi Narayan, Bernd Bohnet, Ryan Mcdonald, On faithfulness and factuality in abstractive summarization, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b15",
+                "authors": [
+                    "Joshua Maynez",
+                    "Shashi Narayan",
+                    "Bernd Bohnet",
+                    "Ryan Mcdonald"
+                ],
+                "title": "On faithfulness and factuality in abstractive summarization",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_59",
+            "content": "UNKNOWN, None, , , Pavel Smrz.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b16",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": null,
+                "pub": "Pavel Smrz"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_60",
+            "content": "Sewon Min, Kenton Lee, Ming-Wei Chang, Kristina Toutanova, Hannaneh Hajishirzi, Joint passage ranking for diverse multi-answer retrieval, 2021, Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b17",
+                "authors": [
+                    "Sewon Min",
+                    "Kenton Lee",
+                    "Ming-Wei Chang",
+                    "Kristina Toutanova",
+                    "Hannaneh Hajishirzi"
+                ],
+                "title": "Joint passage ranking for diverse multi-answer retrieval",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_61",
+            "content": "Sewon Min, Julian Michael, Hannaneh Hajishirzi, Luke Zettlemoyer, AmbigQA: Answering ambiguous open-domain questions, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b18",
+                "authors": [
+                    "Sewon Min",
+                    "Julian Michael",
+                    "Hannaneh Hajishirzi",
+                    "Luke Zettlemoyer"
+                ],
+                "title": "AmbigQA: Answering ambiguous open-domain questions",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "50-ARR_v2_62",
+            "content": "UNKNOWN, None, 2019, Exploring the limits of transfer learning with a unified text-to-text transformer, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b19",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "Exploring the limits of transfer learning with a unified text-to-text transformer",
+                "pub": null
+            }
+        },
+        {
+            "ix": "50-ARR_v2_63",
+            "content": "Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, Percy Liang, SQuAD: 100,000+ questions for machine comprehension of text, 2016, Proceedings of the 2016 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b20",
+                "authors": [
+                    "Pranav Rajpurkar",
+                    "Jian Zhang",
+                    "Konstantin Lopyrev",
+                    "Percy Liang"
+                ],
+                "title": "SQuAD: 100,000+ questions for machine comprehension of text",
+                "pub_date": "2016",
+                "pub_title": "Proceedings of the 2016 Conference on Empirical Methods in Natural Language Processing",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_64",
+            "content": "UNKNOWN, None, 2021, QA dataset explosion: A taxonomy of NLP resources for question answering and reading comprehension, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b21",
+                "authors": null,
+                "title": null,
+                "pub_date": "2021",
+                "pub_title": "QA dataset explosion: A taxonomy of NLP resources for question answering and reading comprehension",
+                "pub": null
+            }
+        },
+        {
+            "ix": "50-ARR_v2_65",
+            "content": "Abigail See, J Peter, Christopher Liu,  Manning, Get to the point: Summarization with pointergenerator networks, 2017, Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics, Long Papers.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b22",
+                "authors": [
+                    "Abigail See",
+                    "J Peter",
+                    "Christopher Liu",
+                    " Manning"
+                ],
+                "title": "Get to the point: Summarization with pointergenerator networks",
+                "pub_date": "2017",
+                "pub_title": "Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics",
+                "pub": "Long Papers"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_66",
+            "content": "Oriol Vinyals, Meire Fortunato, Navdeep Jaitly, Pointer networks, 2015, Advances in Neural, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b23",
+                "authors": [
+                    "Oriol Vinyals",
+                    "Meire Fortunato",
+                    "Navdeep Jaitly"
+                ],
+                "title": "Pointer networks",
+                "pub_date": "2015",
+                "pub_title": "Advances in Neural",
+                "pub": null
+            }
+        },
+        {
+            "ix": "50-ARR_v2_67",
+            "content": "Ellen Voorhees, The TREC-8 question answering track report, 1999-11-17, Proceedings of The Eighth Text REtrieval Conference, NIST.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b24",
+                "authors": [
+                    "Ellen Voorhees"
+                ],
+                "title": "The TREC-8 question answering track report",
+                "pub_date": "1999-11-17",
+                "pub_title": "Proceedings of The Eighth Text REtrieval Conference",
+                "pub": "NIST"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_68",
+            "content": "Yuxiang Wu, Pasquale Minervini, Pontus Stenetorp, Sebastian Riedel, Training adaptive computation for open-domain question answering with computational constraints, 2021, Proceedings of the 59th, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b25",
+                "authors": [
+                    "Yuxiang Wu",
+                    "Pasquale Minervini",
+                    "Pontus Stenetorp",
+                    "Sebastian Riedel"
+                ],
+                "title": "Training adaptive computation for open-domain question answering with computational constraints",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 59th",
+                "pub": null
+            }
+        },
+        {
+            "ix": "50-ARR_v2_69",
+            "content": "UNKNOWN, None, , Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Online. Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b26",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": "Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing",
+                "pub": "Online. Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_70",
+            "content": "Ikuya Yamada, Akari Asai, Hannaneh Hajishirzi, Efficient passage retrieval with hashing for open-domain question answering, 2021, Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Online. Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b27",
+                "authors": [
+                    "Ikuya Yamada",
+                    "Akari Asai",
+                    "Hannaneh Hajishirzi"
+                ],
+                "title": "Efficient passage retrieval with hashing for open-domain question answering",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing",
+                "pub": "Online. Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_71",
+            "content": "Wei Yang, Yuqing Xie, Aileen Lin, Xingyu Li, Luchen Tan, Kun Xiong, Ming Li, Jimmy Lin, End-to-end open-domain question answering with BERTserini, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics (Demonstrations), Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b28",
+                "authors": [
+                    "Wei Yang",
+                    "Yuqing Xie",
+                    "Aileen Lin",
+                    "Xingyu Li",
+                    "Luchen Tan",
+                    "Kun Xiong",
+                    "Ming Li",
+                    "Jimmy Lin"
+                ],
+                "title": "End-to-end open-domain question answering with BERTserini",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics (Demonstrations)",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "50-ARR_v2_72",
+            "content": "Chunting Zhou, Graham Neubig, Jiatao Gu, Mona Diab, Francisco Guzm\u00e1n, Luke Zettlemoyer, Marjan Ghazvininejad, Detecting hallucinated content in conditional neural sequence generation, 2021, Findings of the Association for Computational Linguistics: ACL-IJCNLP 2021, Online. Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b29",
+                "authors": [
+                    "Chunting Zhou",
+                    "Graham Neubig",
+                    "Jiatao Gu",
+                    "Mona Diab",
+                    "Francisco Guzm\u00e1n",
+                    "Luke Zettlemoyer",
+                    "Marjan Ghazvininejad"
+                ],
+                "title": "Detecting hallucinated content in conditional neural sequence generation",
+                "pub_date": "2021",
+                "pub_title": "Findings of the Association for Computational Linguistics: ACL-IJCNLP 2021",
+                "pub": "Online. Association for Computational Linguistics"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "50-ARR_v2_0@0",
+            "content": "A Copy-Augmented Generative Model for Open-Domain Question Answering",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_0",
+            "start": 0,
+            "end": 67,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_2@0",
+            "content": "Open-domain question answering is a challenging task with a wide variety of practical applications.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_2",
+            "start": 0,
+            "end": 98,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_2@1",
+            "content": "Existing modern approaches mostly follow a standard two-stage paradigm: retriever then reader.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_2",
+            "start": 100,
+            "end": 193,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_2@2",
+            "content": "In this article, we focus on improving the effectiveness of the reader module and propose a novel copy-augmented generative approach that integrates the merits of both extractive and generative readers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_2",
+            "start": 195,
+            "end": 396,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_2@3",
+            "content": "In particular, our model is built upon the powerful generative model FiD (Izacard and Grave, 2021b).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_2",
+            "start": 398,
+            "end": 497,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_2@4",
+            "content": "We enhance the original generative reader by incorporating a pointer network to encourage the model to directly copy words from the retrieved passages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_2",
+            "start": 499,
+            "end": 649,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_2@5",
+            "content": "We conduct experiments on the two benchmark datasets, NaturalQuestions and TriviaQA, and the empirical results demonstrate the performance gains of our proposed approach.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_2",
+            "start": 651,
+            "end": 820,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_4@0",
+            "content": "Open-domain question answering (ODQA) focuses on providing highly precise answers to natural language questions from a large collection of unstructured text data (Voorhees, 1999).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_4",
+            "start": 0,
+            "end": 178,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_4@1",
+            "content": "With the pioneering work of DrQA (Chen et al., 2017), modern approaches to ODQA commonly adopt a simple two-stage retriever-reader pipeline, that firstly retrieve a relatively small number of support passages (Karpukhin et al., 2020;Min et al., 2021b;Yamada et al., 2021), followed by the reader identifying the answer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_4",
+            "start": 180,
+            "end": 498,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_5@0",
+            "content": "The reader models can be broadly categorized into two classes: extractive (Chen et al., 2017;Asai et al., 2020;Karpukhin et al., 2020) and generative (Izacard and Grave, 2021b;Lewis et al., 2020b;Wu et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_5",
+            "start": 0,
+            "end": 212,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_5@1",
+            "content": "Recently, benefiting from the powerful ability of large-scale pre-trained encoderdecoder language models (Lewis et al., 2020a;Raffel et al., 2019) and the capability of aggregating information from multiple passages (Izacard * This work was done when she was at AARC. and Grave, 2021b), generative approaches have achieved in general better performance than extractive methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_5",
+            "start": 214,
+            "end": 590,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_6@0",
+            "content": "Compared to extractive models, generative models generate text more freely, which makes it often suffer from the problem of producing hallucinated text that is factual inaccuracy or inconsistent to the input.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_6",
+            "start": 0,
+            "end": 207,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_6@1",
+            "content": "This problem has been addressed in tasks like text summarization (Maynez et al., 2020) and machine translation (Zhou et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_6",
+            "start": 209,
+            "end": 339,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_6@2",
+            "content": "We found that the phenomenon also happens in ODQA.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_6",
+            "start": 341,
+            "end": 390,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_6@3",
+            "content": "As shown in Table 1, the answer \"Dubai in Germany\" produced by the generative model FiD (Izacard and Grave, 2021b) is factual incorrect and the answer \"33\" in the second example is not coherent to the question.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_6",
+            "start": 392,
+            "end": 601,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_6@4",
+            "content": "While in both cases, the ground-truth answers are present in the retrieved passages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_6",
+            "start": 603,
+            "end": 686,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_6@5",
+            "content": "Thus, we hypothesize that if we could put a constraint on the produced words to the input text, the generated answer will be more faithful.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_6",
+            "start": 688,
+            "end": 826,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_7@0",
+            "content": "Inspired by the work of See et al. (2017), we enhance the generative model with a pointer net- Figure 1: The overall architecture of our proposed model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_7",
+            "start": 0,
+            "end": 151,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_7@1",
+            "content": "We add a linear layer to calculate the generation probability, which decides the weights of generating words from vocabulary or copying from source passages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_7",
+            "start": 153,
+            "end": 309,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_8@0",
+            "content": "work , that enables the model to directly copy text from the retrieved passages while retains the ability of generating new words when the true answers are not explicitly present in the input.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_8",
+            "start": 0,
+            "end": 191,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_8@1",
+            "content": "To be more specific, our model fusion-in-decoder pointer-generator network (FiD-PGN) is built upon the state-of-the-art model FiD. We reuse the encoder-decoder attention scores as the copy distribution to reduce the computational cost.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_8",
+            "start": 193,
+            "end": 427,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_8@2",
+            "content": "Compared to FiD, we achieve comparative or even better accuracy on the NaturalQuestions (NQ) (Kwiatkowski et al., 2019) andTriviaQA (Joshi et al., 2017) benchmarks, with less passages used in training.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_8",
+            "start": 429,
+            "end": 629,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_8@3",
+            "content": "Our experiments results show the effectiveness and efficiency of our model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_8",
+            "start": 631,
+            "end": 705,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_9@0",
+            "content": "Related Work",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_9",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_10@0",
+            "content": "Open-Domain Question Answering",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_10",
+            "start": 0,
+            "end": 29,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_11@0",
+            "content": "In this era of data explosion, ODQA offers a way to rapidly and accurately fulfill user's information needs, and hence has recently received significant attention from both industry and academia (Min et al., 2021a).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_11",
+            "start": 0,
+            "end": 214,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_11@1",
+            "content": "Following the work of DrQA (Chen et al., 2017), most recent works build a two-stage retriever-reader system to tackle the problem.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_11",
+            "start": 216,
+            "end": 345,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_11@2",
+            "content": "The retriever aims at retrieving supportive passages to the given question from a large document corpus.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_11",
+            "start": 347,
+            "end": 450,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_11@3",
+            "content": "The reader intends to find answer of the question from the first stage retrieved passages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_11",
+            "start": 452,
+            "end": 541,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_11@4",
+            "content": "Early work of Chen et al. (2017) adapts a BiLSTM architecture with various lexical and semantic features from the question and passages as inputs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_11",
+            "start": 543,
+            "end": 688,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_11@5",
+            "content": "Later, with the emergence of large-scale pre-trained language models, readers based on pre-trained models such as BERT and T5 (Raffel et al., 2019) have become a common approach (Yang et al., 2019;Izacard and Grave, 2021b;Karpukhin et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_11",
+            "start": 690,
+            "end": 935,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_12@0",
+            "content": "Generative Readers",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_12",
+            "start": 0,
+            "end": 17,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_13@0",
+            "content": "Compared to extractive models which extract spans from the retrieved passages, generative models are able to produce new words out of the retrieved passages, and thus provide a more flexible modeling framework. and Lewis et al. (2020b) concatenate the given question with top retrieved passages and feed the concatenation to the BART model (Lewis et al., 2020a).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_13",
+            "start": 0,
+            "end": 361,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_13@1",
+            "content": "Izacard and Grave (2021b) separately encodes the question with each top retrieved passage, then takes the concatenation of the encoder outputs as input to the decoder.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_13",
+            "start": 363,
+            "end": 529,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_13@2",
+            "content": "Their method provide a way to better aggregate evidence from multiple passages and improve the performance significantly.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_13",
+            "start": 531,
+            "end": 651,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_13@3",
+            "content": "FiD-KD (Izacard and Grave, 2021a) is an extension of FiD model that increases the accuracy of passage retrieval by training the dense retriever with the guidance of the FiD reader iteratively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_13",
+            "start": 653,
+            "end": 844,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_14@0",
+            "content": "Pointer-Generator Network",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_14",
+            "start": 0,
+            "end": 24,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_15@0",
+            "content": "Pointer-Generator Network (See et al., 2017) is an extension of the sequence-to-sequence model by integrating a copy mechanism into the generator.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_15",
+            "start": 0,
+            "end": 145,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_15@1",
+            "content": "At each decoding stage, the model is able to either directly copy a word from the input or generate one with certain probability, and thus can be viewed as a combination of extractive and generative approaches.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_15",
+            "start": 147,
+            "end": 356,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_15@2",
+            "content": "It has been frequently used in natural language tasks like summarization (Gu et al., 2016;See al., 2017;Gehrmann et al., 2018) and neural machine translation (Luong et al., 2015;Gu et al., 2018), but its application to ODQA has been less explored.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_15",
+            "start": 358,
+            "end": 604,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_16@0",
+            "content": "Method",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_16",
+            "start": 0,
+            "end": 5,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_17@0",
+            "content": "Our model follows the standard two-stage retrieverreader framework with a focus on the enhancement of the reader module built upon the FiD reader.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_17",
+            "start": 0,
+            "end": 145,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_17@1",
+            "content": "We adopt the retriever results of FiD-KD, where a dense retriever similar to DPR (Karpukhin et al., 2020) is used.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_17",
+            "start": 147,
+            "end": 260,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_17@2",
+            "content": "A pointer network is integrated into the FiD reader to facilitate copying words from the retrieved passages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_17",
+            "start": 262,
+            "end": 369,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_17@3",
+            "content": "The overall reader architecture is depicted in Figure 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_17",
+            "start": 371,
+            "end": 426,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_18@0",
+            "content": "Reader Encoder.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_18",
+            "start": 0,
+            "end": 14,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_18@1",
+            "content": "The reader encoder of our model is identical to the one of FiD reader.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_18",
+            "start": 16,
+            "end": 85,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_18@2",
+            "content": "We firstly concatenate the given question q with each retrieved passage p i as x i = [q; p i ].",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_18",
+            "start": 87,
+            "end": 181,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_18@3",
+            "content": "Next, we pass each x i individually to the reader encoder, i.e., the encoder of T5 or BART model, and obtain the hidden representations h i = (h i,1 , h i,2 , . . . , h i,n ) of the questionpassage pair where h i,j \u2208 R d and d is the model dimension.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_18",
+            "start": 183,
+            "end": 432,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_18@4",
+            "content": "Finally, we concatenate all the hidden representations of top-k passages {h 1 , . . . , h k } as input to the decoder.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_18",
+            "start": 434,
+            "end": 551,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_19@0",
+            "content": "Reader Decoder.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_19",
+            "start": 0,
+            "end": 14,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_19@1",
+            "content": "Our approach mainly differs from FiD reader in the decoder module by adding a pointer network.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_19",
+            "start": 16,
+            "end": 109,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_19@2",
+            "content": "Specifically, at each decoding step t, let e t \u2208 R d be the embedding vector of the input token at this step, and denote s L t \u2208 R d as the output representation of the last layer L of transformer decoder, then the probability of generation is given as follows,",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_19",
+            "start": 111,
+            "end": 371,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_20@0",
+            "content": "p gen = \u03c3(w T e e t + w T s s L t + b)(1)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_20",
+            "start": 0,
+            "end": 40,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_21@0",
+            "content": "where w e \u2208 R d , w s \u2208 R d and b \u2208 R are all learnable parameters and \u03c3(\u2022) represents the sigmoid function.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_21",
+            "start": 0,
+            "end": 107,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_21@1",
+            "content": "In addition, the probability of copying is 1 \u2212 p gen .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_21",
+            "start": 109,
+            "end": 162,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_21@2",
+            "content": "Next, let V denote the vocabulary containing words for the generative model and |V| be the size of the vocabulary.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_21",
+            "start": 164,
+            "end": 277,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_21@3",
+            "content": "Then at step t, the probability distribution of words generation over the vocabulary is computed as,",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_21",
+            "start": 279,
+            "end": 378,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_22@0",
+            "content": "P vocab = softmax(W E s L t )(2)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_22",
+            "start": 0,
+            "end": 31,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_23@0",
+            "content": "where W E \u2208 R |V |\u00d7d is a learnable weight matrix.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_23",
+            "start": 0,
+            "end": 49,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_24@0",
+            "content": "Benefiting from the encoder-decoder attention layer in transformer architecture, we directly utilize the cross-attention score \u03b1 L t of the last decoder layer L over the source tokens for the target token y t as copy distribution.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_24",
+            "start": 0,
+            "end": 229,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_24@1",
+            "content": "Then the probability of selecting y t in source sequence is calculated as,",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_24",
+            "start": 231,
+            "end": 304,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_25@0",
+            "content": "P ctx (y t ) = j:x 1:k,j =yt \u03b1 L t,j(3)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_25",
+            "start": 0,
+            "end": 38,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_26@0",
+            "content": "where x 1:k denotes the concatenation of the top-k retrieved passages, x 1:k,j is the j-th token of x 1:k , and \u03b1 L t,j is the j-th element of \u03b1 L t .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_26",
+            "start": 0,
+            "end": 149,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_26@1",
+            "content": "If y t is not present in the top-k retrieved passages, P ctx (y t ) will be zero.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_26",
+            "start": 151,
+            "end": 231,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_27@0",
+            "content": "Finally, put all the above together, the target token y t could both be generated from vocabulary with probability p gen , and copy from the source passages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_27",
+            "start": 0,
+            "end": 156,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_27@1",
+            "content": "The final prediction probability is defined as",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_27",
+            "start": 158,
+            "end": 203,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_28@0",
+            "content": "P (y t ) = p gen P vocab (y t ) + (1 \u2212 p gen )P ctx (y t ). (4)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_28",
+            "start": 0,
+            "end": 62,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_29@0",
+            "content": "Experiments",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_29",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_30@0",
+            "content": "Datasets",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_30",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_31@0",
+            "content": "We evaluate the performance of our approach on two standard ODQA datasets, NQ and TriviaQA.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_31",
+            "start": 0,
+            "end": 90,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_31@1",
+            "content": "The NQ dataset comprises real queries that user issued on Google search engine along with answers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_31",
+            "start": 92,
+            "end": 189,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_31@2",
+            "content": "The TriviaQA dataset consists of question-answer pairs collected from trivia and quiz-league websites.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_31",
+            "start": 191,
+            "end": 292,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_31@3",
+            "content": "The details of data statistics are listed in Table 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_31",
+            "start": 294,
+            "end": 346,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_31@4",
+            "content": "It can be seen that TriviaQA has on average longer question length than NQ, indicating that questions in TriviaQA are relatively more complex.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_31",
+            "start": 348,
+            "end": 489,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_31@5",
+            "content": "We use the data released on the repository of FiD 1 , containing question-answer pairs and top-100 passages retrieved by FiD-KD.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_31",
+            "start": 491,
+            "end": 618,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_32@0",
+            "content": "Implementation Details",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_32",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_33@0",
+            "content": "We follow the experimental settings as in FiD.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_33",
+            "start": 0,
+            "end": 45,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_34@0",
+            "content": "Our model is initialized with a pre-trained T5-base model, and trained using AdamW (Loshchilov and Hutter, 2017) algorithm with a learning rate of 10 \u22124 , linear scheduling with 15k total steps and 1k warm-up steps.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_34",
+            "start": 0,
+            "end": 214,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_34@1",
+            "content": "Moreover, we train our model using the top-25 retrieved passages for each question and set the batch size as 64 due to computational limitation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_34",
+            "start": 216,
+            "end": 359,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_34@2",
+            "content": "All experiments are run on eight Nvidia V100 32GB GPUs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_34",
+            "start": 361,
+            "end": 415,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_35@0",
+            "content": "Results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_35",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_36@0",
+            "content": "Table 3 shows the experimental results of our model and other approaches on the test sets, evaluated with the standard exact match (EM) score (Rajpurkar et al., 2016).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_36",
+            "start": 0,
+            "end": 166,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_36@1",
+            "content": "For a fair comparison, we retrained the FiD reader on the top-25 retrieved passages to match our experimental settings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_36",
+            "start": 168,
+            "end": 286,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_37@0",
+            "content": "As shown in Table 3, our model outperforms FiD-KD on both NQ and TriviaQA datasets under the same setting.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_37",
+            "start": 0,
+            "end": 105,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_37@1",
+            "content": "This demonstrates that the pointer network could help to generate answers more accurately.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_37",
+            "start": 107,
+            "end": 196,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_37@2",
+            "content": "It is worth noting that, compared with FiD-KD trained with the top-100 retrieved passages, our model achieves comparative or even better results with only 1/4 of the input data and without introducing many parameters (only 1537 extra parameters are added), indicating the efficiency of our model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_37",
+            "start": 198,
+            "end": 493,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_38@0",
+            "content": "Analysis",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_38",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_39@0",
+            "content": "Generation Probability.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_39",
+            "start": 0,
+            "end": 22,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_39@1",
+            "content": "We explore the probability of generation during training to further investigate the effects of the pointer module.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_39",
+            "start": 24,
+            "end": 137,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_39@2",
+            "content": "As shown in Figure 2, the generation probability p gen in TriviaQA is always higher than the one in NQ.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_39",
+            "start": 139,
+            "end": 241,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_39@3",
+            "content": "Note that a higher generation probability means that more tokens are produced from the vocabulary instead of copying from the input.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_39",
+            "start": 243,
+            "end": 374,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_39@4",
+            "content": "We conjecture that this phenomenon is caused by the different Compared to the information-seeking questions in NQ, probing questions tend to need more complex reasoning, and thus it is difficult to directly extract relevant tokens from input texts.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_39",
+            "start": 376,
+            "end": 623,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_39@5",
+            "content": "Moreover, this observation is also consistent with the results that the improvements of our model over FiD reader is smaller in TriviaQA than the one in NQ (0.9 vs. 2.9 EM for TriviaQA and NQ, respectively).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_39",
+            "start": 625,
+            "end": 831,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_40@0",
+            "content": "Test-Train Overlap Evaluation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_40",
+            "start": 0,
+            "end": 29,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_40@1",
+            "content": "The study of test-train overlap (Lewis et al., 2021) provides valuable insights into the model's question answering behavior.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_40",
+            "start": 31,
+            "end": 155,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_40@2",
+            "content": "We evaluate our model on the same test data splits as in Lewis et al. (2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_40",
+            "start": 157,
+            "end": 233,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_40@3",
+            "content": "Table 4 reports the results with respect to three kinds of test-train overlaps.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_40",
+            "start": 235,
+            "end": 313,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_40@4",
+            "content": "It can be seen that our approach improves most over FiD reader on \"No Overlap\" category, the most challenging setting, indicating a better generalization ability to question answering.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_40",
+            "start": 315,
+            "end": 498,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_40@5",
+            "content": "sages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_40",
+            "start": 500,
+            "end": 505,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_40@6",
+            "content": "We can observe that the matching scores of both models increase with respect to the number of passages used in training, consistent with the findings in Izacard and Grave (2021b) that sequence-tosequence model is capable of gathering information across multiple retrieved passages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_40",
+            "start": 507,
+            "end": 787,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_40@7",
+            "content": "Moreover, the two models show comparative performance when the number of training passages is small, but when more passages are included, our model outperforms FiD, especially on the NQ dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_40",
+            "start": 789,
+            "end": 982,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_41@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_41",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_42@0",
+            "content": "In this article, we propose a novel FiD-PGN approach for the reader module of ODQA under the standard retriever-reader framework.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_42",
+            "start": 0,
+            "end": 128,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_42@1",
+            "content": "Specifically, we integrate a pointer network into the FiD reader to allow the model to directly select words from the retrieved passages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_42",
+            "start": 130,
+            "end": 266,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_42@2",
+            "content": "Experimental results show that our model outperforms FiD-KD on two benchmark datasets under the same setting, demonstrating the advantages of our method.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_42",
+            "start": 268,
+            "end": 420,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_43@0",
+            "content": "Akari Asai, Kazuma Hashimoto, Hannaneh Hajishirzi, Richard Socher, Caiming Xiong, Learning to retrieve reasoning paths over wikipedia graph for question answering, 2020-04-26, 8th International Conference on Learning Representations, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_43",
+            "start": 0,
+            "end": 234,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_44@0",
+            "content": "Danqi Chen, Adam Fisch, Jason Weston, Antoine Bordes, Reading Wikipedia to answer opendomain questions, 2017, Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_44",
+            "start": 0,
+            "end": 240,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_45@0",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: Pre-training of deep bidirectional transformers for language understanding, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_45",
+            "start": 0,
+            "end": 335,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_46@0",
+            "content": "Sebastian Gehrmann, Yuntian Deng, Alexander Rush, Bottom-up abstractive summarization, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_46",
+            "start": 0,
+            "end": 181,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_47@0",
+            "content": "Jiatao Gu, James Bradbury, Caiming Xiong, O Victor, Richard Li,  Socher, Non-autoregressive neural machine translation, 2018-04-30, 6th International Conference on Learning Representations, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_47",
+            "start": 0,
+            "end": 190,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_48@0",
+            "content": "Jiatao Gu, Zhengdong Lu, Hang Li, O Victor,  Li, Incorporating copying mechanism in sequenceto-sequence learning, 2016, Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics, Long Papers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_48",
+            "start": 0,
+            "end": 220,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_49@0",
+            "content": "Gautier Izacard, Edouard Grave, Distilling knowledge from reader to retriever for question answering, 2021-05-03, 9th International Conference on Learning Representations, ICLR 2021, Virtual Event, Austria, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_49",
+            "start": 0,
+            "end": 207,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_50@0",
+            "content": "Gautier Izacard, Edouard Grave, Leveraging passage retrieval with generative models for open domain question answering, 2021, Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_50",
+            "start": 0,
+            "end": 248,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_51@0",
+            "content": "Barlas Karpukhin, Sewon Oguz, Patrick Min, Ledell Lewis, Sergey Wu, Danqi Edunov, Wen-Tau Chen,  Yih, Dense passage retrieval for opendomain question answering, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), Online. Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_51",
+            "start": 0,
+            "end": 312,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_52@0",
+            "content": "UNKNOWN, None, 2019, Natural questions: A benchmark for question answering research. Transactions of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_52",
+            "start": 0,
+            "end": 148,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_53@0",
+            "content": "Mike Lewis, Yinhan Liu, Naman Goyal, Marjan Ghazvininejad, Abdelrahman Mohamed, Omer Levy, Veselin Stoyanov, Luke Zettlemoyer, BART: Denoising sequence-to-sequence pre-training for natural language generation, translation, and comprehension, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_53",
+            "start": 0,
+            "end": 337,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_54@0",
+            "content": "Patrick Lewis, Pontus Stenetorp, Sebastian Riedel, Question and answer test-train overlap in opendomain question answering datasets, 2021, Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume, Online. Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_54",
+            "start": 0,
+            "end": 310,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_55@0",
+            "content": "S Patrick, Ethan Lewis, Aleksandra Perez, Fabio Piktus, Vladimir Petroni, Naman Karpukhin, Heinrich Goyal, Mike K\u00fcttler, Wen-Tau Lewis, Tim Yih, Sebastian Rockt\u00e4schel, Douwe Riedel,  Kiela, Retrieval-augmented generation for knowledge-intensive NLP tasks, 2020-12-06, Advances in Neural Information Processing Systems 33: Annual Conference on Neural Information Processing Systems 2020, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_55",
+            "start": 0,
+            "end": 387,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_56@0",
+            "content": "UNKNOWN, None, 2017, Fixing weight decay regularization in adam, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_56",
+            "start": 0,
+            "end": 65,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_57@0",
+            "content": "Thang Luong, Ilya Sutskever, Quoc Le, Oriol Vinyals, Wojciech Zaremba, Addressing the rare word problem in neural machine translation, 2015, Proceedings of the 53rd Annual Meeting of the Association for Computational Linguistics and the 7th International Joint Conference on Natural Language Processing, Long Papers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_57",
+            "start": 0,
+            "end": 315,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_58@0",
+            "content": "Joshua Maynez, Shashi Narayan, Bernd Bohnet, Ryan Mcdonald, On faithfulness and factuality in abstractive summarization, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_58",
+            "start": 0,
+            "end": 257,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_59@0",
+            "content": "UNKNOWN, None, , , Pavel Smrz.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_59",
+            "start": 0,
+            "end": 29,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_60@0",
+            "content": "Sewon Min, Kenton Lee, Ming-Wei Chang, Kristina Toutanova, Hannaneh Hajishirzi, Joint passage ranking for diverse multi-answer retrieval, 2021, Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_60",
+            "start": 0,
+            "end": 273,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_61@0",
+            "content": "Sewon Min, Julian Michael, Hannaneh Hajishirzi, Luke Zettlemoyer, AmbigQA: Answering ambiguous open-domain questions, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_61",
+            "start": 0,
+            "end": 220,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_62@0",
+            "content": "UNKNOWN, None, 2019, Exploring the limits of transfer learning with a unified text-to-text transformer, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_62",
+            "start": 0,
+            "end": 104,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_63@0",
+            "content": "Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, Percy Liang, SQuAD: 100,000+ questions for machine comprehension of text, 2016, Proceedings of the 2016 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_63",
+            "start": 0,
+            "end": 259,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_64@0",
+            "content": "UNKNOWN, None, 2021, QA dataset explosion: A taxonomy of NLP resources for question answering and reading comprehension, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_64",
+            "start": 0,
+            "end": 121,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_65@0",
+            "content": "Abigail See, J Peter, Christopher Liu,  Manning, Get to the point: Summarization with pointergenerator networks, 2017, Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics, Long Papers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_65",
+            "start": 0,
+            "end": 219,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_66@0",
+            "content": "Oriol Vinyals, Meire Fortunato, Navdeep Jaitly, Pointer networks, 2015, Advances in Neural, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_66",
+            "start": 0,
+            "end": 92,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_67@0",
+            "content": "Ellen Voorhees, The TREC-8 question answering track report, 1999-11-17, Proceedings of The Eighth Text REtrieval Conference, NIST.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_67",
+            "start": 0,
+            "end": 129,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_68@0",
+            "content": "Yuxiang Wu, Pasquale Minervini, Pontus Stenetorp, Sebastian Riedel, Training adaptive computation for open-domain question answering with computational constraints, 2021, Proceedings of the 59th, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_68",
+            "start": 0,
+            "end": 196,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_69@0",
+            "content": "UNKNOWN, None, , Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Online. Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_69",
+            "start": 0,
+            "end": 206,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_70@0",
+            "content": "Ikuya Yamada, Akari Asai, Hannaneh Hajishirzi, Efficient passage retrieval with hashing for open-domain question answering, 2021, Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Online. Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_70",
+            "start": 0,
+            "end": 343,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_71@0",
+            "content": "Wei Yang, Yuqing Xie, Aileen Lin, Xingyu Li, Luchen Tan, Kun Xiong, Ming Li, Jimmy Lin, End-to-end open-domain question answering with BERTserini, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics (Demonstrations), Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_71",
+            "start": 0,
+            "end": 326,
+            "label": {}
+        },
+        {
+            "ix": "50-ARR_v2_72@0",
+            "content": "Chunting Zhou, Graham Neubig, Jiatao Gu, Mona Diab, Francisco Guzm\u00e1n, Luke Zettlemoyer, Marjan Ghazvininejad, Detecting hallucinated content in conditional neural sequence generation, 2021, Findings of the Association for Computational Linguistics: ACL-IJCNLP 2021, Online. Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "50-ARR_v2_72",
+            "start": 0,
+            "end": 315,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "50-ARR_v2_0",
+            "tgt_ix": "50-ARR_v2_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_0",
+            "tgt_ix": "50-ARR_v2_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_1",
+            "tgt_ix": "50-ARR_v2_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_1",
+            "tgt_ix": "50-ARR_v2_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_0",
+            "tgt_ix": "50-ARR_v2_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_2",
+            "tgt_ix": "50-ARR_v2_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_4",
+            "tgt_ix": "50-ARR_v2_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_5",
+            "tgt_ix": "50-ARR_v2_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_6",
+            "tgt_ix": "50-ARR_v2_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_7",
+            "tgt_ix": "50-ARR_v2_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_3",
+            "tgt_ix": "50-ARR_v2_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_3",
+            "tgt_ix": "50-ARR_v2_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_3",
+            "tgt_ix": "50-ARR_v2_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_3",
+            "tgt_ix": "50-ARR_v2_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_3",
+            "tgt_ix": "50-ARR_v2_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_3",
+            "tgt_ix": "50-ARR_v2_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_0",
+            "tgt_ix": "50-ARR_v2_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_8",
+            "tgt_ix": "50-ARR_v2_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_9",
+            "tgt_ix": "50-ARR_v2_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_9",
+            "tgt_ix": "50-ARR_v2_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_10",
+            "tgt_ix": "50-ARR_v2_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_10",
+            "tgt_ix": "50-ARR_v2_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_9",
+            "tgt_ix": "50-ARR_v2_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_11",
+            "tgt_ix": "50-ARR_v2_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_12",
+            "tgt_ix": "50-ARR_v2_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_12",
+            "tgt_ix": "50-ARR_v2_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_9",
+            "tgt_ix": "50-ARR_v2_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_13",
+            "tgt_ix": "50-ARR_v2_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_14",
+            "tgt_ix": "50-ARR_v2_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_14",
+            "tgt_ix": "50-ARR_v2_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_0",
+            "tgt_ix": "50-ARR_v2_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_15",
+            "tgt_ix": "50-ARR_v2_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_17",
+            "tgt_ix": "50-ARR_v2_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_18",
+            "tgt_ix": "50-ARR_v2_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_19",
+            "tgt_ix": "50-ARR_v2_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_20",
+            "tgt_ix": "50-ARR_v2_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_21",
+            "tgt_ix": "50-ARR_v2_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_22",
+            "tgt_ix": "50-ARR_v2_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_23",
+            "tgt_ix": "50-ARR_v2_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_24",
+            "tgt_ix": "50-ARR_v2_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_25",
+            "tgt_ix": "50-ARR_v2_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_26",
+            "tgt_ix": "50-ARR_v2_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_27",
+            "tgt_ix": "50-ARR_v2_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_16",
+            "tgt_ix": "50-ARR_v2_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_16",
+            "tgt_ix": "50-ARR_v2_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_16",
+            "tgt_ix": "50-ARR_v2_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_16",
+            "tgt_ix": "50-ARR_v2_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_16",
+            "tgt_ix": "50-ARR_v2_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_16",
+            "tgt_ix": "50-ARR_v2_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_16",
+            "tgt_ix": "50-ARR_v2_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_16",
+            "tgt_ix": "50-ARR_v2_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_16",
+            "tgt_ix": "50-ARR_v2_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_16",
+            "tgt_ix": "50-ARR_v2_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_16",
+            "tgt_ix": "50-ARR_v2_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_16",
+            "tgt_ix": "50-ARR_v2_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_16",
+            "tgt_ix": "50-ARR_v2_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_0",
+            "tgt_ix": "50-ARR_v2_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_28",
+            "tgt_ix": "50-ARR_v2_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_29",
+            "tgt_ix": "50-ARR_v2_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_29",
+            "tgt_ix": "50-ARR_v2_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_30",
+            "tgt_ix": "50-ARR_v2_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_30",
+            "tgt_ix": "50-ARR_v2_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_29",
+            "tgt_ix": "50-ARR_v2_32",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_31",
+            "tgt_ix": "50-ARR_v2_32",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_33",
+            "tgt_ix": "50-ARR_v2_34",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_32",
+            "tgt_ix": "50-ARR_v2_33",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_32",
+            "tgt_ix": "50-ARR_v2_34",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_32",
+            "tgt_ix": "50-ARR_v2_33",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_29",
+            "tgt_ix": "50-ARR_v2_35",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_34",
+            "tgt_ix": "50-ARR_v2_35",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_36",
+            "tgt_ix": "50-ARR_v2_37",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_35",
+            "tgt_ix": "50-ARR_v2_36",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_35",
+            "tgt_ix": "50-ARR_v2_37",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_35",
+            "tgt_ix": "50-ARR_v2_36",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_0",
+            "tgt_ix": "50-ARR_v2_38",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_37",
+            "tgt_ix": "50-ARR_v2_38",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_39",
+            "tgt_ix": "50-ARR_v2_40",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_38",
+            "tgt_ix": "50-ARR_v2_39",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_38",
+            "tgt_ix": "50-ARR_v2_40",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_38",
+            "tgt_ix": "50-ARR_v2_39",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_0",
+            "tgt_ix": "50-ARR_v2_41",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_40",
+            "tgt_ix": "50-ARR_v2_41",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_41",
+            "tgt_ix": "50-ARR_v2_42",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_41",
+            "tgt_ix": "50-ARR_v2_42",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "50-ARR_v2_0",
+            "tgt_ix": "50-ARR_v2_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_1",
+            "tgt_ix": "50-ARR_v2_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_2",
+            "tgt_ix": "50-ARR_v2_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_2",
+            "tgt_ix": "50-ARR_v2_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_2",
+            "tgt_ix": "50-ARR_v2_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_2",
+            "tgt_ix": "50-ARR_v2_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_2",
+            "tgt_ix": "50-ARR_v2_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_2",
+            "tgt_ix": "50-ARR_v2_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_3",
+            "tgt_ix": "50-ARR_v2_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_4",
+            "tgt_ix": "50-ARR_v2_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_4",
+            "tgt_ix": "50-ARR_v2_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_5",
+            "tgt_ix": "50-ARR_v2_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_5",
+            "tgt_ix": "50-ARR_v2_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_6",
+            "tgt_ix": "50-ARR_v2_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_6",
+            "tgt_ix": "50-ARR_v2_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_6",
+            "tgt_ix": "50-ARR_v2_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_6",
+            "tgt_ix": "50-ARR_v2_6@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_6",
+            "tgt_ix": "50-ARR_v2_6@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_6",
+            "tgt_ix": "50-ARR_v2_6@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_7",
+            "tgt_ix": "50-ARR_v2_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_7",
+            "tgt_ix": "50-ARR_v2_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_8",
+            "tgt_ix": "50-ARR_v2_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_8",
+            "tgt_ix": "50-ARR_v2_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_8",
+            "tgt_ix": "50-ARR_v2_8@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_8",
+            "tgt_ix": "50-ARR_v2_8@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_9",
+            "tgt_ix": "50-ARR_v2_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_10",
+            "tgt_ix": "50-ARR_v2_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_11",
+            "tgt_ix": "50-ARR_v2_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_11",
+            "tgt_ix": "50-ARR_v2_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_11",
+            "tgt_ix": "50-ARR_v2_11@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_11",
+            "tgt_ix": "50-ARR_v2_11@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_11",
+            "tgt_ix": "50-ARR_v2_11@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_11",
+            "tgt_ix": "50-ARR_v2_11@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_12",
+            "tgt_ix": "50-ARR_v2_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_13",
+            "tgt_ix": "50-ARR_v2_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_13",
+            "tgt_ix": "50-ARR_v2_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_13",
+            "tgt_ix": "50-ARR_v2_13@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_13",
+            "tgt_ix": "50-ARR_v2_13@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_14",
+            "tgt_ix": "50-ARR_v2_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_15",
+            "tgt_ix": "50-ARR_v2_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_15",
+            "tgt_ix": "50-ARR_v2_15@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_15",
+            "tgt_ix": "50-ARR_v2_15@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_16",
+            "tgt_ix": "50-ARR_v2_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_17",
+            "tgt_ix": "50-ARR_v2_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_17",
+            "tgt_ix": "50-ARR_v2_17@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_17",
+            "tgt_ix": "50-ARR_v2_17@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_17",
+            "tgt_ix": "50-ARR_v2_17@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_18",
+            "tgt_ix": "50-ARR_v2_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_18",
+            "tgt_ix": "50-ARR_v2_18@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_18",
+            "tgt_ix": "50-ARR_v2_18@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_18",
+            "tgt_ix": "50-ARR_v2_18@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_18",
+            "tgt_ix": "50-ARR_v2_18@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_19",
+            "tgt_ix": "50-ARR_v2_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_19",
+            "tgt_ix": "50-ARR_v2_19@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_19",
+            "tgt_ix": "50-ARR_v2_19@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_20",
+            "tgt_ix": "50-ARR_v2_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_21",
+            "tgt_ix": "50-ARR_v2_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_21",
+            "tgt_ix": "50-ARR_v2_21@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_21",
+            "tgt_ix": "50-ARR_v2_21@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_21",
+            "tgt_ix": "50-ARR_v2_21@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_22",
+            "tgt_ix": "50-ARR_v2_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_23",
+            "tgt_ix": "50-ARR_v2_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_24",
+            "tgt_ix": "50-ARR_v2_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_24",
+            "tgt_ix": "50-ARR_v2_24@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_25",
+            "tgt_ix": "50-ARR_v2_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_26",
+            "tgt_ix": "50-ARR_v2_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_26",
+            "tgt_ix": "50-ARR_v2_26@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_27",
+            "tgt_ix": "50-ARR_v2_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_27",
+            "tgt_ix": "50-ARR_v2_27@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_28",
+            "tgt_ix": "50-ARR_v2_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_29",
+            "tgt_ix": "50-ARR_v2_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_30",
+            "tgt_ix": "50-ARR_v2_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_31",
+            "tgt_ix": "50-ARR_v2_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_31",
+            "tgt_ix": "50-ARR_v2_31@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_31",
+            "tgt_ix": "50-ARR_v2_31@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_31",
+            "tgt_ix": "50-ARR_v2_31@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_31",
+            "tgt_ix": "50-ARR_v2_31@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_31",
+            "tgt_ix": "50-ARR_v2_31@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_32",
+            "tgt_ix": "50-ARR_v2_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_33",
+            "tgt_ix": "50-ARR_v2_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_34",
+            "tgt_ix": "50-ARR_v2_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_34",
+            "tgt_ix": "50-ARR_v2_34@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_34",
+            "tgt_ix": "50-ARR_v2_34@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_35",
+            "tgt_ix": "50-ARR_v2_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_36",
+            "tgt_ix": "50-ARR_v2_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_36",
+            "tgt_ix": "50-ARR_v2_36@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_37",
+            "tgt_ix": "50-ARR_v2_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_37",
+            "tgt_ix": "50-ARR_v2_37@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_37",
+            "tgt_ix": "50-ARR_v2_37@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_38",
+            "tgt_ix": "50-ARR_v2_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_39",
+            "tgt_ix": "50-ARR_v2_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_39",
+            "tgt_ix": "50-ARR_v2_39@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_39",
+            "tgt_ix": "50-ARR_v2_39@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_39",
+            "tgt_ix": "50-ARR_v2_39@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_39",
+            "tgt_ix": "50-ARR_v2_39@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_39",
+            "tgt_ix": "50-ARR_v2_39@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_40",
+            "tgt_ix": "50-ARR_v2_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_40",
+            "tgt_ix": "50-ARR_v2_40@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_40",
+            "tgt_ix": "50-ARR_v2_40@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_40",
+            "tgt_ix": "50-ARR_v2_40@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_40",
+            "tgt_ix": "50-ARR_v2_40@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_40",
+            "tgt_ix": "50-ARR_v2_40@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_40",
+            "tgt_ix": "50-ARR_v2_40@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_40",
+            "tgt_ix": "50-ARR_v2_40@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_41",
+            "tgt_ix": "50-ARR_v2_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_42",
+            "tgt_ix": "50-ARR_v2_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_42",
+            "tgt_ix": "50-ARR_v2_42@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_42",
+            "tgt_ix": "50-ARR_v2_42@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_43",
+            "tgt_ix": "50-ARR_v2_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_44",
+            "tgt_ix": "50-ARR_v2_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_45",
+            "tgt_ix": "50-ARR_v2_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_46",
+            "tgt_ix": "50-ARR_v2_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_47",
+            "tgt_ix": "50-ARR_v2_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_48",
+            "tgt_ix": "50-ARR_v2_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_49",
+            "tgt_ix": "50-ARR_v2_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_50",
+            "tgt_ix": "50-ARR_v2_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_51",
+            "tgt_ix": "50-ARR_v2_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_52",
+            "tgt_ix": "50-ARR_v2_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_53",
+            "tgt_ix": "50-ARR_v2_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_54",
+            "tgt_ix": "50-ARR_v2_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_55",
+            "tgt_ix": "50-ARR_v2_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_56",
+            "tgt_ix": "50-ARR_v2_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_57",
+            "tgt_ix": "50-ARR_v2_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_58",
+            "tgt_ix": "50-ARR_v2_58@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_59",
+            "tgt_ix": "50-ARR_v2_59@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_60",
+            "tgt_ix": "50-ARR_v2_60@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_61",
+            "tgt_ix": "50-ARR_v2_61@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_62",
+            "tgt_ix": "50-ARR_v2_62@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_63",
+            "tgt_ix": "50-ARR_v2_63@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_64",
+            "tgt_ix": "50-ARR_v2_64@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_65",
+            "tgt_ix": "50-ARR_v2_65@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_66",
+            "tgt_ix": "50-ARR_v2_66@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_67",
+            "tgt_ix": "50-ARR_v2_67@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_68",
+            "tgt_ix": "50-ARR_v2_68@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_69",
+            "tgt_ix": "50-ARR_v2_69@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_70",
+            "tgt_ix": "50-ARR_v2_70@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_71",
+            "tgt_ix": "50-ARR_v2_71@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "50-ARR_v2_72",
+            "tgt_ix": "50-ARR_v2_72@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 461,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "doc_id": "50-ARR",
+        "version": 2
+    }
+}

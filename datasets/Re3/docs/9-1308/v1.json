@@ -1,0 +1,2199 @@
+{
+    "nodes": [
+        {
+            "ix": "9-1308_v1_0",
+            "content": "MosaicExplorerJ: Interactive stitching of terabyte-size tiled datasets from lightsheet microscopy",
+            "ntype": "article-title",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_2",
+            "content": "We introduce MosaicExplorerJ, an ImageJ macro to stitch 3D tiles from terabyte-size microscopy datasets. As opposed to existing software, stitching does not require any prior information on the actual positions of the tiles, sample fiducials, or conversion of raw TIFF images, and the stitched images can be explored instantly. MosaicExplorerJ was specifically designed to process lightsheet microscopy datasets from optically cleared samples. It can handle multiple fluorescence channels, dual-side lightsheet illumination and dual-side camera detection.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1",
+                "sec-type": "intro",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_4",
+            "content": "A number of open source tools are available to stitch mosaics from optical microscopy 3D tiled scans <REF-1> \u2013 <REF-4> but they all implement automated algorithms, potentially converging to a suboptimal solution. This is especially likely if the initial positions are far from the optimal positions, or if the data suffers from unexpected artifacts. Even worse, this situation can be difficult to detect in practice since these tools bring no or scarce support to check the results and correct for errors manually. Additionally, some software limits the size of the datasets <REF-1> , <REF-2> , or requires the data to be redundantly converted to ad-hoc formats <REF-3> . Finally, none of these solutions handles both dual-side illumination and dual-side camera detection, two useful lightsheet microscopy <REF-5> modalities that can advantageously be combined ( Figure 1 , Left). We developed MosaicExplorerJ to address these shortcomings and bring a complementary alternative to ImageJ BigStitcher <REF-4> , the reference in the field.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_5",
+            "content": "Figure 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "f1",
+                "caption": "Left : Illuminating the sample and collecting the light from both sides enables to image a sample by lightsheet microscopy in the best conditions. Middle : Overlapping tiles (green, blue, red) from a 3D mosaic are shifted axially to compensate for the tilt of the lightsheet (here exaggerated around Y axis). Right : Reconstructed mosaics from both cameras are aligned before stacking their best section.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29948/fd6463d6-0501-4925-bf19-120983199507_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_6",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f1\" position=\"float\"> <caption> <p> <bold>Left</bold>: Illuminating the sample and collecting the light from both sides enables to image a sample by lightsheet microscopy in the best conditions. <bold>Middle</bold>: Overlapping tiles (green, blue, red) from a 3D mosaic are shifted axially to compensate for the tilt of the lightsheet (here exaggerated around Y axis). <bold>Right</bold>: Reconstructed mosaics from both cameras are aligned before stacking their best section.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/29948/fd6463d6-0501-4925-bf19-120983199507_figure1.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f1",
+                "caption": "Left : Illuminating the sample and collecting the light from both sides enables to image a sample by lightsheet microscopy in the best conditions. Middle : Overlapping tiles (green, blue, red) from a 3D mosaic are shifted axially to compensate for the tilt of the lightsheet (here exaggerated around Y axis). Right : Reconstructed mosaics from both cameras are aligned before stacking their best section.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29948/fd6463d6-0501-4925-bf19-120983199507_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_7",
+            "content": "Methods",
+            "ntype": "title",
+            "meta": {
+                "section": "2",
+                "sec-type": "methods",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_8",
+            "content": "Implementation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_9",
+            "content": "Whereas stitching the tiles of confocal microscopy datasets chiefly consists in compensating for the scanning head to sample stage tilt, stitching lightsheet microscopy datasets is compounded by the fact that the lightsheet is not necessarily perfectly collinear to the object plane of the detection objective. This can lead to 1) a distortion of the aspect ratio of the images (often negligible), 2) an apparent axial displacement of the tiles while moving across the mosaic. This second effect can be simply compensated by axially offsetting the 3D tiles accordingly ( Figure 1 , Middle), but additional lightsheet non-uniformity (or lateral misalignment) can lead to differences in the features visible in the regions of tile overlap; potentially weakening correlation based algorithms. To address these issues, MosaicExplorerJ does not implement any automated stitching but instead assists the user in visually aligning the tiles along their possible degrees of freedom. This is basically achieved by following a step-by-step procedure to compensate for the misalignments highlighted in the regions of overlap between adjacent tiles.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_10",
+            "content": "Operation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_11",
+            "content": "ImageJ/Fiji should be installed and MosaicExplorerJ run from ImageJ macro editor. If no other data is available, the software can be tested with the data provided.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_12",
+            "content": "First, the mosaics from both cameras (and illumination sides) should be aligned independently before being aligned together. This first operation can be as simple as joining two matching features between two adjacent tiles ( Figure 2B ), while compensating lightsheet tilt ( Figures 2C, 2D ) and the axial wobbling of the motors forming the mosaics might respectively require to adjust the axial shift of the tiles forming the top left corner or the first row and first column of the mosaic. Dual-camera alignment includes a calibration step to compensate for discrepancy between the magnifications of both detection objectives ( Figure 1 , Right). Finally, the user can save the overall mosaic alignment for further inspection, or export the stitched dataset as a TIFF series. Several tile blending modes are available.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_13",
+            "content": "Figure 2.",
+            "ntype": "label",
+            "meta": {
+                "id": "f2",
+                "caption": "A : Two mosaics (2\u00d78 tiles each with a full overlap in the central column along Y) from a dual illumination side scan aligned with MosaicExplorerJ, the arrows show the directions of the light sheets (the view is turned and cropped to fit the figure). Scale bar: 1 mm. B : Zoomed region from the red square prior to adjusting the XY positions of the tiles but after axial shift (Z) correction. The user joins two matching features (white arrow) from two adjacent tiles. C : The XY positions of the tiles are adjusted based on the previous user input and for correct alignment matching features are highlighted in white in the region of overlap. D : Same view but prior to axial shift correction to compensate for lightsheet tilt: no matching features are apparent in the region of overlap. Scale bar: 100 \u00b5m.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29948/fd6463d6-0501-4925-bf19-120983199507_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_14",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f2\" position=\"float\"> <caption> <p> <bold>A</bold>: Two mosaics (2&#215;8 tiles each with a full overlap in the central column along Y) from a dual illumination side scan aligned with MosaicExplorerJ, the arrows show the directions of the light sheets (the view is turned and cropped to fit the figure). Scale bar: 1 mm. <bold>B</bold>: Zoomed region from the red square prior to adjusting the XY positions of the tiles but after axial shift (Z) correction. The user joins two matching features (white arrow) from two adjacent tiles. <bold>C</bold>: The XY positions of the tiles are adjusted based on the previous user input and for correct alignment matching features are highlighted in white in the region of overlap. <bold>D</bold>: Same view but prior to axial shift correction to compensate for lightsheet tilt: no matching features are apparent in the region of overlap. Scale bar: 100 &#181;m.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/29948/fd6463d6-0501-4925-bf19-120983199507_figure2.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f2",
+                "caption": "A : Two mosaics (2\u00d78 tiles each with a full overlap in the central column along Y) from a dual illumination side scan aligned with MosaicExplorerJ, the arrows show the directions of the light sheets (the view is turned and cropped to fit the figure). Scale bar: 1 mm. B : Zoomed region from the red square prior to adjusting the XY positions of the tiles but after axial shift (Z) correction. The user joins two matching features (white arrow) from two adjacent tiles. C : The XY positions of the tiles are adjusted based on the previous user input and for correct alignment matching features are highlighted in white in the region of overlap. D : Same view but prior to axial shift correction to compensate for lightsheet tilt: no matching features are apparent in the region of overlap. Scale bar: 100 \u00b5m.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29948/fd6463d6-0501-4925-bf19-120983199507_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_15",
+            "content": "Testing",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_16",
+            "content": "MosaicExplorerJ has been extensively tested by stitching several large lightsheet microscopy datasets acquired from diverse optically cleared biological samples (see Data availability ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_17",
+            "content": "Use cases",
+            "ntype": "title",
+            "meta": {
+                "section": "3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_18",
+            "content": "All datasets were successfully aligned, each time in under 30 minutes. The results were checked visually by scrolling through the slices and ensuring that the alignment was correct in the regions of overlap between the tiles. The dataset Brain2_izq_2x8Mosaic_LeftSide_300GB was also aligned by BigStitcher, leading to similar results both visually and quantitatively (Extended Data Table S1 <REF-6> ). It took about 2h30 to process this dataset with BigStitcher (from 3D TIF tiles to computed alignment), excluding the conversion from TIFF series (the original format of this dataset) to 3D TIFF tiles. This time is expected to scale at least linearly with increasing dataset size for BigStitcher while alignment time in MosaicExplorerJ is relatively constant, and mostly conditioned by the degrees of freedom of the 3D tiles. After alignment, the exportation of the stitched images to TIFF series could be achieved in a comparable time with both tools.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_19",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "4",
+                "sec-type": "conclusions",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_20",
+            "content": "MosaicExplorerJ brings a complementary alternative to BigStitcher, and presents a number of advantages (Extended Data S2 and Table S2 <REF-6> ). No fiducials or detectable feature points are required, which makes the tool robust, versatile, and compatible with large optically cleared samples for which introducing fiducials is virtually impossible. The processing is fast, and terabyte-size datasets can be explored on the fly without conversion to an intermediate format, even on laptop computers with limited memory. Finally, dual-side camera detection is supported and all alignment steps are performed visually, which brings direct control and feedback both on the imperfections of the datasets and on the quality of the results, minimizing the risk of leaving coarse errors unnoticed.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_21",
+            "content": "Data availability",
+            "ntype": "title",
+            "meta": {
+                "section": "5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_22",
+            "content": "Underlying data",
+            "ntype": "title",
+            "meta": {
+                "section": "5.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_23",
+            "content": "A complete description of the datasets used to test MosaicExplorerJ, including sample preparation and imaging can be found in Extended Data S1. The full datasets are too large (1.5TB) to feasibly host on a data repository; however, datasets can all be accessed publicly on the IRB Barcelona Google Drive at: https://bit.ly/37iocrP .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_24",
+            "content": "Extended data",
+            "ntype": "title",
+            "meta": {
+                "section": "5.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_25",
+            "content": "Zenodo: MosaicExplorerJ F1000Research article extended data. https://doi.org/10.5281/zenodo.4156030 <REF-6> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_26",
+            "content": "Data are available under the terms of the Creative Commons Attribution 4.0 International license (CC-BY 4.0).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_27",
+            "content": "Software availability",
+            "ntype": "title",
+            "meta": {
+                "section": "6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_28",
+            "content": "Source code and documentation are available from: https://github.com/SebastienTs/MosaicExplorerJ",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_29",
+            "content": "Archived source code at time of publication: https://doi.org/10.5281/zenodo.4106848 <REF-7> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_30",
+            "content": "License: GNU General Public License v3.0 .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_31",
+            "content": "<REF-1> Emmenlauer M Ronneberger O Ponti A : XuvTools: free, fast and reliable stitching of large 3D datasets. J Microsc. 2009 ; 233 ( 1 ): 42 \u2013 60 . 19196411 10.1111/j.1365-2818.2008.03094.x",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_32",
+            "content": "<REF-2> https://imagej.net/Grid/Collection_Stitching_Plugin .",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_33",
+            "content": "<REF-3> Bria A Iannello G : TeraStitcher - a tool for fast automatic 3D-stitching of teravoxel-sized microscopy images. BMC Bioinformatics. 2012 ; 13 : 316 . 23181553 10.1186/1471-2105-13-316 3582611",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_34",
+            "content": "<REF-4> H\u00f6rl D Rojas Rusak F Preusser F : BigStitcher: reconstructing high-resolution image datasets of cleared and expanded samples. Nat Methods. 2019 ; 16 ( 9 ): 870 \u2013 874 . 31384047 10.1038/s41592-019-0501-0",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_35",
+            "content": "<REF-5> Huisken J Swoger J Del Bene F : Optical sectioning deep inside live embryos by selective plane illumination microscopy. Science. 2004 ; 305 ( 5686 ): 1007 \u2013 1009 . 15310904 10.1126/science.1100035",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_36",
+            "content": "<REF-6> Tosi S Bardia L Colombelli J : MosaicExplorerJ F1000Research article extended data (Version 1.0). Zenodo. 2020 . http://www.doi.org/10.5281/zenodo.4156030",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1308_v1_37",
+            "content": "<REF-7> Tosi S : SebastienTs/MosaicExplorerJ: First_Release (Version 1.0). Zenodo. 2020 . http://www.doi.org/10.5281/zenodo.4106848",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-7",
+                "created_by": "F1000XMLParser"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "9-1308_v1_0@0",
+            "content": "MosaicExplorerJ: Interactive stitching of terabyte-size tiled datasets from lightsheet microscopy",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_0",
+            "start": 0,
+            "end": 96,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_2@0",
+            "content": "We introduce MosaicExplorerJ, an ImageJ macro to stitch 3D tiles from terabyte-size microscopy datasets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_2",
+            "start": 0,
+            "end": 103,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_2@1",
+            "content": "As opposed to existing software, stitching does not require any prior information on the actual positions of the tiles, sample fiducials, or conversion of raw TIFF images, and the stitched images can be explored instantly.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_2",
+            "start": 105,
+            "end": 326,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_2@2",
+            "content": "MosaicExplorerJ was specifically designed to process lightsheet microscopy datasets from optically cleared samples.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_2",
+            "start": 328,
+            "end": 442,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_2@3",
+            "content": "It can handle multiple fluorescence channels, dual-side lightsheet illumination and dual-side camera detection.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_2",
+            "start": 444,
+            "end": 554,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_4@0",
+            "content": "A number of open source tools are available to stitch mosaics from optical microscopy 3D tiled scans <REF-1> \u2013 <REF-4> but they all implement automated algorithms, potentially converging to a suboptimal solution.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_4",
+            "start": 0,
+            "end": 211,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_4@1",
+            "content": "This is especially likely if the initial positions are far from the optimal positions, or if the data suffers from unexpected artifacts.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_4",
+            "start": 213,
+            "end": 348,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_4@2",
+            "content": "Even worse, this situation can be difficult to detect in practice since these tools bring no or scarce support to check the results and correct for errors manually.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_4",
+            "start": 350,
+            "end": 513,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_4@3",
+            "content": "Additionally, some software limits the size of the datasets <REF-1> , <REF-2> , or requires the data to be redundantly converted to ad-hoc formats <REF-3> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_4",
+            "start": 515,
+            "end": 670,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_4@4",
+            "content": "Finally, none of these solutions handles both dual-side illumination and dual-side camera detection, two useful lightsheet microscopy <REF-5> modalities that can advantageously be combined ( Figure 1 , Left).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_4",
+            "start": 672,
+            "end": 879,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_4@5",
+            "content": "We developed MosaicExplorerJ to address these shortcomings and bring a complementary alternative to ImageJ BigStitcher <REF-4> , the reference in the field.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_4",
+            "start": 881,
+            "end": 1036,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_5@0",
+            "content": "Figure 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_5",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_7@0",
+            "content": "Methods",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_7",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_8@0",
+            "content": "Implementation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_8",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_9@0",
+            "content": "Whereas stitching the tiles of confocal microscopy datasets chiefly consists in compensating for the scanning head to sample stage tilt, stitching lightsheet microscopy datasets is compounded by the fact that the lightsheet is not necessarily perfectly collinear to the object plane of the detection objective.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_9",
+            "start": 0,
+            "end": 309,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_9@1",
+            "content": "This can lead to 1) a distortion of the aspect ratio of the images (often negligible), 2) an apparent axial displacement of the tiles while moving across the mosaic.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_9",
+            "start": 311,
+            "end": 475,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_9@2",
+            "content": "This second effect can be simply compensated by axially offsetting the 3D tiles accordingly ( Figure 1 , Middle), but additional lightsheet non-uniformity (or lateral misalignment) can lead to differences in the features visible in the regions of tile overlap; potentially weakening correlation based algorithms.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_9",
+            "start": 477,
+            "end": 788,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_9@3",
+            "content": "To address these issues, MosaicExplorerJ does not implement any automated stitching but instead assists the user in visually aligning the tiles along their possible degrees of freedom.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_9",
+            "start": 790,
+            "end": 973,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_9@4",
+            "content": "This is basically achieved by following a step-by-step procedure to compensate for the misalignments highlighted in the regions of overlap between adjacent tiles.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_9",
+            "start": 975,
+            "end": 1136,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_10@0",
+            "content": "Operation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_10",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_11@0",
+            "content": "ImageJ/Fiji should be installed and MosaicExplorerJ run from ImageJ macro editor.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_11",
+            "start": 0,
+            "end": 80,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_11@1",
+            "content": "If no other data is available, the software can be tested with the data provided.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_11",
+            "start": 82,
+            "end": 162,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_12@0",
+            "content": "First, the mosaics from both cameras (and illumination sides) should be aligned independently before being aligned together.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_12",
+            "start": 0,
+            "end": 123,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_12@1",
+            "content": "This first operation can be as simple as joining two matching features between two adjacent tiles ( Figure 2B ), while compensating lightsheet tilt ( Figures 2C, 2D ) and the axial wobbling of the motors forming the mosaics might respectively require to adjust the axial shift of the tiles forming the top left corner or the first row and first column of the mosaic.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_12",
+            "start": 125,
+            "end": 490,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_12@2",
+            "content": "Dual-camera alignment includes a calibration step to compensate for discrepancy between the magnifications of both detection objectives ( Figure 1 , Right).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_12",
+            "start": 492,
+            "end": 647,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_12@3",
+            "content": "Finally, the user can save the overall mosaic alignment for further inspection, or export the stitched dataset as a TIFF series.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_12",
+            "start": 649,
+            "end": 776,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_12@4",
+            "content": "Several tile blending modes are available.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_12",
+            "start": 778,
+            "end": 819,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_13@0",
+            "content": "Figure 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_13",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_15@0",
+            "content": "Testing",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_15",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_16@0",
+            "content": "MosaicExplorerJ has been extensively tested by stitching several large lightsheet microscopy datasets acquired from diverse optically cleared biological samples (see Data availability ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_16",
+            "start": 0,
+            "end": 185,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_17@0",
+            "content": "Use cases",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_17",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_18@0",
+            "content": "All datasets were successfully aligned, each time in under 30 minutes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_18",
+            "start": 0,
+            "end": 69,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_18@1",
+            "content": "The results were checked visually by scrolling through the slices and ensuring that the alignment was correct in the regions of overlap between the tiles.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_18",
+            "start": 71,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_18@2",
+            "content": "The dataset Brain2_izq_2x8Mosaic_LeftSide_300GB was also aligned by BigStitcher, leading to similar results both visually and quantitatively (Extended Data Table S1 <REF-6> ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_18",
+            "start": 226,
+            "end": 400,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_18@3",
+            "content": "It took about 2h30 to process this dataset with BigStitcher (from 3D TIF tiles to computed alignment), excluding the conversion from TIFF series (the original format of this dataset) to 3D TIFF tiles.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_18",
+            "start": 402,
+            "end": 601,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_18@4",
+            "content": "This time is expected to scale at least linearly with increasing dataset size for BigStitcher while alignment time in MosaicExplorerJ is relatively constant, and mostly conditioned by the degrees of freedom of the 3D tiles.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_18",
+            "start": 603,
+            "end": 825,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_18@5",
+            "content": "After alignment, the exportation of the stitched images to TIFF series could be achieved in a comparable time with both tools.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_18",
+            "start": 827,
+            "end": 952,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_19@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_19",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_20@0",
+            "content": "MosaicExplorerJ brings a complementary alternative to BigStitcher, and presents a number of advantages (Extended Data S2 and Table S2 <REF-6> ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_20",
+            "start": 0,
+            "end": 143,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_20@1",
+            "content": "No fiducials or detectable feature points are required, which makes the tool robust, versatile, and compatible with large optically cleared samples for which introducing fiducials is virtually impossible.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_20",
+            "start": 145,
+            "end": 348,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_20@2",
+            "content": "The processing is fast, and terabyte-size datasets can be explored on the fly without conversion to an intermediate format, even on laptop computers with limited memory.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_20",
+            "start": 350,
+            "end": 518,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_20@3",
+            "content": "Finally, dual-side camera detection is supported and all alignment steps are performed visually, which brings direct control and feedback both on the imperfections of the datasets and on the quality of the results, minimizing the risk of leaving coarse errors unnoticed.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_20",
+            "start": 520,
+            "end": 789,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_21@0",
+            "content": "Data availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_21",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_22@0",
+            "content": "Underlying data",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_22",
+            "start": 0,
+            "end": 14,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_23@0",
+            "content": "A complete description of the datasets used to test MosaicExplorerJ, including sample preparation and imaging can be found in Extended Data S1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_23",
+            "start": 0,
+            "end": 142,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_23@1",
+            "content": "The full datasets are too large (1.5TB) to feasibly host on a data repository; however, datasets can all be accessed publicly on the IRB Barcelona Google Drive at: https://bit.ly/37iocrP .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_23",
+            "start": 144,
+            "end": 331,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_24@0",
+            "content": "Extended data",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_24",
+            "start": 0,
+            "end": 12,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_25@0",
+            "content": "Zenodo: MosaicExplorerJ F1000Research article extended data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_25",
+            "start": 0,
+            "end": 59,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_25@1",
+            "content": "https://doi.org/10.5281/zenodo.4156030 <REF-6> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_25",
+            "start": 61,
+            "end": 108,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_26@0",
+            "content": "Data are available under the terms of the Creative Commons Attribution 4.0 International license (CC-BY 4.0).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_26",
+            "start": 0,
+            "end": 108,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_27@0",
+            "content": "Software availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_27",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_28@0",
+            "content": "Source code and documentation are available from: https://github.com/SebastienTs/MosaicExplorerJ",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_28",
+            "start": 0,
+            "end": 95,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_29@0",
+            "content": "Archived source code at time of publication: https://doi.org/10.5281/zenodo.4106848 <REF-7> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_29",
+            "start": 0,
+            "end": 92,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_30@0",
+            "content": "License: GNU General Public License v3.0 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_30",
+            "start": 0,
+            "end": 41,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_31@0",
+            "content": "<REF-1> Emmenlauer M Ronneberger O Ponti A : XuvTools: free, fast and reliable stitching of large 3D datasets. J Microsc. 2009 ; 233 ( 1 ): 42 \u2013 60 . 19196411 10.1111/j.1365-2818.2008.03094.x",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_31",
+            "start": 0,
+            "end": 190,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_32@0",
+            "content": "<REF-2> https://imagej.net/Grid/Collection_Stitching_Plugin .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_32",
+            "start": 0,
+            "end": 60,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_33@0",
+            "content": "<REF-3> Bria A Iannello G : TeraStitcher - a tool for fast automatic 3D-stitching of teravoxel-sized microscopy images. BMC Bioinformatics. 2012 ; 13 : 316 . 23181553 10.1186/1471-2105-13-316 3582611",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_33",
+            "start": 0,
+            "end": 198,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_34@0",
+            "content": "<REF-4> H\u00f6rl D Rojas Rusak F Preusser F : BigStitcher: reconstructing high-resolution image datasets of cleared and expanded samples. Nat Methods. 2019 ; 16 ( 9 ): 870 \u2013 874 . 31384047 10.1038/s41592-019-0501-0",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_34",
+            "start": 0,
+            "end": 209,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_35@0",
+            "content": "<REF-5> Huisken J Swoger J Del Bene F : Optical sectioning deep inside live embryos by selective plane illumination microscopy. Science. 2004 ; 305 ( 5686 ): 1007 \u2013 1009 . 15310904 10.1126/science.1100035",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_35",
+            "start": 0,
+            "end": 203,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_36@0",
+            "content": "<REF-6> Tosi S Bardia L Colombelli J : MosaicExplorerJ F1000Research article extended data (Version 1.0). Zenodo. 2020 . http://www.doi.org/10.5281/zenodo.4156030",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_36",
+            "start": 0,
+            "end": 161,
+            "label": {}
+        },
+        {
+            "ix": "9-1308_v1_37@0",
+            "content": "<REF-7> Tosi S : SebastienTs/MosaicExplorerJ: First_Release (Version 1.0). Zenodo. 2020 . http://www.doi.org/10.5281/zenodo.4106848",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1308_v1_37",
+            "start": 0,
+            "end": 130,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "9-1308_v1_0",
+            "tgt_ix": "9-1308_v1_1",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_1",
+            "tgt_ix": "9-1308_v1_2",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_0",
+            "tgt_ix": "9-1308_v1_3",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_3",
+            "tgt_ix": "9-1308_v1_4",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_3",
+            "tgt_ix": "9-1308_v1_5",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_5",
+            "tgt_ix": "9-1308_v1_6",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_0",
+            "tgt_ix": "9-1308_v1_7",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_7",
+            "tgt_ix": "9-1308_v1_8",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_8",
+            "tgt_ix": "9-1308_v1_9",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_7",
+            "tgt_ix": "9-1308_v1_10",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_10",
+            "tgt_ix": "9-1308_v1_11",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_10",
+            "tgt_ix": "9-1308_v1_12",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_10",
+            "tgt_ix": "9-1308_v1_13",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_13",
+            "tgt_ix": "9-1308_v1_14",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_7",
+            "tgt_ix": "9-1308_v1_15",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_15",
+            "tgt_ix": "9-1308_v1_16",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_0",
+            "tgt_ix": "9-1308_v1_17",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_17",
+            "tgt_ix": "9-1308_v1_18",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_0",
+            "tgt_ix": "9-1308_v1_19",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_19",
+            "tgt_ix": "9-1308_v1_20",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_0",
+            "tgt_ix": "9-1308_v1_21",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_21",
+            "tgt_ix": "9-1308_v1_22",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_22",
+            "tgt_ix": "9-1308_v1_23",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_21",
+            "tgt_ix": "9-1308_v1_24",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_24",
+            "tgt_ix": "9-1308_v1_25",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_24",
+            "tgt_ix": "9-1308_v1_26",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_0",
+            "tgt_ix": "9-1308_v1_27",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_27",
+            "tgt_ix": "9-1308_v1_28",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_27",
+            "tgt_ix": "9-1308_v1_29",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_27",
+            "tgt_ix": "9-1308_v1_30",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_0",
+            "tgt_ix": "9-1308_v1_1",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_1",
+            "tgt_ix": "9-1308_v1_2",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_2",
+            "tgt_ix": "9-1308_v1_3",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_3",
+            "tgt_ix": "9-1308_v1_4",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_4",
+            "tgt_ix": "9-1308_v1_5",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_5",
+            "tgt_ix": "9-1308_v1_6",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_6",
+            "tgt_ix": "9-1308_v1_7",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_7",
+            "tgt_ix": "9-1308_v1_8",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_8",
+            "tgt_ix": "9-1308_v1_9",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_9",
+            "tgt_ix": "9-1308_v1_10",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_10",
+            "tgt_ix": "9-1308_v1_11",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_11",
+            "tgt_ix": "9-1308_v1_12",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_12",
+            "tgt_ix": "9-1308_v1_13",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_13",
+            "tgt_ix": "9-1308_v1_14",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_14",
+            "tgt_ix": "9-1308_v1_15",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_15",
+            "tgt_ix": "9-1308_v1_16",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_16",
+            "tgt_ix": "9-1308_v1_17",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_17",
+            "tgt_ix": "9-1308_v1_18",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_18",
+            "tgt_ix": "9-1308_v1_19",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_19",
+            "tgt_ix": "9-1308_v1_20",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_20",
+            "tgt_ix": "9-1308_v1_21",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_21",
+            "tgt_ix": "9-1308_v1_22",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_22",
+            "tgt_ix": "9-1308_v1_23",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_23",
+            "tgt_ix": "9-1308_v1_24",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_24",
+            "tgt_ix": "9-1308_v1_25",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_25",
+            "tgt_ix": "9-1308_v1_26",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_26",
+            "tgt_ix": "9-1308_v1_27",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_27",
+            "tgt_ix": "9-1308_v1_28",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_28",
+            "tgt_ix": "9-1308_v1_29",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_29",
+            "tgt_ix": "9-1308_v1_30",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_4",
+            "tgt_ix": "9-1308_v1_31",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_4",
+            "tgt_ix": "9-1308_v1_32",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_4",
+            "tgt_ix": "9-1308_v1_33",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_4",
+            "tgt_ix": "9-1308_v1_34",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_4",
+            "tgt_ix": "9-1308_v1_35",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_18",
+            "tgt_ix": "9-1308_v1_36",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_29",
+            "tgt_ix": "9-1308_v1_37",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_4",
+            "tgt_ix": "9-1308_v1_6",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_12",
+            "tgt_ix": "9-1308_v1_14",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_0",
+            "tgt_ix": "9-1308_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_1",
+            "tgt_ix": "9-1308_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_2",
+            "tgt_ix": "9-1308_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_2",
+            "tgt_ix": "9-1308_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_2",
+            "tgt_ix": "9-1308_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_2",
+            "tgt_ix": "9-1308_v1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_3",
+            "tgt_ix": "9-1308_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_4",
+            "tgt_ix": "9-1308_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_4",
+            "tgt_ix": "9-1308_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_4",
+            "tgt_ix": "9-1308_v1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_4",
+            "tgt_ix": "9-1308_v1_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_4",
+            "tgt_ix": "9-1308_v1_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_4",
+            "tgt_ix": "9-1308_v1_4@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_5",
+            "tgt_ix": "9-1308_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_7",
+            "tgt_ix": "9-1308_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_8",
+            "tgt_ix": "9-1308_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_9",
+            "tgt_ix": "9-1308_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_9",
+            "tgt_ix": "9-1308_v1_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_9",
+            "tgt_ix": "9-1308_v1_9@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_9",
+            "tgt_ix": "9-1308_v1_9@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_9",
+            "tgt_ix": "9-1308_v1_9@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_10",
+            "tgt_ix": "9-1308_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_11",
+            "tgt_ix": "9-1308_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_11",
+            "tgt_ix": "9-1308_v1_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_12",
+            "tgt_ix": "9-1308_v1_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_12",
+            "tgt_ix": "9-1308_v1_12@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_12",
+            "tgt_ix": "9-1308_v1_12@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_12",
+            "tgt_ix": "9-1308_v1_12@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_12",
+            "tgt_ix": "9-1308_v1_12@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_13",
+            "tgt_ix": "9-1308_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_15",
+            "tgt_ix": "9-1308_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_16",
+            "tgt_ix": "9-1308_v1_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_17",
+            "tgt_ix": "9-1308_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_18",
+            "tgt_ix": "9-1308_v1_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_18",
+            "tgt_ix": "9-1308_v1_18@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_18",
+            "tgt_ix": "9-1308_v1_18@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_18",
+            "tgt_ix": "9-1308_v1_18@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_18",
+            "tgt_ix": "9-1308_v1_18@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_18",
+            "tgt_ix": "9-1308_v1_18@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_19",
+            "tgt_ix": "9-1308_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_20",
+            "tgt_ix": "9-1308_v1_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_20",
+            "tgt_ix": "9-1308_v1_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_20",
+            "tgt_ix": "9-1308_v1_20@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_20",
+            "tgt_ix": "9-1308_v1_20@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_21",
+            "tgt_ix": "9-1308_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_22",
+            "tgt_ix": "9-1308_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_23",
+            "tgt_ix": "9-1308_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_23",
+            "tgt_ix": "9-1308_v1_23@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_24",
+            "tgt_ix": "9-1308_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_25",
+            "tgt_ix": "9-1308_v1_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_25",
+            "tgt_ix": "9-1308_v1_25@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_26",
+            "tgt_ix": "9-1308_v1_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_27",
+            "tgt_ix": "9-1308_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_28",
+            "tgt_ix": "9-1308_v1_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_29",
+            "tgt_ix": "9-1308_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_30",
+            "tgt_ix": "9-1308_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_31",
+            "tgt_ix": "9-1308_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_32",
+            "tgt_ix": "9-1308_v1_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_33",
+            "tgt_ix": "9-1308_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_34",
+            "tgt_ix": "9-1308_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_35",
+            "tgt_ix": "9-1308_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_36",
+            "tgt_ix": "9-1308_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1308_v1_37",
+            "tgt_ix": "9-1308_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "9-1308_v1",
+    "meta": {
+        "parser": "F1000XMLParser",
+        "intertext-graph": "N/A",
+        "doi": "10.12688/f1000research.27112.1",
+        "atype": "software-tool",
+        "license": "http://creativecommons.org/licenses/by/4.0/",
+        "title": "MosaicExplorerJ: Interactive stitching of terabyte-size tiled datasets from lightsheet microscopy",
+        "abstract": "We introduce MosaicExplorerJ, an ImageJ macro to stitch 3D tiles from terabyte-size microscopy datasets. As opposed to existing software, stitching does not require any prior information on the actual positions of the tiles, sample fiducials, or conversion of raw TIFF images, and the stitched images can be explored instantly. MosaicExplorerJ was specifically designed to process lightsheet microscopy datasets from optically cleared samples. It can handle multiple fluorescence channels, dual-side lightsheet illumination and dual-side camera detection.",
+        "contributors": [
+            {
+                "surname": "Tosi",
+                "given-names": "S\u00e9bastien"
+            },
+            {
+                "surname": "Bardia",
+                "given-names": "L\u00eddia"
+            },
+            {
+                "surname": "Barallobre",
+                "given-names": "Maria Jose"
+            },
+            {
+                "surname": "Mu\u00f1oz-Barrutia",
+                "given-names": "Arrate"
+            },
+            {
+                "surname": "Soto-Montenegro",
+                "given-names": "Mar\u00eda Luisa"
+            },
+            {
+                "surname": "Colombelli",
+                "given-names": "Julien"
+            }
+        ],
+        "url": "https://f1000research.com/articles/9-1308/v1/",
+        "doc_id": "9-1308",
+        "version": 1,
+        "ix_counter": 138,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy"
+    }
+}

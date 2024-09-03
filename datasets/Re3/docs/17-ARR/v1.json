@@ -1,0 +1,3579 @@
+{
+    "nodes": [
+        {
+            "ix": "17-ARR_v1_0",
+            "content": "SUBS: Subtree Substitution for Compositional Semantic Parsing",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_2",
+            "content": "Although sequence-to-sequence models often achieve good performance in semantic parsing for i.i.d. data, their performance is still inferior in compositional generalization. Several data augmentation methods have been proposed to alleviate this problem. However, prior work only leveraged superficial grammar or rules for data augmentation, which resulted in limited improvement. We propose to use subtree substitution for compositional data augmentation, where we consider subtrees with similar semantic functions as exchangeable. Our experiments showed that such augmented data led to significantly better performance on SCAN and GEOQUERY, and reached new SOTA on compositional split of GEOQUERY.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "17-ARR_v1_4",
+            "content": "Semantic parsing transforms natural language utterances to formal language. Because meaning representations or programs are essentially compositional, semantic parsing is an ideal testbed for compositional generalization. Although neural seq2seq models could achieve state-of-the-art performance in semantic parsing for i.i.d. data, they failed at compositional generalization due to lack of reasoning ability. That is, they do not generalize well to formal language structures that were not seen at training time. For example, a model that observes at training time the questions \"What is the population of the largest state?\" and \"What is the largest city in USA?\" may fail to generalize to questions such as \"What is the population of the largest city in USA?\". This leads to large performance drops on data splits designed to measure compositional generalization (compositional splits), in contrast to the generalization abilities of humans.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_5",
+            "content": "To improve compositional generalization in semantic parsing (compositional semantic parsing), prior work focused on incorporating inductive biases directly to models or data augmentation. From the model perspective, some work used neuralsymbolic models (Chen et al., 2020), generated intermediate discrete structures (Herzig and Berant, 2020;Zheng and Lapata, 2020), or conducted meta-learning (Lake, 2019). From the data perspective, Jia and Liang (2016) proposed to recombine data with simple synchronous context-free grammar (SCFG), despite not for compositional generalization. Andreas (2019) used some simple rules for data augmentation, where tokens with the same context were considered as exchangeable. Such techniques are still limited since they only leveraged superficial grammars or rules, and failed when there are linguistically rich phrases or clauses.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_6",
+            "content": "To fill this gap, we propose to augment the training data of semantic parsing with diverse compositional examples based on induced or annotated (semantic and syntactic) trees. Specifically, we propose to exchange subtrees where roots have similar meaning functions. Since we consider all hierarchies in all trees, deep structures and complex phrases or clauses are considered for data augmentation, which is key for compositional generalization. For instance, in Figure 1, if we exchange subtrees with \"largest\" as meaning function of its root, composition of \"population of the\" and \"largest city in the smallest state in the USA\" results in a new augmented structure \"population of the largest city in the smallest state in the USA\". Although certain substructure substitution methods were explored in other NLP tasks (Shi et al., 2021), subtree substitution with fine-grained meaning functions has been under-explored. Our experiments showed that such augmented data led to significantly better performance on SCAN and GEOQUERY, and reached new SOTA on compositional split of GEOQUERY.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_7",
+            "content": "Methods",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "17-ARR_v1_8",
+            "content": "Span trees Suppose training set is {(x i , z i )} N i=1 , where x i is a natural language utterance and z i is the corresponding program. An utterance x can be mapped to a span tree T , such that program(T )= z, where the deterministic function program(\u2022) maps span trees to programs (Herzig and Berant, 2020).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_9",
+            "content": "As shown in Figure 1, a span tree T is a tree where each node covers a span (i, j) with tokens x i:j = (x i , x i+1 , \u2022 \u2022 \u2022 , x j ). A span subtree can be viewed as a mapping from every span (i, j) to a single category c \u2208 C, where C is a set of domainspecific categories representing domain constants, which include entities (e.g. countryid#usa in Figure 1) and predicates (e.g. loc_2 in Figure 1). The final program can be computed from the span tree deterministically by the function program(\u2022). Concretely, program(T ) iterates over the nodes in T bottom-up, and generates a program z i:j for each node covering the span (i, j). For a terminal node, z i:j = c. For an internal node, z i:j is determined by composing the programs of its children, z i:s and z s:j where s is the split point. As in Combinatory Categorical Grammar, composition is simply function application, where a domain-specific type system is used to determine which child is the function and which is the argument. Span trees can be induced by a hard-EM algorithm or semi-automatically annotated. We refer the reader to Herzig and Berant (2020) to see how to obtain span-trees.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_10",
+            "content": "Subtree Substitution (SUBS)",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1"
+            }
+        },
+        {
+            "ix": "17-ARR_v1_11",
+            "content": "As shown in Figure 1, we consider span subtrees with similar semantic functions as exchangeable. Formally, func(\u2022) maps a subprogram to a semantic category, and subtrees with the same semantic cat-RIGHT AROUNDRIGHT LSTM 0.00 1.00 (2800 updates) LSTM + SUBS 1.00 1.00 (800 updates) egories have similar semantic functions. For two data points (x 1 , z 1 ) and (x 2 , z 2 ), if func(z 1 i 1 :j 1 ) = func(z 2 i 2 :j 2 ), we obtain a new augmented (x \u2032 , z \u2032 ):",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_12",
+            "content": "x \u2032 = x 1 :i 1 + x 2 i 2 :j 2 + x 1 j 1 : , z \u2032 = z 1 \\z 1 i 1 :j 1 /z 2 i 2 :j 2",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_13",
+            "content": "Definition of func(\u2022) may vary in different dataset.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_14",
+            "content": "One straightforward way is to extract the outside predicate in z i:j as its semantic category, which is used on GEOQUERY, such as func(largest ( state ( all ) ) )) = largest.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_15",
+            "content": "Semantic Parsing",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2"
+            }
+        },
+        {
+            "ix": "17-ARR_v1_16",
+            "content": "After getting augmented data by subtree substitution, we then combine augmented data and the original training data to train a seq2seq semantic parser, where we choose LSTM models with attention (Luong et al., 2015) and copying mechanism (Gu et al., 2016), or pretrained BART (Lewis et al., 2020) as the seq2seq model architecture.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_17",
+            "content": "Experiments and Results",
+            "ntype": "title",
+            "meta": {
+                "section": "3"
+            }
+        },
+        {
+            "ix": "17-ARR_v1_18",
+            "content": "Dataset We first use SCAN as a diagnostic dataset to test the performance of subtree substitution in compositional semantic parsing. SCAN is a synthetic dataset, which consists of simple English commands paired with sequences of discrete actions. We use the program version of Herzig and Berant (2020). For instance, \"run right after jump\" corresponds to the program \"i_after ( i_run ( i_right ) , i_jump )\". Also, semi-automatically annotated span trees from Herzig and Berant (2020) That is, all \"i_right\" and \"i_left\" appear as leaf nodes in span trees and they are exchangeable.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_19",
+            "content": "We use GEOQUERY dataset to test the performance of subtree substitution in both i.i.d. and compositional generalization for semantic parsing. GEOQUERY contains 880 questions about US geography (Zelle and Mooney, 1996). Following Herzig and Berant (2020), we use the variable-free FunQL formalism from Kate et al. (2005). The i.i.d. split (Question), which is randomly sampled from the whole dataset, contains 513/57/256 instances for train/dev/test set. The compositional split (Query) contains 519/54/253 examples for train/dev/test set, where templates created by anonymizing entities are used to split the dataset, to make sure that all examples sharing a template are assigned to the same set (Finegan-Dollak et al., 2018). As for span trees, we use semi-automatically annotated span trees (gold tree) released by Herzig and Berant (2020). Alternatively, we use the span trees induced by Herzig and Berant (2020)'s span-based semantic parsing, without any human labour. 1, where we use LSTM parser without data augmentation as the baseline. We can see that on the RIGHT split, LSTM seq2seq semantic parser could only achieve zero exact-match accuracy without any data augmentation techniques, which means that the model's compositional generalizibility on the RIGHT split is very poor. After adding our augmented data with subtree substitution, we achieve an exact-match accuracy of 100%. Actually, we got 6660 augmented examples besides the original 12180 training examples. Among all augmented examples, 3351 examples are in the test set, which means 74.87% of 4476 test examples are recovered by subtree substitution. On the AROUNDRIGHT split, using LSTM seq2seq semantic parser could already achieve 100% exact-match accuracy, which means that the model learned from Primitive right and Primitive opposite right generalize to Primitive around right well in our program format \"i_primitive ( i_around ( i_right ) )\". After adding our augmented examples, the parser converged to 100% exact-match accuracy faster, where our method requires around 800 updates to converge while baseline model requires 2800 updates with the same batch size 64.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_20",
+            "content": "Diagnostic Results",
+            "ntype": "title",
+            "meta": {
+                "section": "3.1"
+            }
+        },
+        {
+            "ix": "17-ARR_v1_21",
+            "content": "Main Results",
+            "ntype": "title",
+            "meta": {
+                "section": "3.2"
+            }
+        },
+        {
+            "ix": "17-ARR_v1_22",
+            "content": "Table 2 shows the results of experiments on GEO-QUERY dataset, where we examined both seq2seq LSTM and BART parsers. LSTM and BART parsers without any data augmentation are simplest baselines. We also compare with other two data augmentation methods as additional baselines, recombining data with simple SCFG (Jia and Liang, 2016) or using simple rules for Good Enough Data Augmentation (GECA) (Andreas, 2019), which were proven useful for compositional semantic parsing. We can see that on the Question split, adding augmented data from (gold) subtree substitution leads to improvements for both LSTM and BART seq2seq models, suggesting that subtree substitution as data augmentation helps i.i.d generalization for semantic parsing. On the Query split, (gold) subtree substitution achieves more substantial improvements over seq2seq baseline models (absolute 21% and 3% improvements of the exactmatch accuracy for LSTM and BART respectively), achieving state-of-the-art results. Moreover, our methods are also better than the two data augmentation baselines. Therefore, subtree substitution is a simple yet effective compositional data augmentation method for semantic parsing. With (induced) subtree substitution, SUBS still achieves improvements for LSTM models. Our SUBS could outperform Herzig and Berant (2020), although our induced tree are based on their model. That said, incorporating inductive biases to data and then to the model (seq2seq model finetuning) could achieve superior performance than directly incorporating inductive biases to model via latent variables (Herzig and Berant, 2020).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_23",
+            "content": "We further examine why subtree substitution could achieve much better performance by analyzing its augmented data. As shown in Table 3, GECA only identifies and exchanges very simple structures, where the average and maximal length of exchanged segments are 1.93 and 4. A closer look at these augmented data shows that nearly all of these segments are simple entities (e.g. STATE: \"Illinois\", \"Arizona\" etc.) or other Nouns (e.g. \"area\", \"population\" etc.). In contrast, subtree substitution can identify and exchange much more complex structures, where the average and maximal length of exchanged segments are 5.99 and 25. For example, largest city in the smallest state in the USA and largest state are identified as exchangeable. As a result, subtree substitution could produce more complex utterance and program pairs, where the average and maximal length of these resulted utterances are 10.43 and 26, compared with the average (8.53) and maximal (18) length of utterances returned by GECA. Moreover, subtree substitution could generate much more augmented instances, because it can identify more complex structures besides those simple ones identified by GECA. Compared with SCFG, SUBS could also identify complex structures automatically with subtrees, while SCFG only handle simple phrases defined by rules. Effect of Training Data Size Table 4 shows that with more training examples, models' performances improve. In all settings, using (gold) subtree substitution boosts the performance of BART. When there are 100 and 200 training examples, the improvement is more significant, demonstrating the effectiveness of SUBS in the few-shot setting.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_24",
+            "content": "Related Work",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "17-ARR_v1_25",
+            "content": "Several data augmentation methods have been introduced for (compositional) semantic parsing. Jia and Liang (2016) recombined data by SCFG, and Andreas (2019) used some simple rules to exchange tokens with the same context. However, they leveraged only superficial grammars or rules, which has limited capacity to identify complex structures. Aky\u00fcrek et al. (2020) learned to recombine and resample data with a prototype-based generative model, instead of using rules. Certain substructure substitution methods have been explored for data augmentation in other NLP tasks (Shi et al., 2021). Dependency tree cropping and rotation within sentence was used in low-resource language POS tagging ( \u015eahin and Steedman, 2019) and dependency parsing (Vania et al., 2019). Dependency tree swapping was explored in low-resource language dependency parsing (Dehouck and G\u00f3mez-Rodr\u00edguez, 2020). However, subtree substitution with finegrained meaning functions has not been examined. To the best of our knowledge, we are the first to explore tree manipulation for semantic parsing.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_26",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "5"
+            }
+        },
+        {
+            "ix": "17-ARR_v1_27",
+            "content": "This work proposed to use subtree substitution to compositionally augment the data of semantic parsing to help the compositional generalization. Our method achieved significant improvements over seq2seq models, other data augmentation methods and span-based semantic parsing.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_28",
+            "content": "tokens. Besides, we employ a weight-decay rate 0.01. All the parameters are manually tuned based on the dev performance.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_29",
+            "content": "We train all models on NVIDIA A100 SXM4 40 GB GPU. We set the max training epoch to be 100 and select the best performed epoch according to dev performance. Training process on each clause or whole sequence could be finished within 3 hours.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_30",
+            "content": "For baselines with other data augmentation methods, we reran GECA and SCFG on this FunQL formalism of GEOQUERY and these splits with annotated span trees. That's why our results are a little different from the reported results in the original paper. We got similar results with their source code and our code on our data, in order to make sure that there is no problem with our results and code.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_31",
+            "content": "We got the same denotation accuracy as reported by Herzig and Berant (2020), but we reported exactmatch accuracy on Table 2 for fair comparison.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "17-ARR_v1_32",
+            "content": "UNKNOWN, None, , Afra Feyza Aky\u00fcrek, and Jacob Andreas. 2020. Learning to recombine and resample data for compositional generalization, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": "Afra Feyza Aky\u00fcrek, and Jacob Andreas. 2020. Learning to recombine and resample data for compositional generalization",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_33",
+            "content": "UNKNOWN, None, 2019, Good-enough compositional data augmentation, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "Good-enough compositional data augmentation",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_34",
+            "content": "UNKNOWN, None, 2020, Compositional generalization via neural-symbolic stack machines, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": null,
+                "title": null,
+                "pub_date": "2020",
+                "pub_title": "Compositional generalization via neural-symbolic stack machines",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_35",
+            "content": "Mathieu Dehouck, Carlos G\u00f3mez-Rodr\u00edguez, Data augmentation via subtree swapping for dependency parsing of low-resource languages, 2020, Proceedings of the 28th International Conference on Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": [
+                    "Mathieu Dehouck",
+                    "Carlos G\u00f3mez-Rodr\u00edguez"
+                ],
+                "title": "Data augmentation via subtree swapping for dependency parsing of low-resource languages",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 28th International Conference on Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_36",
+            "content": "UNKNOWN, None, 2018, Improving text-to-sql evaluation methodology, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": null,
+                "title": null,
+                "pub_date": "2018",
+                "pub_title": "Improving text-to-sql evaluation methodology",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_37",
+            "content": "Jiatao Gu, Zhengdong Lu, Hang Li, O Victor,  Li, Incorporating copying mechanism in sequenceto-sequence learning, 2016, Proceedings of the 54th, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "Jiatao Gu",
+                    "Zhengdong Lu",
+                    "Hang Li",
+                    "O Victor",
+                    " Li"
+                ],
+                "title": "Incorporating copying mechanism in sequenceto-sequence learning",
+                "pub_date": "2016",
+                "pub_title": "Proceedings of the 54th",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_38",
+            "content": "UNKNOWN, None, , Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": "Annual Meeting of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_39",
+            "content": "UNKNOWN, None, 2020, Spanbased semantic parsing for compositional generalization, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": null,
+                "title": null,
+                "pub_date": "2020",
+                "pub_title": "Spanbased semantic parsing for compositional generalization",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_40",
+            "content": "UNKNOWN, None, 2016, Data recombination for neural semantic parsing, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": null,
+                "title": null,
+                "pub_date": "2016",
+                "pub_title": "Data recombination for neural semantic parsing",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_41",
+            "content": "J Rohit, Yuk Kate, Raymond J Wong,  Mooney, Learning to transform natural to formal languages, 2005, AAAI, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    "J Rohit",
+                    "Yuk Kate",
+                    "Raymond J Wong",
+                    " Mooney"
+                ],
+                "title": "Learning to transform natural to formal languages",
+                "pub_date": "2005",
+                "pub_title": "AAAI",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_42",
+            "content": "UNKNOWN, None, 2017, Opennmt: Opensource toolkit for neural machine translation, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": null,
+                "title": null,
+                "pub_date": "2017",
+                "pub_title": "Opennmt: Opensource toolkit for neural machine translation",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_43",
+            "content": "Brenden Lake, Marco Baroni, Generalization without systematicity: On the compositional skills of sequence-to-sequence recurrent networks, 2018, International Conference on Machine Learning, PMLR.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": [
+                    "Brenden Lake",
+                    "Marco Baroni"
+                ],
+                "title": "Generalization without systematicity: On the compositional skills of sequence-to-sequence recurrent networks",
+                "pub_date": "2018",
+                "pub_title": "International Conference on Machine Learning",
+                "pub": "PMLR"
+            }
+        },
+        {
+            "ix": "17-ARR_v1_44",
+            "content": "UNKNOWN, None, 2019, Compositional generalization through meta sequence-to-sequence learning, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "Compositional generalization through meta sequence-to-sequence learning",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_45",
+            "content": "Mike Lewis, Yinhan Liu, Naman Goyal, Marjan Ghazvininejad, Abdelrahman Mohamed, Omer Levy, Veselin Stoyanov, Luke Zettlemoyer, BART: Denoising sequence-to-sequence pre-training for natural language generation, translation, and comprehension, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": [
+                    "Mike Lewis",
+                    "Yinhan Liu",
+                    "Naman Goyal",
+                    "Marjan Ghazvininejad",
+                    "Abdelrahman Mohamed",
+                    "Omer Levy",
+                    "Veselin Stoyanov",
+                    "Luke Zettlemoyer"
+                ],
+                "title": "BART: Denoising sequence-to-sequence pre-training for natural language generation, translation, and comprehension",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_46",
+            "content": "UNKNOWN, None, 2018, Rearranging the familiar: Testing compositional generalization in recurrent networks, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": null,
+                "title": null,
+                "pub_date": "2018",
+                "pub_title": "Rearranging the familiar: Testing compositional generalization in recurrent networks",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_47",
+            "content": "Minh-Thang Luong, Hieu Pham, Christopher D Manning, Effective approaches to attentionbased neural machine translation, 2015, Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b15",
+                "authors": [
+                    "Minh-Thang Luong",
+                    "Hieu Pham",
+                    "Christopher D Manning"
+                ],
+                "title": "Effective approaches to attentionbased neural machine translation",
+                "pub_date": "2015",
+                "pub_title": "Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_48",
+            "content": "UNKNOWN, None, 2019, fairseq: A fast, extensible toolkit for sequence modeling, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b16",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "fairseq: A fast, extensible toolkit for sequence modeling",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_49",
+            "content": "UNKNOWN, None, 2019, Data augmentation via dependency tree morphing for low-resource languages, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b17",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "Data augmentation via dependency tree morphing for low-resource languages",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_50",
+            "content": "UNKNOWN, None, 2021, Substructure substitution: Structured data augmentation for nlp, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b18",
+                "authors": null,
+                "title": null,
+                "pub_date": "2021",
+                "pub_title": "Substructure substitution: Structured data augmentation for nlp",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_51",
+            "content": "UNKNOWN, None, 2019, A systematic comparison of methods for low-resource dependency parsing on genuinely low-resource languages, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b19",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "A systematic comparison of methods for low-resource dependency parsing on genuinely low-resource languages",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_52",
+            "content": "M John, Raymond J Zelle,  Mooney, Learning to parse database queries using inductive logic programming, 1996, Proceedings of the national conference on artificial intelligence, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b20",
+                "authors": [
+                    "M John",
+                    "Raymond J Zelle",
+                    " Mooney"
+                ],
+                "title": "Learning to parse database queries using inductive logic programming",
+                "pub_date": "1996",
+                "pub_title": "Proceedings of the national conference on artificial intelligence",
+                "pub": null
+            }
+        },
+        {
+            "ix": "17-ARR_v1_53",
+            "content": "UNKNOWN, None, 2020, Compositional generalization via semantic tagging, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b21",
+                "authors": null,
+                "title": null,
+                "pub_date": "2020",
+                "pub_title": "Compositional generalization via semantic tagging",
+                "pub": null
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "17-ARR_v1_0@0",
+            "content": "SUBS: Subtree Substitution for Compositional Semantic Parsing",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_0",
+            "start": 0,
+            "end": 60,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_2@0",
+            "content": "Although sequence-to-sequence models often achieve good performance in semantic parsing for i.i.d. data, their performance is still inferior in compositional generalization.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_2",
+            "start": 0,
+            "end": 172,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_2@1",
+            "content": "Several data augmentation methods have been proposed to alleviate this problem.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_2",
+            "start": 174,
+            "end": 252,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_2@2",
+            "content": "However, prior work only leveraged superficial grammar or rules for data augmentation, which resulted in limited improvement.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_2",
+            "start": 254,
+            "end": 378,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_2@3",
+            "content": "We propose to use subtree substitution for compositional data augmentation, where we consider subtrees with similar semantic functions as exchangeable.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_2",
+            "start": 380,
+            "end": 530,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_2@4",
+            "content": "Our experiments showed that such augmented data led to significantly better performance on SCAN and GEOQUERY, and reached new SOTA on compositional split of GEOQUERY.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_2",
+            "start": 532,
+            "end": 697,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_4@0",
+            "content": "Semantic parsing transforms natural language utterances to formal language.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_4",
+            "start": 0,
+            "end": 74,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_4@1",
+            "content": "Because meaning representations or programs are essentially compositional, semantic parsing is an ideal testbed for compositional generalization.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_4",
+            "start": 76,
+            "end": 220,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_4@2",
+            "content": "Although neural seq2seq models could achieve state-of-the-art performance in semantic parsing for i.i.d. data, they failed at compositional generalization due to lack of reasoning ability.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_4",
+            "start": 222,
+            "end": 409,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_4@3",
+            "content": "That is, they do not generalize well to formal language structures that were not seen at training time.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_4",
+            "start": 411,
+            "end": 513,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_4@4",
+            "content": "For example, a model that observes at training time the questions \"What is the population of the largest state?\" and \"What is the largest city in USA?\" may fail to generalize to questions such as \"What is the population of the largest city in USA?\".",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_4",
+            "start": 515,
+            "end": 763,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_4@5",
+            "content": "This leads to large performance drops on data splits designed to measure compositional generalization (compositional splits), in contrast to the generalization abilities of humans.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_4",
+            "start": 765,
+            "end": 944,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_5@0",
+            "content": "To improve compositional generalization in semantic parsing (compositional semantic parsing), prior work focused on incorporating inductive biases directly to models or data augmentation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_5",
+            "start": 0,
+            "end": 186,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_5@1",
+            "content": "From the model perspective, some work used neuralsymbolic models (Chen et al., 2020), generated intermediate discrete structures (Herzig and Berant, 2020;Zheng and Lapata, 2020), or conducted meta-learning (Lake, 2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_5",
+            "start": 188,
+            "end": 406,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_5@2",
+            "content": "From the data perspective, Jia and Liang (2016) proposed to recombine data with simple synchronous context-free grammar (SCFG), despite not for compositional generalization.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_5",
+            "start": 408,
+            "end": 580,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_5@3",
+            "content": "Andreas (2019) used some simple rules for data augmentation, where tokens with the same context were considered as exchangeable.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_5",
+            "start": 582,
+            "end": 709,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_5@4",
+            "content": "Such techniques are still limited since they only leveraged superficial grammars or rules, and failed when there are linguistically rich phrases or clauses.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_5",
+            "start": 711,
+            "end": 866,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_6@0",
+            "content": "To fill this gap, we propose to augment the training data of semantic parsing with diverse compositional examples based on induced or annotated (semantic and syntactic) trees.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_6",
+            "start": 0,
+            "end": 174,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_6@1",
+            "content": "Specifically, we propose to exchange subtrees where roots have similar meaning functions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_6",
+            "start": 176,
+            "end": 264,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_6@2",
+            "content": "Since we consider all hierarchies in all trees, deep structures and complex phrases or clauses are considered for data augmentation, which is key for compositional generalization.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_6",
+            "start": 266,
+            "end": 444,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_6@3",
+            "content": "For instance, in Figure 1, if we exchange subtrees with \"largest\" as meaning function of its root, composition of \"population of the\" and \"largest city in the smallest state in the USA\" results in a new augmented structure \"population of the largest city in the smallest state in the USA\".",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_6",
+            "start": 446,
+            "end": 734,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_6@4",
+            "content": "Although certain substructure substitution methods were explored in other NLP tasks (Shi et al., 2021), subtree substitution with fine-grained meaning functions has been under-explored.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_6",
+            "start": 736,
+            "end": 920,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_6@5",
+            "content": "Our experiments showed that such augmented data led to significantly better performance on SCAN and GEOQUERY, and reached new SOTA on compositional split of GEOQUERY.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_6",
+            "start": 922,
+            "end": 1087,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_7@0",
+            "content": "Methods",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_7",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_8@0",
+            "content": "Span trees Suppose training set is {(x i , z i )} N i=1 , where x i is a natural language utterance and z i is the corresponding program.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_8",
+            "start": 0,
+            "end": 136,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_8@1",
+            "content": "An utterance x can be mapped to a span tree T , such that program(T )= z, where the deterministic function program(\u2022) maps span trees to programs (Herzig and Berant, 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_8",
+            "start": 138,
+            "end": 309,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_9@0",
+            "content": "As shown in Figure 1, a span tree T is a tree where each node covers a span (i, j) with tokens x i:j = (x i , x i+1 , \u2022 \u2022 \u2022 , x j ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_9",
+            "start": 0,
+            "end": 131,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_9@1",
+            "content": "A span subtree can be viewed as a mapping from every span (i, j) to a single category c \u2208 C, where C is a set of domainspecific categories representing domain constants, which include entities (e.g. countryid#usa in Figure 1) and predicates (e.g. loc_2 in Figure 1).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_9",
+            "start": 133,
+            "end": 398,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_9@2",
+            "content": "The final program can be computed from the span tree deterministically by the function program(\u2022).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_9",
+            "start": 400,
+            "end": 497,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_9@3",
+            "content": "Concretely, program(T ) iterates over the nodes in T bottom-up, and generates a program z i:j for each node covering the span (i, j).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_9",
+            "start": 499,
+            "end": 631,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_9@4",
+            "content": "For a terminal node, z i:j = c. For an internal node, z i:j is determined by composing the programs of its children, z i:s and z s:j where s is the split point.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_9",
+            "start": 633,
+            "end": 792,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_9@5",
+            "content": "As in Combinatory Categorical Grammar, composition is simply function application, where a domain-specific type system is used to determine which child is the function and which is the argument.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_9",
+            "start": 794,
+            "end": 987,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_9@6",
+            "content": "Span trees can be induced by a hard-EM algorithm or semi-automatically annotated.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_9",
+            "start": 989,
+            "end": 1069,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_9@7",
+            "content": "We refer the reader to Herzig and Berant (2020) to see how to obtain span-trees.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_9",
+            "start": 1071,
+            "end": 1150,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_10@0",
+            "content": "Subtree Substitution (SUBS)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_10",
+            "start": 0,
+            "end": 26,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_11@0",
+            "content": "As shown in Figure 1, we consider span subtrees with similar semantic functions as exchangeable.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_11",
+            "start": 0,
+            "end": 95,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_11@1",
+            "content": "Formally, func(\u2022) maps a subprogram to a semantic category, and subtrees with the same semantic cat-RIGHT AROUNDRIGHT LSTM 0.00 1.00 (2800 updates) LSTM + SUBS 1.00 1.00 (800 updates) egories have similar semantic functions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_11",
+            "start": 97,
+            "end": 320,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_11@2",
+            "content": "For two data points (x 1 , z 1 ) and (x 2 , z 2 ), if func(z 1 i 1 :j 1 ) = func(z 2 i 2 :j 2 ), we obtain a new augmented (x \u2032 , z \u2032 ):",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_11",
+            "start": 322,
+            "end": 457,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_12@0",
+            "content": "x \u2032 = x 1 :i 1 + x 2 i 2 :j 2 + x 1 j 1 : , z \u2032 = z 1 \\z 1 i 1 :j 1 /z 2 i 2 :j 2",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_12",
+            "start": 0,
+            "end": 80,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_13@0",
+            "content": "Definition of func(\u2022) may vary in different dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_13",
+            "start": 0,
+            "end": 51,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_14@0",
+            "content": "One straightforward way is to extract the outside predicate in z i:j as its semantic category, which is used on GEOQUERY, such as func(largest ( state ( all ) ) )) = largest.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_14",
+            "start": 0,
+            "end": 173,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_15@0",
+            "content": "Semantic Parsing",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_15",
+            "start": 0,
+            "end": 15,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_16@0",
+            "content": "After getting augmented data by subtree substitution, we then combine augmented data and the original training data to train a seq2seq semantic parser, where we choose LSTM models with attention (Luong et al., 2015) and copying mechanism (Gu et al., 2016), or pretrained BART (Lewis et al., 2020) as the seq2seq model architecture.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_16",
+            "start": 0,
+            "end": 330,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_17@0",
+            "content": "Experiments and Results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_17",
+            "start": 0,
+            "end": 22,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_18@0",
+            "content": "Dataset We first use SCAN as a diagnostic dataset to test the performance of subtree substitution in compositional semantic parsing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_18",
+            "start": 0,
+            "end": 131,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_18@1",
+            "content": "SCAN is a synthetic dataset, which consists of simple English commands paired with sequences of discrete actions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_18",
+            "start": 133,
+            "end": 245,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_18@2",
+            "content": "We use the program version of Herzig and Berant (2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_18",
+            "start": 247,
+            "end": 301,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_18@3",
+            "content": "For instance, \"run right after jump\" corresponds to the program \"i_after ( i_run ( i_right ) , i_jump )\".",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_18",
+            "start": 303,
+            "end": 407,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_18@4",
+            "content": "Also, semi-automatically annotated span trees from Herzig and Berant (2020) That is, all \"i_right\" and \"i_left\" appear as leaf nodes in span trees and they are exchangeable.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_18",
+            "start": 409,
+            "end": 581,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_19@0",
+            "content": "We use GEOQUERY dataset to test the performance of subtree substitution in both i.i.d. and compositional generalization for semantic parsing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_19",
+            "start": 0,
+            "end": 140,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_19@1",
+            "content": "GEOQUERY contains 880 questions about US geography (Zelle and Mooney, 1996).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_19",
+            "start": 142,
+            "end": 217,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_19@2",
+            "content": "Following Herzig and Berant (2020), we use the variable-free FunQL formalism from Kate et al. (2005).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_19",
+            "start": 219,
+            "end": 319,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_19@3",
+            "content": "The i.i.d. split (Question), which is randomly sampled from the whole dataset, contains 513/57/256 instances for train/dev/test set.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_19",
+            "start": 321,
+            "end": 452,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_19@4",
+            "content": "The compositional split (Query) contains 519/54/253 examples for train/dev/test set, where templates created by anonymizing entities are used to split the dataset, to make sure that all examples sharing a template are assigned to the same set (Finegan-Dollak et al., 2018).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_19",
+            "start": 454,
+            "end": 726,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_19@5",
+            "content": "As for span trees, we use semi-automatically annotated span trees (gold tree) released by Herzig and Berant (2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_19",
+            "start": 728,
+            "end": 842,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_19@6",
+            "content": "Alternatively, we use the span trees induced by Herzig and Berant (2020)'s span-based semantic parsing, without any human labour.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_19",
+            "start": 844,
+            "end": 972,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_19@7",
+            "content": "1, where we use LSTM parser without data augmentation as the baseline.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_19",
+            "start": 974,
+            "end": 1043,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_19@8",
+            "content": "We can see that on the RIGHT split, LSTM seq2seq semantic parser could only achieve zero exact-match accuracy without any data augmentation techniques, which means that the model's compositional generalizibility on the RIGHT split is very poor.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_19",
+            "start": 1045,
+            "end": 1288,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_19@9",
+            "content": "After adding our augmented data with subtree substitution, we achieve an exact-match accuracy of 100%.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_19",
+            "start": 1290,
+            "end": 1391,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_19@10",
+            "content": "Actually, we got 6660 augmented examples besides the original 12180 training examples.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_19",
+            "start": 1393,
+            "end": 1478,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_19@11",
+            "content": "Among all augmented examples, 3351 examples are in the test set, which means 74.87% of 4476 test examples are recovered by subtree substitution.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_19",
+            "start": 1480,
+            "end": 1623,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_19@12",
+            "content": "On the AROUNDRIGHT split, using LSTM seq2seq semantic parser could already achieve 100% exact-match accuracy, which means that the model learned from Primitive right and Primitive opposite right generalize to Primitive around right well in our program format \"i_primitive ( i_around ( i_right ) )\".",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_19",
+            "start": 1625,
+            "end": 1922,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_19@13",
+            "content": "After adding our augmented examples, the parser converged to 100% exact-match accuracy faster, where our method requires around 800 updates to converge while baseline model requires 2800 updates with the same batch size 64.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_19",
+            "start": 1924,
+            "end": 2146,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_20@0",
+            "content": "Diagnostic Results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_20",
+            "start": 0,
+            "end": 17,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_21@0",
+            "content": "Main Results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_21",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_22@0",
+            "content": "Table 2 shows the results of experiments on GEO-QUERY dataset, where we examined both seq2seq LSTM and BART parsers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_22",
+            "start": 0,
+            "end": 115,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_22@1",
+            "content": "LSTM and BART parsers without any data augmentation are simplest baselines.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_22",
+            "start": 117,
+            "end": 191,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_22@2",
+            "content": "We also compare with other two data augmentation methods as additional baselines, recombining data with simple SCFG (Jia and Liang, 2016) or using simple rules for Good Enough Data Augmentation (GECA) (Andreas, 2019), which were proven useful for compositional semantic parsing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_22",
+            "start": 193,
+            "end": 470,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_22@3",
+            "content": "We can see that on the Question split, adding augmented data from (gold) subtree substitution leads to improvements for both LSTM and BART seq2seq models, suggesting that subtree substitution as data augmentation helps i.i.d generalization for semantic parsing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_22",
+            "start": 472,
+            "end": 732,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_22@4",
+            "content": "On the Query split, (gold) subtree substitution achieves more substantial improvements over seq2seq baseline models (absolute 21% and 3% improvements of the exactmatch accuracy for LSTM and BART respectively), achieving state-of-the-art results.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_22",
+            "start": 734,
+            "end": 978,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_22@5",
+            "content": "Moreover, our methods are also better than the two data augmentation baselines.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_22",
+            "start": 980,
+            "end": 1058,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_22@6",
+            "content": "Therefore, subtree substitution is a simple yet effective compositional data augmentation method for semantic parsing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_22",
+            "start": 1060,
+            "end": 1177,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_22@7",
+            "content": "With (induced) subtree substitution, SUBS still achieves improvements for LSTM models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_22",
+            "start": 1179,
+            "end": 1264,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_22@8",
+            "content": "Our SUBS could outperform Herzig and Berant (2020), although our induced tree are based on their model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_22",
+            "start": 1266,
+            "end": 1368,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_22@9",
+            "content": "That said, incorporating inductive biases to data and then to the model (seq2seq model finetuning) could achieve superior performance than directly incorporating inductive biases to model via latent variables (Herzig and Berant, 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_22",
+            "start": 1370,
+            "end": 1604,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_23@0",
+            "content": "We further examine why subtree substitution could achieve much better performance by analyzing its augmented data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_23",
+            "start": 0,
+            "end": 113,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_23@1",
+            "content": "As shown in Table 3, GECA only identifies and exchanges very simple structures, where the average and maximal length of exchanged segments are 1.93 and 4.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_23",
+            "start": 115,
+            "end": 268,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_23@2",
+            "content": "A closer look at these augmented data shows that nearly all of these segments are simple entities (e.g. STATE: \"Illinois\", \"Arizona\" etc.) or other Nouns (e.g. \"area\", \"population\" etc.).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_23",
+            "start": 270,
+            "end": 456,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_23@3",
+            "content": "In contrast, subtree substitution can identify and exchange much more complex structures, where the average and maximal length of exchanged segments are 5.99 and 25.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_23",
+            "start": 458,
+            "end": 622,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_23@4",
+            "content": "For example, largest city in the smallest state in the USA and largest state are identified as exchangeable.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_23",
+            "start": 624,
+            "end": 731,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_23@5",
+            "content": "As a result, subtree substitution could produce more complex utterance and program pairs, where the average and maximal length of these resulted utterances are 10.43 and 26, compared with the average (8.53) and maximal (18) length of utterances returned by GECA.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_23",
+            "start": 733,
+            "end": 994,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_23@6",
+            "content": "Moreover, subtree substitution could generate much more augmented instances, because it can identify more complex structures besides those simple ones identified by GECA.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_23",
+            "start": 996,
+            "end": 1165,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_23@7",
+            "content": "Compared with SCFG, SUBS could also identify complex structures automatically with subtrees, while SCFG only handle simple phrases defined by rules.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_23",
+            "start": 1167,
+            "end": 1314,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_23@8",
+            "content": "Effect of Training Data Size Table 4 shows that with more training examples, models' performances improve.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_23",
+            "start": 1316,
+            "end": 1421,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_23@9",
+            "content": "In all settings, using (gold) subtree substitution boosts the performance of BART.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_23",
+            "start": 1423,
+            "end": 1504,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_23@10",
+            "content": "When there are 100 and 200 training examples, the improvement is more significant, demonstrating the effectiveness of SUBS in the few-shot setting.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_23",
+            "start": 1506,
+            "end": 1652,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_24@0",
+            "content": "Related Work",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_24",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_25@0",
+            "content": "Several data augmentation methods have been introduced for (compositional) semantic parsing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_25",
+            "start": 0,
+            "end": 91,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_25@1",
+            "content": "Jia and Liang (2016) recombined data by SCFG, and Andreas (2019) used some simple rules to exchange tokens with the same context.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_25",
+            "start": 93,
+            "end": 221,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_25@2",
+            "content": "However, they leveraged only superficial grammars or rules, which has limited capacity to identify complex structures.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_25",
+            "start": 223,
+            "end": 340,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_25@3",
+            "content": "Aky\u00fcrek et al. (2020) learned to recombine and resample data with a prototype-based generative model, instead of using rules.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_25",
+            "start": 342,
+            "end": 466,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_25@4",
+            "content": "Certain substructure substitution methods have been explored for data augmentation in other NLP tasks (Shi et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_25",
+            "start": 468,
+            "end": 588,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_25@5",
+            "content": "Dependency tree cropping and rotation within sentence was used in low-resource language POS tagging ( \u015eahin and Steedman, 2019) and dependency parsing (Vania et al., 2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_25",
+            "start": 590,
+            "end": 761,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_25@6",
+            "content": "Dependency tree swapping was explored in low-resource language dependency parsing (Dehouck and G\u00f3mez-Rodr\u00edguez, 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_25",
+            "start": 763,
+            "end": 880,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_25@7",
+            "content": "However, subtree substitution with finegrained meaning functions has not been examined.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_25",
+            "start": 882,
+            "end": 968,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_25@8",
+            "content": "To the best of our knowledge, we are the first to explore tree manipulation for semantic parsing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_25",
+            "start": 970,
+            "end": 1066,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_26@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_26",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_27@0",
+            "content": "This work proposed to use subtree substitution to compositionally augment the data of semantic parsing to help the compositional generalization.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_27",
+            "start": 0,
+            "end": 143,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_27@1",
+            "content": "Our method achieved significant improvements over seq2seq models, other data augmentation methods and span-based semantic parsing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_27",
+            "start": 145,
+            "end": 274,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_28@0",
+            "content": "tokens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_28",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_28@1",
+            "content": "Besides, we employ a weight-decay rate 0.01.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_28",
+            "start": 8,
+            "end": 51,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_28@2",
+            "content": "All the parameters are manually tuned based on the dev performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_28",
+            "start": 53,
+            "end": 119,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_29@0",
+            "content": "We train all models on NVIDIA A100 SXM4 40 GB GPU.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_29",
+            "start": 0,
+            "end": 49,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_29@1",
+            "content": "We set the max training epoch to be 100 and select the best performed epoch according to dev performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_29",
+            "start": 51,
+            "end": 155,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_29@2",
+            "content": "Training process on each clause or whole sequence could be finished within 3 hours.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_29",
+            "start": 157,
+            "end": 239,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_30@0",
+            "content": "For baselines with other data augmentation methods, we reran GECA and SCFG on this FunQL formalism of GEOQUERY and these splits with annotated span trees.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_30",
+            "start": 0,
+            "end": 153,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_30@1",
+            "content": "That's why our results are a little different from the reported results in the original paper.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_30",
+            "start": 155,
+            "end": 248,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_30@2",
+            "content": "We got similar results with their source code and our code on our data, in order to make sure that there is no problem with our results and code.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_30",
+            "start": 250,
+            "end": 394,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_31@0",
+            "content": "We got the same denotation accuracy as reported by Herzig and Berant (2020), but we reported exactmatch accuracy on Table 2 for fair comparison.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_31",
+            "start": 0,
+            "end": 143,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_32@0",
+            "content": "UNKNOWN, None, , Afra Feyza Aky\u00fcrek, and Jacob Andreas. 2020. Learning to recombine and resample data for compositional generalization, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_32",
+            "start": 0,
+            "end": 136,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_33@0",
+            "content": "UNKNOWN, None, 2019, Good-enough compositional data augmentation, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_33",
+            "start": 0,
+            "end": 66,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_34@0",
+            "content": "UNKNOWN, None, 2020, Compositional generalization via neural-symbolic stack machines, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_34",
+            "start": 0,
+            "end": 86,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_35@0",
+            "content": "Mathieu Dehouck, Carlos G\u00f3mez-Rodr\u00edguez, Data augmentation via subtree swapping for dependency parsing of low-resource languages, 2020, Proceedings of the 28th International Conference on Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_35",
+            "start": 0,
+            "end": 215,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_36@0",
+            "content": "UNKNOWN, None, 2018, Improving text-to-sql evaluation methodology, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_36",
+            "start": 0,
+            "end": 67,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_37@0",
+            "content": "Jiatao Gu, Zhengdong Lu, Hang Li, O Victor,  Li, Incorporating copying mechanism in sequenceto-sequence learning, 2016, Proceedings of the 54th, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_37",
+            "start": 0,
+            "end": 145,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_38@0",
+            "content": "UNKNOWN, None, , Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_38",
+            "start": 0,
+            "end": 82,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_39@0",
+            "content": "UNKNOWN, None, 2020, Spanbased semantic parsing for compositional generalization, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_39",
+            "start": 0,
+            "end": 82,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_40@0",
+            "content": "UNKNOWN, None, 2016, Data recombination for neural semantic parsing, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_40",
+            "start": 0,
+            "end": 69,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_41@0",
+            "content": "J Rohit, Yuk Kate, Raymond J Wong,  Mooney, Learning to transform natural to formal languages, 2005, AAAI, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_41",
+            "start": 0,
+            "end": 107,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_42@0",
+            "content": "UNKNOWN, None, 2017, Opennmt: Opensource toolkit for neural machine translation, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_42",
+            "start": 0,
+            "end": 81,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_43@0",
+            "content": "Brenden Lake, Marco Baroni, Generalization without systematicity: On the compositional skills of sequence-to-sequence recurrent networks, 2018, International Conference on Machine Learning, PMLR.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_43",
+            "start": 0,
+            "end": 194,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_44@0",
+            "content": "UNKNOWN, None, 2019, Compositional generalization through meta sequence-to-sequence learning, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_44",
+            "start": 0,
+            "end": 94,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_45@0",
+            "content": "Mike Lewis, Yinhan Liu, Naman Goyal, Marjan Ghazvininejad, Abdelrahman Mohamed, Omer Levy, Veselin Stoyanov, Luke Zettlemoyer, BART: Denoising sequence-to-sequence pre-training for natural language generation, translation, and comprehension, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_45",
+            "start": 0,
+            "end": 337,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_46@0",
+            "content": "UNKNOWN, None, 2018, Rearranging the familiar: Testing compositional generalization in recurrent networks, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_46",
+            "start": 0,
+            "end": 107,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_47@0",
+            "content": "Minh-Thang Luong, Hieu Pham, Christopher D Manning, Effective approaches to attentionbased neural machine translation, 2015, Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_47",
+            "start": 0,
+            "end": 213,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_48@0",
+            "content": "UNKNOWN, None, 2019, fairseq: A fast, extensible toolkit for sequence modeling, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_48",
+            "start": 0,
+            "end": 80,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_49@0",
+            "content": "UNKNOWN, None, 2019, Data augmentation via dependency tree morphing for low-resource languages, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_49",
+            "start": 0,
+            "end": 96,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_50@0",
+            "content": "UNKNOWN, None, 2021, Substructure substitution: Structured data augmentation for nlp, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_50",
+            "start": 0,
+            "end": 86,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_51@0",
+            "content": "UNKNOWN, None, 2019, A systematic comparison of methods for low-resource dependency parsing on genuinely low-resource languages, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_51",
+            "start": 0,
+            "end": 129,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_52@0",
+            "content": "M John, Raymond J Zelle,  Mooney, Learning to parse database queries using inductive logic programming, 1996, Proceedings of the national conference on artificial intelligence, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_52",
+            "start": 0,
+            "end": 177,
+            "label": {}
+        },
+        {
+            "ix": "17-ARR_v1_53@0",
+            "content": "UNKNOWN, None, 2020, Compositional generalization via semantic tagging, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "17-ARR_v1_53",
+            "start": 0,
+            "end": 72,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "17-ARR_v1_0",
+            "tgt_ix": "17-ARR_v1_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_0",
+            "tgt_ix": "17-ARR_v1_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_1",
+            "tgt_ix": "17-ARR_v1_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_1",
+            "tgt_ix": "17-ARR_v1_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_0",
+            "tgt_ix": "17-ARR_v1_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_2",
+            "tgt_ix": "17-ARR_v1_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_4",
+            "tgt_ix": "17-ARR_v1_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_5",
+            "tgt_ix": "17-ARR_v1_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_3",
+            "tgt_ix": "17-ARR_v1_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_3",
+            "tgt_ix": "17-ARR_v1_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_3",
+            "tgt_ix": "17-ARR_v1_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_3",
+            "tgt_ix": "17-ARR_v1_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_0",
+            "tgt_ix": "17-ARR_v1_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_6",
+            "tgt_ix": "17-ARR_v1_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_8",
+            "tgt_ix": "17-ARR_v1_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_7",
+            "tgt_ix": "17-ARR_v1_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_7",
+            "tgt_ix": "17-ARR_v1_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_7",
+            "tgt_ix": "17-ARR_v1_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_7",
+            "tgt_ix": "17-ARR_v1_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_9",
+            "tgt_ix": "17-ARR_v1_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_11",
+            "tgt_ix": "17-ARR_v1_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_12",
+            "tgt_ix": "17-ARR_v1_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_13",
+            "tgt_ix": "17-ARR_v1_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_10",
+            "tgt_ix": "17-ARR_v1_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_10",
+            "tgt_ix": "17-ARR_v1_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_10",
+            "tgt_ix": "17-ARR_v1_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_10",
+            "tgt_ix": "17-ARR_v1_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_10",
+            "tgt_ix": "17-ARR_v1_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_7",
+            "tgt_ix": "17-ARR_v1_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_14",
+            "tgt_ix": "17-ARR_v1_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_15",
+            "tgt_ix": "17-ARR_v1_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_15",
+            "tgt_ix": "17-ARR_v1_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_0",
+            "tgt_ix": "17-ARR_v1_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_16",
+            "tgt_ix": "17-ARR_v1_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_18",
+            "tgt_ix": "17-ARR_v1_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_17",
+            "tgt_ix": "17-ARR_v1_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_17",
+            "tgt_ix": "17-ARR_v1_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_17",
+            "tgt_ix": "17-ARR_v1_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_17",
+            "tgt_ix": "17-ARR_v1_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_19",
+            "tgt_ix": "17-ARR_v1_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_17",
+            "tgt_ix": "17-ARR_v1_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_20",
+            "tgt_ix": "17-ARR_v1_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_21",
+            "tgt_ix": "17-ARR_v1_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_21",
+            "tgt_ix": "17-ARR_v1_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_21",
+            "tgt_ix": "17-ARR_v1_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_22",
+            "tgt_ix": "17-ARR_v1_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_0",
+            "tgt_ix": "17-ARR_v1_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_23",
+            "tgt_ix": "17-ARR_v1_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_24",
+            "tgt_ix": "17-ARR_v1_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_24",
+            "tgt_ix": "17-ARR_v1_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_0",
+            "tgt_ix": "17-ARR_v1_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_25",
+            "tgt_ix": "17-ARR_v1_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_27",
+            "tgt_ix": "17-ARR_v1_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_28",
+            "tgt_ix": "17-ARR_v1_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_29",
+            "tgt_ix": "17-ARR_v1_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_30",
+            "tgt_ix": "17-ARR_v1_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_26",
+            "tgt_ix": "17-ARR_v1_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_26",
+            "tgt_ix": "17-ARR_v1_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_26",
+            "tgt_ix": "17-ARR_v1_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_26",
+            "tgt_ix": "17-ARR_v1_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_26",
+            "tgt_ix": "17-ARR_v1_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_26",
+            "tgt_ix": "17-ARR_v1_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "17-ARR_v1_0",
+            "tgt_ix": "17-ARR_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_1",
+            "tgt_ix": "17-ARR_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_2",
+            "tgt_ix": "17-ARR_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_2",
+            "tgt_ix": "17-ARR_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_2",
+            "tgt_ix": "17-ARR_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_2",
+            "tgt_ix": "17-ARR_v1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_2",
+            "tgt_ix": "17-ARR_v1_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_3",
+            "tgt_ix": "17-ARR_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_4",
+            "tgt_ix": "17-ARR_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_4",
+            "tgt_ix": "17-ARR_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_4",
+            "tgt_ix": "17-ARR_v1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_4",
+            "tgt_ix": "17-ARR_v1_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_4",
+            "tgt_ix": "17-ARR_v1_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_4",
+            "tgt_ix": "17-ARR_v1_4@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_5",
+            "tgt_ix": "17-ARR_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_5",
+            "tgt_ix": "17-ARR_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_5",
+            "tgt_ix": "17-ARR_v1_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_5",
+            "tgt_ix": "17-ARR_v1_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_5",
+            "tgt_ix": "17-ARR_v1_5@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_6",
+            "tgt_ix": "17-ARR_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_6",
+            "tgt_ix": "17-ARR_v1_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_6",
+            "tgt_ix": "17-ARR_v1_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_6",
+            "tgt_ix": "17-ARR_v1_6@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_6",
+            "tgt_ix": "17-ARR_v1_6@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_6",
+            "tgt_ix": "17-ARR_v1_6@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_7",
+            "tgt_ix": "17-ARR_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_8",
+            "tgt_ix": "17-ARR_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_8",
+            "tgt_ix": "17-ARR_v1_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_9",
+            "tgt_ix": "17-ARR_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_9",
+            "tgt_ix": "17-ARR_v1_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_9",
+            "tgt_ix": "17-ARR_v1_9@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_9",
+            "tgt_ix": "17-ARR_v1_9@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_9",
+            "tgt_ix": "17-ARR_v1_9@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_9",
+            "tgt_ix": "17-ARR_v1_9@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_9",
+            "tgt_ix": "17-ARR_v1_9@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_9",
+            "tgt_ix": "17-ARR_v1_9@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_10",
+            "tgt_ix": "17-ARR_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_11",
+            "tgt_ix": "17-ARR_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_11",
+            "tgt_ix": "17-ARR_v1_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_11",
+            "tgt_ix": "17-ARR_v1_11@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_12",
+            "tgt_ix": "17-ARR_v1_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_13",
+            "tgt_ix": "17-ARR_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_14",
+            "tgt_ix": "17-ARR_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_15",
+            "tgt_ix": "17-ARR_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_16",
+            "tgt_ix": "17-ARR_v1_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_17",
+            "tgt_ix": "17-ARR_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_18",
+            "tgt_ix": "17-ARR_v1_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_18",
+            "tgt_ix": "17-ARR_v1_18@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_18",
+            "tgt_ix": "17-ARR_v1_18@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_18",
+            "tgt_ix": "17-ARR_v1_18@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_18",
+            "tgt_ix": "17-ARR_v1_18@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_19",
+            "tgt_ix": "17-ARR_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_19",
+            "tgt_ix": "17-ARR_v1_19@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_19",
+            "tgt_ix": "17-ARR_v1_19@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_19",
+            "tgt_ix": "17-ARR_v1_19@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_19",
+            "tgt_ix": "17-ARR_v1_19@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_19",
+            "tgt_ix": "17-ARR_v1_19@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_19",
+            "tgt_ix": "17-ARR_v1_19@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_19",
+            "tgt_ix": "17-ARR_v1_19@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_19",
+            "tgt_ix": "17-ARR_v1_19@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_19",
+            "tgt_ix": "17-ARR_v1_19@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_19",
+            "tgt_ix": "17-ARR_v1_19@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_19",
+            "tgt_ix": "17-ARR_v1_19@11",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_19",
+            "tgt_ix": "17-ARR_v1_19@12",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_19",
+            "tgt_ix": "17-ARR_v1_19@13",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_20",
+            "tgt_ix": "17-ARR_v1_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_21",
+            "tgt_ix": "17-ARR_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_22",
+            "tgt_ix": "17-ARR_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_22",
+            "tgt_ix": "17-ARR_v1_22@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_22",
+            "tgt_ix": "17-ARR_v1_22@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_22",
+            "tgt_ix": "17-ARR_v1_22@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_22",
+            "tgt_ix": "17-ARR_v1_22@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_22",
+            "tgt_ix": "17-ARR_v1_22@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_22",
+            "tgt_ix": "17-ARR_v1_22@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_22",
+            "tgt_ix": "17-ARR_v1_22@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_22",
+            "tgt_ix": "17-ARR_v1_22@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_22",
+            "tgt_ix": "17-ARR_v1_22@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_23",
+            "tgt_ix": "17-ARR_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_23",
+            "tgt_ix": "17-ARR_v1_23@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_23",
+            "tgt_ix": "17-ARR_v1_23@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_23",
+            "tgt_ix": "17-ARR_v1_23@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_23",
+            "tgt_ix": "17-ARR_v1_23@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_23",
+            "tgt_ix": "17-ARR_v1_23@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_23",
+            "tgt_ix": "17-ARR_v1_23@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_23",
+            "tgt_ix": "17-ARR_v1_23@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_23",
+            "tgt_ix": "17-ARR_v1_23@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_23",
+            "tgt_ix": "17-ARR_v1_23@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_23",
+            "tgt_ix": "17-ARR_v1_23@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_24",
+            "tgt_ix": "17-ARR_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_25",
+            "tgt_ix": "17-ARR_v1_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_25",
+            "tgt_ix": "17-ARR_v1_25@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_25",
+            "tgt_ix": "17-ARR_v1_25@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_25",
+            "tgt_ix": "17-ARR_v1_25@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_25",
+            "tgt_ix": "17-ARR_v1_25@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_25",
+            "tgt_ix": "17-ARR_v1_25@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_25",
+            "tgt_ix": "17-ARR_v1_25@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_25",
+            "tgt_ix": "17-ARR_v1_25@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_25",
+            "tgt_ix": "17-ARR_v1_25@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_26",
+            "tgt_ix": "17-ARR_v1_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_27",
+            "tgt_ix": "17-ARR_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_27",
+            "tgt_ix": "17-ARR_v1_27@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_28",
+            "tgt_ix": "17-ARR_v1_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_28",
+            "tgt_ix": "17-ARR_v1_28@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_28",
+            "tgt_ix": "17-ARR_v1_28@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_29",
+            "tgt_ix": "17-ARR_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_29",
+            "tgt_ix": "17-ARR_v1_29@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_29",
+            "tgt_ix": "17-ARR_v1_29@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_30",
+            "tgt_ix": "17-ARR_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_30",
+            "tgt_ix": "17-ARR_v1_30@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_30",
+            "tgt_ix": "17-ARR_v1_30@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_31",
+            "tgt_ix": "17-ARR_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_32",
+            "tgt_ix": "17-ARR_v1_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_33",
+            "tgt_ix": "17-ARR_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_34",
+            "tgt_ix": "17-ARR_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_35",
+            "tgt_ix": "17-ARR_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_36",
+            "tgt_ix": "17-ARR_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_37",
+            "tgt_ix": "17-ARR_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_38",
+            "tgt_ix": "17-ARR_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_39",
+            "tgt_ix": "17-ARR_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_40",
+            "tgt_ix": "17-ARR_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_41",
+            "tgt_ix": "17-ARR_v1_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_42",
+            "tgt_ix": "17-ARR_v1_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_43",
+            "tgt_ix": "17-ARR_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_44",
+            "tgt_ix": "17-ARR_v1_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_45",
+            "tgt_ix": "17-ARR_v1_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_46",
+            "tgt_ix": "17-ARR_v1_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_47",
+            "tgt_ix": "17-ARR_v1_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_48",
+            "tgt_ix": "17-ARR_v1_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_49",
+            "tgt_ix": "17-ARR_v1_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_50",
+            "tgt_ix": "17-ARR_v1_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_51",
+            "tgt_ix": "17-ARR_v1_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_52",
+            "tgt_ix": "17-ARR_v1_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "17-ARR_v1_53",
+            "tgt_ix": "17-ARR_v1_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 633,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "position_tag_type": "from_draft",
+        "doc_id": "17-ARR",
+        "version": 1
+    }
+}

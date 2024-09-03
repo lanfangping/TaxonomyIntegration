@@ -1,0 +1,4805 @@
+{
+    "nodes": [
+        {
+            "ix": "8-1874_v1_0",
+            "content": "Falco: high-speed FastQC emulation for quality control of sequencing data",
+            "ntype": "article-title",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_2",
+            "content": "Quality control is an essential first step in sequencing data analysis, and software tools for quality control are deeply entrenched in standard pipelines at most sequencing centers. Although the associated computations are straightforward, in many settings the total computing effort required for quality control is appreciable and warrants optimization. We present falco, an emulation of the popular FastQC tool that runs on average three times faster while generating equivalent results. Compared to FastQC, falco also provides greater scalability for datasets with longer reads and more flexible visualization of HTML reports.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1",
+                "sec-type": "intro",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_4",
+            "content": "High-throughput sequencing is routinely used to profile copy number variations in cancers <REF-1> , assemble genomes of microbial organisms <REF-2> , <REF-3> , quantify gene expression <REF-4> , identify cell populations from single-cell transcriptomes in a variety of tissues <REF-5> and track epigenetic changes in developing organisms and diseases <REF-6> , among numerous other applications. New sequencing protocols are constantly being introduced <REF-7> , <REF-8> , and as the cost of sequencing per base decreases, sequencing data is growing in abundance, dataset size and read length <REF-9> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_5",
+            "content": "When high-throughput sequencing data is generated it often undergoes common upstream analysis steps involving quality control (QC), adapter trimming, filtering contaminants and low-quality reads, and mapping reads to a reference genome or transcriptome. Excluding sequence assembly applications, read mapping should be the most computationally expensive step early in analysis pipelines. In comparison, the time and computation required for QC should be negligible. However, the efficiency of mapping algorithms has improving substantially over the past decade, while software for QC has received far less attention. As a consequence, the computation required for QC is appreciable, and can no longer be ignored when considering the total cost of sequencing.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_6",
+            "content": "The most commonly used tool for quality control of sequencing data is FastQC <REF-10> , which, since 2011, has incorporated a wide range of QC checks covering multiple use cases. FastQC has been cited over 3,000 times, with citations increasing steadily since its introduction. Its analysis reports have become the standard for several QC tools, and automated analysis pipelines often rely on its evaluation as a safety criteria to proceed with downstream steps or, alternatively, to filter, trim or ultimately discard the data <REF-11> , <REF-12> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_7",
+            "content": "FastQC is implemented in a modular design, where multiple independent analysis procedures are run sequentially after an input record is read. This design allows new modules to be incorporated easily, but it implies that each analysis module is applied independently to each read, so the time required to process each read is the sum of the processing times for each module. If multiple modules use similar measurements, such as nucleotide content or average sequence quality, the same measurement will be calculated multiple times, causing the total analysis run time to increase.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_8",
+            "content": "Several QC software tools have been introduced since FastQC , many focusing on speed improvements, more flexible module visualization, incorporation of paired-end reads and filtering sequences that failed QC checks. Despite proposing different alternatives to calculate and present QC results, the modules available in these tools are largely similar to FastQC \u2019s ( Table 1 ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_9",
+            "content": "Table 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "T1",
+                "caption": "Comparison of analysis modules provided by fastp and HTQC , two commonly used QC software tools.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_10",
+            "content": "<table-wrap xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"T1\" position=\"anchor\"> <caption> <title>Comparison of analysis modules provided by <monospace>fastp</monospace> and <monospace>HTQC</monospace>, two commonly used QC software tools.</title> </caption> <table content-type=\"article-table\" frame=\"hsides\"> <thead> <tr> <th align=\"left\" valign=\"top\"> <monospace>FastQC</monospace> module</th> <th align=\"left\" valign=\"top\"> <monospace>fastp</monospace> </th> <th align=\"left\" valign=\"top\"> <monospace>HTQC</monospace> </th> </tr> </thead> <tbody> <tr> <td align=\"left\" valign=\"top\">Per base sequence quality</td> <td align=\"left\" valign=\"top\">No</td> <td align=\"left\" valign=\"top\">Yes</td> </tr> <tr> <td align=\"left\" valign=\"top\">Per base N content</td> <td align=\"left\" valign=\"top\">Yes</td> <td align=\"left\" valign=\"top\">Yes</td> </tr> <tr> <td align=\"left\" valign=\"top\">Per tile sequence quality</td> <td align=\"left\" valign=\"top\">No</td> <td align=\"left\" valign=\"top\">Yes</td> </tr> <tr> <td align=\"left\" valign=\"top\">Per sequence quality scores</td> <td align=\"left\" valign=\"top\">No</td> <td align=\"left\" valign=\"top\">Yes</td> </tr> <tr> <td align=\"left\" valign=\"top\">Per sequence GC content</td> <td align=\"left\" valign=\"top\">No</td> <td align=\"left\" valign=\"top\">No</td> </tr> <tr> <td align=\"left\" valign=\"top\">Sequence length distribution</td> <td align=\"left\" valign=\"top\">No</td> <td align=\"left\" valign=\"top\">Yes</td> </tr> <tr> <td align=\"left\" valign=\"top\">Sequence duplication levels</td> <td align=\"left\" valign=\"top\">Yes</td> <td align=\"left\" valign=\"top\">No</td> </tr> <tr> <td align=\"left\" valign=\"top\">Overrepresented sequences</td> <td align=\"left\" valign=\"top\">Yes</td> <td align=\"left\" valign=\"top\">No</td> </tr> <tr> <td align=\"left\" valign=\"top\">Adapter content</td> <td align=\"left\" valign=\"top\">No</td> <td align=\"left\" valign=\"top\">No</td> </tr> <tr> <td align=\"left\" valign=\"top\">Kmer content</td> <td align=\"left\" valign=\"top\">Yes</td> <td align=\"left\" valign=\"top\">No</td> </tr> </tbody> </table> </table-wrap>",
+            "ntype": "table-wrap",
+            "meta": {
+                "id": "T1",
+                "caption": "Comparison of analysis modules provided by fastp and HTQC , two commonly used QC software tools.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_11",
+            "content": "At the same time, FastQC \u2019s analysis results are already part of many standard initial analysis pipelines. If a new QC software tool were to be incorporated in these pipelines, it is desirable that its results, and its output formats, remain consistent with those of FastQC .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_12",
+            "content": "To improve the speed of quality control while retaining the behaviour of FastQC , we developed FastQC Alternative Code ( falco ) <REF-13> , an emulation of FastQC \u2019s current analysis modules. We show that falco generates the same results as FastQC across a wide variety of datasets of different read lengths, sizes, file formats and library preparation protocols at significantly shorter running times. We also present example datasets from the public domain where FastQC fails to generate reports even when run on high-performance computing hardware, demonstrating that falco expands the range of possible cases in which these quality control metrics can be applied.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_13",
+            "content": "Methods",
+            "ntype": "title",
+            "meta": {
+                "section": "2",
+                "sec-type": "methods",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_14",
+            "content": "Implementation choices",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_15",
+            "content": "We designed falco <REF-13> to faithfully emulate FastQC \u2019s calculations, results and text reports. Our goal was to minimize the effort required to replace FastQC with falco in the context of larger automated analysis pipelines. We use the same set of command line arguments, configuration file names and formats. We also produce the same plain text format output, and the same report structure as FastQC , allowing users to take advantage of improved speed without adjusting to different program behaviors.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_16",
+            "content": "There are major differences between the implementations of falco and FastQC . While FastQC \u2019s code emphasizes modularity in a way that allows for additional types of QC information to be added easily and uniformly,",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_17",
+            "content": "falco \u2019s design centralizes the function to read sequences from the input file and collects the minimum data necessary to subsequently create all modules after file processing. To ensure consistency with FastQC , we wrote each module\u2019s source code based on FastQC \u2019s implementation, adapting the portions that relate to sequence processing and maintaining the postprocessing functions that define how the collected data is used to generate summaries and reports.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_18",
+            "content": "Operation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_19",
+            "content": "Compilation of falco requires a GNU GCC compiler version 5.0.0 (July 16, 2015; full support for the C++11 standard) or greater. Once installed, falco can be run on uncompressed files (FASTQ and SAM) without any additional dependencies. In order to process files in gzip compressed FASTQ and BAM formats, falco must be compiled with the ZLib <REF-14> and HTSLib <REF-15> libraries. The full documentation on how to compile, install dependencies and run the program is available in the README file in the falco repository.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_20",
+            "content": "Use cases",
+            "ntype": "title",
+            "meta": {
+                "section": "3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_21",
+            "content": "Like FastQC , falco <REF-13> can be applied to any sequencing data file ( i.e. a file of sequenced reads) in the accepted formats. The only required command line argument is the path to the input file. Also like FastQC , a wide range of options can be provided if users only require a given subset of its analysis modules or outputs. The letters and symbols used for command line arguments were chosen to maintain consistency with FastQC\u2019s options. As mentioned above, this choice is to facilitate integration with larger pipelines that already employ FastQC and depend on its behaviours.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_22",
+            "content": "Falco can be run on a FASTQ format file named example.fastq with the following simple command:",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_23",
+            "content": "- $ falco example.fastq",
+            "ntype": "list",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_24",
+            "content": "This will generate three files:",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_25",
+            "content": "- 1. fastqc_data.txt: The complete numerical values generated in each module\u2019s individual analysis.\n- 2. fastqc_report.html: A visual page display of the text report\u2019s data and plots generated in modules.\n- 3. summary.txt: A short summary indicating whether the input file passed or failed each module, and whether any warnings were raised.",
+            "ntype": "list",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_26",
+            "content": "Default configuration files are contained in a Configuration directory that is included with the program, but falco also allows users to manually define the thresholds for statistics to be considered a pass, warning or fail, the list of adapters to search for in reads and the list of contaminants to check overrepresented sequences by using configuration files in the same format used by FastQC .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_27",
+            "content": "Results",
+            "ntype": "title",
+            "meta": {
+                "section": "4",
+                "sec-type": "results",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_28",
+            "content": "Falco matches FastQC \u2019s output",
+            "ntype": "title",
+            "meta": {
+                "section": "4.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_29",
+            "content": "We compared the output of falco <REF-13> to its FastQC counterpart using 11 datasets ( Table 2 ). The tests consist of Illumina files originating from a range of different library preparation protocols for DNA, RNA and epigenetic experiments, as well as reads from the nanopore <REF-16> technology. For simplicity, Illumina paired-end datasets were only tested on their first read.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_30",
+            "content": "Table 2.",
+            "ntype": "label",
+            "meta": {
+                "id": "T2",
+                "caption": "Datasets used for comparison with FastQC \u2019s output and run time speed benchmarking between QC tools.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_31",
+            "content": "<table-wrap xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"T2\" position=\"anchor\"> <caption> <title>Datasets used for comparison with <monospace>FastQC</monospace>&#8217;s output and run time speed benchmarking between QC tools.</title> </caption> <table content-type=\"article-table\" frame=\"hsides\"> <thead> <tr> <th align=\"left\" valign=\"top\">test</th> <th align=\"left\" valign=\"top\">accession</th> <th align=\"left\" valign=\"top\">reference</th> <th align=\"right\" valign=\"top\">file size (FASTQ)</th> <th align=\"right\" valign=\"top\">reads</th> <th align=\"right\" valign=\"top\">length (bp)</th> <th align=\"left\" valign=\"top\">protocol</th> </tr> </thead> <tbody> <tr> <td align=\"left\" valign=\"top\">1</td> <td align=\"left\" valign=\"top\">SRR10124060</td> <td align=\"left\" valign=\"top\">unpublished</td> <td align=\"right\" valign=\"top\">7.3GB</td> <td align=\"right\" valign=\"top\">25,172,255</td> <td align=\"right\" valign=\"top\">130</td> <td align=\"left\" valign=\"top\">RNA-Seq</td> </tr> <tr> <td align=\"left\" valign=\"top\">2</td> <td align=\"left\" valign=\"top\">SRR10143153</td> <td align=\"left\" valign=\"top\">unpublished</td> <td align=\"right\" valign=\"top\">11.0GB</td> <td align=\"right\" valign=\"top\">15,949,900</td> <td align=\"right\" valign=\"top\">150</td> <td align=\"left\" valign=\"top\">miRNA-Seq</td> </tr> <tr> <td align=\"left\" valign=\"top\">3</td> <td align=\"left\" valign=\"top\">SRR3897196</td> <td align=\"left\" valign=\"top\"> <xref ref-type=\"bibr\" rid=\"ref-21\">21</xref> </td> <td align=\"right\" valign=\"top\">4.2GB</td> <td align=\"right\" valign=\"top\">15,570,348</td> <td align=\"right\" valign=\"top\">100</td> <td align=\"left\" valign=\"top\">BS-Seq</td> </tr> <tr> <td align=\"left\" valign=\"top\">4</td> <td align=\"left\" valign=\"top\">SRR9624732</td> <td align=\"left\" valign=\"top\"> <xref ref-type=\"bibr\" rid=\"ref-22\">22</xref> </td> <td align=\"right\" valign=\"top\">1.6GB</td> <td align=\"right\" valign=\"top\">18,807,797</td> <td align=\"right\" valign=\"top\">150</td> <td align=\"left\" valign=\"top\">ChIP-Seq</td> </tr> <tr> <td align=\"left\" valign=\"top\">5</td> <td align=\"left\" valign=\"top\">SRR1853178</td> <td align=\"left\" valign=\"top\"> <xref ref-type=\"bibr\" rid=\"ref-23\">23</xref> </td> <td align=\"right\" valign=\"top\">130.0GB</td> <td align=\"right\" valign=\"top\">510,210,716</td> <td align=\"right\" valign=\"top\">60</td> <td align=\"left\" valign=\"top\">Drop-Seq</td> </tr> <tr> <td align=\"left\" valign=\"top\">6</td> <td align=\"left\" valign=\"top\">SRR6387347</td> <td align=\"left\" valign=\"top\"> <xref ref-type=\"bibr\" rid=\"ref-24\">24</xref> </td> <td align=\"right\" valign=\"top\">20.0GB</td> <td align=\"right\" valign=\"top\">305,434,830</td> <td align=\"right\" valign=\"top\">100</td> <td align=\"left\" valign=\"top\">10x genomics</td> </tr> <tr> <td align=\"left\" valign=\"top\">7</td> <td align=\"left\" valign=\"top\">SRR6954584</td> <td align=\"left\" valign=\"top\"> <xref ref-type=\"bibr\" rid=\"ref-5\">5</xref> </td> <td align=\"right\" valign=\"top\">56.0GB</td> <td align=\"right\" valign=\"top\">152,853,013</td> <td align=\"right\" valign=\"top\">150</td> <td align=\"left\" valign=\"top\">Microwell-Seq</td> </tr> <tr> <td align=\"left\" valign=\"top\">8</td> <td align=\"left\" valign=\"top\">SRR891268</td> <td align=\"left\" valign=\"top\"> <xref ref-type=\"bibr\" rid=\"ref-25\">25</xref> </td> <td align=\"right\" valign=\"top\">46.0GB</td> <td align=\"right\" valign=\"top\">192,904,649</td> <td align=\"right\" valign=\"top\">50</td> <td align=\"left\" valign=\"top\">ATAC-Seq</td> </tr> <tr> <td align=\"left\" valign=\"top\">9</td> <td align=\"left\" valign=\"top\">SRR9878537</td> <td align=\"left\" valign=\"top\">unpublished</td> <td align=\"right\" valign=\"top\">38.0MB</td> <td align=\"right\" valign=\"top\">3,284</td> <td align=\"right\" valign=\"top\">64,000</td> <td align=\"left\" valign=\"top\">Nanopore</td> </tr> <tr> <td align=\"left\" valign=\"top\">10</td> <td align=\"left\" valign=\"top\">wgs-FAB49164</td> <td align=\"left\" valign=\"top\"> <xref ref-type=\"bibr\" rid=\"ref-17\">17</xref> </td> <td align=\"right\" valign=\"top\">8.4GB</td> <td align=\"right\" valign=\"top\">746,333</td> <td align=\"right\" valign=\"top\">180,000</td> <td align=\"left\" valign=\"top\">Nanopore</td> </tr> <tr> <td align=\"left\" valign=\"top\">11</td> <td align=\"left\" valign=\"top\">SRR6059706</td> <td align=\"left\" valign=\"top\">unpublished</td> <td align=\"right\" valign=\"top\">1.4GB</td> <td align=\"right\" valign=\"top\">892,313</td> <td align=\"right\" valign=\"top\">150,000</td> <td align=\"left\" valign=\"top\">Nanopore</td> </tr> </tbody> </table> </table-wrap>",
+            "ntype": "table-wrap",
+            "meta": {
+                "id": "T2",
+                "caption": "Datasets used for comparison with FastQC \u2019s output and run time speed benchmarking between QC tools.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_32",
+            "content": "FASTQ files available in the Sequencing Read Archive (SRA) were downloaded using the fastq-dump command from the SRA toolkit. We used the following flags when running fastq-dump: -skip-technical, -readids, -read-filter pass, -dumpbase, -split-3 and -clip . One dataset was downloaded from the Whole Human Genome Sequencing Project <REF-17> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_33",
+            "content": "We directly compared the text summary for each output of falco to FastQC \u2019s output summary files, obtaining the same outputs (pass/warn/fail) for all tested criteria in all datasets.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_34",
+            "content": "To assess if falco \u2019s output is consistent with FastQC \u2019s format, we used the fastqcr <REF-18> R package version 0.1.2 and MultiQC <REF-11> version 1.7. Both tools can successfully parse the text reports generated by falco for the tested files. Differences in the fastq_data.txt files between the two programs result from choices for numerical precision output, or as a result of falco calculating certain averages based on more of the data within each file.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_35",
+            "content": "Falco is faster than popular QC tools",
+            "ntype": "title",
+            "meta": {
+                "section": "4.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_36",
+            "content": "Some alternative software tools exist for quality control of sequencing data, and users may opt for them due to their efficiency in cases where not all FastQC analysis modules are necessary. Among these, fastp <REF-19> has gained popularity for its speed and versatile set of options for trimming. fastp has demonstrated superior runtime to FastQC even when generating FASTQ format output files corrected by trimming adapters and filtering (which requires both input and output). HTQC <REF-20> is another tool that was developed with the intent to both improve speed performance and incorporate trimming functions after quality control. The two programs were used as benchmarks to compare with falco \u2019s performance.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_37",
+            "content": "Although most fastp modules are both calculated and displayed equivalently to FastQC , one major difference between these tools is how overrepresented sequences are estimated. fastp counts the sequences at every P reads (which users may specify), whereas FastQC stores the first 100,000 reads encountered for the first time, and subsequently checks if the following sequences match any of the stored candidates. This choice of implementation causes fastp \u2019s runtime to greatly differ when over-representation is enabled. Conversely, FastQC \u2019s runtime does not seem to be affected by disabling the overrepresented sequences module. For a comprehensive comparison between programs, we have measured the run times for our test datasets both with and without the overrepresented sequences module enabled. Programs were compared both in compressed (gzipped FASTQ) and uncompressed (plain FASTQ) file formats.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_38",
+            "content": "Files used to assess falco \u2019s output comparison to FastQC ( Table 2 ) were also used for speed benchmarking. Tests were executed in an Intel Xeon CPU E5-2640 v3 2.60GHz processor with a CentOS Linux 7 operating system. All file I/O was done using local disk to reduce variability in execution runtime. Programs were instructed to run using a single thread.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_39",
+            "content": "FastQC version 0.11.8 was run with default parameters and the configuration limits, adapters and contaminants provided with the software. fastp version 0.20.0 was run with the -A , -G , -Q and -L flags to disable adapter trimming, poly-G trimming, quality filtering and length filtering, thus requiring the program to only perform QC checks without generating a new FASTQ file. When testing for overrepresented sequences, we set the -p flag to enable this module, and set the frequency of counts to the program\u2019s default value of P = 20. We ran the ht-stat program on the tested files using the -S flag for single-ended reads. HTQC was not tested on gzip",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_40",
+            "content": "compressed files as this file format is not accepted by the program. We used the time command (using the BASH shell keyword) to measure the total running times for each program, using the real time (total wall clock from program start to finish) as measurement. The benchmarking results ( Table 3 and Table 4 ) show that falco performs faster than fastp and FastQC in all datasets, with an average 3x faster runtime than FastQC , both with the overrepresented sequences module on and off. Despite HTQC failing to process most test datasets due to unaccepted header formats, the two tests that ran to completion demonstrate that falco \u2019s analysis times are also significantly smaller in comparison.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_41",
+            "content": "Table 3.",
+            "ntype": "label",
+            "meta": {
+                "id": "T3",
+                "caption": "Real run times for falco , fastp and FastQC on uncompressed FASTQ format, with the overrepresented sequences module on and off. Asterisks (*) indicate tests in which tools did not run to completion.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_42",
+            "content": "<table-wrap xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"T3\" position=\"anchor\"> <caption> <title>Real run times for <monospace>falco</monospace>, <monospace>fastp</monospace> and <monospace>FastQC</monospace> on uncompressed <monospace>FASTQ</monospace> format, with the overrepresented sequences module on and off.</title> <p>Asterisks (*) indicate tests in which tools did not run to completion.</p> </caption> <table content-type=\"article-table\" frame=\"hsides\"> <thead> <tr> <th align=\"left\" rowspan=\"2\" valign=\"top\">test</th> <th align=\"right\" valign=\"top\"> <monospace>falco</monospace> </th> <th align=\"right\" valign=\"top\"> <monospace>fastp</monospace> </th> <th align=\"right\" valign=\"top\"> <monospace>FastQC</monospace> </th> <th align=\"right\" valign=\"top\"> <monospace>falco</monospace> </th> <th align=\"right\" valign=\"top\"> <monospace>fastp</monospace> </th> <th align=\"right\" valign=\"top\"> <monospace>FastQC</monospace> </th> <th align=\"right\" rowspan=\"2\" valign=\"top\"> <monospace>HTQC</monospace> </th> </tr> <tr> <th align=\"right\" valign=\"top\">overrep off</th> <th align=\"right\" valign=\"top\">overrep off</th> <th align=\"right\" valign=\"top\">overrep off</th> <th align=\"right\" valign=\"top\">overrep on</th> <th align=\"right\" valign=\"top\">overrep on</th> <th align=\"right\" valign=\"top\">overrep on</th> </tr> </thead> <tbody> <tr> <td align=\"left\" valign=\"top\">1</td> <td align=\"right\" valign=\"top\">48s</td> <td align=\"right\" valign=\"top\">1m54s</td> <td align=\"right\" valign=\"top\">3m30s</td> <td align=\"right\" valign=\"top\">55s</td> <td align=\"right\" valign=\"top\">5m57s</td> <td align=\"right\" valign=\"top\">3m23s</td> <td align=\"right\" valign=\"top\">12m09s</td> </tr> <tr> <td align=\"left\" valign=\"top\">2</td> <td align=\"right\" valign=\"top\">36s</td> <td align=\"right\" valign=\"top\">1m20s</td> <td align=\"right\" valign=\"top\">2m08s</td> <td align=\"right\" valign=\"top\">37s</td> <td align=\"right\" valign=\"top\">4m32s</td> <td align=\"right\" valign=\"top\">2m10s</td> <td align=\"right\" valign=\"top\">*</td> </tr> <tr> <td align=\"left\" valign=\"top\">3</td> <td align=\"right\" valign=\"top\">27s</td> <td align=\"right\" valign=\"top\">1m04s</td> <td align=\"right\" valign=\"top\">1m25s</td> <td align=\"right\" valign=\"top\">30s</td> <td align=\"right\" valign=\"top\">2m16s</td> <td align=\"right\" valign=\"top\">1m24s</td> <td align=\"right\" valign=\"top\">*</td> </tr> <tr> <td align=\"left\" valign=\"top\">4</td> <td align=\"right\" valign=\"top\">44s</td> <td align=\"right\" valign=\"top\">1m48s</td> <td align=\"right\" valign=\"top\">2m40s</td> <td align=\"right\" valign=\"top\">51s</td> <td align=\"right\" valign=\"top\">3m37s</td> <td align=\"right\" valign=\"top\">2m38s</td> <td align=\"right\" valign=\"top\">*</td> </tr> <tr> <td align=\"left\" valign=\"top\">5</td> <td align=\"right\" valign=\"top\">15m49s</td> <td align=\"right\" valign=\"top\">35m14s</td> <td align=\"right\" valign=\"top\">41m27s</td> <td align=\"right\" valign=\"top\">15m58s</td> <td align=\"right\" valign=\"top\">44m30s</td> <td align=\"right\" valign=\"top\">37m43s</td> <td align=\"right\" valign=\"top\">*</td> </tr> <tr> <td align=\"left\" valign=\"top\">6</td> <td align=\"right\" valign=\"top\">7m59s</td> <td align=\"right\" valign=\"top\">18m42s</td> <td align=\"right\" valign=\"top\">22m59s</td> <td align=\"right\" valign=\"top\">8m33s</td> <td align=\"right\" valign=\"top\">42m50s</td> <td align=\"right\" valign=\"top\">22m53s</td> <td align=\"right\" valign=\"top\">134m42s</td> </tr> <tr> <td align=\"left\" valign=\"top\">7</td> <td align=\"right\" valign=\"top\">6m05</td> <td align=\"right\" valign=\"top\">13m50s</td> <td align=\"right\" valign=\"top\">19m42s</td> <td align=\"right\" valign=\"top\">6m49s</td> <td align=\"right\" valign=\"top\">41m55s</td> <td align=\"right\" valign=\"top\">19m52s</td> <td align=\"right\" valign=\"top\">*</td> </tr> <tr> <td align=\"left\" valign=\"top\">8</td> <td align=\"right\" valign=\"top\">5m12s</td> <td align=\"right\" valign=\"top\">11m47s</td> <td align=\"right\" valign=\"top\">13m59s</td> <td align=\"right\" valign=\"top\">5m20s</td> <td align=\"right\" valign=\"top\">15m25s</td> <td align=\"right\" valign=\"top\">14m08s</td> <td align=\"right\" valign=\"top\">*</td> </tr> <tr> <td align=\"left\" valign=\"top\">9</td> <td align=\"right\" valign=\"top\">1s</td> <td align=\"right\" valign=\"top\">1s</td> <td align=\"right\" valign=\"top\">*</td> <td align=\"right\" valign=\"top\">1s</td> <td align=\"right\" valign=\"top\">0m26s</td> <td align=\"right\" valign=\"top\">*</td> <td align=\"right\" valign=\"top\">*</td> </tr> <tr> <td align=\"left\" valign=\"top\">10</td> <td align=\"right\" valign=\"top\">1m37s</td> <td align=\"right\" valign=\"top\">1m50s</td> <td align=\"right\" valign=\"top\">*</td> <td align=\"right\" valign=\"top\">1m32s</td> <td align=\"right\" valign=\"top\">4m37s</td> <td align=\"right\" valign=\"top\">*</td> <td align=\"right\" valign=\"top\">*</td> </tr> <tr> <td align=\"left\" valign=\"top\">11</td> <td align=\"right\" valign=\"top\">13s</td> <td align=\"right\" valign=\"top\">24s</td> <td align=\"right\" valign=\"top\">*</td> <td align=\"right\" valign=\"top\">13s</td> <td align=\"right\" valign=\"top\">1m07s</td> <td align=\"right\" valign=\"top\">*</td> <td align=\"right\" valign=\"top\">*</td> </tr> </tbody> </table> </table-wrap>",
+            "ntype": "table-wrap",
+            "meta": {
+                "id": "T3",
+                "caption": "Real run times for falco , fastp and FastQC on uncompressed FASTQ format, with the overrepresented sequences module on and off. Asterisks (*) indicate tests in which tools did not run to completion.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_43",
+            "content": "Table 4.",
+            "ntype": "label",
+            "meta": {
+                "id": "T4",
+                "caption": "Real run times for falco , fastp and FastQC on gzip compressed FASTQ format.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_44",
+            "content": "<table-wrap xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"T4\" position=\"anchor\"> <caption> <title>Real run times for <monospace>falco</monospace>, <monospace>fastp</monospace> and <monospace>FastQC</monospace> on gzip compressed FASTQ format.</title> </caption> <table content-type=\"article-table\" frame=\"hsides\"> <thead> <tr> <th align=\"right\" rowspan=\"2\" valign=\"top\">test</th> <th align=\"right\" valign=\"top\"> <monospace>falco</monospace> </th> <th align=\"right\" valign=\"top\"> <monospace>fastp</monospace> </th> <th align=\"right\" valign=\"top\"> <monospace>FastQC</monospace> </th> <th align=\"right\" valign=\"top\"> <monospace>falco</monospace> </th> <th align=\"right\" valign=\"top\"> <monospace>fastp</monospace> </th> <th align=\"right\" valign=\"top\"> <monospace>FastQC</monospace> </th> </tr> <tr> <th align=\"right\" valign=\"top\">overrep off</th> <th align=\"right\" valign=\"top\">overrep off</th> <th align=\"right\" valign=\"top\">overrep off</th> <th align=\"right\" valign=\"top\">overrep on </th> <th align=\"right\" valign=\"top\">overrep on </th> <th align=\"right\" valign=\"top\">overrep on </th> </tr> </thead> <tbody> <tr> <td align=\"left\" valign=\"top\">1</td> <td align=\"right\" valign=\"top\">1m19s</td> <td align=\"right\" valign=\"top\">2m19s</td> <td align=\"right\" valign=\"top\">3m49s</td> <td align=\"right\" valign=\"top\">1m25s</td> <td align=\"right\" valign=\"top\">6m23s</td> <td align=\"right\" valign=\"top\">3m50s</td> </tr> <tr> <td align=\"left\" valign=\"top\">2</td> <td align=\"right\" valign=\"top\">45s</td> <td align=\"right\" valign=\"top\">1m31s</td> <td align=\"right\" valign=\"top\">2m21s</td> <td align=\"right\" valign=\"top\">51s</td> <td align=\"right\" valign=\"top\">5m23s</td> <td align=\"right\" valign=\"top\">2m24s</td> </tr> <tr> <td align=\"left\" valign=\"top\">3</td> <td align=\"right\" valign=\"top\">33s</td> <td align=\"right\" valign=\"top\">1m10s</td> <td align=\"right\" valign=\"top\">1m35s</td> <td align=\"right\" valign=\"top\">35s</td> <td align=\"right\" valign=\"top\">2m26s</td> <td align=\"right\" valign=\"top\">1m36s</td> </tr> <tr> <td align=\"left\" valign=\"top\">4</td> <td align=\"right\" valign=\"top\">1m01s</td> <td align=\"right\" valign=\"top\">2m06s</td> <td align=\"right\" valign=\"top\">3m01s</td> <td align=\"right\" valign=\"top\">1m03s</td> <td align=\"right\" valign=\"top\">3m59s</td> <td align=\"right\" valign=\"top\">3m00s</td> </tr> <tr> <td align=\"left\" valign=\"top\">5</td> <td align=\"right\" valign=\"top\">16m05s</td> <td align=\"right\" valign=\"top\">42m40s</td> <td align=\"right\" valign=\"top\">44m57s</td> <td align=\"right\" valign=\"top\">18m17s</td> <td align=\"right\" valign=\"top\">53m09s</td> <td align=\"right\" valign=\"top\">44m59s</td> </tr> <tr> <td align=\"left\" valign=\"top\">6</td> <td align=\"right\" valign=\"top\">12m26s</td> <td align=\"right\" valign=\"top\">23m18s</td> <td align=\"right\" valign=\"top\">26m39s</td> <td align=\"right\" valign=\"top\">12m29s</td> <td align=\"right\" valign=\"top\">47m32s</td> <td align=\"right\" valign=\"top\">26m38s</td> </tr> <tr> <td align=\"left\" valign=\"top\">7</td> <td align=\"right\" valign=\"top\">8m40s</td> <td align=\"right\" valign=\"top\">17m34s</td> <td align=\"right\" valign=\"top\">22m31s</td> <td align=\"right\" valign=\"top\">8m34s</td> <td align=\"right\" valign=\"top\">44m41s</td> <td align=\"right\" valign=\"top\">22m31s</td> </tr> <tr> <td align=\"left\" valign=\"top\">8</td> <td align=\"right\" valign=\"top\">7m08s</td> <td align=\"right\" valign=\"top\">14m37s</td> <td align=\"right\" valign=\"top\">16m06s</td> <td align=\"right\" valign=\"top\">6m31s</td> <td align=\"right\" valign=\"top\">18m19s</td> <td align=\"right\" valign=\"top\">16m11s</td> </tr> <tr> <td align=\"left\" valign=\"top\">9</td> <td align=\"right\" valign=\"top\">2s</td> <td align=\"right\" valign=\"top\">1s</td> <td align=\"right\" valign=\"top\">*</td> <td align=\"right\" valign=\"top\">1s</td> <td align=\"right\" valign=\"top\">27s</td> <td align=\"right\" valign=\"top\">*</td> </tr> <tr> <td align=\"left\" valign=\"top\">10</td> <td align=\"right\" valign=\"top\">2m23s</td> <td align=\"right\" valign=\"top\">2m32s</td> <td align=\"right\" valign=\"top\">*</td> <td align=\"right\" valign=\"top\">2m34s</td> <td align=\"right\" valign=\"top\">5m22s</td> <td align=\"right\" valign=\"top\">*</td> </tr> <tr> <td align=\"left\" valign=\"top\">11</td> <td align=\"right\" valign=\"top\">22s</td> <td align=\"right\" valign=\"top\">31s</td> <td align=\"right\" valign=\"top\">*</td> <td align=\"right\" valign=\"top\">23s</td> <td align=\"right\" valign=\"top\">1m14s</td> <td align=\"right\" valign=\"top\">*</td> </tr> </tbody> </table> </table-wrap>",
+            "ntype": "table-wrap",
+            "meta": {
+                "id": "T4",
+                "caption": "Real run times for falco , fastp and FastQC on gzip compressed FASTQ format.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_45",
+            "content": "Falco scales for longer Nanopore reads",
+            "ntype": "title",
+            "meta": {
+                "section": "4.3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_46",
+            "content": "Nanopore sequencing is gaining popularity in genome assembly applications and as a low-cost protocol to quantify short reads <REF-26> . Nanopore sequencers can generate reads of up to millions of bases, and assessing quality metrics for these datasets is fundamental to test for potential problems in quality or bias in specific regions of such long reads. While FastQC is capable of making summaries for protocols such as 454 <REF-27> PacBio <REF-28> , which generate sequences with around 10,000 bases per read, we have observed that it does not run to completion when given files with larger reads of over 100,000 bases. Files for which FastQC \u2019s analysis does not finish are marked with an asterisk in Table 3 and Table 4 . Falco successfully completes its analysis on these datasets, demonstrating that it can equally be used as a QC tool for longer reads.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_47",
+            "content": "Falco allows dynamic visualization of results",
+            "ntype": "title",
+            "meta": {
+                "section": "4.4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_48",
+            "content": "Despite FastQC \u2019s clarity in its HTML reports, graphs are displayed as static images and have limited visualization flexibility, such as tile heatmaps not displaying raw deviations from average Phred scores in base positions or raw values in line plots not being visible. We have opted to display falco \u2019s analysis results using the Plotly JavaScript library <REF-29> , which allows interactive changes of axis labels, hovering on data points to visualize raw values and screenshots from specific position on the plot ( Figure 1 ). This choice of presentation provides greater options to explore and interpret QC results while maintaining the visualization standards set by FastQC .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_49",
+            "content": "Figure 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "f1",
+                "caption": "Sample HTML report for test 8 (accession SRR891268). Layout and plots are based on FastQC \u2019s HTML report.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/23273/1d67e864-49fe-4290-8919-09c70ca391fb_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_50",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f1\" position=\"float\"> <caption> <title>Sample HTML report for test 8 (accession SRR891268).</title> <p>Layout and plots are based on <monospace>FastQC</monospace>&#8217;s HTML report.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/23273/1d67e864-49fe-4290-8919-09c70ca391fb_figure1.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f1",
+                "caption": "Sample HTML report for test 8 (accession SRR891268). Layout and plots are based on FastQC \u2019s HTML report.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/23273/1d67e864-49fe-4290-8919-09c70ca391fb_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_51",
+            "content": "Conclusions",
+            "ntype": "title",
+            "meta": {
+                "section": "5",
+                "sec-type": "conclusions",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_52",
+            "content": "Falco <REF-13> is a faster alternative to calculate the wide range of QC metrics generated by FastQC . It is entirely based on emulating the analysis modules FastQC provides while running faster than popular QC tools and generating dynamic visual summaries of analysis results. Both falco \u2019s text and HTML outputs provide the same information generated by FastQC \u2019s report, so tools that parse these files for custom visualization and downstream analysis can seamlessly incorporate falco into their pipeline.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_53",
+            "content": "Data availability",
+            "ntype": "title",
+            "meta": {
+                "section": "6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_54",
+            "content": "Datasets used to compare Falco and FastQC are shown in Table 2 . Guidance for how to accept accession wgs-FAB49164 is available from the Benchmark directory of the falco GitHub page .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_55",
+            "content": "Software availability",
+            "ntype": "title",
+            "meta": {
+                "section": "7",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_56",
+            "content": "Source code for falco available at: https://github.com/smithlabcode/falco .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_57",
+            "content": "The scripts used to download files and reproduce the benchmarking steps described are also available in the same repository within the \u201cbenchmark\u201d directory.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_58",
+            "content": "Archived source code at time of publication: http://doi.org/10.5281/zenodo.3520933 <REF-13> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_59",
+            "content": "License: GNU General Public License version 3.0 .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_60",
+            "content": "<REF-1> Alkan C Kidd JM Marques-Bonet T : Personalized copy number and segmental duplication maps using next-generation sequencing. Nat Genet. 2009 ; 41 ( 10 ): 1061 \u2013 7 . 19718026 10.1038/ng.437 2875196",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_61",
+            "content": "<REF-2> Loman NJ Quick J Simpson JT : A complete bacterial genome assembled de novo using only nanopore sequencing data. Nat Methods. 2015 ; 12 ( 8 ): 733 \u2013 5 . 26076426 10.1038/nmeth.3444",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_62",
+            "content": "<REF-3> Masella AP Bartram AK Truszkowski JM : PANDAseq: paired-end assembler for illumina sequences. BMC Bioinformatics. 2012 ; 13 ( 1 ): 31 . 22333067 10.1186/1471-2105-13-31 3471323",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_63",
+            "content": "<REF-4> Ozsolak F Milos PM : RNA sequencing: advances, challenges and opportunities. Nat Rev Genet. 2011 ; 12 ( 2 ): 87 \u2013 98 . 21191423 10.1038/nrg2934 3031867",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_64",
+            "content": "<REF-5> Han X Wang R Zhou Y : Mapping the Mouse Cell Atlas by Microwell-Seq. Cell. 2018 ; 172 ( 5 ): 1091 \u2013 1107.e17 . 29474909 10.1016/j.cell.2018.02.001",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_65",
+            "content": "<REF-6> Buenrostro JD Wu B Chang HY : ATAC-seq: A Method for Assaying Chromatin Accessibility Genome-Wide. Curr Protoc Mol Biol. 2015 ; 109 ( 1 ): 21.29.1 \u2013 9 . 25559105 10.1002/0471142727.mb2129s109 4374986",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_66",
+            "content": "<REF-7> Datlinger P Rendeiro AF Schmidl C : Pooled CRISPR screening with single-cell transcriptome readout. Nat Methods. 2017 ; 14 ( 3 ): 297 \u2013 301 . 28099430 10.1038/nmeth.4177 5334791",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-7",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_67",
+            "content": "<REF-8> Spanjaard B Hu B Mitic N : Simultaneous lineage tracing and cell-type identification using CRISPR\u2013Cas9-induced genetic scars. Nat Biotechnol. 2018 ; 36 ( 5 ): 469 \u2013 473 . 29644996 10.1038/nbt.4124 5942543",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-8",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_68",
+            "content": "<REF-9> Svensson V Vento-Tormo R Teichmann SA : Exponential scaling of single-cell RNA-seq in the past decade. Nat Protoc. 2018 ; 13 ( 4 ): 599 \u2013 604 . 29494575 10.1038/nprot.2017.149",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-9",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_69",
+            "content": "<REF-10> Andrews S : FastQC: a quality control tool for high throughput sequence data . 2010 . Reference Source",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-10",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_70",
+            "content": "<REF-11> Ewels P Magnusson M Lundin S : MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 ; 32 ( 19 ): 3047 \u2013 3048 . 10.1093/bioinformatics/btw354",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-11",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_71",
+            "content": "<REF-12> Brown J Pirrung M McCue LA : FQC Dashboard: integrates FastQC results into a web-based, interactive, and extensible FASTQ quality control tool. Bioinformatics. 2017 ; 33 ( 19 ): 3137 \u2013 3139 . 28605449 10.1093/bioinformatics/btx373 5870778",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-12",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_72",
+            "content": "<REF-13> Sena G Smith A : smithlabcode/falco: 0.1 - 2019/10/28 . 2019 . http://www.doi.org/10.5281/zenodo.3520933",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-13",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_73",
+            "content": "<REF-14> Deutsch P Gailly JL : Zlib compressed data format specification version 3.3 . 1996 . 10.17487/RFC1950",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-14",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_74",
+            "content": "<REF-15> Li H Handsaker B Wysoker A : The Sequence Alignment/Map format and SAMtools. Bioinformatics. 2009 ; 25 ( 16 ): 2078 \u2013 2079 . 19505943 10.1093/bioinformatics/btp352 2723002",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-15",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_75",
+            "content": "<REF-16> Jain M Olsen HE Paten B : The Oxford Nanopore MinION: delivery of nanopore sequencing to the genomics community. Genome Biol. 2016 ; 17 ( 1 ): 239 . 27887629 10.1186/s13059-016-1103-0 5124260",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-16",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_76",
+            "content": "<REF-17> Jain M Koren S Miga KH : Nanopore sequencing and assembly of a human genome with ultra-long reads. Nat Biotechnol. 2018 ; 36 ( 4 ): 338 \u2013 345 . 29431738 10.1038/nbt.4060 5889714",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-17",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_77",
+            "content": "<REF-18> Kassambara A : fastqcr: Quality control of sequencing data . R package version 0.1.2. 2019 . Reference Source",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-18",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_78",
+            "content": "<REF-19> Chen S Zhou Y Chen Y : fastp: an ultra-fast all-in-one FASTQ preprocessor. Bioinformatics. 2018 ; 34 ( 17 ): i884 \u2013 i890 . 10.1093/bioinformatics/bty560",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-19",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_79",
+            "content": "<REF-20> Yang X Liu D Liu F : HTQC: a fast quality control toolkit for Illumina sequencing data. BMC Bioinformatics. 2013 ; 14 ( 1 ): 33 . 23363224 10.1186/1471-2105-14-33 3571943",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-20",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_80",
+            "content": "<REF-26> Prabakar RK Xu L Hicks J : SMURF-seq: efficient copy number profiling on long-read sequencers. Genome Biol. 2019 ; 20 ( 1 ): 134 . 10.1186/s13059-019-1732-1",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-26",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_81",
+            "content": "<REF-27> Margulies M Egholm M Altman WE : Genome sequencing in microfabricated high-density picolitre reactors. Nature. 2005 ; 437 ( 7057 ): 376 \u2013 80 . 16056220 10.1038/nature03959 1464427",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-27",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_82",
+            "content": "<REF-28> Rhoads A Au KF : PacBio Sequencing and Its Applications. Genomics Proteomics Bioinformatics. 2015 ; 13 ( 5 ): 278 \u2013 289 . 26542840 10.1016/j.gpb.2015.08.002 4678779",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-28",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "8-1874_v1_83",
+            "content": "<REF-29> Sievert C Parmer C Hocking T : plotly: Create Interactive Web Graphics via \u2018plotly. js\u2019 . 2017 . Reference Source",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-29",
+                "created_by": "F1000XMLParser"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "8-1874_v1_0@0",
+            "content": "Falco: high-speed FastQC emulation for quality control of sequencing data",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_0",
+            "start": 0,
+            "end": 72,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_2@0",
+            "content": "Quality control is an essential first step in sequencing data analysis, and software tools for quality control are deeply entrenched in standard pipelines at most sequencing centers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_2",
+            "start": 0,
+            "end": 181,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_2@1",
+            "content": "Although the associated computations are straightforward, in many settings the total computing effort required for quality control is appreciable and warrants optimization.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_2",
+            "start": 183,
+            "end": 354,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_2@2",
+            "content": "We present falco, an emulation of the popular FastQC tool that runs on average three times faster while generating equivalent results.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_2",
+            "start": 356,
+            "end": 489,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_2@3",
+            "content": "Compared to FastQC, falco also provides greater scalability for datasets with longer reads and more flexible visualization of HTML reports.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_2",
+            "start": 491,
+            "end": 629,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_4@0",
+            "content": "High-throughput sequencing is routinely used to profile copy number variations in cancers <REF-1> , assemble genomes of microbial organisms <REF-2> , <REF-3> , quantify gene expression <REF-4> , identify cell populations from single-cell transcriptomes in a variety of tissues <REF-5> and track epigenetic changes in developing organisms and diseases <REF-6> , among numerous other applications.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_4",
+            "start": 0,
+            "end": 394,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_4@1",
+            "content": "New sequencing protocols are constantly being introduced <REF-7> , <REF-8> , and as the cost of sequencing per base decreases, sequencing data is growing in abundance, dataset size and read length <REF-9> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_4",
+            "start": 396,
+            "end": 601,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_5@0",
+            "content": "When high-throughput sequencing data is generated it often undergoes common upstream analysis steps involving quality control (QC), adapter trimming, filtering contaminants and low-quality reads, and mapping reads to a reference genome or transcriptome.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_5",
+            "start": 0,
+            "end": 252,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_5@1",
+            "content": "Excluding sequence assembly applications, read mapping should be the most computationally expensive step early in analysis pipelines.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_5",
+            "start": 254,
+            "end": 386,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_5@2",
+            "content": "In comparison, the time and computation required for QC should be negligible.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_5",
+            "start": 388,
+            "end": 464,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_5@3",
+            "content": "However, the efficiency of mapping algorithms has improving substantially over the past decade, while software for QC has received far less attention.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_5",
+            "start": 466,
+            "end": 615,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_5@4",
+            "content": "As a consequence, the computation required for QC is appreciable, and can no longer be ignored when considering the total cost of sequencing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_5",
+            "start": 617,
+            "end": 757,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_6@0",
+            "content": "The most commonly used tool for quality control of sequencing data is FastQC <REF-10> , which, since 2011, has incorporated a wide range of QC checks covering multiple use cases.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_6",
+            "start": 0,
+            "end": 177,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_6@1",
+            "content": "FastQC has been cited over 3,000 times, with citations increasing steadily since its introduction.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_6",
+            "start": 179,
+            "end": 276,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_6@2",
+            "content": "Its analysis reports have become the standard for several QC tools, and automated analysis pipelines often rely on its evaluation as a safety criteria to proceed with downstream steps or, alternatively, to filter, trim or ultimately discard the data <REF-11> , <REF-12> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_6",
+            "start": 278,
+            "end": 548,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_7@0",
+            "content": "FastQC is implemented in a modular design, where multiple independent analysis procedures are run sequentially after an input record is read.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_7",
+            "start": 0,
+            "end": 140,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_7@1",
+            "content": "This design allows new modules to be incorporated easily, but it implies that each analysis module is applied independently to each read, so the time required to process each read is the sum of the processing times for each module.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_7",
+            "start": 142,
+            "end": 372,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_7@2",
+            "content": "If multiple modules use similar measurements, such as nucleotide content or average sequence quality, the same measurement will be calculated multiple times, causing the total analysis run time to increase.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_7",
+            "start": 374,
+            "end": 579,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_8@0",
+            "content": "Several QC software tools have been introduced since FastQC , many focusing on speed improvements, more flexible module visualization, incorporation of paired-end reads and filtering sequences that failed QC checks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_8",
+            "start": 0,
+            "end": 214,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_8@1",
+            "content": "Despite proposing different alternatives to calculate and present QC results, the modules available in these tools are largely similar to FastQC \u2019s ( Table 1 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_8",
+            "start": 216,
+            "end": 375,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_9@0",
+            "content": "Table 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_9",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_11@0",
+            "content": "At the same time, FastQC \u2019s analysis results are already part of many standard initial analysis pipelines.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_11",
+            "start": 0,
+            "end": 105,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_11@1",
+            "content": "If a new QC software tool were to be incorporated in these pipelines, it is desirable that its results, and its output formats, remain consistent with those of FastQC .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_11",
+            "start": 107,
+            "end": 274,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_12@0",
+            "content": "To improve the speed of quality control while retaining the behaviour of FastQC , we developed FastQC Alternative Code ( falco ) <REF-13> , an emulation of FastQC \u2019s current analysis modules.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_12",
+            "start": 0,
+            "end": 190,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_12@1",
+            "content": "We show that falco generates the same results as FastQC across a wide variety of datasets of different read lengths, sizes, file formats and library preparation protocols at significantly shorter running times.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_12",
+            "start": 192,
+            "end": 401,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_12@2",
+            "content": "We also present example datasets from the public domain where FastQC fails to generate reports even when run on high-performance computing hardware, demonstrating that falco expands the range of possible cases in which these quality control metrics can be applied.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_12",
+            "start": 403,
+            "end": 666,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_13@0",
+            "content": "Methods",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_13",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_14@0",
+            "content": "Implementation choices",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_14",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_15@0",
+            "content": "We designed falco <REF-13> to faithfully emulate FastQC \u2019s calculations, results and text reports.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_15",
+            "start": 0,
+            "end": 97,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_15@1",
+            "content": "Our goal was to minimize the effort required to replace FastQC with falco in the context of larger automated analysis pipelines.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_15",
+            "start": 99,
+            "end": 226,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_15@2",
+            "content": "We use the same set of command line arguments, configuration file names and formats.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_15",
+            "start": 228,
+            "end": 311,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_15@3",
+            "content": "We also produce the same plain text format output, and the same report structure as FastQC , allowing users to take advantage of improved speed without adjusting to different program behaviors.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_15",
+            "start": 313,
+            "end": 505,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_16@0",
+            "content": "There are major differences between the implementations of falco and FastQC .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_16",
+            "start": 0,
+            "end": 76,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_16@1",
+            "content": "While FastQC \u2019s code emphasizes modularity in a way that allows for additional types of QC information to be added easily and uniformly,",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_16",
+            "start": 78,
+            "end": 213,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_17@0",
+            "content": "falco \u2019s design centralizes the function to read sequences from the input file and collects the minimum data necessary to subsequently create all modules after file processing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_17",
+            "start": 0,
+            "end": 175,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_17@1",
+            "content": "To ensure consistency with FastQC , we wrote each module\u2019s source code based on FastQC \u2019s implementation, adapting the portions that relate to sequence processing and maintaining the postprocessing functions that define how the collected data is used to generate summaries and reports.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_17",
+            "start": 177,
+            "end": 461,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_18@0",
+            "content": "Operation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_18",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_19@0",
+            "content": "Compilation of falco requires a GNU GCC compiler version 5.0.0 (July 16, 2015; full support for the C++11 standard) or greater.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_19",
+            "start": 0,
+            "end": 126,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_19@1",
+            "content": "Once installed, falco can be run on uncompressed files (FASTQ and SAM) without any additional dependencies.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_19",
+            "start": 128,
+            "end": 234,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_19@2",
+            "content": "In order to process files in gzip compressed FASTQ and BAM formats, falco must be compiled with the ZLib <REF-14> and HTSLib <REF-15> libraries.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_19",
+            "start": 236,
+            "end": 379,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_19@3",
+            "content": "The full documentation on how to compile, install dependencies and run the program is available in the README file in the falco repository.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_19",
+            "start": 381,
+            "end": 519,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_20@0",
+            "content": "Use cases",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_20",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_21@0",
+            "content": "Like FastQC , falco <REF-13> can be applied to any sequencing data file ( i.e. a file of sequenced reads) in the accepted formats.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_21",
+            "start": 0,
+            "end": 129,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_21@1",
+            "content": "The only required command line argument is the path to the input file.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_21",
+            "start": 131,
+            "end": 200,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_21@2",
+            "content": "Also like FastQC , a wide range of options can be provided if users only require a given subset of its analysis modules or outputs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_21",
+            "start": 202,
+            "end": 332,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_21@3",
+            "content": "The letters and symbols used for command line arguments were chosen to maintain consistency with FastQC\u2019s options.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_21",
+            "start": 334,
+            "end": 447,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_21@4",
+            "content": "As mentioned above, this choice is to facilitate integration with larger pipelines that already employ FastQC and depend on its behaviours.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_21",
+            "start": 449,
+            "end": 587,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_22@0",
+            "content": "Falco can be run on a FASTQ format file named example.fastq with the following simple command:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_22",
+            "start": 0,
+            "end": 93,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_23@0",
+            "content": "- $ falco example.fastq",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_23",
+            "start": 0,
+            "end": 22,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_24@0",
+            "content": "This will generate three files:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_24",
+            "start": 0,
+            "end": 30,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_25@0",
+            "content": "- 1. fastqc_data.txt: The complete numerical values generated in each module\u2019s individual analysis.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_25",
+            "start": 0,
+            "end": 98,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_25@1",
+            "content": "- 2. fastqc_report.html: A visual page display of the text report\u2019s data and plots generated in modules.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_25",
+            "start": 100,
+            "end": 203,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_25@2",
+            "content": "- 3. summary.txt: A short summary indicating whether the input file passed or failed each module, and whether any warnings were raised.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_25",
+            "start": 205,
+            "end": 339,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_26@0",
+            "content": "Default configuration files are contained in a Configuration directory that is included with the program, but falco also allows users to manually define the thresholds for statistics to be considered a pass, warning or fail, the list of adapters to search for in reads and the list of contaminants to check overrepresented sequences by using configuration files in the same format used by FastQC .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_26",
+            "start": 0,
+            "end": 396,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_27@0",
+            "content": "Results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_27",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_28@0",
+            "content": "Falco matches FastQC \u2019s output",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_28",
+            "start": 0,
+            "end": 29,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_29@0",
+            "content": "We compared the output of falco <REF-13> to its FastQC counterpart using 11 datasets ( Table 2 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_29",
+            "start": 0,
+            "end": 96,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_29@1",
+            "content": "The tests consist of Illumina files originating from a range of different library preparation protocols for DNA, RNA and epigenetic experiments, as well as reads from the nanopore <REF-16> technology.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_29",
+            "start": 98,
+            "end": 297,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_29@2",
+            "content": "For simplicity, Illumina paired-end datasets were only tested on their first read.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_29",
+            "start": 299,
+            "end": 380,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_30@0",
+            "content": "Table 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_30",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_32@0",
+            "content": "FASTQ files available in the Sequencing Read Archive (SRA) were downloaded using the fastq-dump command from the SRA toolkit.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_32",
+            "start": 0,
+            "end": 124,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_32@1",
+            "content": "We used the following flags when running fastq-dump: -skip-technical, -readids, -read-filter pass, -dumpbase, -split-3 and -clip .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_32",
+            "start": 126,
+            "end": 255,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_32@2",
+            "content": "One dataset was downloaded from the Whole Human Genome Sequencing Project <REF-17> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_32",
+            "start": 257,
+            "end": 340,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_33@0",
+            "content": "We directly compared the text summary for each output of falco to FastQC \u2019s output summary files, obtaining the same outputs (pass/warn/fail) for all tested criteria in all datasets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_33",
+            "start": 0,
+            "end": 181,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_34@0",
+            "content": "To assess if falco \u2019s output is consistent with FastQC \u2019s format, we used the fastqcr <REF-18> R package version 0.1.2 and MultiQC <REF-11> version 1.7.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_34",
+            "start": 0,
+            "end": 151,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_34@1",
+            "content": "Both tools can successfully parse the text reports generated by falco for the tested files.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_34",
+            "start": 153,
+            "end": 243,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_34@2",
+            "content": "Differences in the fastq_data.txt files between the two programs result from choices for numerical precision output, or as a result of falco calculating certain averages based on more of the data within each file.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_34",
+            "start": 245,
+            "end": 457,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_35@0",
+            "content": "Falco is faster than popular QC tools",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_35",
+            "start": 0,
+            "end": 36,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_36@0",
+            "content": "Some alternative software tools exist for quality control of sequencing data, and users may opt for them due to their efficiency in cases where not all FastQC analysis modules are necessary.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_36",
+            "start": 0,
+            "end": 189,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_36@1",
+            "content": "Among these, fastp <REF-19> has gained popularity for its speed and versatile set of options for trimming.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_36",
+            "start": 191,
+            "end": 296,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_36@2",
+            "content": "fastp has demonstrated superior runtime to FastQC even when generating FASTQ format output files corrected by trimming adapters and filtering (which requires both input and output).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_36",
+            "start": 298,
+            "end": 478,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_36@3",
+            "content": "HTQC <REF-20> is another tool that was developed with the intent to both improve speed performance and incorporate trimming functions after quality control.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_36",
+            "start": 480,
+            "end": 635,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_36@4",
+            "content": "The two programs were used as benchmarks to compare with falco \u2019s performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_36",
+            "start": 637,
+            "end": 714,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_37@0",
+            "content": "Although most fastp modules are both calculated and displayed equivalently to FastQC , one major difference between these tools is how overrepresented sequences are estimated.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_37",
+            "start": 0,
+            "end": 174,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_37@1",
+            "content": "fastp counts the sequences at every P reads (which users may specify), whereas FastQC stores the first 100,000 reads encountered for the first time, and subsequently checks if the following sequences match any of the stored candidates.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_37",
+            "start": 176,
+            "end": 410,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_37@2",
+            "content": "This choice of implementation causes fastp \u2019s runtime to greatly differ when over-representation is enabled.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_37",
+            "start": 412,
+            "end": 519,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_37@3",
+            "content": "Conversely, FastQC \u2019s runtime does not seem to be affected by disabling the overrepresented sequences module.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_37",
+            "start": 521,
+            "end": 629,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_37@4",
+            "content": "For a comprehensive comparison between programs, we have measured the run times for our test datasets both with and without the overrepresented sequences module enabled.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_37",
+            "start": 631,
+            "end": 799,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_37@5",
+            "content": "Programs were compared both in compressed (gzipped FASTQ) and uncompressed (plain FASTQ) file formats.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_37",
+            "start": 801,
+            "end": 902,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_38@0",
+            "content": "Files used to assess falco \u2019s output comparison to FastQC ( Table 2 ) were also used for speed benchmarking.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_38",
+            "start": 0,
+            "end": 107,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_38@1",
+            "content": "Tests were executed in an Intel Xeon CPU E5-2640 v3 2.60GHz processor with a CentOS Linux 7 operating system.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_38",
+            "start": 109,
+            "end": 217,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_38@2",
+            "content": "All file I/O was done using local disk to reduce variability in execution runtime.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_38",
+            "start": 219,
+            "end": 300,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_38@3",
+            "content": "Programs were instructed to run using a single thread.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_38",
+            "start": 302,
+            "end": 355,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_39@0",
+            "content": "FastQC version 0.11.8 was run with default parameters and the configuration limits, adapters and contaminants provided with the software.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_39",
+            "start": 0,
+            "end": 136,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_39@1",
+            "content": "fastp version 0.20.0 was run with the -A , -G , -Q and -L flags to disable adapter trimming, poly-G trimming, quality filtering and length filtering, thus requiring the program to only perform QC checks without generating a new FASTQ file.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_39",
+            "start": 138,
+            "end": 376,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_39@2",
+            "content": "When testing for overrepresented sequences, we set the -p flag to enable this module, and set the frequency of counts to the program\u2019s default value of P = 20.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_39",
+            "start": 378,
+            "end": 536,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_39@3",
+            "content": "We ran the ht-stat program on the tested files using the -S flag for single-ended reads.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_39",
+            "start": 538,
+            "end": 625,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_39@4",
+            "content": "HTQC was not tested on gzip",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_39",
+            "start": 627,
+            "end": 653,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_40@0",
+            "content": "compressed files as this file format is not accepted by the program.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_40",
+            "start": 0,
+            "end": 67,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_40@1",
+            "content": "We used the time command (using the BASH shell keyword) to measure the total running times for each program, using the real time (total wall clock from program start to finish) as measurement.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_40",
+            "start": 69,
+            "end": 260,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_40@2",
+            "content": "The benchmarking results ( Table 3 and Table 4 ) show that falco performs faster than fastp and FastQC in all datasets, with an average 3x faster runtime than FastQC , both with the overrepresented sequences module on and off.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_40",
+            "start": 262,
+            "end": 487,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_40@3",
+            "content": "Despite HTQC failing to process most test datasets due to unaccepted header formats, the two tests that ran to completion demonstrate that falco \u2019s analysis times are also significantly smaller in comparison.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_40",
+            "start": 489,
+            "end": 696,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_41@0",
+            "content": "Table 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_41",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_43@0",
+            "content": "Table 4.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_43",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_45@0",
+            "content": "Falco scales for longer Nanopore reads",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_45",
+            "start": 0,
+            "end": 37,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_46@0",
+            "content": "Nanopore sequencing is gaining popularity in genome assembly applications and as a low-cost protocol to quantify short reads <REF-26> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_46",
+            "start": 0,
+            "end": 134,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_46@1",
+            "content": "Nanopore sequencers can generate reads of up to millions of bases, and assessing quality metrics for these datasets is fundamental to test for potential problems in quality or bias in specific regions of such long reads.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_46",
+            "start": 136,
+            "end": 355,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_46@2",
+            "content": "While FastQC is capable of making summaries for protocols such as 454 <REF-27> PacBio <REF-28> , which generate sequences with around 10,000 bases per read, we have observed that it does not run to completion when given files with larger reads of over 100,000 bases.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_46",
+            "start": 357,
+            "end": 622,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_46@3",
+            "content": "Files for which FastQC \u2019s analysis does not finish are marked with an asterisk in Table 3 and Table 4 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_46",
+            "start": 624,
+            "end": 726,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_46@4",
+            "content": "Falco successfully completes its analysis on these datasets, demonstrating that it can equally be used as a QC tool for longer reads.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_46",
+            "start": 728,
+            "end": 860,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_47@0",
+            "content": "Falco allows dynamic visualization of results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_47",
+            "start": 0,
+            "end": 44,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_48@0",
+            "content": "Despite FastQC \u2019s clarity in its HTML reports, graphs are displayed as static images and have limited visualization flexibility, such as tile heatmaps not displaying raw deviations from average Phred scores in base positions or raw values in line plots not being visible.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_48",
+            "start": 0,
+            "end": 270,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_48@1",
+            "content": "We have opted to display falco \u2019s analysis results using the Plotly JavaScript library <REF-29> , which allows interactive changes of axis labels, hovering on data points to visualize raw values and screenshots from specific position on the plot ( Figure 1 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_48",
+            "start": 272,
+            "end": 530,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_48@2",
+            "content": "This choice of presentation provides greater options to explore and interpret QC results while maintaining the visualization standards set by FastQC .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_48",
+            "start": 532,
+            "end": 681,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_49@0",
+            "content": "Figure 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_49",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_51@0",
+            "content": "Conclusions",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_51",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_52@0",
+            "content": "Falco <REF-13> is a faster alternative to calculate the wide range of QC metrics generated by FastQC .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_52",
+            "start": 0,
+            "end": 101,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_52@1",
+            "content": "It is entirely based on emulating the analysis modules FastQC provides while running faster than popular QC tools and generating dynamic visual summaries of analysis results.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_52",
+            "start": 103,
+            "end": 276,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_52@2",
+            "content": "Both falco \u2019s text and HTML outputs provide the same information generated by FastQC \u2019s report, so tools that parse these files for custom visualization and downstream analysis can seamlessly incorporate falco into their pipeline.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_52",
+            "start": 278,
+            "end": 507,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_53@0",
+            "content": "Data availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_53",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_54@0",
+            "content": "Datasets used to compare Falco and FastQC are shown in Table 2 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_54",
+            "start": 0,
+            "end": 63,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_54@1",
+            "content": "Guidance for how to accept accession wgs-FAB49164 is available from the Benchmark directory of the falco GitHub page .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_54",
+            "start": 65,
+            "end": 182,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_55@0",
+            "content": "Software availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_55",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_56@0",
+            "content": "Source code for falco available at: https://github.com/smithlabcode/falco .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_56",
+            "start": 0,
+            "end": 74,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_57@0",
+            "content": "The scripts used to download files and reproduce the benchmarking steps described are also available in the same repository within the \u201cbenchmark\u201d directory.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_57",
+            "start": 0,
+            "end": 156,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_58@0",
+            "content": "Archived source code at time of publication: http://doi.org/10.5281/zenodo.3520933 <REF-13> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_58",
+            "start": 0,
+            "end": 92,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_59@0",
+            "content": "License: GNU General Public License version 3.0 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_59",
+            "start": 0,
+            "end": 48,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_60@0",
+            "content": "<REF-1> Alkan C Kidd JM Marques-Bonet T : Personalized copy number and segmental duplication maps using next-generation sequencing. Nat Genet. 2009 ; 41 ( 10 ): 1061 \u2013 7 . 19718026 10.1038/ng.437 2875196",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_60",
+            "start": 0,
+            "end": 202,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_61@0",
+            "content": "<REF-2> Loman NJ Quick J Simpson JT : A complete bacterial genome assembled de novo using only nanopore sequencing data. Nat Methods. 2015 ; 12 ( 8 ): 733 \u2013 5 . 26076426 10.1038/nmeth.3444",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_61",
+            "start": 0,
+            "end": 187,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_62@0",
+            "content": "<REF-3> Masella AP Bartram AK Truszkowski JM : PANDAseq: paired-end assembler for illumina sequences. BMC Bioinformatics. 2012 ; 13 ( 1 ): 31 . 22333067 10.1186/1471-2105-13-31 3471323",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_62",
+            "start": 0,
+            "end": 183,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_63@0",
+            "content": "<REF-4> Ozsolak F Milos PM : RNA sequencing: advances, challenges and opportunities. Nat Rev Genet. 2011 ; 12 ( 2 ): 87 \u2013 98 . 21191423 10.1038/nrg2934 3031867",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_63",
+            "start": 0,
+            "end": 158,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_64@0",
+            "content": "<REF-5> Han X Wang R Zhou Y : Mapping the Mouse Cell Atlas by Microwell-Seq. Cell. 2018 ; 172 ( 5 ): 1091 \u2013 1107.e17 . 29474909 10.1016/j.cell.2018.02.001",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_64",
+            "start": 0,
+            "end": 153,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_65@0",
+            "content": "<REF-6> Buenrostro JD Wu B Chang HY : ATAC-seq: A Method for Assaying Chromatin Accessibility Genome-Wide. Curr Protoc Mol Biol. 2015 ; 109 ( 1 ): 21.29.1 \u2013 9 . 25559105 10.1002/0471142727.mb2129s109 4374986",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_65",
+            "start": 0,
+            "end": 206,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_66@0",
+            "content": "<REF-7> Datlinger P Rendeiro AF Schmidl C : Pooled CRISPR screening with single-cell transcriptome readout. Nat Methods. 2017 ; 14 ( 3 ): 297 \u2013 301 . 28099430 10.1038/nmeth.4177 5334791",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_66",
+            "start": 0,
+            "end": 184,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_67@0",
+            "content": "<REF-8> Spanjaard B Hu B Mitic N : Simultaneous lineage tracing and cell-type identification using CRISPR\u2013Cas9-induced genetic scars. Nat Biotechnol. 2018 ; 36 ( 5 ): 469 \u2013 473 . 29644996 10.1038/nbt.4124 5942543",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_67",
+            "start": 0,
+            "end": 211,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_68@0",
+            "content": "<REF-9> Svensson V Vento-Tormo R Teichmann SA : Exponential scaling of single-cell RNA-seq in the past decade. Nat Protoc. 2018 ; 13 ( 4 ): 599 \u2013 604 . 29494575 10.1038/nprot.2017.149",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_68",
+            "start": 0,
+            "end": 182,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_69@0",
+            "content": "<REF-10> Andrews S : FastQC: a quality control tool for high throughput sequence data . 2010 . Reference Source",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_69",
+            "start": 0,
+            "end": 110,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_70@0",
+            "content": "<REF-11> Ewels P Magnusson M Lundin S : MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 ; 32 ( 19 ): 3047 \u2013 3048 . 10.1093/bioinformatics/btw354",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_70",
+            "start": 0,
+            "end": 203,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_71@0",
+            "content": "<REF-12> Brown J Pirrung M McCue LA : FQC Dashboard: integrates FastQC results into a web-based, interactive, and extensible FASTQ quality control tool. Bioinformatics. 2017 ; 33 ( 19 ): 3137 \u2013 3139 . 28605449 10.1093/bioinformatics/btx373 5870778",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_71",
+            "start": 0,
+            "end": 246,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_72@0",
+            "content": "<REF-13> Sena G Smith A : smithlabcode/falco: 0.1 - 2019/10/28 . 2019 . http://www.doi.org/10.5281/zenodo.3520933",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_72",
+            "start": 0,
+            "end": 112,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_73@0",
+            "content": "<REF-14> Deutsch P Gailly JL : Zlib compressed data format specification version 3.3 . 1996 . 10.17487/RFC1950",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_73",
+            "start": 0,
+            "end": 109,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_74@0",
+            "content": "<REF-15> Li H Handsaker B Wysoker A : The Sequence Alignment/Map format and SAMtools. Bioinformatics. 2009 ; 25 ( 16 ): 2078 \u2013 2079 . 19505943 10.1093/bioinformatics/btp352 2723002",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_74",
+            "start": 0,
+            "end": 179,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_75@0",
+            "content": "<REF-16> Jain M Olsen HE Paten B : The Oxford Nanopore MinION: delivery of nanopore sequencing to the genomics community. Genome Biol. 2016 ; 17 ( 1 ): 239 . 27887629 10.1186/s13059-016-1103-0 5124260",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_75",
+            "start": 0,
+            "end": 199,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_76@0",
+            "content": "<REF-17> Jain M Koren S Miga KH : Nanopore sequencing and assembly of a human genome with ultra-long reads. Nat Biotechnol. 2018 ; 36 ( 4 ): 338 \u2013 345 . 29431738 10.1038/nbt.4060 5889714",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_76",
+            "start": 0,
+            "end": 185,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_77@0",
+            "content": "<REF-18> Kassambara A : fastqcr: Quality control of sequencing data . R package version 0.1.2. 2019 . Reference Source",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_77",
+            "start": 0,
+            "end": 117,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_78@0",
+            "content": "<REF-19> Chen S Zhou Y Chen Y : fastp: an ultra-fast all-in-one FASTQ preprocessor. Bioinformatics. 2018 ; 34 ( 17 ): i884 \u2013 i890 . 10.1093/bioinformatics/bty560",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_78",
+            "start": 0,
+            "end": 160,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_79@0",
+            "content": "<REF-20> Yang X Liu D Liu F : HTQC: a fast quality control toolkit for Illumina sequencing data. BMC Bioinformatics. 2013 ; 14 ( 1 ): 33 . 23363224 10.1186/1471-2105-14-33 3571943",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_79",
+            "start": 0,
+            "end": 178,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_80@0",
+            "content": "<REF-26> Prabakar RK Xu L Hicks J : SMURF-seq: efficient copy number profiling on long-read sequencers. Genome Biol. 2019 ; 20 ( 1 ): 134 . 10.1186/s13059-019-1732-1",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_80",
+            "start": 0,
+            "end": 164,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_81@0",
+            "content": "<REF-27> Margulies M Egholm M Altman WE : Genome sequencing in microfabricated high-density picolitre reactors. Nature. 2005 ; 437 ( 7057 ): 376 \u2013 80 . 16056220 10.1038/nature03959 1464427",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_81",
+            "start": 0,
+            "end": 187,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_82@0",
+            "content": "<REF-28> Rhoads A Au KF : PacBio Sequencing and Its Applications. Genomics Proteomics Bioinformatics. 2015 ; 13 ( 5 ): 278 \u2013 289 . 26542840 10.1016/j.gpb.2015.08.002 4678779",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_82",
+            "start": 0,
+            "end": 172,
+            "label": {}
+        },
+        {
+            "ix": "8-1874_v1_83@0",
+            "content": "<REF-29> Sievert C Parmer C Hocking T : plotly: Create Interactive Web Graphics via \u2018plotly. js\u2019 . 2017 . Reference Source",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "8-1874_v1_83",
+            "start": 0,
+            "end": 121,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "8-1874_v1_0",
+            "tgt_ix": "8-1874_v1_1",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_1",
+            "tgt_ix": "8-1874_v1_2",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_0",
+            "tgt_ix": "8-1874_v1_3",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_3",
+            "tgt_ix": "8-1874_v1_4",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_3",
+            "tgt_ix": "8-1874_v1_5",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_3",
+            "tgt_ix": "8-1874_v1_6",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_3",
+            "tgt_ix": "8-1874_v1_7",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_3",
+            "tgt_ix": "8-1874_v1_8",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_3",
+            "tgt_ix": "8-1874_v1_9",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_9",
+            "tgt_ix": "8-1874_v1_10",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_3",
+            "tgt_ix": "8-1874_v1_11",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_3",
+            "tgt_ix": "8-1874_v1_12",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_0",
+            "tgt_ix": "8-1874_v1_13",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_13",
+            "tgt_ix": "8-1874_v1_14",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_14",
+            "tgt_ix": "8-1874_v1_15",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_14",
+            "tgt_ix": "8-1874_v1_16",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_14",
+            "tgt_ix": "8-1874_v1_17",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_13",
+            "tgt_ix": "8-1874_v1_18",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_18",
+            "tgt_ix": "8-1874_v1_19",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_0",
+            "tgt_ix": "8-1874_v1_20",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_20",
+            "tgt_ix": "8-1874_v1_21",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_20",
+            "tgt_ix": "8-1874_v1_22",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_20",
+            "tgt_ix": "8-1874_v1_23",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_20",
+            "tgt_ix": "8-1874_v1_24",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_20",
+            "tgt_ix": "8-1874_v1_25",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_20",
+            "tgt_ix": "8-1874_v1_26",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_0",
+            "tgt_ix": "8-1874_v1_27",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_27",
+            "tgt_ix": "8-1874_v1_28",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_28",
+            "tgt_ix": "8-1874_v1_29",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_28",
+            "tgt_ix": "8-1874_v1_30",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_30",
+            "tgt_ix": "8-1874_v1_31",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_28",
+            "tgt_ix": "8-1874_v1_32",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_28",
+            "tgt_ix": "8-1874_v1_33",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_28",
+            "tgt_ix": "8-1874_v1_34",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_27",
+            "tgt_ix": "8-1874_v1_35",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_35",
+            "tgt_ix": "8-1874_v1_36",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_35",
+            "tgt_ix": "8-1874_v1_37",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_35",
+            "tgt_ix": "8-1874_v1_38",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_35",
+            "tgt_ix": "8-1874_v1_39",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_35",
+            "tgt_ix": "8-1874_v1_40",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_35",
+            "tgt_ix": "8-1874_v1_41",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_41",
+            "tgt_ix": "8-1874_v1_42",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_35",
+            "tgt_ix": "8-1874_v1_43",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_43",
+            "tgt_ix": "8-1874_v1_44",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_27",
+            "tgt_ix": "8-1874_v1_45",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_45",
+            "tgt_ix": "8-1874_v1_46",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_27",
+            "tgt_ix": "8-1874_v1_47",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_47",
+            "tgt_ix": "8-1874_v1_48",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_47",
+            "tgt_ix": "8-1874_v1_49",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_49",
+            "tgt_ix": "8-1874_v1_50",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_0",
+            "tgt_ix": "8-1874_v1_51",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_51",
+            "tgt_ix": "8-1874_v1_52",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_0",
+            "tgt_ix": "8-1874_v1_53",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_53",
+            "tgt_ix": "8-1874_v1_54",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_0",
+            "tgt_ix": "8-1874_v1_55",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_55",
+            "tgt_ix": "8-1874_v1_56",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_55",
+            "tgt_ix": "8-1874_v1_57",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_55",
+            "tgt_ix": "8-1874_v1_58",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_55",
+            "tgt_ix": "8-1874_v1_59",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_0",
+            "tgt_ix": "8-1874_v1_1",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_1",
+            "tgt_ix": "8-1874_v1_2",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_2",
+            "tgt_ix": "8-1874_v1_3",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_3",
+            "tgt_ix": "8-1874_v1_4",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_4",
+            "tgt_ix": "8-1874_v1_5",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_5",
+            "tgt_ix": "8-1874_v1_6",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_6",
+            "tgt_ix": "8-1874_v1_7",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_7",
+            "tgt_ix": "8-1874_v1_8",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_8",
+            "tgt_ix": "8-1874_v1_9",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_9",
+            "tgt_ix": "8-1874_v1_10",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_10",
+            "tgt_ix": "8-1874_v1_11",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_11",
+            "tgt_ix": "8-1874_v1_12",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_12",
+            "tgt_ix": "8-1874_v1_13",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_13",
+            "tgt_ix": "8-1874_v1_14",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_14",
+            "tgt_ix": "8-1874_v1_15",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_15",
+            "tgt_ix": "8-1874_v1_16",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_16",
+            "tgt_ix": "8-1874_v1_17",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_17",
+            "tgt_ix": "8-1874_v1_18",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_18",
+            "tgt_ix": "8-1874_v1_19",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_19",
+            "tgt_ix": "8-1874_v1_20",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_20",
+            "tgt_ix": "8-1874_v1_21",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_21",
+            "tgt_ix": "8-1874_v1_22",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_22",
+            "tgt_ix": "8-1874_v1_23",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_23",
+            "tgt_ix": "8-1874_v1_24",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_24",
+            "tgt_ix": "8-1874_v1_25",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_25",
+            "tgt_ix": "8-1874_v1_26",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_26",
+            "tgt_ix": "8-1874_v1_27",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_27",
+            "tgt_ix": "8-1874_v1_28",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_28",
+            "tgt_ix": "8-1874_v1_29",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_29",
+            "tgt_ix": "8-1874_v1_30",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_30",
+            "tgt_ix": "8-1874_v1_31",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_31",
+            "tgt_ix": "8-1874_v1_32",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_32",
+            "tgt_ix": "8-1874_v1_33",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_33",
+            "tgt_ix": "8-1874_v1_34",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_34",
+            "tgt_ix": "8-1874_v1_35",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_35",
+            "tgt_ix": "8-1874_v1_36",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_36",
+            "tgt_ix": "8-1874_v1_37",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_37",
+            "tgt_ix": "8-1874_v1_38",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_38",
+            "tgt_ix": "8-1874_v1_39",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_39",
+            "tgt_ix": "8-1874_v1_40",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_40",
+            "tgt_ix": "8-1874_v1_41",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_41",
+            "tgt_ix": "8-1874_v1_42",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_42",
+            "tgt_ix": "8-1874_v1_43",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_43",
+            "tgt_ix": "8-1874_v1_44",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_44",
+            "tgt_ix": "8-1874_v1_45",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_45",
+            "tgt_ix": "8-1874_v1_46",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_46",
+            "tgt_ix": "8-1874_v1_47",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_47",
+            "tgt_ix": "8-1874_v1_48",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_48",
+            "tgt_ix": "8-1874_v1_49",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_49",
+            "tgt_ix": "8-1874_v1_50",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_50",
+            "tgt_ix": "8-1874_v1_51",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_51",
+            "tgt_ix": "8-1874_v1_52",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_52",
+            "tgt_ix": "8-1874_v1_53",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_53",
+            "tgt_ix": "8-1874_v1_54",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_54",
+            "tgt_ix": "8-1874_v1_55",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_55",
+            "tgt_ix": "8-1874_v1_56",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_56",
+            "tgt_ix": "8-1874_v1_57",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_57",
+            "tgt_ix": "8-1874_v1_58",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_58",
+            "tgt_ix": "8-1874_v1_59",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_4",
+            "tgt_ix": "8-1874_v1_60",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_4",
+            "tgt_ix": "8-1874_v1_61",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_4",
+            "tgt_ix": "8-1874_v1_62",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_4",
+            "tgt_ix": "8-1874_v1_63",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_4",
+            "tgt_ix": "8-1874_v1_64",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_4",
+            "tgt_ix": "8-1874_v1_65",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_4",
+            "tgt_ix": "8-1874_v1_66",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_4",
+            "tgt_ix": "8-1874_v1_67",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_4",
+            "tgt_ix": "8-1874_v1_68",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_6",
+            "tgt_ix": "8-1874_v1_69",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_6",
+            "tgt_ix": "8-1874_v1_70",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_6",
+            "tgt_ix": "8-1874_v1_71",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_12",
+            "tgt_ix": "8-1874_v1_72",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_19",
+            "tgt_ix": "8-1874_v1_73",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_19",
+            "tgt_ix": "8-1874_v1_74",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_29",
+            "tgt_ix": "8-1874_v1_75",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_32",
+            "tgt_ix": "8-1874_v1_76",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_34",
+            "tgt_ix": "8-1874_v1_77",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_36",
+            "tgt_ix": "8-1874_v1_78",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_36",
+            "tgt_ix": "8-1874_v1_79",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_46",
+            "tgt_ix": "8-1874_v1_80",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_46",
+            "tgt_ix": "8-1874_v1_81",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_46",
+            "tgt_ix": "8-1874_v1_82",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_48",
+            "tgt_ix": "8-1874_v1_83",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_8",
+            "tgt_ix": "8-1874_v1_10",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_29",
+            "tgt_ix": "8-1874_v1_31",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_40",
+            "tgt_ix": "8-1874_v1_42",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_40",
+            "tgt_ix": "8-1874_v1_44",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_48",
+            "tgt_ix": "8-1874_v1_50",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_0",
+            "tgt_ix": "8-1874_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_1",
+            "tgt_ix": "8-1874_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_2",
+            "tgt_ix": "8-1874_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_2",
+            "tgt_ix": "8-1874_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_2",
+            "tgt_ix": "8-1874_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_2",
+            "tgt_ix": "8-1874_v1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_3",
+            "tgt_ix": "8-1874_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_4",
+            "tgt_ix": "8-1874_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_4",
+            "tgt_ix": "8-1874_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_5",
+            "tgt_ix": "8-1874_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_5",
+            "tgt_ix": "8-1874_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_5",
+            "tgt_ix": "8-1874_v1_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_5",
+            "tgt_ix": "8-1874_v1_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_5",
+            "tgt_ix": "8-1874_v1_5@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_6",
+            "tgt_ix": "8-1874_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_6",
+            "tgt_ix": "8-1874_v1_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_6",
+            "tgt_ix": "8-1874_v1_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_7",
+            "tgt_ix": "8-1874_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_7",
+            "tgt_ix": "8-1874_v1_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_7",
+            "tgt_ix": "8-1874_v1_7@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_8",
+            "tgt_ix": "8-1874_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_8",
+            "tgt_ix": "8-1874_v1_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_9",
+            "tgt_ix": "8-1874_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_11",
+            "tgt_ix": "8-1874_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_11",
+            "tgt_ix": "8-1874_v1_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_12",
+            "tgt_ix": "8-1874_v1_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_12",
+            "tgt_ix": "8-1874_v1_12@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_12",
+            "tgt_ix": "8-1874_v1_12@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_13",
+            "tgt_ix": "8-1874_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_14",
+            "tgt_ix": "8-1874_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_15",
+            "tgt_ix": "8-1874_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_15",
+            "tgt_ix": "8-1874_v1_15@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_15",
+            "tgt_ix": "8-1874_v1_15@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_15",
+            "tgt_ix": "8-1874_v1_15@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_16",
+            "tgt_ix": "8-1874_v1_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_16",
+            "tgt_ix": "8-1874_v1_16@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_17",
+            "tgt_ix": "8-1874_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_17",
+            "tgt_ix": "8-1874_v1_17@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_18",
+            "tgt_ix": "8-1874_v1_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_19",
+            "tgt_ix": "8-1874_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_19",
+            "tgt_ix": "8-1874_v1_19@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_19",
+            "tgt_ix": "8-1874_v1_19@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_19",
+            "tgt_ix": "8-1874_v1_19@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_20",
+            "tgt_ix": "8-1874_v1_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_21",
+            "tgt_ix": "8-1874_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_21",
+            "tgt_ix": "8-1874_v1_21@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_21",
+            "tgt_ix": "8-1874_v1_21@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_21",
+            "tgt_ix": "8-1874_v1_21@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_21",
+            "tgt_ix": "8-1874_v1_21@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_22",
+            "tgt_ix": "8-1874_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_23",
+            "tgt_ix": "8-1874_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_24",
+            "tgt_ix": "8-1874_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_25",
+            "tgt_ix": "8-1874_v1_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_25",
+            "tgt_ix": "8-1874_v1_25@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_25",
+            "tgt_ix": "8-1874_v1_25@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_26",
+            "tgt_ix": "8-1874_v1_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_27",
+            "tgt_ix": "8-1874_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_28",
+            "tgt_ix": "8-1874_v1_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_29",
+            "tgt_ix": "8-1874_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_29",
+            "tgt_ix": "8-1874_v1_29@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_29",
+            "tgt_ix": "8-1874_v1_29@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_30",
+            "tgt_ix": "8-1874_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_32",
+            "tgt_ix": "8-1874_v1_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_32",
+            "tgt_ix": "8-1874_v1_32@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_32",
+            "tgt_ix": "8-1874_v1_32@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_33",
+            "tgt_ix": "8-1874_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_34",
+            "tgt_ix": "8-1874_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_34",
+            "tgt_ix": "8-1874_v1_34@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_34",
+            "tgt_ix": "8-1874_v1_34@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_35",
+            "tgt_ix": "8-1874_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_36",
+            "tgt_ix": "8-1874_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_36",
+            "tgt_ix": "8-1874_v1_36@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_36",
+            "tgt_ix": "8-1874_v1_36@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_36",
+            "tgt_ix": "8-1874_v1_36@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_36",
+            "tgt_ix": "8-1874_v1_36@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_37",
+            "tgt_ix": "8-1874_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_37",
+            "tgt_ix": "8-1874_v1_37@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_37",
+            "tgt_ix": "8-1874_v1_37@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_37",
+            "tgt_ix": "8-1874_v1_37@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_37",
+            "tgt_ix": "8-1874_v1_37@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_37",
+            "tgt_ix": "8-1874_v1_37@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_38",
+            "tgt_ix": "8-1874_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_38",
+            "tgt_ix": "8-1874_v1_38@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_38",
+            "tgt_ix": "8-1874_v1_38@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_38",
+            "tgt_ix": "8-1874_v1_38@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_39",
+            "tgt_ix": "8-1874_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_39",
+            "tgt_ix": "8-1874_v1_39@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_39",
+            "tgt_ix": "8-1874_v1_39@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_39",
+            "tgt_ix": "8-1874_v1_39@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_39",
+            "tgt_ix": "8-1874_v1_39@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_40",
+            "tgt_ix": "8-1874_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_40",
+            "tgt_ix": "8-1874_v1_40@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_40",
+            "tgt_ix": "8-1874_v1_40@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_40",
+            "tgt_ix": "8-1874_v1_40@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_41",
+            "tgt_ix": "8-1874_v1_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_43",
+            "tgt_ix": "8-1874_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_45",
+            "tgt_ix": "8-1874_v1_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_46",
+            "tgt_ix": "8-1874_v1_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_46",
+            "tgt_ix": "8-1874_v1_46@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_46",
+            "tgt_ix": "8-1874_v1_46@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_46",
+            "tgt_ix": "8-1874_v1_46@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_46",
+            "tgt_ix": "8-1874_v1_46@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_47",
+            "tgt_ix": "8-1874_v1_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_48",
+            "tgt_ix": "8-1874_v1_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_48",
+            "tgt_ix": "8-1874_v1_48@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_48",
+            "tgt_ix": "8-1874_v1_48@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_49",
+            "tgt_ix": "8-1874_v1_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_51",
+            "tgt_ix": "8-1874_v1_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_52",
+            "tgt_ix": "8-1874_v1_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_52",
+            "tgt_ix": "8-1874_v1_52@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_52",
+            "tgt_ix": "8-1874_v1_52@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_53",
+            "tgt_ix": "8-1874_v1_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_54",
+            "tgt_ix": "8-1874_v1_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_54",
+            "tgt_ix": "8-1874_v1_54@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_55",
+            "tgt_ix": "8-1874_v1_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_56",
+            "tgt_ix": "8-1874_v1_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_57",
+            "tgt_ix": "8-1874_v1_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_58",
+            "tgt_ix": "8-1874_v1_58@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_59",
+            "tgt_ix": "8-1874_v1_59@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_60",
+            "tgt_ix": "8-1874_v1_60@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_61",
+            "tgt_ix": "8-1874_v1_61@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_62",
+            "tgt_ix": "8-1874_v1_62@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_63",
+            "tgt_ix": "8-1874_v1_63@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_64",
+            "tgt_ix": "8-1874_v1_64@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_65",
+            "tgt_ix": "8-1874_v1_65@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_66",
+            "tgt_ix": "8-1874_v1_66@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_67",
+            "tgt_ix": "8-1874_v1_67@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_68",
+            "tgt_ix": "8-1874_v1_68@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_69",
+            "tgt_ix": "8-1874_v1_69@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_70",
+            "tgt_ix": "8-1874_v1_70@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_71",
+            "tgt_ix": "8-1874_v1_71@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_72",
+            "tgt_ix": "8-1874_v1_72@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_73",
+            "tgt_ix": "8-1874_v1_73@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_74",
+            "tgt_ix": "8-1874_v1_74@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_75",
+            "tgt_ix": "8-1874_v1_75@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_76",
+            "tgt_ix": "8-1874_v1_76@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_77",
+            "tgt_ix": "8-1874_v1_77@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_78",
+            "tgt_ix": "8-1874_v1_78@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_79",
+            "tgt_ix": "8-1874_v1_79@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_80",
+            "tgt_ix": "8-1874_v1_80@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_81",
+            "tgt_ix": "8-1874_v1_81@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_82",
+            "tgt_ix": "8-1874_v1_82@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "8-1874_v1_83",
+            "tgt_ix": "8-1874_v1_83@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "8-1874_v1",
+    "meta": {
+        "parser": "F1000XMLParser",
+        "intertext-graph": "N/A",
+        "doi": "10.12688/f1000research.21142.1",
+        "atype": "software-tool",
+        "license": "http://creativecommons.org/licenses/by/4.0/",
+        "title": "Falco: high-speed FastQC emulation for quality control of sequencing data",
+        "abstract": "Quality control is an essential first step in sequencing data analysis, and software tools for quality control are deeply entrenched in standard pipelines at most sequencing centers. Although the associated computations are straightforward, in many settings the total computing effort required for quality control is appreciable and warrants optimization. We present falco, an emulation of the popular FastQC tool that runs on average three times faster while generating equivalent results. Compared to FastQC, falco also provides greater scalability for datasets with longer reads and more flexible visualization of HTML reports.",
+        "contributors": [
+            {
+                "surname": "de Sena Brandine",
+                "given-names": "Guilherme"
+            },
+            {
+                "surname": "Smith",
+                "given-names": "Andrew D."
+            }
+        ],
+        "url": "https://f1000research.com/articles/8-1874/v1/",
+        "doc_id": "8-1874",
+        "version": 1,
+        "ix_counter": 310,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy"
+    }
+}

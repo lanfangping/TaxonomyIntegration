@@ -1,0 +1,3273 @@
+{
+    "nodes": [
+        {
+            "ix": "9-1276_v1_0",
+            "content": "SAPHIR: a Shiny application to analyze tissue section images",
+            "ntype": "article-title",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_2",
+            "content": "Study of cell populations in tissues using immunofluorescence is a powerful method for both basic and medical research. Image acquisitions performed by confocal microscopy notably allow excellent lateral resolution and more than 10 parameter measurement when using spectral or multiplex imaging. Analysis of such complex images can be very challenging and easily lead to bias and misinterpretation. Here, we have developed the Shiny Analytical Plot of Histological Image Results (SAPHIR), an R shiny application for histo-cytometry using scatterplot representation of data extracted by segmentation. It offers many features, such as filtering of spurious data points, selection of cell subsets on scatterplot, visualization of scatterplot selections back into the image, statistics of selected data and data annotation. Our application allows to quickly characterize labeled cells, from their phenotype to their number and location in the tissue, as well as their interaction with other cells. SAPHIR is available from: https://github.com/elodiegermani/SAPHIR",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1",
+                "sec-type": "intro",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_4",
+            "content": "The identification, localization and quantification of cell subsets in tissue is a difficult but essential task for biologists to understand spatial cellular organization in different settings (e.g. homeostasis vs inflammatory diseases or cancer). Advances in optical microscopy allow image acquisitions with more than 10 channel measurements using spectral fluorescence imaging or multiplex imaging combined with z-axis optical slices of tissue sections ranging from 10 \u00b5m to more than 200 \u00b5m when clearing methods are used <REF-1> \u2013 <REF-4> . Analysis of such complex images is very challenging due to the size and complexity of data. It requires image segmentation in 3D that can be further improved using deep learning-based segmentation <REF-5> \u2013 <REF-7> . Then, like flow cytometry, complex image analysis can benefit from scatterplot representations that allow to gate cells of interest <REF-2> , <REF-8> . Surprisingly, in existing software, this scatterplot representation is rarely interactive with the image itself, although this would allow to locate selection results back into the image but also to filter or correct results and fine-tune the gates defining cell populations to obtain in return a better visualization of them into the image.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_5",
+            "content": "To this end, we developed the Shiny Analytical Plot of Histological Image Results (SAPHIR), an R/Shiny application for the quantitative analysis of tissue section images. Since image segmentation is a complex task in continuous development and highly dependent on image quality and information, the integration of a single type of segmentation method in an image analysis application is not necessarily recommended. Therefore, we decided to separate segmentation from SAPHIR, but we provided two Fiji macro examples with associated images, which can be used to perform this task before running SAPHIR. SAPHIR offers many features such as interactive scatterplots with the image and data filtering and correction as described below.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_6",
+            "content": "Methods",
+            "ntype": "title",
+            "meta": {
+                "section": "2",
+                "sec-type": "methods",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_7",
+            "content": "Data requirement",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_8",
+            "content": "The segmentation required to use the application SAPHIR has been carried out under Fiji <REF-9> , with custom-made macros, which are available on GitHub in the Demonstration Files . Cell nucleus detection was used for segmentation and fluorescence intensity signal of each channel within a circular ring around nuclei was determined to define cell of interest (COI) phenotype. In addition, regions of interest were defined using DBSCAN (optional) <REF-10> . The segmentation process of the image to be analyzed should create a csv result file containing the channel intensity values (ranging from 0 to 255) and, if required, the positioning (x, y, z) linked to each COI. Another file, termed ROI.zip, should contain the image contour of each COI. Importantly, many other morphological measurements like area, roundness, or solidity as well as other information (COI belonging to a region of interest, COI interaction with other cells, COI centroid position) can be added to the segmentation result file. Finally, the minimal requirements to run the application are the image in TIFF with multiple channels and optionally slices, the segmentation result file with COI identity in csv and the roi.zip file containing contours of each COI. A legend file with all channel information can also be provided (optional).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_9",
+            "content": "Operation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_10",
+            "content": "SAPHIR is built in the R programming language, version 4.0.2, and uses many packages available on CRAN (e.g. shinydashboard, ijtiff, magick, ggplot2, plotly) and one package (EBImage) available on Bioconductor. It has been tested on macOS and Windows 10. A user flowchart from image acquisition to obtention of quantitative data of COI with SAPHIR is shown in Figure 1 .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_11",
+            "content": "Figure 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "f1",
+                "caption": "Flow chart of tissue image analysis from image acquisition and segmentation (left side) to extracted data analysis with SAPHIR (right side).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_12",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f1\" position=\"float\"> <caption> <title>Flow chart of tissue image analysis from image acquisition and segmentation (left side) to extracted data analysis with SAPHIR (right side).</title> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure1.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f1",
+                "caption": "Flow chart of tissue image analysis from image acquisition and segmentation (left side) to extracted data analysis with SAPHIR (right side).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_13",
+            "content": "Implementation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_14",
+            "content": "The first step of SAPHIR is either to run a segmentation program to obtain appropriate files or to load the three required files (image.tif, roi.zip, results.csv) and if needed the legend (csv file) in the \u201cselect your results\u201d menu of the application. Here, result, region of interest (ROI) and legend files were obtained with an in house-made segmentation macro developed under Fiji.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_15",
+            "content": "The first tab of the \u201cPlot to Image\u201d menu is shown in Figure 2 and allows the users to filter their data depending on one or two parameters displayed on histogram or scatterplot, respectively. This can be used to remove cells that have been badly segmented. Indeed, such cells display an aberrant area or volume (doublets or aggregates in red in Figure 2 ). Here, only cells within the Gaussian curve were retained (in blue in Figure 2 ). This can also be used to work only on given subpopulations filtered based on their location, interaction with other cells or other criteria (see use case section below). Then, filtered cells can be separated into subsets thanks to a two-parameter (most often channel intensities) scatterplot ( Figure 3A ). In addition, users can add a third parameter that is displayed on the scatterplot through a change of symbol shape for each COI beyond a threshold defined by the users for a given parameter value ( Figure 3A ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_16",
+            "content": "Figure 2.",
+            "ntype": "label",
+            "meta": {
+                "id": "f2",
+                "caption": "Menu \u201cPlot to Image\u201d of SAPHIR application. The data-filtering tab allows the selection of cells to be analyzed based on one or two parameters. Based on the cell area parameter, only cells that displayed a conventional cell area (in blue) were selected. Badly segmented cells (large area in red) were discarded.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_17",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f2\" position=\"float\"> <caption> <title>Menu &#8220;Plot to Image&#8221; of SAPHIR application.</title> <p>The data-filtering tab allows the selection of cells to be analyzed based on one or two parameters. Based on the cell area parameter, only cells that displayed a conventional cell area (in blue) were selected. Badly segmented cells (large area in red) were discarded.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure2.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f2",
+                "caption": "Menu \u201cPlot to Image\u201d of SAPHIR application. The data-filtering tab allows the selection of cells to be analyzed based on one or two parameters. Based on the cell area parameter, only cells that displayed a conventional cell area (in blue) were selected. Badly segmented cells (large area in red) were discarded.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_18",
+            "content": "Figure 3.",
+            "ntype": "label",
+            "meta": {
+                "id": "f3",
+                "caption": "Menu \u201cPlot to Image\u201d of SAPHIR application. ( A ) Scatterplot of two channel intensity parameters used to gate COI. User can add a third parameter that is displayed on the scatterplot through a change of symbol shape for COI beyond a threshold defined by the user. ( B ) Visualization of selected cells in the image. Some of the available options are shown (displayed channel(s), channel overlay, cell identity number, brightness).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_19",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f3\" position=\"float\"> <caption> <title>Menu &#8220;Plot to Image&#8221; of SAPHIR application.</title> <p>( <bold>A</bold>) Scatterplot of two channel intensity parameters used to gate COI. User can add a third parameter that is displayed on the scatterplot through a change of symbol shape for COI beyond a threshold defined by the user. ( <bold>B</bold>) Visualization of selected cells in the image. Some of the available options are shown (displayed channel(s), channel overlay, cell identity number, brightness).</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure3.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f3",
+                "caption": "Menu \u201cPlot to Image\u201d of SAPHIR application. ( A ) Scatterplot of two channel intensity parameters used to gate COI. User can add a third parameter that is displayed on the scatterplot through a change of symbol shape for COI beyond a threshold defined by the user. ( B ) Visualization of selected cells in the image. Some of the available options are shown (displayed channel(s), channel overlay, cell identity number, brightness).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_20",
+            "content": "Gating can be made easily with quadrants, rectangles and lassos in single or multiple selection mode. Interactivity between scatterplot and image is optional to avoid slow interaction when high-resolution images are used. In the latter case, we recommend users to perform their gating before allowing their selection to be shown in the image by ticking the appropriate box. Users can easily change the slice and the displayed channels with buttons to monitor selected COI spatial distribution and fluorescence intensity in the image ( Figure 3B ). Moreover, several options are available such as cell identity display or channel overlay ( Figure 3B ). Finally, statistics of the gated COI are downloadable, and gates are saveable for further analyses.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_21",
+            "content": "The SAPHIR menu \u201cimage to plot\u201d allows to select a region in the image and to display cells of this region on a two-parameter scatterplot ( Figure 4 ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_22",
+            "content": "Figure 4.",
+            "ntype": "label",
+            "meta": {
+                "id": "f4",
+                "caption": "Menu \u201cImage to Plot\u201d of SAPHIR application. Selection of one region in the image (left) and visualization of COI of this region in a corresponding scatterplot where two parameters are displayed (right).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_23",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f4\" position=\"float\"> <caption> <title>Menu &#8220;Image to Plot&#8221; of SAPHIR application.</title> <p>Selection of one region in the image (left) and visualization of COI of this region in a corresponding scatterplot where two parameters are displayed (right).</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure4.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f4",
+                "caption": "Menu \u201cImage to Plot\u201d of SAPHIR application. Selection of one region in the image (left) and visualization of COI of this region in a corresponding scatterplot where two parameters are displayed (right).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_24",
+            "content": "Finally, the menu \u201cAnnotation\u201d allows, based on the previous analyses, correction of the data from the result csv file but also from the scatterplot-gated cells when saved in the \u201cplot to image\u201d menu. For each selected cell, a cropped image of this cell is displayed, and users can change its parameters if necessary ( Figure 5 ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_25",
+            "content": "Figure 5.",
+            "ntype": "label",
+            "meta": {
+                "id": "f5",
+                "caption": "Menu \u201cAnnotate your data\u201d of SAPHIR application. The results to annotate can be selected based on the Plot to Image scatterplot gated cells that have been previously saved (left panel). Each cell of the selection can be visualized in the image (right panel) with the possibility to change image size (magnification), the displayed channel(s), the slice (z optical section) and the brightness. Based on the different analysis, results for the selected COI can be modified and final results saved and exported.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure5.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_26",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f5\" position=\"float\"> <caption> <title>Menu &#8220;Annotate your data&#8221; of SAPHIR application.</title> <p>The results to annotate can be selected based on the Plot to Image scatterplot gated cells that have been previously saved (left panel). Each cell of the selection can be visualized in the image (right panel) with the possibility to change image size (magnification), the displayed channel(s), the slice (z optical section) and the brightness. Based on the different analysis, results for the selected COI can be modified and final results saved and exported.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure5.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f5",
+                "caption": "Menu \u201cAnnotate your data\u201d of SAPHIR application. The results to annotate can be selected based on the Plot to Image scatterplot gated cells that have been previously saved (left panel). Each cell of the selection can be visualized in the image (right panel) with the possibility to change image size (magnification), the displayed channel(s), the slice (z optical section) and the brightness. Based on the different analysis, results for the selected COI can be modified and final results saved and exported.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure5.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_27",
+            "content": "Use case",
+            "ntype": "title",
+            "meta": {
+                "section": "3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_28",
+            "content": "To show the usefulness of our application, we used it on a project that aimed to characterize the interaction between phagocytes and proliferative immune effector cells in murine Peyer\u2019s patches (PP), i.e. B and T cells. PP are immune inductive sites distributed along the small intestine in charge of sampling noxious antigens and mounting an immune response against them. In PP, antigens are taken up by phagocytes that, upon stimulation, migrate in the T cell zone and its periphery to interact with and prime na\u00efve T cells. The periphery of the PP T cell zone is indeed an area of intense proliferation of immune effector cells after stimulation, suggesting that this region is a privileged site for their activation <REF-11> . We therefore decided to examine the evolution of proliferative cell number, to determine their identity (B or T cells) and to analyze their interaction with migratory phagocytes during the course of the stimulation.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_29",
+            "content": "We used SAPHIR application and two ImageJ macros, which are available on GitHub in the Demonstration Files . The first macro allows the counting of proliferative cells through segmentation of Ki-67+ nuclei, provides their identity through analysis of T and B cell staining of Ki-67+ cell membrane, and analyses their interaction with phagocytes. The second macro identify the area of high density in proliferative cells as ROI, thanks to the DBSCAN algorithm and determine whether previously analysed cells belong to this ROI.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_30",
+            "content": "Then, SAPHIR application allowed us to integrate these data and provided scatter plots and statistical analyses. Thus, the filtering tab was used to select only proliferative cells belonging to the ROI ( Figure 6 , upper left). Then, ROI-proliferative cells were split into B and T cells using the scatter plot ( Figure 6 , lower left). Finally, we used the \u201csymbol shape change parameter\u201d option to highlight ROI-proliferative cells that interacted with phagocytes. This clearly showed that in the ROI, there were more proliferative T cells than B cells that interacted with phagocytes. Exportable statistical tables confirmed this observation. Selecting these T cells, we could localize these cells interacting with phagocytes directly into the image ( Figure 6 , right).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_31",
+            "content": "Figure 6.",
+            "ntype": "label",
+            "meta": {
+                "id": "f6",
+                "caption": "Use case: analysis of proliferative immune effector cells interacting with phagocytes in the T cell priming region of murine Peyer\u2019s patches. Upper left: Cells belonging to the proliferative area of the PP T cell zone were selected using the filtering tab. Lower left: ROI proliferative cells were split into T and B cells on the scatterplot and phagocyte-interacting cells highlighted thanks to the symbol shape change parameter (circle). Right: T cells selected in the scatter plot in the lower left (orange) are visualized in the image (magenta contour).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure6.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_32",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f6\" position=\"float\"> <caption> <title>Use case: analysis of proliferative immune effector cells interacting with phagocytes in the T cell priming region of murine Peyer&#8217;s patches.</title> <p>Upper left: Cells belonging to the proliferative area of the PP T cell zone were selected using the filtering tab. Lower left: ROI proliferative cells were split into T and B cells on the scatterplot and phagocyte-interacting cells highlighted thanks to the symbol shape change parameter (circle). Right: T cells selected in the scatter plot in the lower left (orange) are visualized in the image (magenta contour).</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure6.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f6",
+                "caption": "Use case: analysis of proliferative immune effector cells interacting with phagocytes in the T cell priming region of murine Peyer\u2019s patches. Upper left: Cells belonging to the proliferative area of the PP T cell zone were selected using the filtering tab. Lower left: ROI proliferative cells were split into T and B cells on the scatterplot and phagocyte-interacting cells highlighted thanks to the symbol shape change parameter (circle). Right: T cells selected in the scatter plot in the lower left (orange) are visualized in the image (magenta contour).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/29894/eca75d33-bac5-4f86-8647-c59bfb56b004_figure6.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_33",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "4",
+                "sec-type": "conclusions",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_34",
+            "content": "The SAPHIR application provides a simple and user-friendly interface to obtain quantitative data from tissue images as well as COI positioning in the tissue. It is based on the interactivity between quantitative data and image to simplify the analysis and limit bias. Further developments of SAPHIR will include use of pyramidal images to minimize loading and analysis time and unsupervised clustering methods for scatterplot generation <REF-12> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_35",
+            "content": "Data and availability",
+            "ntype": "title",
+            "meta": {
+                "section": "5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_36",
+            "content": "SAPHIR is provided with segmentation data from two demo pictures ( https://github.com/elodiegermani/SAPHIR/tree/master/Demonstration%20files ): one with only two intensity channels to test the application in a very easy and quickly way, and a more complex one with 6 intensity channels, 12 slices and two additional parameters (belonging to a ROI and cell-cell interaction) for advanced testing of the application.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_37",
+            "content": "These data are parts of several projects conducted in the Center of Immunology of Marseille-Luminy (France). Acquisition of the images was made with spectral confocal microscopy and analyzed with Fiji with the provided macro.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_38",
+            "content": "Software availability",
+            "ntype": "title",
+            "meta": {
+                "section": "6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_39",
+            "content": "Source code available from: www.github.com/elodiegermani/SAPHIR",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_40",
+            "content": "Archived source code as at time of publication: http://doi.org/10.5281/zenodo.4088899 <REF-13>",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_41",
+            "content": "License: GNU General Public License v3.0",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_42",
+            "content": "<REF-1> Dodt HU Leischner U Schierloh A : Ultramicroscopy: three-dimensional visualization of neuronal networks in the whole mouse brain. Nat Methods. 2007 ; 4 ( 4 ): 331 \u2013 336 . 17384643 10.1038/nmeth1036",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_43",
+            "content": "<REF-2> Gerner MY Kastenmuller W Ifrim I : Histo-cytometry: a method for highly multiplex quantitative tissue imaging analysis applied to dendritic cell subset microanatomy in lymph nodes. Immunity. 2012 ; 37 ( 2 ): 364 \u2013 376 . 22863836 10.1016/j.immuni.2012.07.011 3514885",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_44",
+            "content": "<REF-4> Lelouard H Mailfert S Fallet M : A ten-color spectral imaging strategy to reveal localization of gut immune cell subsets. Zeiss Application note. 2018 . Reference Source",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_45",
+            "content": "<REF-5> Legland D Arganda-Carreras I Andrey P : MorphoLibJ: integrated library and plugins for mathematical morphology with ImageJ. Bioinformatics. 2016 ; 32 ( 22 ): 3532 \u2013 3534 . 27412086 10.1093/bioinformatics/btw413",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_46",
+            "content": "<REF-7> Stringer C Michaelos M Pachitariu M : Cellpose: a generalist algorithm for cellular segmentation. bioRxiv. 2020 ; 2020.2002.2002.931238 . 10.1101/2020.02.02.931238",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-7",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_47",
+            "content": "<REF-8> Winfree S Khan S Micanovic R : Quantitative Three-Dimensional Tissue Cytometry to Study Kidney Tissue and Resident Immune Cells. J Am Soc Nephrol. 2017 ; 28 ( 7 ): 2108 \u2013 2118 . 28154201 10.1681/ASN.2016091027 5491289",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-8",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_48",
+            "content": "<REF-9> Schindelin J Arganda-Carreras I Frise E : Fiji: an open-source platform for biological-image analysis. Nat Methods. 2012 ; 9 ( 7 ): 676 \u2013 682 . 22743772 10.1038/nmeth.2019 3855844",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-9",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_49",
+            "content": "<REF-10> Hahsler M Piekenbrock M Doran D : dbscan: Fast Density-Based Clustering with R. J Stat Softw. 2019 ; 91 ( 1 ): 30 . 10.18637/jss.v091.i01",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-10",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_50",
+            "content": "<REF-11> Wagner C Bonnardel J Da Silva C : Differentiation Paths of Peyer\u2019s Patch LysoDCs Are Linked to Sampling Site Positioning, Migration, and T Cell Priming. Cell Rep. 2020 ; 31 ( 1 ): 107479 . 32268097 10.1016/j.celrep.2020.03.043",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-11",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_51",
+            "content": "<REF-12> Stoltzfus CR Filipek J Gern BH : CytoMAP: A Spatial Analysis Toolbox Reveals Features of Myeloid Cell Organization in Lymphoid Tissues. Cell Rep. 2020 ; 31 ( 3 ): 107523 . 32320656 10.1016/j.celrep.2020.107523 7233132",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-12",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-1276_v1_52",
+            "content": "<REF-13> elodiegermani matfallet : elodiegermani/SAPHIR: A Shiny application for analyzing tissue section images (Version v1.0.0). Zenodo. 2020 . http://www.doi.org/10.5281/zenodo.4088899",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-13",
+                "created_by": "F1000XMLParser"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "9-1276_v1_0@0",
+            "content": "SAPHIR: a Shiny application to analyze tissue section images",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_0",
+            "start": 0,
+            "end": 59,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_2@0",
+            "content": "Study of cell populations in tissues using immunofluorescence is a powerful method for both basic and medical research.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_2",
+            "start": 0,
+            "end": 118,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_2@1",
+            "content": "Image acquisitions performed by confocal microscopy notably allow excellent lateral resolution and more than 10 parameter measurement when using spectral or multiplex imaging.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_2",
+            "start": 120,
+            "end": 294,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_2@2",
+            "content": "Analysis of such complex images can be very challenging and easily lead to bias and misinterpretation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_2",
+            "start": 296,
+            "end": 397,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_2@3",
+            "content": "Here, we have developed the Shiny Analytical Plot of Histological Image Results (SAPHIR), an R shiny application for histo-cytometry using scatterplot representation of data extracted by segmentation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_2",
+            "start": 399,
+            "end": 598,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_2@4",
+            "content": "It offers many features, such as filtering of spurious data points, selection of cell subsets on scatterplot, visualization of scatterplot selections back into the image, statistics of selected data and data annotation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_2",
+            "start": 600,
+            "end": 818,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_2@5",
+            "content": "Our application allows to quickly characterize labeled cells, from their phenotype to their number and location in the tissue, as well as their interaction with other cells.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_2",
+            "start": 820,
+            "end": 992,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_2@6",
+            "content": "SAPHIR is available from: https://github.com/elodiegermani/SAPHIR",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_2",
+            "start": 994,
+            "end": 1058,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_4@0",
+            "content": "The identification, localization and quantification of cell subsets in tissue is a difficult but essential task for biologists to understand spatial cellular organization in different settings (e.g. homeostasis vs inflammatory diseases or cancer).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_4",
+            "start": 0,
+            "end": 246,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_4@1",
+            "content": "Advances in optical microscopy allow image acquisitions with more than 10 channel measurements using spectral fluorescence imaging or multiplex imaging combined with z-axis optical slices of tissue sections ranging from 10 \u00b5m to more than 200 \u00b5m when clearing methods are used <REF-1> \u2013 <REF-4> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_4",
+            "start": 248,
+            "end": 543,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_4@2",
+            "content": "Analysis of such complex images is very challenging due to the size and complexity of data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_4",
+            "start": 545,
+            "end": 635,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_4@3",
+            "content": "It requires image segmentation in 3D that can be further improved using deep learning-based segmentation <REF-5> \u2013 <REF-7> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_4",
+            "start": 637,
+            "end": 760,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_4@4",
+            "content": "Then, like flow cytometry, complex image analysis can benefit from scatterplot representations that allow to gate cells of interest <REF-2> , <REF-8> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_4",
+            "start": 762,
+            "end": 912,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_4@5",
+            "content": "Surprisingly, in existing software, this scatterplot representation is rarely interactive with the image itself, although this would allow to locate selection results back into the image but also to filter or correct results and fine-tune the gates defining cell populations to obtain in return a better visualization of them into the image.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_4",
+            "start": 914,
+            "end": 1254,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_5@0",
+            "content": "To this end, we developed the Shiny Analytical Plot of Histological Image Results (SAPHIR), an R/Shiny application for the quantitative analysis of tissue section images.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_5",
+            "start": 0,
+            "end": 169,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_5@1",
+            "content": "Since image segmentation is a complex task in continuous development and highly dependent on image quality and information, the integration of a single type of segmentation method in an image analysis application is not necessarily recommended.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_5",
+            "start": 171,
+            "end": 414,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_5@2",
+            "content": "Therefore, we decided to separate segmentation from SAPHIR, but we provided two Fiji macro examples with associated images, which can be used to perform this task before running SAPHIR.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_5",
+            "start": 416,
+            "end": 600,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_5@3",
+            "content": "SAPHIR offers many features such as interactive scatterplots with the image and data filtering and correction as described below.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_5",
+            "start": 602,
+            "end": 730,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_6@0",
+            "content": "Methods",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_6",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_7@0",
+            "content": "Data requirement",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_7",
+            "start": 0,
+            "end": 15,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_8@0",
+            "content": "The segmentation required to use the application SAPHIR has been carried out under Fiji <REF-9> , with custom-made macros, which are available on GitHub in the Demonstration Files .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_8",
+            "start": 0,
+            "end": 180,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_8@1",
+            "content": "Cell nucleus detection was used for segmentation and fluorescence intensity signal of each channel within a circular ring around nuclei was determined to define cell of interest (COI) phenotype.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_8",
+            "start": 182,
+            "end": 375,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_8@2",
+            "content": "In addition, regions of interest were defined using DBSCAN (optional) <REF-10> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_8",
+            "start": 377,
+            "end": 456,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_8@3",
+            "content": "The segmentation process of the image to be analyzed should create a csv result file containing the channel intensity values (ranging from 0 to 255) and, if required, the positioning (x, y, z) linked to each COI.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_8",
+            "start": 458,
+            "end": 669,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_8@4",
+            "content": "Another file, termed ROI.zip, should contain the image contour of each COI.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_8",
+            "start": 671,
+            "end": 745,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_8@5",
+            "content": "Importantly, many other morphological measurements like area, roundness, or solidity as well as other information (COI belonging to a region of interest, COI interaction with other cells, COI centroid position) can be added to the segmentation result file.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_8",
+            "start": 747,
+            "end": 1002,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_8@6",
+            "content": "Finally, the minimal requirements to run the application are the image in TIFF with multiple channels and optionally slices, the segmentation result file with COI identity in csv and the roi.zip file containing contours of each COI.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_8",
+            "start": 1004,
+            "end": 1235,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_8@7",
+            "content": "A legend file with all channel information can also be provided (optional).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_8",
+            "start": 1237,
+            "end": 1311,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_9@0",
+            "content": "Operation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_9",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_10@0",
+            "content": "SAPHIR is built in the R programming language, version 4.0.2, and uses many packages available on CRAN (e.g. shinydashboard, ijtiff, magick, ggplot2, plotly) and one package (EBImage) available on Bioconductor.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_10",
+            "start": 0,
+            "end": 209,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_10@1",
+            "content": "It has been tested on macOS and Windows 10.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_10",
+            "start": 211,
+            "end": 253,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_10@2",
+            "content": "A user flowchart from image acquisition to obtention of quantitative data of COI with SAPHIR is shown in Figure 1 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_10",
+            "start": 255,
+            "end": 369,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_11@0",
+            "content": "Figure 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_11",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_13@0",
+            "content": "Implementation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_13",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_14@0",
+            "content": "The first step of SAPHIR is either to run a segmentation program to obtain appropriate files or to load the three required files (image.tif, roi.zip, results.csv) and if needed the legend (csv file) in the \u201cselect your results\u201d menu of the application.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_14",
+            "start": 0,
+            "end": 251,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_14@1",
+            "content": "Here, result, region of interest (ROI) and legend files were obtained with an in house-made segmentation macro developed under Fiji.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_14",
+            "start": 253,
+            "end": 384,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_15@0",
+            "content": "The first tab of the \u201cPlot to Image\u201d menu is shown in Figure 2 and allows the users to filter their data depending on one or two parameters displayed on histogram or scatterplot, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_15",
+            "start": 0,
+            "end": 191,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_15@1",
+            "content": "This can be used to remove cells that have been badly segmented.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_15",
+            "start": 193,
+            "end": 256,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_15@2",
+            "content": "Indeed, such cells display an aberrant area or volume (doublets or aggregates in red in Figure 2 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_15",
+            "start": 258,
+            "end": 356,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_15@3",
+            "content": "Here, only cells within the Gaussian curve were retained (in blue in Figure 2 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_15",
+            "start": 358,
+            "end": 437,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_15@4",
+            "content": "This can also be used to work only on given subpopulations filtered based on their location, interaction with other cells or other criteria (see use case section below).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_15",
+            "start": 439,
+            "end": 607,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_15@5",
+            "content": "Then, filtered cells can be separated into subsets thanks to a two-parameter (most often channel intensities) scatterplot ( Figure 3A ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_15",
+            "start": 609,
+            "end": 744,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_15@6",
+            "content": "In addition, users can add a third parameter that is displayed on the scatterplot through a change of symbol shape for each COI beyond a threshold defined by the users for a given parameter value ( Figure 3A ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_15",
+            "start": 746,
+            "end": 955,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_16@0",
+            "content": "Figure 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_16",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_18@0",
+            "content": "Figure 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_18",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_20@0",
+            "content": "Gating can be made easily with quadrants, rectangles and lassos in single or multiple selection mode.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_20",
+            "start": 0,
+            "end": 100,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_20@1",
+            "content": "Interactivity between scatterplot and image is optional to avoid slow interaction when high-resolution images are used.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_20",
+            "start": 102,
+            "end": 220,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_20@2",
+            "content": "In the latter case, we recommend users to perform their gating before allowing their selection to be shown in the image by ticking the appropriate box.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_20",
+            "start": 222,
+            "end": 372,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_20@3",
+            "content": "Users can easily change the slice and the displayed channels with buttons to monitor selected COI spatial distribution and fluorescence intensity in the image ( Figure 3B ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_20",
+            "start": 374,
+            "end": 546,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_20@4",
+            "content": "Moreover, several options are available such as cell identity display or channel overlay ( Figure 3B ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_20",
+            "start": 548,
+            "end": 650,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_20@5",
+            "content": "Finally, statistics of the gated COI are downloadable, and gates are saveable for further analyses.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_20",
+            "start": 652,
+            "end": 750,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_21@0",
+            "content": "The SAPHIR menu \u201cimage to plot\u201d allows to select a region in the image and to display cells of this region on a two-parameter scatterplot ( Figure 4 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_21",
+            "start": 0,
+            "end": 150,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_22@0",
+            "content": "Figure 4.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_22",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_24@0",
+            "content": "Finally, the menu \u201cAnnotation\u201d allows, based on the previous analyses, correction of the data from the result csv file but also from the scatterplot-gated cells when saved in the \u201cplot to image\u201d menu.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_24",
+            "start": 0,
+            "end": 199,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_24@1",
+            "content": "For each selected cell, a cropped image of this cell is displayed, and users can change its parameters if necessary ( Figure 5 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_24",
+            "start": 201,
+            "end": 329,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_25@0",
+            "content": "Figure 5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_25",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_27@0",
+            "content": "Use case",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_27",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_28@0",
+            "content": "To show the usefulness of our application, we used it on a project that aimed to characterize the interaction between phagocytes and proliferative immune effector cells in murine Peyer\u2019s patches (PP), i.e. B and T cells.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_28",
+            "start": 0,
+            "end": 219,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_28@1",
+            "content": "PP are immune inductive sites distributed along the small intestine in charge of sampling noxious antigens and mounting an immune response against them.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_28",
+            "start": 221,
+            "end": 372,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_28@2",
+            "content": "In PP, antigens are taken up by phagocytes that, upon stimulation, migrate in the T cell zone and its periphery to interact with and prime na\u00efve T cells.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_28",
+            "start": 374,
+            "end": 526,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_28@3",
+            "content": "The periphery of the PP T cell zone is indeed an area of intense proliferation of immune effector cells after stimulation, suggesting that this region is a privileged site for their activation <REF-11> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_28",
+            "start": 528,
+            "end": 730,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_28@4",
+            "content": "We therefore decided to examine the evolution of proliferative cell number, to determine their identity (B or T cells) and to analyze their interaction with migratory phagocytes during the course of the stimulation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_28",
+            "start": 732,
+            "end": 946,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_29@0",
+            "content": "We used SAPHIR application and two ImageJ macros, which are available on GitHub in the Demonstration Files .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_29",
+            "start": 0,
+            "end": 107,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_29@1",
+            "content": "The first macro allows the counting of proliferative cells through segmentation of Ki-67+ nuclei, provides their identity through analysis of T and B cell staining of Ki-67+ cell membrane, and analyses their interaction with phagocytes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_29",
+            "start": 109,
+            "end": 344,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_29@2",
+            "content": "The second macro identify the area of high density in proliferative cells as ROI, thanks to the DBSCAN algorithm and determine whether previously analysed cells belong to this ROI.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_29",
+            "start": 346,
+            "end": 525,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_30@0",
+            "content": "Then, SAPHIR application allowed us to integrate these data and provided scatter plots and statistical analyses.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_30",
+            "start": 0,
+            "end": 111,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_30@1",
+            "content": "Thus, the filtering tab was used to select only proliferative cells belonging to the ROI ( Figure 6 , upper left).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_30",
+            "start": 113,
+            "end": 226,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_30@2",
+            "content": "Then, ROI-proliferative cells were split into B and T cells using the scatter plot ( Figure 6 , lower left).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_30",
+            "start": 228,
+            "end": 335,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_30@3",
+            "content": "Finally, we used the \u201csymbol shape change parameter\u201d option to highlight ROI-proliferative cells that interacted with phagocytes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_30",
+            "start": 337,
+            "end": 465,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_30@4",
+            "content": "This clearly showed that in the ROI, there were more proliferative T cells than B cells that interacted with phagocytes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_30",
+            "start": 467,
+            "end": 586,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_30@5",
+            "content": "Exportable statistical tables confirmed this observation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_30",
+            "start": 588,
+            "end": 644,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_30@6",
+            "content": "Selecting these T cells, we could localize these cells interacting with phagocytes directly into the image ( Figure 6 , right).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_30",
+            "start": 646,
+            "end": 772,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_31@0",
+            "content": "Figure 6.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_31",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_33@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_33",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_34@0",
+            "content": "The SAPHIR application provides a simple and user-friendly interface to obtain quantitative data from tissue images as well as COI positioning in the tissue.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_34",
+            "start": 0,
+            "end": 156,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_34@1",
+            "content": "It is based on the interactivity between quantitative data and image to simplify the analysis and limit bias.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_34",
+            "start": 158,
+            "end": 266,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_34@2",
+            "content": "Further developments of SAPHIR will include use of pyramidal images to minimize loading and analysis time and unsupervised clustering methods for scatterplot generation <REF-12> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_34",
+            "start": 268,
+            "end": 446,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_35@0",
+            "content": "Data and availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_35",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_36@0",
+            "content": "SAPHIR is provided with segmentation data from two demo pictures ( https://github.com/elodiegermani/SAPHIR/tree/master/Demonstration%20files ): one with only two intensity channels to test the application in a very easy and quickly way, and a more complex one with 6 intensity channels, 12 slices and two additional parameters (belonging to a ROI and cell-cell interaction) for advanced testing of the application.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_36",
+            "start": 0,
+            "end": 413,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_37@0",
+            "content": "These data are parts of several projects conducted in the Center of Immunology of Marseille-Luminy (France).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_37",
+            "start": 0,
+            "end": 107,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_37@1",
+            "content": "Acquisition of the images was made with spectral confocal microscopy and analyzed with Fiji with the provided macro.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_37",
+            "start": 109,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_38@0",
+            "content": "Software availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_38",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_39@0",
+            "content": "Source code available from: www.github.com/elodiegermani/SAPHIR",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_39",
+            "start": 0,
+            "end": 62,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_40@0",
+            "content": "Archived source code as at time of publication: http://doi.org/10.5281/zenodo.4088899 <REF-13>",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_40",
+            "start": 0,
+            "end": 93,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_41@0",
+            "content": "License: GNU General Public License v3.0",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_41",
+            "start": 0,
+            "end": 39,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_42@0",
+            "content": "<REF-1> Dodt HU Leischner U Schierloh A : Ultramicroscopy: three-dimensional visualization of neuronal networks in the whole mouse brain. Nat Methods. 2007 ; 4 ( 4 ): 331 \u2013 336 . 17384643 10.1038/nmeth1036",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_42",
+            "start": 0,
+            "end": 204,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_43@0",
+            "content": "<REF-2> Gerner MY Kastenmuller W Ifrim I : Histo-cytometry: a method for highly multiplex quantitative tissue imaging analysis applied to dendritic cell subset microanatomy in lymph nodes. Immunity. 2012 ; 37 ( 2 ): 364 \u2013 376 . 22863836 10.1016/j.immuni.2012.07.011 3514885",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_43",
+            "start": 0,
+            "end": 272,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_44@0",
+            "content": "<REF-4> Lelouard H Mailfert S Fallet M : A ten-color spectral imaging strategy to reveal localization of gut immune cell subsets. Zeiss Application note. 2018 . Reference Source",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_44",
+            "start": 0,
+            "end": 176,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_45@0",
+            "content": "<REF-5> Legland D Arganda-Carreras I Andrey P : MorphoLibJ: integrated library and plugins for mathematical morphology with ImageJ. Bioinformatics. 2016 ; 32 ( 22 ): 3532 \u2013 3534 . 27412086 10.1093/bioinformatics/btw413",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_45",
+            "start": 0,
+            "end": 217,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_46@0",
+            "content": "<REF-7> Stringer C Michaelos M Pachitariu M : Cellpose: a generalist algorithm for cellular segmentation. bioRxiv. 2020 ; 2020.2002.2002.931238 . 10.1101/2020.02.02.931238",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_46",
+            "start": 0,
+            "end": 170,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_47@0",
+            "content": "<REF-8> Winfree S Khan S Micanovic R : Quantitative Three-Dimensional Tissue Cytometry to Study Kidney Tissue and Resident Immune Cells. J Am Soc Nephrol. 2017 ; 28 ( 7 ): 2108 \u2013 2118 . 28154201 10.1681/ASN.2016091027 5491289",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_47",
+            "start": 0,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_48@0",
+            "content": "<REF-9> Schindelin J Arganda-Carreras I Frise E : Fiji: an open-source platform for biological-image analysis. Nat Methods. 2012 ; 9 ( 7 ): 676 \u2013 682 . 22743772 10.1038/nmeth.2019 3855844",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_48",
+            "start": 0,
+            "end": 186,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_49@0",
+            "content": "<REF-10> Hahsler M Piekenbrock M Doran D : dbscan: Fast Density-Based Clustering with R. J Stat Softw. 2019 ; 91 ( 1 ): 30 . 10.18637/jss.v091.i01",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_49",
+            "start": 0,
+            "end": 145,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_50@0",
+            "content": "<REF-11> Wagner C Bonnardel J Da Silva C : Differentiation Paths of Peyer\u2019s Patch LysoDCs Are Linked to Sampling Site Positioning, Migration, and T Cell Priming. Cell Rep. 2020 ; 31 ( 1 ): 107479 . 32268097 10.1016/j.celrep.2020.03.043",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_50",
+            "start": 0,
+            "end": 234,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_51@0",
+            "content": "<REF-12> Stoltzfus CR Filipek J Gern BH : CytoMAP: A Spatial Analysis Toolbox Reveals Features of Myeloid Cell Organization in Lymphoid Tissues. Cell Rep. 2020 ; 31 ( 3 ): 107523 . 32320656 10.1016/j.celrep.2020.107523 7233132",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_51",
+            "start": 0,
+            "end": 225,
+            "label": {}
+        },
+        {
+            "ix": "9-1276_v1_52@0",
+            "content": "<REF-13> elodiegermani matfallet : elodiegermani/SAPHIR: A Shiny application for analyzing tissue section images (Version v1.0.0). Zenodo. 2020 . http://www.doi.org/10.5281/zenodo.4088899",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-1276_v1_52",
+            "start": 0,
+            "end": 186,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "9-1276_v1_0",
+            "tgt_ix": "9-1276_v1_1",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_1",
+            "tgt_ix": "9-1276_v1_2",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_0",
+            "tgt_ix": "9-1276_v1_3",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_3",
+            "tgt_ix": "9-1276_v1_4",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_3",
+            "tgt_ix": "9-1276_v1_5",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_0",
+            "tgt_ix": "9-1276_v1_6",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_6",
+            "tgt_ix": "9-1276_v1_7",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_7",
+            "tgt_ix": "9-1276_v1_8",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_6",
+            "tgt_ix": "9-1276_v1_9",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_9",
+            "tgt_ix": "9-1276_v1_10",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_9",
+            "tgt_ix": "9-1276_v1_11",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_11",
+            "tgt_ix": "9-1276_v1_12",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_6",
+            "tgt_ix": "9-1276_v1_13",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_13",
+            "tgt_ix": "9-1276_v1_14",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_13",
+            "tgt_ix": "9-1276_v1_15",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_13",
+            "tgt_ix": "9-1276_v1_16",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_16",
+            "tgt_ix": "9-1276_v1_17",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_13",
+            "tgt_ix": "9-1276_v1_18",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_18",
+            "tgt_ix": "9-1276_v1_19",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_13",
+            "tgt_ix": "9-1276_v1_20",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_13",
+            "tgt_ix": "9-1276_v1_21",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_13",
+            "tgt_ix": "9-1276_v1_22",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_22",
+            "tgt_ix": "9-1276_v1_23",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_13",
+            "tgt_ix": "9-1276_v1_24",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_13",
+            "tgt_ix": "9-1276_v1_25",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_25",
+            "tgt_ix": "9-1276_v1_26",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_0",
+            "tgt_ix": "9-1276_v1_27",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_27",
+            "tgt_ix": "9-1276_v1_28",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_27",
+            "tgt_ix": "9-1276_v1_29",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_27",
+            "tgt_ix": "9-1276_v1_30",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_27",
+            "tgt_ix": "9-1276_v1_31",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_31",
+            "tgt_ix": "9-1276_v1_32",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_0",
+            "tgt_ix": "9-1276_v1_33",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_33",
+            "tgt_ix": "9-1276_v1_34",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_0",
+            "tgt_ix": "9-1276_v1_35",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_35",
+            "tgt_ix": "9-1276_v1_36",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_35",
+            "tgt_ix": "9-1276_v1_37",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_0",
+            "tgt_ix": "9-1276_v1_38",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_38",
+            "tgt_ix": "9-1276_v1_39",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_38",
+            "tgt_ix": "9-1276_v1_40",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_38",
+            "tgt_ix": "9-1276_v1_41",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_0",
+            "tgt_ix": "9-1276_v1_1",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_1",
+            "tgt_ix": "9-1276_v1_2",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_2",
+            "tgt_ix": "9-1276_v1_3",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_3",
+            "tgt_ix": "9-1276_v1_4",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_4",
+            "tgt_ix": "9-1276_v1_5",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_5",
+            "tgt_ix": "9-1276_v1_6",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_6",
+            "tgt_ix": "9-1276_v1_7",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_7",
+            "tgt_ix": "9-1276_v1_8",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_8",
+            "tgt_ix": "9-1276_v1_9",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_9",
+            "tgt_ix": "9-1276_v1_10",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_10",
+            "tgt_ix": "9-1276_v1_11",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_11",
+            "tgt_ix": "9-1276_v1_12",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_12",
+            "tgt_ix": "9-1276_v1_13",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_13",
+            "tgt_ix": "9-1276_v1_14",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_14",
+            "tgt_ix": "9-1276_v1_15",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_15",
+            "tgt_ix": "9-1276_v1_16",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_16",
+            "tgt_ix": "9-1276_v1_17",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_17",
+            "tgt_ix": "9-1276_v1_18",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_18",
+            "tgt_ix": "9-1276_v1_19",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_19",
+            "tgt_ix": "9-1276_v1_20",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_20",
+            "tgt_ix": "9-1276_v1_21",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_21",
+            "tgt_ix": "9-1276_v1_22",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_22",
+            "tgt_ix": "9-1276_v1_23",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_23",
+            "tgt_ix": "9-1276_v1_24",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_24",
+            "tgt_ix": "9-1276_v1_25",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_25",
+            "tgt_ix": "9-1276_v1_26",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_26",
+            "tgt_ix": "9-1276_v1_27",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_27",
+            "tgt_ix": "9-1276_v1_28",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_28",
+            "tgt_ix": "9-1276_v1_29",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_29",
+            "tgt_ix": "9-1276_v1_30",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_30",
+            "tgt_ix": "9-1276_v1_31",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_31",
+            "tgt_ix": "9-1276_v1_32",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_32",
+            "tgt_ix": "9-1276_v1_33",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_33",
+            "tgt_ix": "9-1276_v1_34",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_34",
+            "tgt_ix": "9-1276_v1_35",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_35",
+            "tgt_ix": "9-1276_v1_36",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_36",
+            "tgt_ix": "9-1276_v1_37",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_37",
+            "tgt_ix": "9-1276_v1_38",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_38",
+            "tgt_ix": "9-1276_v1_39",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_39",
+            "tgt_ix": "9-1276_v1_40",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_40",
+            "tgt_ix": "9-1276_v1_41",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_4",
+            "tgt_ix": "9-1276_v1_42",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_4",
+            "tgt_ix": "9-1276_v1_43",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_4",
+            "tgt_ix": "9-1276_v1_44",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_4",
+            "tgt_ix": "9-1276_v1_45",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_4",
+            "tgt_ix": "9-1276_v1_46",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_4",
+            "tgt_ix": "9-1276_v1_47",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_8",
+            "tgt_ix": "9-1276_v1_48",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_8",
+            "tgt_ix": "9-1276_v1_49",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_28",
+            "tgt_ix": "9-1276_v1_50",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_34",
+            "tgt_ix": "9-1276_v1_51",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_40",
+            "tgt_ix": "9-1276_v1_52",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_10",
+            "tgt_ix": "9-1276_v1_12",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_15",
+            "tgt_ix": "9-1276_v1_17",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_15",
+            "tgt_ix": "9-1276_v1_19",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_21",
+            "tgt_ix": "9-1276_v1_23",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_24",
+            "tgt_ix": "9-1276_v1_26",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_30",
+            "tgt_ix": "9-1276_v1_32",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_0",
+            "tgt_ix": "9-1276_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_1",
+            "tgt_ix": "9-1276_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_2",
+            "tgt_ix": "9-1276_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_2",
+            "tgt_ix": "9-1276_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_2",
+            "tgt_ix": "9-1276_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_2",
+            "tgt_ix": "9-1276_v1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_2",
+            "tgt_ix": "9-1276_v1_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_2",
+            "tgt_ix": "9-1276_v1_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_2",
+            "tgt_ix": "9-1276_v1_2@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_3",
+            "tgt_ix": "9-1276_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_4",
+            "tgt_ix": "9-1276_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_4",
+            "tgt_ix": "9-1276_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_4",
+            "tgt_ix": "9-1276_v1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_4",
+            "tgt_ix": "9-1276_v1_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_4",
+            "tgt_ix": "9-1276_v1_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_4",
+            "tgt_ix": "9-1276_v1_4@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_5",
+            "tgt_ix": "9-1276_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_5",
+            "tgt_ix": "9-1276_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_5",
+            "tgt_ix": "9-1276_v1_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_5",
+            "tgt_ix": "9-1276_v1_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_6",
+            "tgt_ix": "9-1276_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_7",
+            "tgt_ix": "9-1276_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_8",
+            "tgt_ix": "9-1276_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_8",
+            "tgt_ix": "9-1276_v1_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_8",
+            "tgt_ix": "9-1276_v1_8@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_8",
+            "tgt_ix": "9-1276_v1_8@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_8",
+            "tgt_ix": "9-1276_v1_8@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_8",
+            "tgt_ix": "9-1276_v1_8@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_8",
+            "tgt_ix": "9-1276_v1_8@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_8",
+            "tgt_ix": "9-1276_v1_8@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_9",
+            "tgt_ix": "9-1276_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_10",
+            "tgt_ix": "9-1276_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_10",
+            "tgt_ix": "9-1276_v1_10@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_10",
+            "tgt_ix": "9-1276_v1_10@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_11",
+            "tgt_ix": "9-1276_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_13",
+            "tgt_ix": "9-1276_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_14",
+            "tgt_ix": "9-1276_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_14",
+            "tgt_ix": "9-1276_v1_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_15",
+            "tgt_ix": "9-1276_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_15",
+            "tgt_ix": "9-1276_v1_15@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_15",
+            "tgt_ix": "9-1276_v1_15@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_15",
+            "tgt_ix": "9-1276_v1_15@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_15",
+            "tgt_ix": "9-1276_v1_15@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_15",
+            "tgt_ix": "9-1276_v1_15@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_15",
+            "tgt_ix": "9-1276_v1_15@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_16",
+            "tgt_ix": "9-1276_v1_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_18",
+            "tgt_ix": "9-1276_v1_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_20",
+            "tgt_ix": "9-1276_v1_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_20",
+            "tgt_ix": "9-1276_v1_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_20",
+            "tgt_ix": "9-1276_v1_20@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_20",
+            "tgt_ix": "9-1276_v1_20@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_20",
+            "tgt_ix": "9-1276_v1_20@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_20",
+            "tgt_ix": "9-1276_v1_20@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_21",
+            "tgt_ix": "9-1276_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_22",
+            "tgt_ix": "9-1276_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_24",
+            "tgt_ix": "9-1276_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_24",
+            "tgt_ix": "9-1276_v1_24@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_25",
+            "tgt_ix": "9-1276_v1_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_27",
+            "tgt_ix": "9-1276_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_28",
+            "tgt_ix": "9-1276_v1_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_28",
+            "tgt_ix": "9-1276_v1_28@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_28",
+            "tgt_ix": "9-1276_v1_28@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_28",
+            "tgt_ix": "9-1276_v1_28@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_28",
+            "tgt_ix": "9-1276_v1_28@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_29",
+            "tgt_ix": "9-1276_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_29",
+            "tgt_ix": "9-1276_v1_29@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_29",
+            "tgt_ix": "9-1276_v1_29@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_30",
+            "tgt_ix": "9-1276_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_30",
+            "tgt_ix": "9-1276_v1_30@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_30",
+            "tgt_ix": "9-1276_v1_30@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_30",
+            "tgt_ix": "9-1276_v1_30@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_30",
+            "tgt_ix": "9-1276_v1_30@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_30",
+            "tgt_ix": "9-1276_v1_30@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_30",
+            "tgt_ix": "9-1276_v1_30@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_31",
+            "tgt_ix": "9-1276_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_33",
+            "tgt_ix": "9-1276_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_34",
+            "tgt_ix": "9-1276_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_34",
+            "tgt_ix": "9-1276_v1_34@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_34",
+            "tgt_ix": "9-1276_v1_34@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_35",
+            "tgt_ix": "9-1276_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_36",
+            "tgt_ix": "9-1276_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_37",
+            "tgt_ix": "9-1276_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_37",
+            "tgt_ix": "9-1276_v1_37@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_38",
+            "tgt_ix": "9-1276_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_39",
+            "tgt_ix": "9-1276_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_40",
+            "tgt_ix": "9-1276_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_41",
+            "tgt_ix": "9-1276_v1_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_42",
+            "tgt_ix": "9-1276_v1_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_43",
+            "tgt_ix": "9-1276_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_44",
+            "tgt_ix": "9-1276_v1_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_45",
+            "tgt_ix": "9-1276_v1_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_46",
+            "tgt_ix": "9-1276_v1_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_47",
+            "tgt_ix": "9-1276_v1_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_48",
+            "tgt_ix": "9-1276_v1_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_49",
+            "tgt_ix": "9-1276_v1_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_50",
+            "tgt_ix": "9-1276_v1_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_51",
+            "tgt_ix": "9-1276_v1_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-1276_v1_52",
+            "tgt_ix": "9-1276_v1_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "9-1276_v1",
+    "meta": {
+        "parser": "F1000XMLParser",
+        "intertext-graph": "N/A",
+        "doi": "10.12688/f1000research.27062.1",
+        "atype": "software-tool",
+        "license": "http://creativecommons.org/licenses/by/4.0/",
+        "title": "SAPHIR: a Shiny application to analyze tissue section images",
+        "abstract": "Study of cell populations in tissues using immunofluorescence is a powerful method for both basic and medical research. Image acquisitions performed by confocal microscopy notably allow excellent lateral resolution and more than 10 parameter measurement when using spectral or multiplex imaging. Analysis of such complex images can be very challenging and easily lead to bias and misinterpretation. Here, we have developed the Shiny Analytical Plot of Histological Image Results (SAPHIR), an R shiny application for histo-cytometry using scatterplot representation of data extracted by segmentation. It offers many features, such as filtering of spurious data points, selection of cell subsets on scatterplot, visualization of scatterplot selections back into the image, statistics of selected data and data annotation. Our application allows to quickly characterize labeled cells, from their phenotype to their number and location in the tissue, as well as their interaction with other cells. SAPHIR is available from: https://github.com/elodiegermani/SAPHIR",
+        "contributors": [
+            {
+                "surname": "Germani",
+                "given-names": "Elodie"
+            },
+            {
+                "surname": "Lelouard",
+                "given-names": "Hugues"
+            },
+            {
+                "surname": "Fallet",
+                "given-names": "Mathieu"
+            }
+        ],
+        "url": "https://f1000research.com/articles/9-1276/v1/",
+        "doc_id": "9-1276",
+        "version": 1,
+        "ix_counter": 203,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy"
+    }
+}

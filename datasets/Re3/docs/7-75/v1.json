@@ -1,0 +1,3092 @@
+{
+    "nodes": [
+        {
+            "ix": "7-75_v1_0",
+            "content": "Explicit interaction information from WikiPathways in RDF facilitates drug discovery in the Open PHACTS Discovery Platform",
+            "ntype": "article-title",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_2",
+            "content": "Open PHACTS is a pre-competitive project to answer scientific questions developed recently by the pharmaceutical industry. Having high quality biological interaction information in the Open PHACTS Discovery Platform is needed to answer multiple pathway related questions. To address this, updated WikiPathways data has been added to the platform. This data includes information about biological interactions, such as stimulation and inhibition. The platform's Application Programming Interface (API) was extended with appropriate calls to reference these interactions. These new methods of the Open PHACTS API are available now.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1",
+                "sec-type": "intro",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_4",
+            "content": "Targeting proteins to ideally restore normal biological processes is a common starting point in drug discovery <REF-1> . The Open PHACTS Discovery Platform (OPDP) was designed to help identify protein targets and information about their associations with each other <REF-2> \u2013 <REF-4> . The OPDP supports target identification and validation by including target-target interactions from WikiPathways <REF-5> \u2013 <REF-7> . Of these interaction networks, proteins sharing a downstream path allows investigation of alternative drug target combinations. Even the knowledge of which biological pathways participate in disease-related processes provides insight in the pathway topology between the targets. The importance and need of providing access to interaction information for real-world research questions was outlined in a recent Open PHACTS paper <REF-8> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_5",
+            "content": "The Open PHACTS project was born out of the desire to integrate pharmacological data from multiple pre-competitive sources to efficiently address scientific questions that cannot be answered with single data sources <REF-8> . It integrates data using linked data approaches <REF-3> from chemical and biological sources such as ChEBI, ChEMBL, UniProt, and WikiPathways <REF-6> . However, the OPDP did not previously include calls to access specific up- and downstream interaction effects. This information is needed for questions related to drug repositioning and repurposing. Up- or downstream targets may be interesting alternatives with similar therapeutic effect to targets, for which it is particularly hard to develop an drug agent. Thus, finding a target that has already been drugged or is more drug tractable will be advantageous. Here we describe how to identify alternative targets in the same cellular pathway using OPDP against the WikiPathways data.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_6",
+            "content": "Methods",
+            "ntype": "title",
+            "meta": {
+                "section": "2",
+                "sec-type": "methods",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_7",
+            "content": "Implementation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_8",
+            "content": "The WikiPathways Resource Description Framework data (WPRDF) is released as part of the monthly releases <REF-5> . It includes details about directed and undirected interactions. Directed biochemical interactions capture the source and target which are depicted as an arrow in simple pathway drawings. WikiPathways adds biological meaning to interactions with Molecular Interaction Map (MIM) interaction types, like inhibitions, enzyme catalyzed reactions, and stimulations <REF-9> , as well as Systems Biology Graphical Notation (SBGN) interactions <REF-10> . Reactome pathways in WikiPathways use SBGN interactions <REF-11> , <REF-12> . However, because MIM and SBGN use different drawing styles, we normalize their inhibition types into a common inhibition type, defined by the WikiPathways ontology ( https://vocabularies.wikipathways.org/wp ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_9",
+            "content": "The WikiPathways basic drawing tools also contain generic arrows and t-bar annotations that give the user the ability to create basic diagrams without the semantic meaning of MIM or SBGN notations. The interactions connecting these nodes are captured, but the only explicit information is that it is a directed interaction from a source to a target. To handle more complicated enzyme reaction drawings, where there is not a single line that directly connects targets in a cascade of enzymatic reactions, a query was developed that recognizes these types of reactions. However, this is not implemented in the current Open PHACTS Application Programming Interface (API).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_10",
+            "content": "Version 2.1 of the OPDP API contains three new calls for interactions and their pathways. The first call, /pathway/getInteractions , returns all interactions involved in a pathway. To use this feature, the user specifies a pathway URI and OPDP returns its interactions including information about direction and the connected entities. The direction information is relayed as a starting node having a wp:source annotation, while the end of the interaction has the wp:target annotation. In its simplest form, this means that if gene product A is interacting with a gene product B, then we have wp:source for product A and wp:target for product B. However, the new methods also support interactions with multiple sources and targets.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_11",
+            "content": "The second added call, /pathways/interactions/byEntity , returns the direction of the interactions involving this entity. An entity is specified by a URI and can be a metabolite, protein, gene product, or RNA. API options allow the user to select only upstream or only downstream interactions. The results also specify the interaction type (e.g. inhibition, stimulation, conversion). This ability to select the interaction direction is specifically what allows users to answer scientific questions around upstream and downstream effects, such as those defined by Open PHACTS. The third API call is /pathways/interactions/byEntity/count which is a helper function that returns the number of interactions for a target.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_12",
+            "content": "Operation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_13",
+            "content": "The OPDP API calls are backed by SPARQL searches against the loaded WikiPathways RDF. The query parameters that are required or optional are given in the documentation of Open PHACTS ( https://dev.openphacts.org/docs/2.1 ). As in previous versions, the API uses HTTP GET to call methods and needs a (free) application ID and key <REF-3> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_14",
+            "content": "Example queries",
+            "ntype": "title",
+            "meta": {
+                "section": "3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_15",
+            "content": "We are demonstrating the platform with three example calls. All the API calls require use of an application ID and an application key. This key and ID can be acquired by creating a free Open PHACTS account. The first example is an application to the PI3K/AKT pathway for cell growth regulation which contain important targets for cancer treatment <REF-13> . The AKT protein has a central role and usefully shows the API call\u2019s ability to return connected elements with the first and third calls. The API call can help aid drug discovery by taking a target, in this case AKT, and easily identify other connected proteins that could potentially be used as drug targets with a common downstream effect.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_16",
+            "content": "Figure 1 shows the web interface of the API call that returns the connectivity of the AKT2 target to both upstream or downstream proteins or gene products. This method allows the user to identify connections to other targets in the pathway. The results of that API call ( Figure 2 ) show the AKT2 interaction with microRNA. A helper method ( Figure 3 ): /pathways/interactions/byEntity/count is also included. It returns the number of all interactions in which an entity is participates. This helps the user get a sense of the prevalence of the queried entity with interactions in pathways found on WikiPathways.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_17",
+            "content": "Figure 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "f1",
+                "caption": "Parameters (bottom) and curl command (top) for the GET /pathways/interactions/byEntity call. The GET portion tells the API to retrieve data with the associated call. It takes an entity URI, the Ensembl ID for AKT2, and returns a list interactions for AKT2. The obligatory parameters are shown in bold.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/14318/cd1971d8-06dc-4daa-addd-7014665d36d0_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_18",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f1\" position=\"float\"> <caption> <title>Parameters (bottom) and <italic>curl</italic> command (top) for the GET <italic>/pathways/interactions/byEntity</italic> call.</title> <p>The GET portion tells the API to retrieve data with the associated call. It takes an entity URI, the Ensembl ID for AKT2, and returns a list interactions for AKT2. The obligatory parameters are shown in bold.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/14318/cd1971d8-06dc-4daa-addd-7014665d36d0_figure1.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f1",
+                "caption": "Parameters (bottom) and curl command (top) for the GET /pathways/interactions/byEntity call. The GET portion tells the API to retrieve data with the associated call. It takes an entity URI, the Ensembl ID for AKT2, and returns a list interactions for AKT2. The obligatory parameters are shown in bold.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/14318/cd1971d8-06dc-4daa-addd-7014665d36d0_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_19",
+            "content": "Figure 2.",
+            "ntype": "label",
+            "meta": {
+                "id": "f2",
+                "caption": "Result in the JSON format of the AKT2 query from Figure 1 . The participants of the interaction are directed from source (hsa-let7b) to target (AKT2). It also shows the type of interaction (inhibition), and the biological types of the interaction participants.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/14318/cd1971d8-06dc-4daa-addd-7014665d36d0_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_20",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f2\" position=\"float\"> <caption> <title>Result in the JSON format of the AKT2 query from <xref ref-type=\"fig\" rid=\"f1\">Figure 1</xref>.</title> <p>The participants of the interaction are directed from source (hsa-let7b) to target (AKT2). It also shows the type of interaction (inhibition), and the biological types of the interaction participants.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/14318/cd1971d8-06dc-4daa-addd-7014665d36d0_figure2.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f2",
+                "caption": "Result in the JSON format of the AKT2 query from Figure 1 . The participants of the interaction are directed from source (hsa-let7b) to target (AKT2). It also shows the type of interaction (inhibition), and the biological types of the interaction participants.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/14318/cd1971d8-06dc-4daa-addd-7014665d36d0_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_21",
+            "content": "Figure 3.",
+            "ntype": "label",
+            "meta": {
+                "id": "f3",
+                "caption": "Parameters (bottom) and curl command (top) for the GET /pathways/interactions/byEntity/count call. It takes a URI for an entity, in this case the Ensembl ID for AKT2 and returns a count of the interactions to which this gene product is involved. Only the entity URI, app ID, and app key are required fields. Optional parameters are pathway organism, direction, or type of interaction.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/14318/cd1971d8-06dc-4daa-addd-7014665d36d0_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_22",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f3\" position=\"float\"> <caption> <title>Parameters (bottom) and <italic>curl</italic> command (top) for the GET <italic>/pathways/interactions/byEntity/count</italic> call.</title> <p>It takes a URI for an entity, in this case the Ensembl ID for AKT2 and returns a count of the interactions to which this gene product is involved. Only the entity URI, app ID, and app key are required fields. Optional parameters are pathway organism, direction, or type of interaction.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/14318/cd1971d8-06dc-4daa-addd-7014665d36d0_figure3.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f3",
+                "caption": "Parameters (bottom) and curl command (top) for the GET /pathways/interactions/byEntity/count call. It takes a URI for an entity, in this case the Ensembl ID for AKT2 and returns a count of the interactions to which this gene product is involved. Only the entity URI, app ID, and app key are required fields. Optional parameters are pathway organism, direction, or type of interaction.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/14318/cd1971d8-06dc-4daa-addd-7014665d36d0_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_23",
+            "content": "The other call implemented, /pathway/getInteractions ( Figure 4 ), demonstrates an API call to return all interactions in the MicroRNAs in cardiomyocyte hypertrophy pathway <REF-14> . This pathway has interaction details for AKT, mTOR, and PI3K, which are all important targets in cancer research <REF-15> . For each interaction the participants are given and whether it is a directed or undirected interaction.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_24",
+            "content": "Figure 4.",
+            "ntype": "label",
+            "meta": {
+                "id": "f4",
+                "caption": "Parameters (bottom) and curl command (top) for the /pathways/getInteractions call. It is intended to take the pathway URI from WikiPathways and return a list of interaction involved in that particular pathway. Pathway URI, app ID, and app key are the only required values for this call.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/14318/cd1971d8-06dc-4daa-addd-7014665d36d0_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_25",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f4\" position=\"float\"> <caption> <title>Parameters (bottom) and <italic>curl</italic> command (top) for the <italic>/pathways/getInteractions</italic> call.</title> <p>It is intended to take the pathway URI from WikiPathways and return a list of interaction involved in that particular pathway. Pathway URI, app ID, and app key are the only required values for this call.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/14318/cd1971d8-06dc-4daa-addd-7014665d36d0_figure4.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f4",
+                "caption": "Parameters (bottom) and curl command (top) for the /pathways/getInteractions call. It is intended to take the pathway URI from WikiPathways and return a list of interaction involved in that particular pathway. Pathway URI, app ID, and app key are the only required values for this call.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/14318/cd1971d8-06dc-4daa-addd-7014665d36d0_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_26",
+            "content": "Summary",
+            "ntype": "title",
+            "meta": {
+                "section": "4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_27",
+            "content": "The addition of interactions with direction information allows OPDP to answering more of the pre-defined scientific questions <REF-16> . The directional information allows the user to explore how proteins and gene products are connected with one another and easily access this information. This is illustrated in the example queries using the cancer target AKT.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_28",
+            "content": "Software availability",
+            "ntype": "title",
+            "meta": {
+                "section": "5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_29",
+            "content": "Online service: https://dev.openphacts.org/docs/2.1",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_30",
+            "content": "Latest source code is available at: https://github.com/openphacts/OPS_LinkedDataApi",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_31",
+            "content": "Archived source code of discussed version: https://doi.org/10.5281/zenodo.1068252 <REF-17>",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_32",
+            "content": "License: Apache License 2.0",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_33",
+            "content": "<REF-1> Schreiber SL : Target-oriented and diversity-oriented organic synthesis in drug discovery. Science. 2000 ; 287 ( 5460 ): 1964 \u2013 1969 . 10720315 10.1126/science.287.5460.1964",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_34",
+            "content": "<REF-2> Azzaoui K Jacoby E Senger S : Scientific competency questions as the basis for semantically enriched open pharmacological space development. Drug Discov Today. 2013 ; 18 ( 17\u201318 ): 843 \u2013 852 . 23702085 10.1016/j.drudis.2013.05.008",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_35",
+            "content": "<REF-3> Williams AJ Harland L Groth P : Open PHACTS: semantic interoperability for drug discovery. Drug Discov Today. 2012 ; 17 ( 21\u201322 ): 1188 \u2013 1198 . 22683805 10.1016/j.drudis.2012.05.016",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_36",
+            "content": "<REF-4> Digles D Zdrazil B Neefs JM : Open PHACTS computational protocols for in silico target validation of cellular phenotypic screens: knowing the knowns. Medchemcomm. 2016 ; 7 ( 6 ): 1237 \u2013 1244 . 27774140 10.1039/c6md00065g 5063042",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_37",
+            "content": "<REF-5> Waagmeester A Kutmon M Riutta A : Using the Semantic Web for Rapid Integration of WikiPathways with Other Biological Online Data Resources. PLoS Comput Biol. 2016 ; 12 ( 6 ): e1004989 . 27336457 10.1371/journal.pcbi.1004989 4918977",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_38",
+            "content": "<REF-6> Gray AJG Groth P Loizou A : Applying linked data approaches to pharmacology: Architectural decisions and implementation. Semant Web. 2014 ; 5 ( 2 ): 101 \u2013 113 . 10.3233/SW-2012-0088",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_39",
+            "content": "<REF-7> Kelder T Pico AR Hanspers K : Mining biological pathways using WikiPathways web services. PLoS One. 2009 ; 4 ( 7 ): e6447 . 19649250 10.1371/journal.pone.0006447 2714472",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-7",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_40",
+            "content": "<REF-8> Chichester C Digles D Siebes R : Drug discovery FAQs: workflows for answering multidomain drug discovery questions. Drug Discov Today. 2015 ; 20 ( 4 ): 399 \u2013 405 . 25463038 10.1016/j.drudis.2014.11.006",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-8",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_41",
+            "content": "<REF-9> Luna A Karac EI Sunshine M : A formal mim specification and tools for the common exchange of mim diagrams: an xml-based format, an api, and a validation method. BMC Bioinformatics. 2011 ; 12 ( 1 ): 167 . 21586134 10.1186/1471-2105-12-167 3118169",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-9",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_42",
+            "content": "<REF-10> Le Nov\u00e8re NL Hucka M Mi H : The systems biology graphical notation. Nat Biotechnol. 2009 ; 27 ( 8 ): 735 \u2013 741 . 19668183 10.1038/nbt.1558",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-10",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_43",
+            "content": "<REF-11> Kutmon M Riutta A Nunes N : WikiPathways: capturing the full diversity of pathway knowledge. Nucleic Acids Res. 2016 ; 44 ( D1 ): D488 \u2013 D494 . 26481357 10.1093/nar/gkv1024 4702772",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-11",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_44",
+            "content": "<REF-12> Croft D Mundo AF Haw R : The reactome pathway knowledgebase. Nucleic Acids Res. 2014 ; 42 ( Database issue ): D472 \u2013 D477 . 24243840 10.1093/nar/gkt1102 3965010",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-12",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_45",
+            "content": "<REF-13> Vanhaesebroeck B Stephens L Hawkins P : PI3K signalling: the path to discovery and understanding. Nat Rev Mol Cell Biol. 2012 ; 13 ( 3 ): 195 \u2013 203 . 22358332 10.1038/nrm3290",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-13",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_46",
+            "content": "<REF-14> Levels M Hanspers K Kutmon M : Micrornas in cardiomyocyte hypertrophy (homo sapiens) . 2017 . Reference Source",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-14",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_47",
+            "content": "<REF-15> Li H Zeng J Shen K : PI3K/AKT/mTOR signaling pathway as a therapeutic target for ovarian cancer. Arch Gynecol Obstet. 2014 ; 290 ( 6 ): 1067 \u2013 1078 . 25086744 10.1007/s00404-014-3377-3",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-15",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_48",
+            "content": "<REF-16> Azzaoui K Jacoby E Senger S : Scientific competency questions as the basis for semantically enriched open pharmacological space development. Drug Discov Today. 2013 ; 18 ( 17\u201318 ): 843 \u2013 852 . 23702085 10.1016/j.drudis.2013.05.008",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-16",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-75_v1_49",
+            "content": "<REF-17> fundatureanu-sever Kerber R Soiland-Reyes S : openphacts/OPS_LinkedDataApi: Open PHACTS Linked Data API 2.1.0 (Version 2.1.0). Zenodo. 2016 . Data Source",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-17",
+                "created_by": "F1000XMLParser"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "7-75_v1_0@0",
+            "content": "Explicit interaction information from WikiPathways in RDF facilitates drug discovery in the Open PHACTS Discovery Platform",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_0",
+            "start": 0,
+            "end": 121,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_2@0",
+            "content": "Open PHACTS is a pre-competitive project to answer scientific questions developed recently by the pharmaceutical industry.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_2",
+            "start": 0,
+            "end": 121,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_2@1",
+            "content": "Having high quality biological interaction information in the Open PHACTS Discovery Platform is needed to answer multiple pathway related questions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_2",
+            "start": 123,
+            "end": 270,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_2@2",
+            "content": "To address this, updated WikiPathways data has been added to the platform.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_2",
+            "start": 272,
+            "end": 345,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_2@3",
+            "content": "This data includes information about biological interactions, such as stimulation and inhibition.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_2",
+            "start": 347,
+            "end": 443,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_2@4",
+            "content": "The platform's Application Programming Interface (API) was extended with appropriate calls to reference these interactions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_2",
+            "start": 445,
+            "end": 567,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_2@5",
+            "content": "These new methods of the Open PHACTS API are available now.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_2",
+            "start": 569,
+            "end": 627,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_4@0",
+            "content": "Targeting proteins to ideally restore normal biological processes is a common starting point in drug discovery <REF-1> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_4",
+            "start": 0,
+            "end": 119,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_4@1",
+            "content": "The Open PHACTS Discovery Platform (OPDP) was designed to help identify protein targets and information about their associations with each other <REF-2> \u2013 <REF-4> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_4",
+            "start": 121,
+            "end": 284,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_4@2",
+            "content": "The OPDP supports target identification and validation by including target-target interactions from WikiPathways <REF-5> \u2013 <REF-7> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_4",
+            "start": 286,
+            "end": 417,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_4@3",
+            "content": "Of these interaction networks, proteins sharing a downstream path allows investigation of alternative drug target combinations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_4",
+            "start": 419,
+            "end": 545,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_4@4",
+            "content": "Even the knowledge of which biological pathways participate in disease-related processes provides insight in the pathway topology between the targets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_4",
+            "start": 547,
+            "end": 696,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_4@5",
+            "content": "The importance and need of providing access to interaction information for real-world research questions was outlined in a recent Open PHACTS paper <REF-8> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_4",
+            "start": 698,
+            "end": 854,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_5@0",
+            "content": "The Open PHACTS project was born out of the desire to integrate pharmacological data from multiple pre-competitive sources to efficiently address scientific questions that cannot be answered with single data sources <REF-8> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_5",
+            "start": 0,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_5@1",
+            "content": "It integrates data using linked data approaches <REF-3> from chemical and biological sources such as ChEBI, ChEMBL, UniProt, and WikiPathways <REF-6> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_5",
+            "start": 226,
+            "end": 376,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_5@2",
+            "content": "However, the OPDP did not previously include calls to access specific up- and downstream interaction effects.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_5",
+            "start": 378,
+            "end": 486,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_5@3",
+            "content": "This information is needed for questions related to drug repositioning and repurposing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_5",
+            "start": 488,
+            "end": 574,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_5@4",
+            "content": "Up- or downstream targets may be interesting alternatives with similar therapeutic effect to targets, for which it is particularly hard to develop an drug agent.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_5",
+            "start": 576,
+            "end": 736,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_5@5",
+            "content": "Thus, finding a target that has already been drugged or is more drug tractable will be advantageous.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_5",
+            "start": 738,
+            "end": 837,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_5@6",
+            "content": "Here we describe how to identify alternative targets in the same cellular pathway using OPDP against the WikiPathways data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_5",
+            "start": 839,
+            "end": 961,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_6@0",
+            "content": "Methods",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_6",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_7@0",
+            "content": "Implementation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_7",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_8@0",
+            "content": "The WikiPathways Resource Description Framework data (WPRDF) is released as part of the monthly releases <REF-5> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_8",
+            "start": 0,
+            "end": 113,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_8@1",
+            "content": "It includes details about directed and undirected interactions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_8",
+            "start": 115,
+            "end": 177,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_8@2",
+            "content": "Directed biochemical interactions capture the source and target which are depicted as an arrow in simple pathway drawings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_8",
+            "start": 179,
+            "end": 300,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_8@3",
+            "content": "WikiPathways adds biological meaning to interactions with Molecular Interaction Map (MIM) interaction types, like inhibitions, enzyme catalyzed reactions, and stimulations <REF-9> , as well as Systems Biology Graphical Notation (SBGN) interactions <REF-10> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_8",
+            "start": 302,
+            "end": 559,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_8@4",
+            "content": "Reactome pathways in WikiPathways use SBGN interactions <REF-11> , <REF-12> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_8",
+            "start": 561,
+            "end": 637,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_8@5",
+            "content": "However, because MIM and SBGN use different drawing styles, we normalize their inhibition types into a common inhibition type, defined by the WikiPathways ontology ( https://vocabularies.wikipathways.org/wp ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_8",
+            "start": 639,
+            "end": 847,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_9@0",
+            "content": "The WikiPathways basic drawing tools also contain generic arrows and t-bar annotations that give the user the ability to create basic diagrams without the semantic meaning of MIM or SBGN notations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_9",
+            "start": 0,
+            "end": 196,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_9@1",
+            "content": "The interactions connecting these nodes are captured, but the only explicit information is that it is a directed interaction from a source to a target.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_9",
+            "start": 198,
+            "end": 348,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_9@2",
+            "content": "To handle more complicated enzyme reaction drawings, where there is not a single line that directly connects targets in a cascade of enzymatic reactions, a query was developed that recognizes these types of reactions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_9",
+            "start": 350,
+            "end": 566,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_9@3",
+            "content": "However, this is not implemented in the current Open PHACTS Application Programming Interface (API).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_9",
+            "start": 568,
+            "end": 667,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_10@0",
+            "content": "Version 2.1 of the OPDP API contains three new calls for interactions and their pathways.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_10",
+            "start": 0,
+            "end": 88,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_10@1",
+            "content": "The first call, /pathway/getInteractions , returns all interactions involved in a pathway.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_10",
+            "start": 90,
+            "end": 179,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_10@2",
+            "content": "To use this feature, the user specifies a pathway URI and OPDP returns its interactions including information about direction and the connected entities.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_10",
+            "start": 181,
+            "end": 333,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_10@3",
+            "content": "The direction information is relayed as a starting node having a wp:source annotation, while the end of the interaction has the wp:target annotation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_10",
+            "start": 335,
+            "end": 483,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_10@4",
+            "content": "In its simplest form, this means that if gene product A is interacting with a gene product B, then we have wp:source for product A and wp:target for product B. However, the new methods also support interactions with multiple sources and targets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_10",
+            "start": 485,
+            "end": 729,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_11@0",
+            "content": "The second added call, /pathways/interactions/byEntity , returns the direction of the interactions involving this entity.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_11",
+            "start": 0,
+            "end": 120,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_11@1",
+            "content": "An entity is specified by a URI and can be a metabolite, protein, gene product, or RNA.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_11",
+            "start": 122,
+            "end": 208,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_11@2",
+            "content": "API options allow the user to select only upstream or only downstream interactions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_11",
+            "start": 210,
+            "end": 292,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_11@3",
+            "content": "The results also specify the interaction type (e.g. inhibition, stimulation, conversion).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_11",
+            "start": 294,
+            "end": 382,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_11@4",
+            "content": "This ability to select the interaction direction is specifically what allows users to answer scientific questions around upstream and downstream effects, such as those defined by Open PHACTS.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_11",
+            "start": 384,
+            "end": 574,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_11@5",
+            "content": "The third API call is /pathways/interactions/byEntity/count which is a helper function that returns the number of interactions for a target.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_11",
+            "start": 576,
+            "end": 715,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_12@0",
+            "content": "Operation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_12",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_13@0",
+            "content": "The OPDP API calls are backed by SPARQL searches against the loaded WikiPathways RDF.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_13",
+            "start": 0,
+            "end": 84,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_13@1",
+            "content": "The query parameters that are required or optional are given in the documentation of Open PHACTS ( https://dev.openphacts.org/docs/2.1 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_13",
+            "start": 86,
+            "end": 222,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_13@2",
+            "content": "As in previous versions, the API uses HTTP GET to call methods and needs a (free) application ID and key <REF-3> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_13",
+            "start": 224,
+            "end": 337,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_14@0",
+            "content": "Example queries",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_14",
+            "start": 0,
+            "end": 14,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_15@0",
+            "content": "We are demonstrating the platform with three example calls.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_15",
+            "start": 0,
+            "end": 58,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_15@1",
+            "content": "All the API calls require use of an application ID and an application key.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_15",
+            "start": 60,
+            "end": 133,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_15@2",
+            "content": "This key and ID can be acquired by creating a free Open PHACTS account.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_15",
+            "start": 135,
+            "end": 205,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_15@3",
+            "content": "The first example is an application to the PI3K/AKT pathway for cell growth regulation which contain important targets for cancer treatment <REF-13> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_15",
+            "start": 207,
+            "end": 356,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_15@4",
+            "content": "The AKT protein has a central role and usefully shows the API call\u2019s ability to return connected elements with the first and third calls.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_15",
+            "start": 358,
+            "end": 494,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_15@5",
+            "content": "The API call can help aid drug discovery by taking a target, in this case AKT, and easily identify other connected proteins that could potentially be used as drug targets with a common downstream effect.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_15",
+            "start": 496,
+            "end": 698,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_16@0",
+            "content": "Figure 1 shows the web interface of the API call that returns the connectivity of the AKT2 target to both upstream or downstream proteins or gene products.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_16",
+            "start": 0,
+            "end": 154,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_16@1",
+            "content": "This method allows the user to identify connections to other targets in the pathway.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_16",
+            "start": 156,
+            "end": 239,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_16@2",
+            "content": "The results of that API call ( Figure 2 ) show the AKT2 interaction with microRNA.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_16",
+            "start": 241,
+            "end": 322,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_16@3",
+            "content": "A helper method ( Figure 3 ): /pathways/interactions/byEntity/count is also included.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_16",
+            "start": 324,
+            "end": 408,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_16@4",
+            "content": "It returns the number of all interactions in which an entity is participates.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_16",
+            "start": 410,
+            "end": 486,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_16@5",
+            "content": "This helps the user get a sense of the prevalence of the queried entity with interactions in pathways found on WikiPathways.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_16",
+            "start": 488,
+            "end": 611,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_17@0",
+            "content": "Figure 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_17",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_19@0",
+            "content": "Figure 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_19",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_21@0",
+            "content": "Figure 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_21",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_23@0",
+            "content": "The other call implemented, /pathway/getInteractions ( Figure 4 ), demonstrates an API call to return all interactions in the MicroRNAs in cardiomyocyte hypertrophy pathway <REF-14> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_23",
+            "start": 0,
+            "end": 182,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_23@1",
+            "content": "This pathway has interaction details for AKT, mTOR, and PI3K, which are all important targets in cancer research <REF-15> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_23",
+            "start": 184,
+            "end": 306,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_23@2",
+            "content": "For each interaction the participants are given and whether it is a directed or undirected interaction.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_23",
+            "start": 308,
+            "end": 410,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_24@0",
+            "content": "Figure 4.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_24",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_26@0",
+            "content": "Summary",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_26",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_27@0",
+            "content": "The addition of interactions with direction information allows OPDP to answering more of the pre-defined scientific questions <REF-16> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_27",
+            "start": 0,
+            "end": 135,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_27@1",
+            "content": "The directional information allows the user to explore how proteins and gene products are connected with one another and easily access this information.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_27",
+            "start": 137,
+            "end": 288,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_27@2",
+            "content": "This is illustrated in the example queries using the cancer target AKT.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_27",
+            "start": 290,
+            "end": 360,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_28@0",
+            "content": "Software availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_28",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_29@0",
+            "content": "Online service: https://dev.openphacts.org/docs/2.1",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_29",
+            "start": 0,
+            "end": 50,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_30@0",
+            "content": "Latest source code is available at: https://github.com/openphacts/OPS_LinkedDataApi",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_30",
+            "start": 0,
+            "end": 82,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_31@0",
+            "content": "Archived source code of discussed version: https://doi.org/10.5281/zenodo.1068252 <REF-17>",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_31",
+            "start": 0,
+            "end": 89,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_32@0",
+            "content": "License: Apache License 2.0",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_32",
+            "start": 0,
+            "end": 26,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_33@0",
+            "content": "<REF-1> Schreiber SL : Target-oriented and diversity-oriented organic synthesis in drug discovery. Science. 2000 ; 287 ( 5460 ): 1964 \u2013 1969 . 10720315 10.1126/science.287.5460.1964",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_33",
+            "start": 0,
+            "end": 180,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_34@0",
+            "content": "<REF-2> Azzaoui K Jacoby E Senger S : Scientific competency questions as the basis for semantically enriched open pharmacological space development. Drug Discov Today. 2013 ; 18 ( 17\u201318 ): 843 \u2013 852 . 23702085 10.1016/j.drudis.2013.05.008",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_34",
+            "start": 0,
+            "end": 237,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_35@0",
+            "content": "<REF-3> Williams AJ Harland L Groth P : Open PHACTS: semantic interoperability for drug discovery. Drug Discov Today. 2012 ; 17 ( 21\u201322 ): 1188 \u2013 1198 . 22683805 10.1016/j.drudis.2012.05.016",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_35",
+            "start": 0,
+            "end": 189,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_36@0",
+            "content": "<REF-4> Digles D Zdrazil B Neefs JM : Open PHACTS computational protocols for in silico target validation of cellular phenotypic screens: knowing the knowns. Medchemcomm. 2016 ; 7 ( 6 ): 1237 \u2013 1244 . 27774140 10.1039/c6md00065g 5063042",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_36",
+            "start": 0,
+            "end": 235,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_37@0",
+            "content": "<REF-5> Waagmeester A Kutmon M Riutta A : Using the Semantic Web for Rapid Integration of WikiPathways with Other Biological Online Data Resources. PLoS Comput Biol. 2016 ; 12 ( 6 ): e1004989 . 27336457 10.1371/journal.pcbi.1004989 4918977",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_37",
+            "start": 0,
+            "end": 238,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_38@0",
+            "content": "<REF-6> Gray AJG Groth P Loizou A : Applying linked data approaches to pharmacology: Architectural decisions and implementation. Semant Web. 2014 ; 5 ( 2 ): 101 \u2013 113 . 10.3233/SW-2012-0088",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_38",
+            "start": 0,
+            "end": 188,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_39@0",
+            "content": "<REF-7> Kelder T Pico AR Hanspers K : Mining biological pathways using WikiPathways web services. PLoS One. 2009 ; 4 ( 7 ): e6447 . 19649250 10.1371/journal.pone.0006447 2714472",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_39",
+            "start": 0,
+            "end": 176,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_40@0",
+            "content": "<REF-8> Chichester C Digles D Siebes R : Drug discovery FAQs: workflows for answering multidomain drug discovery questions. Drug Discov Today. 2015 ; 20 ( 4 ): 399 \u2013 405 . 25463038 10.1016/j.drudis.2014.11.006",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_40",
+            "start": 0,
+            "end": 208,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_41@0",
+            "content": "<REF-9> Luna A Karac EI Sunshine M : A formal mim specification and tools for the common exchange of mim diagrams: an xml-based format, an api, and a validation method. BMC Bioinformatics. 2011 ; 12 ( 1 ): 167 . 21586134 10.1186/1471-2105-12-167 3118169",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_41",
+            "start": 0,
+            "end": 252,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_42@0",
+            "content": "<REF-10> Le Nov\u00e8re NL Hucka M Mi H : The systems biology graphical notation. Nat Biotechnol. 2009 ; 27 ( 8 ): 735 \u2013 741 . 19668183 10.1038/nbt.1558",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_42",
+            "start": 0,
+            "end": 146,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_43@0",
+            "content": "<REF-11> Kutmon M Riutta A Nunes N : WikiPathways: capturing the full diversity of pathway knowledge. Nucleic Acids Res. 2016 ; 44 ( D1 ): D488 \u2013 D494 . 26481357 10.1093/nar/gkv1024 4702772",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_43",
+            "start": 0,
+            "end": 188,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_44@0",
+            "content": "<REF-12> Croft D Mundo AF Haw R : The reactome pathway knowledgebase. Nucleic Acids Res. 2014 ; 42 ( Database issue ): D472 \u2013 D477 . 24243840 10.1093/nar/gkt1102 3965010",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_44",
+            "start": 0,
+            "end": 168,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_45@0",
+            "content": "<REF-13> Vanhaesebroeck B Stephens L Hawkins P : PI3K signalling: the path to discovery and understanding. Nat Rev Mol Cell Biol. 2012 ; 13 ( 3 ): 195 \u2013 203 . 22358332 10.1038/nrm3290",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_45",
+            "start": 0,
+            "end": 182,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_46@0",
+            "content": "<REF-14> Levels M Hanspers K Kutmon M : Micrornas in cardiomyocyte hypertrophy (homo sapiens) . 2017 . Reference Source",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_46",
+            "start": 0,
+            "end": 118,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_47@0",
+            "content": "<REF-15> Li H Zeng J Shen K : PI3K/AKT/mTOR signaling pathway as a therapeutic target for ovarian cancer. Arch Gynecol Obstet. 2014 ; 290 ( 6 ): 1067 \u2013 1078 . 25086744 10.1007/s00404-014-3377-3",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_47",
+            "start": 0,
+            "end": 192,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_48@0",
+            "content": "<REF-16> Azzaoui K Jacoby E Senger S : Scientific competency questions as the basis for semantically enriched open pharmacological space development. Drug Discov Today. 2013 ; 18 ( 17\u201318 ): 843 \u2013 852 . 23702085 10.1016/j.drudis.2013.05.008",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_48",
+            "start": 0,
+            "end": 238,
+            "label": {}
+        },
+        {
+            "ix": "7-75_v1_49@0",
+            "content": "<REF-17> fundatureanu-sever Kerber R Soiland-Reyes S : openphacts/OPS_LinkedDataApi: Open PHACTS Linked Data API 2.1.0 (Version 2.1.0). Zenodo. 2016 . Data Source",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-75_v1_49",
+            "start": 0,
+            "end": 161,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "7-75_v1_0",
+            "tgt_ix": "7-75_v1_1",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_1",
+            "tgt_ix": "7-75_v1_2",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_0",
+            "tgt_ix": "7-75_v1_3",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_3",
+            "tgt_ix": "7-75_v1_4",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_3",
+            "tgt_ix": "7-75_v1_5",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_0",
+            "tgt_ix": "7-75_v1_6",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_6",
+            "tgt_ix": "7-75_v1_7",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_7",
+            "tgt_ix": "7-75_v1_8",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_7",
+            "tgt_ix": "7-75_v1_9",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_7",
+            "tgt_ix": "7-75_v1_10",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_7",
+            "tgt_ix": "7-75_v1_11",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_6",
+            "tgt_ix": "7-75_v1_12",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_12",
+            "tgt_ix": "7-75_v1_13",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_0",
+            "tgt_ix": "7-75_v1_14",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_14",
+            "tgt_ix": "7-75_v1_15",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_14",
+            "tgt_ix": "7-75_v1_16",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_14",
+            "tgt_ix": "7-75_v1_17",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_17",
+            "tgt_ix": "7-75_v1_18",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_14",
+            "tgt_ix": "7-75_v1_19",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_19",
+            "tgt_ix": "7-75_v1_20",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_14",
+            "tgt_ix": "7-75_v1_21",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_21",
+            "tgt_ix": "7-75_v1_22",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_14",
+            "tgt_ix": "7-75_v1_23",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_14",
+            "tgt_ix": "7-75_v1_24",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_24",
+            "tgt_ix": "7-75_v1_25",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_0",
+            "tgt_ix": "7-75_v1_26",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_26",
+            "tgt_ix": "7-75_v1_27",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_0",
+            "tgt_ix": "7-75_v1_28",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_28",
+            "tgt_ix": "7-75_v1_29",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_28",
+            "tgt_ix": "7-75_v1_30",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_28",
+            "tgt_ix": "7-75_v1_31",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_28",
+            "tgt_ix": "7-75_v1_32",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_0",
+            "tgt_ix": "7-75_v1_1",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_1",
+            "tgt_ix": "7-75_v1_2",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_2",
+            "tgt_ix": "7-75_v1_3",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_3",
+            "tgt_ix": "7-75_v1_4",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_4",
+            "tgt_ix": "7-75_v1_5",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_5",
+            "tgt_ix": "7-75_v1_6",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_6",
+            "tgt_ix": "7-75_v1_7",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_7",
+            "tgt_ix": "7-75_v1_8",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_8",
+            "tgt_ix": "7-75_v1_9",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_9",
+            "tgt_ix": "7-75_v1_10",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_10",
+            "tgt_ix": "7-75_v1_11",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_11",
+            "tgt_ix": "7-75_v1_12",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_12",
+            "tgt_ix": "7-75_v1_13",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_13",
+            "tgt_ix": "7-75_v1_14",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_14",
+            "tgt_ix": "7-75_v1_15",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_15",
+            "tgt_ix": "7-75_v1_16",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_16",
+            "tgt_ix": "7-75_v1_17",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_17",
+            "tgt_ix": "7-75_v1_18",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_18",
+            "tgt_ix": "7-75_v1_19",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_19",
+            "tgt_ix": "7-75_v1_20",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_20",
+            "tgt_ix": "7-75_v1_21",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_21",
+            "tgt_ix": "7-75_v1_22",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_22",
+            "tgt_ix": "7-75_v1_23",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_23",
+            "tgt_ix": "7-75_v1_24",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_24",
+            "tgt_ix": "7-75_v1_25",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_25",
+            "tgt_ix": "7-75_v1_26",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_26",
+            "tgt_ix": "7-75_v1_27",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_27",
+            "tgt_ix": "7-75_v1_28",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_28",
+            "tgt_ix": "7-75_v1_29",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_29",
+            "tgt_ix": "7-75_v1_30",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_30",
+            "tgt_ix": "7-75_v1_31",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_31",
+            "tgt_ix": "7-75_v1_32",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_4",
+            "tgt_ix": "7-75_v1_33",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_4",
+            "tgt_ix": "7-75_v1_34",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_5",
+            "tgt_ix": "7-75_v1_35",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_4",
+            "tgt_ix": "7-75_v1_36",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_4",
+            "tgt_ix": "7-75_v1_37",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_5",
+            "tgt_ix": "7-75_v1_38",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_4",
+            "tgt_ix": "7-75_v1_39",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_4",
+            "tgt_ix": "7-75_v1_40",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_8",
+            "tgt_ix": "7-75_v1_41",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_8",
+            "tgt_ix": "7-75_v1_42",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_8",
+            "tgt_ix": "7-75_v1_43",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_8",
+            "tgt_ix": "7-75_v1_44",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_15",
+            "tgt_ix": "7-75_v1_45",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_23",
+            "tgt_ix": "7-75_v1_46",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_23",
+            "tgt_ix": "7-75_v1_47",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_27",
+            "tgt_ix": "7-75_v1_48",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_31",
+            "tgt_ix": "7-75_v1_49",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_16",
+            "tgt_ix": "7-75_v1_18",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_16",
+            "tgt_ix": "7-75_v1_20",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_16",
+            "tgt_ix": "7-75_v1_22",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_23",
+            "tgt_ix": "7-75_v1_25",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_0",
+            "tgt_ix": "7-75_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_1",
+            "tgt_ix": "7-75_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_2",
+            "tgt_ix": "7-75_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_2",
+            "tgt_ix": "7-75_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_2",
+            "tgt_ix": "7-75_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_2",
+            "tgt_ix": "7-75_v1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_2",
+            "tgt_ix": "7-75_v1_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_2",
+            "tgt_ix": "7-75_v1_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_3",
+            "tgt_ix": "7-75_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_4",
+            "tgt_ix": "7-75_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_4",
+            "tgt_ix": "7-75_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_4",
+            "tgt_ix": "7-75_v1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_4",
+            "tgt_ix": "7-75_v1_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_4",
+            "tgt_ix": "7-75_v1_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_4",
+            "tgt_ix": "7-75_v1_4@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_5",
+            "tgt_ix": "7-75_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_5",
+            "tgt_ix": "7-75_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_5",
+            "tgt_ix": "7-75_v1_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_5",
+            "tgt_ix": "7-75_v1_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_5",
+            "tgt_ix": "7-75_v1_5@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_5",
+            "tgt_ix": "7-75_v1_5@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_5",
+            "tgt_ix": "7-75_v1_5@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_6",
+            "tgt_ix": "7-75_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_7",
+            "tgt_ix": "7-75_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_8",
+            "tgt_ix": "7-75_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_8",
+            "tgt_ix": "7-75_v1_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_8",
+            "tgt_ix": "7-75_v1_8@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_8",
+            "tgt_ix": "7-75_v1_8@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_8",
+            "tgt_ix": "7-75_v1_8@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_8",
+            "tgt_ix": "7-75_v1_8@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_9",
+            "tgt_ix": "7-75_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_9",
+            "tgt_ix": "7-75_v1_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_9",
+            "tgt_ix": "7-75_v1_9@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_9",
+            "tgt_ix": "7-75_v1_9@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_10",
+            "tgt_ix": "7-75_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_10",
+            "tgt_ix": "7-75_v1_10@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_10",
+            "tgt_ix": "7-75_v1_10@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_10",
+            "tgt_ix": "7-75_v1_10@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_10",
+            "tgt_ix": "7-75_v1_10@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_11",
+            "tgt_ix": "7-75_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_11",
+            "tgt_ix": "7-75_v1_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_11",
+            "tgt_ix": "7-75_v1_11@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_11",
+            "tgt_ix": "7-75_v1_11@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_11",
+            "tgt_ix": "7-75_v1_11@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_11",
+            "tgt_ix": "7-75_v1_11@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_12",
+            "tgt_ix": "7-75_v1_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_13",
+            "tgt_ix": "7-75_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_13",
+            "tgt_ix": "7-75_v1_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_13",
+            "tgt_ix": "7-75_v1_13@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_14",
+            "tgt_ix": "7-75_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_15",
+            "tgt_ix": "7-75_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_15",
+            "tgt_ix": "7-75_v1_15@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_15",
+            "tgt_ix": "7-75_v1_15@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_15",
+            "tgt_ix": "7-75_v1_15@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_15",
+            "tgt_ix": "7-75_v1_15@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_15",
+            "tgt_ix": "7-75_v1_15@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_16",
+            "tgt_ix": "7-75_v1_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_16",
+            "tgt_ix": "7-75_v1_16@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_16",
+            "tgt_ix": "7-75_v1_16@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_16",
+            "tgt_ix": "7-75_v1_16@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_16",
+            "tgt_ix": "7-75_v1_16@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_16",
+            "tgt_ix": "7-75_v1_16@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_17",
+            "tgt_ix": "7-75_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_19",
+            "tgt_ix": "7-75_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_21",
+            "tgt_ix": "7-75_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_23",
+            "tgt_ix": "7-75_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_23",
+            "tgt_ix": "7-75_v1_23@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_23",
+            "tgt_ix": "7-75_v1_23@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_24",
+            "tgt_ix": "7-75_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_26",
+            "tgt_ix": "7-75_v1_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_27",
+            "tgt_ix": "7-75_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_27",
+            "tgt_ix": "7-75_v1_27@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_27",
+            "tgt_ix": "7-75_v1_27@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_28",
+            "tgt_ix": "7-75_v1_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_29",
+            "tgt_ix": "7-75_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_30",
+            "tgt_ix": "7-75_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_31",
+            "tgt_ix": "7-75_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_32",
+            "tgt_ix": "7-75_v1_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_33",
+            "tgt_ix": "7-75_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_34",
+            "tgt_ix": "7-75_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_35",
+            "tgt_ix": "7-75_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_36",
+            "tgt_ix": "7-75_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_37",
+            "tgt_ix": "7-75_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_38",
+            "tgt_ix": "7-75_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_39",
+            "tgt_ix": "7-75_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_40",
+            "tgt_ix": "7-75_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_41",
+            "tgt_ix": "7-75_v1_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_42",
+            "tgt_ix": "7-75_v1_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_43",
+            "tgt_ix": "7-75_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_44",
+            "tgt_ix": "7-75_v1_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_45",
+            "tgt_ix": "7-75_v1_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_46",
+            "tgt_ix": "7-75_v1_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_47",
+            "tgt_ix": "7-75_v1_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_48",
+            "tgt_ix": "7-75_v1_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-75_v1_49",
+            "tgt_ix": "7-75_v1_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "7-75_v1",
+    "meta": {
+        "parser": "F1000XMLParser",
+        "intertext-graph": "N/A",
+        "doi": "10.12688/f1000research.13197.1",
+        "atype": "software-tool",
+        "license": "http://creativecommons.org/licenses/by/4.0/",
+        "title": "Explicit interaction information from WikiPathways in RDF facilitates drug discovery in the Open PHACTS Discovery Platform",
+        "abstract": "Open PHACTS is a pre-competitive project to answer scientific questions developed recently by the pharmaceutical industry. Having high quality biological interaction information in the Open PHACTS Discovery Platform is needed to answer multiple pathway related questions. To address this, updated WikiPathways data has been added to the platform. This data includes information about biological interactions, such as stimulation and inhibition. The platform's Application Programming Interface (API) was extended with appropriate calls to reference these interactions. These new methods of the Open PHACTS API are available now.",
+        "contributors": [
+            {
+                "surname": "Miller",
+                "given-names": "Ryan A."
+            },
+            {
+                "surname": "Woollard",
+                "given-names": "Peter"
+            },
+            {
+                "surname": "Willighagen",
+                "given-names": "Egon L."
+            },
+            {
+                "surname": "Digles",
+                "given-names": "Daniela"
+            },
+            {
+                "surname": "Kutmon",
+                "given-names": "Martina"
+            },
+            {
+                "surname": "Loizou",
+                "given-names": "Antonis"
+            },
+            {
+                "surname": "Waagmeester",
+                "given-names": "Andra"
+            },
+            {
+                "surname": "Senger",
+                "given-names": "Stefan"
+            },
+            {
+                "surname": "Evelo",
+                "given-names": "Chris T."
+            }
+        ],
+        "url": "https://f1000research.com/articles/7-75/v1/",
+        "doc_id": "7-75",
+        "version": 1,
+        "ix_counter": 194,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy"
+    }
+}

@@ -1,0 +1,3846 @@
+{
+    "nodes": [
+        {
+            "ix": "9-ARR_v2_0",
+            "content": "NoisyTune: A Little Noise Can Help You Finetune Pretrained Language Models Better",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_2",
+            "content": "Effectively finetuning pretrained language models (PLMs) is critical for their success in downstream tasks. However, PLMs may have risks in overfitting the pretraining tasks and data, which usually have gap with the target downstream tasks. Such gap may be difficult for existing PLM finetuning methods to overcome and lead to suboptimal performance. In this paper, we propose a very simple yet effective method named NoisyTune to help better finetune PLMs on downstream tasks by adding some noise to the parameters of PLMs before finetuning. More specifically, we propose a matrix-wise perturbing method which adds different uniform noises to different parameter matrices based on their standard deviations. In this way, the varied characteristics of different types of parameters in PLMs can be considered. Extensive experiments on both GLUE English benchmark and XTREME multilingual benchmark show NoisyTune can consistently empower the finetuning of different PLMs on different downstream tasks.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "9-ARR_v2_4",
+            "content": "In recent years, pretrained language models (PLMs) have achieved huge success in NLP (Qiu et al., 2020). Many PLMs such as BERT (Devlin et al., 2019), RoBERTa and UniLM (Dong et al., 2019) which are pretrained from large-scale unlabeled corpus in a selfsupervised way, have significantly improve various downstream tasks such as reading comprehension , machine translation (Brown et al., 2020), text classification (Bao et al., 2020), dialog (Wu et al., 2020) and recommendation by finetuning on these tasks.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_5",
+            "content": "How to effectively finetune PLMs to better empower downstream tasks is an important research problem (Zheng et al., 2021). Many existing NLP methods usually directly finetune PLMs with the * Corresponding author. labeled data in downstream tasks (Sun et al., 2019). Only a few works explore more effective and robust PLM finetuning methods Lee et al., 2020;Aghajanyan et al., 2021;Xu et al., 2021). For example, proposed RecAdam that adds a penalty item to minimize the L 2 distance between the finetuned models and the pretrained models, where the penalty intensity is time-variant during finetuning. Lee et al. (2020) proposed Mixout which randomly replaces part of the parameters in the finetuned model with their original weights in the PLMs. These PLM finetuning methods mainly focus on preventing PLMs from overfitting the limited labeled data in downstream tasks. Besides the overfitting of downstream task data, a rarely studied problem is that the PLMs usually overfit the pretraining tasks and data (Qi et al., 2020), which may have significant gap with the downstream task and data. It is not easy for existing PLM finetuning methods to overcome such gap (Roberts et al., 2020), which may lead to suboptimal performance especially when labeled data in downstream tasks is insufficient.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_6",
+            "content": "In order to handle this problem, in this paper we propose a very simple yet effective method named NoisyTune, which can help better finetune PLMs for downstream tasks. Different from the standard finetuning paradigm (Fig. 1 (a)) which directly finetunes PLMs on the downstream task data, the key idea of NoisyTune is to add a small amount of noise to perturb PLMs parameters before finetuning (Fig. 1 (b)). It can help prevent PLMs from overfitting the tasks and data in the pretraining stage, and reduce the gap between pretraining and downstream tasks. Since PLMs have different types of parameters which usually own different characteristics, in NoisyTune we use a matrix-wise perturbing method that adds uniform noise with different intensities to different parameter matrices according to their standard deviations for better adaptation. We conduct extensive experiments on two widely used NLP benchmarks, namely, GLUE (Wang et al., 2018) for English language understanding and XTREME (Hu et al., 2020) for multilingual language understanding. The results show NoisyTune can empower the finetuning of different PLMs on many different downstream NLP tasks to consistently achieve better performance. In addition, the results show NoisyTune can be easily combined with many existing PLM finetuning methods and further improve their performance.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_7",
+            "content": "NoisyTune",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "9-ARR_v2_8",
+            "content": "The goal of NoisyTune is for more effective finetuning of PLMs on downstream tasks. The motivation of NoisyTune is that PLMs are well pretrained on some unlabeled corpus with some self-supervision tasks, and they may overfit these pretraining data and tasks (Qi et al., 2020), which usually have gap with the downstream task and data. It may be difficult for PLMs to effectively adapt to downstream tasks especially when labeled data in these tasks are limited, which is usually the case. Motivated by the dueling bandits mechanism (Yue and Joachims, 2009) that adds randomness to the model for exploration, as shown in Fig. 1, we propose to add some noise to the parameters of PLMs before finetuning them on downstream tasks to do some \"exploration\" in parameter space and reduce the risk of overfitting the pretraining tasks and data.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_9",
+            "content": "PLMs usually have different kinds of parameter matrices, such as query, key, value, and feedforward network matrices (Devlin et al., 2019). Different parameter matrices in the PLMs usually have different characteristics and scales. For example, some researchers found that the self-attention parameters and the feed-forward network parameters in Transformers have very different properties, such as rank and density . Thus, adding unified noise to all parameter matrices in PLMs may not be optimal for keeping their good model utility. To handle this challenge, we propose a matrix-wise perturbing method that adds noise with different intensities to different parameter matrices according to their variances. Denote the parameter matrices (or scalars/vectors) in a PLM as",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_10",
+            "content": "[W 1 , W 2 , ..., W N ],",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_11",
+            "content": "where N is the number of parameter matrix types. Denote the perturbed version of the parameter matrix W i as Wi , which is computed as follows:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_12",
+            "content": "Wi = W i + U (\u2212 \u03bb 2 , \u03bb 2 ) * std(W i ),(1)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_13",
+            "content": "where std stands for standard deviation. The function U (a, b) represents uniform distribution noise ranged from a to b, and \u03bb is a hyperparameter that controls the relative noise intensity. 1 We can see that in NoisyTune parameters in PLMs with higher variance will be added with stronger noise.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_14",
+            "content": "In addition, in some PLMs there are some constant matrices, such as token type embeddings in RoBERTa . They will not be perturbed because their standard deviation is 0. It can ensure that these constant matrices will not be accidentally activated by additional noise.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_15",
+            "content": "NoisyTune is a simple and general plug-and-play technique that can be applied to the finetuning of any PLM on any task, simply by inserting the following PyTorch-style code before finetuning: * noise lambda * torch .std (para) 3 Experiments",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_16",
+            "content": "Datasets and Experimental Settings",
+            "ntype": "title",
+            "meta": {
+                "section": "3.1"
+            }
+        },
+        {
+            "ix": "9-ARR_v2_17",
+            "content": "We conduct extensive experiments on two widely used benchmarks for PLM evaluation. The first one is GLUE (Wang et al., 2018), which is a benchmark for English language understanding that contains different tasks like natural language inference, sentiment analysis and sentence similarity evaluation. The second one is XTREME (Hu et al., 2020), which is a benchmark for multilingual language understanding. It covers 40 languages and contains four groups of tasks, including sentence classification, structured prediction, sentence retrieval and question answering. More details of these benchmarks can refer to their original papers and official websites. Since the test labels of GLUE are not released, following (Bao et al., 2020) Following (Zheng et al., 2021), in sentence retrieval tasks we first train the models on the XNLI dataset, and then use the average of token representations produced by the hidden layer that yields the best performance. In order not to harm the alignment of token embeddings across different languages, we do not add noise to the token embeddings in multilingual PLMs. We repeat experiments 5 times with different random seeds and report the average scores.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_18",
+            "content": "Performance Evaluation",
+            "ntype": "title",
+            "meta": {
+                "section": "3.2"
+            }
+        },
+        {
+            "ix": "9-ARR_v2_19",
+            "content": "On the GLUE benchmark, we compare the performance of directly finetuning the base version of BERT (Devlin et al., 2019), XLNET , RoBERTa and ELEC-TRA (Clark et al., 2020) with that of finetuning them after applying NoisyTune. On the XTREME benchmark, we compare the performance of directly finetuning both base and large versions of XLM-R (Conneau et al., 2020) with that of their variants obtained by applying NoisyTune. The results on these two benchmarks are shown in Tables 2 and 3, respectively. On the XTREME datasets, we report two types of results. The first one is zero-shot crosslingual transfer from English to other languages, and the second one is learning models on both English and translated data.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_20",
+            "content": "According to these results, NoisyTune can consistently improve the performance of different PLMs on different tasks in both English and multilingual settings. In addition, the performance improvement brought by NoisyTune is usually larger on relatively small datasets (e.g., RTE, CoLA and WNLI). These results indicate that when labeled data in downstream tasks is insufficient, it is quite difficult to effectively finetune PLMs starting from the original parameters which usually overfit the pretraining tasks and data. The experimental results validate that NoisyTune can properly perturb PLMs with a little noise to explore different parameter spaces and reduce the overfitting problem, making PLMs easier to be adapted to downstream tasks.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_21",
+            "content": "Which Noise to Use and How?",
+            "ntype": "title",
+            "meta": {
+                "section": "3.3"
+            }
+        },
+        {
+            "ix": "9-ARR_v2_22",
+            "content": "In this section we study which kind of noise is more suitable for NoisyTune. In addition, we explore whether our proposed matrix-wise perturbing method is better than using a unified global noise for all model parameters in PLMs. We compare five methods, including (1) NoisyTune without any noise; (2) NoisyTune with a global Gaussian noise; (3) NoisyTune with a global uniform noise; (4) NoisyTune with matrix-wise Gaussian noise; (5) NoisyTune with matrix-wise uniform noise. The results on GLUE are shown in Fig. 2, and the results on XTREME show similar patterns. We find that adding global noise with the same distribution to all the PLM parameters will harm the model performance. This is because different parameter matrices in PLMs have very different distributions and characteristics . Simply adding a unified global noise to all the parameter matrices is not optimal. The results show that matrix-wise noise is a much better choice, since the different characteristics of different parameter matrices can be taken into consideration. In addition, we find an interesting phenomenon that adding uniform noise is better than Gaussian noise. This may be because Gaussian noise has wider ranges and some extreme values may affect the model performance. Thus, we use matrix-wise uniform noise in NoisyTune.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_23",
+            "content": "Combination with Existing PLM Finetuning Methods",
+            "ntype": "title",
+            "meta": {
+                "section": "3.4"
+            }
+        },
+        {
+            "ix": "9-ARR_v2_24",
+            "content": "From Fig. 1, it is very clear that NoisyTune is independent of the specific PLM finetuning method, since it is applied at the stage before finetuning PLM on the task-specific data. Thus, it is very easy to combine NoisyTune with any kind of existing PLM finetuning method. In this section, we explore whether NoisyTune has the potential to empower the existing PLM finetuning techniques to achieve better performance. Here we select two well-known PLM finetuning for experiments, i.e., RecAdam and Mixout (Lee et al., 2020). The experimental results are summarized in Fig. 3. We find that combining NoisyTune with existing PLM finetuning techniques can further improve their performance. This is because NoisyTune aims to address the overfitting of pretraining signals while these methods aim to prevent overfitting in downstream tasks. Thus, NoisyTune and these PLM finetuning methods are complementary, and they can be empowered by NoisyTune to achieve better performance.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_25",
+            "content": "Empirical Analysis of NoisyTune",
+            "ntype": "title",
+            "meta": {
+                "section": "3.5"
+            }
+        },
+        {
+            "ix": "9-ARR_v2_26",
+            "content": "Next, we empirically analyze why NoisyTune can help PLM finetuning. We compare the accuracy of BERT with and without NoisyTune finetuned with different percentage of samples on the MRPC dataset. 2 The results are shown in Fig. 4. We find NoisyTune can consistently improve PLMs under different amounts of data, especially when less training data is used. This is because the perturbed PLMs may have lower risks of overfitting the pretraining tasks and have better generalization abilities, which is especially beneficial for finetuning 2 We observe similar patterns on other datasets. PLMs on downstream task with limited data.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_27",
+            "content": "To further study the impact of NoisyTune on PLM finetuning, we show the relative changes of the L 1 -norms of different kinds of parameters in the BERT model during finetuning on the MRPC dataset in Fig. 5. 3 Since the noise we added to PLMs in NoisyTune is zero-mean uniform noise, the absolute parameter L 1 -norm will not change too much. However, we can see that the relative change of L 1 -norms becomes smaller when Noisy-Tune is applied, which indicates that the PLMs can find the (sub)optimal parameters for downstream tasks more easily. This result validates directly finetuning PLMs may need more updates to adapt to downstream tasks, which is due to the overfitting of pretraining tasks, and NoisyTune can provide a simple way to alleviate this problem and help finetune PLMs on downstream tasks more effectively.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_28",
+            "content": "Hyperparameter Analysis",
+            "ntype": "title",
+            "meta": {
+                "section": "3.6"
+            }
+        },
+        {
+            "ix": "9-ARR_v2_29",
+            "content": "We study the influence of the most important hyperparameter in NoisyTune, i.e., \u03bb, which controls the relative noise intensity. The average GLUE scores w.r.t. different \u03bb values are shown in Fig. 6. We find that when \u03bb is too small or too large, the performance is not optimal. This is because when \u03bb is too small, it is difficult for PLMs to do parameter space exploration and overcome the overfitting problem. While when \u03bb is too large, the useful pretrained knowledge in PLMs may be overwhelmed by random noise. Values between 0.1 and 0.15 are more suitable for NoisyTune on the GLUE datasets.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_30",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "9-ARR_v2_31",
+            "content": "In this paper, we propose a very simple but effective method named NoisyTune, which can help better finetune PLMs on downstream tasks by adding a little noise to them before finetuning. In NoisyTune, we propose a matrix-wise perturbing method that adds noise with different intensities to different kinds of parameter matrices in PLMs according to their variances. NoisyTune is a very general method, and is PLM model agnostic, downstream task agnostic, and finetuning method agnostic. Extensive experiments on both monolingual GLUE benchmark and multilingual XTREME benchmark demonstrate NoisyTune can consistently empower the finetuning of different PLMs on various downstream tasks to achieve better performance.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "9-ARR_v2_32",
+            "content": "Armen Aghajanyan, Akshat Shrivastava, Anchit Gupta, Naman Goyal, Luke Zettlemoyer, Sonal Gupta, Better fine-tuning by reducing representational collapse, 2021, ICLR, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": [
+                    "Armen Aghajanyan",
+                    "Akshat Shrivastava",
+                    "Anchit Gupta",
+                    "Naman Goyal",
+                    "Luke Zettlemoyer",
+                    "Sonal Gupta"
+                ],
+                "title": "Better fine-tuning by reducing representational collapse",
+                "pub_date": "2021",
+                "pub_title": "ICLR",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_33",
+            "content": "Hangbo Bao, Li Dong, Furu Wei, Wenhui Wang, Nan Yang, Xiaodong Liu, Yu Wang, Jianfeng Gao, Songhao Piao, Ming Zhou, Unilmv2: Pseudomasked language models for unified language model pre-training, 2020, ICML, PMLR.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": [
+                    "Hangbo Bao",
+                    "Li Dong",
+                    "Furu Wei",
+                    "Wenhui Wang",
+                    "Nan Yang",
+                    "Xiaodong Liu",
+                    "Yu Wang",
+                    "Jianfeng Gao",
+                    "Songhao Piao",
+                    "Ming Zhou"
+                ],
+                "title": "Unilmv2: Pseudomasked language models for unified language model pre-training",
+                "pub_date": "2020",
+                "pub_title": "ICML",
+                "pub": "PMLR"
+            }
+        },
+        {
+            "ix": "9-ARR_v2_34",
+            "content": "Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared Kaplan, Prafulla Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell, Language models are few-shot learners, 2020, NeurIPS, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": [
+                    "Tom Brown",
+                    "Benjamin Mann",
+                    "Nick Ryder",
+                    "Melanie Subbiah",
+                    "Jared Kaplan",
+                    "Prafulla Dhariwal",
+                    "Arvind Neelakantan",
+                    "Pranav Shyam",
+                    "Girish Sastry",
+                    "Amanda Askell"
+                ],
+                "title": "Language models are few-shot learners",
+                "pub_date": "2020",
+                "pub_title": "NeurIPS",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_35",
+            "content": "Sanyuan Chen, Yutai Hou, Yiming Cui, Wanxiang Che, Ting Liu, Xiangzhan Yu, Recall and learn: Fine-tuning deep pretrained language models with less forgetting, 2020, EMNLP, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": [
+                    "Sanyuan Chen",
+                    "Yutai Hou",
+                    "Yiming Cui",
+                    "Wanxiang Che",
+                    "Ting Liu",
+                    "Xiangzhan Yu"
+                ],
+                "title": "Recall and learn: Fine-tuning deep pretrained language models with less forgetting",
+                "pub_date": "2020",
+                "pub_title": "EMNLP",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_36",
+            "content": "Kevin Clark, Minh-Thang Luong, Quoc Le, Christopher Manning, ELECTRA: pretraining text encoders as discriminators rather than generators, 2020, ICLR, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": [
+                    "Kevin Clark",
+                    "Minh-Thang Luong",
+                    "Quoc Le",
+                    "Christopher Manning"
+                ],
+                "title": "ELECTRA: pretraining text encoders as discriminators rather than generators",
+                "pub_date": "2020",
+                "pub_title": "ICLR",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_37",
+            "content": "Alexis Conneau, Kartikay Khandelwal, Naman Goyal, Vishrav Chaudhary, Guillaume Wenzek, Francisco Guzm\u00e1n, Edouard Grave, Myle Ott, Luke Zettlemoyer, Veselin Stoyanov, Unsupervised cross-lingual representation learning at scale, 2020, ACL, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "Alexis Conneau",
+                    "Kartikay Khandelwal",
+                    "Naman Goyal",
+                    "Vishrav Chaudhary",
+                    "Guillaume Wenzek",
+                    "Francisco Guzm\u00e1n",
+                    "Edouard Grave",
+                    "Myle Ott",
+                    "Luke Zettlemoyer",
+                    "Veselin Stoyanov"
+                ],
+                "title": "Unsupervised cross-lingual representation learning at scale",
+                "pub_date": "2020",
+                "pub_title": "ACL",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_38",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, Bert: Pre-training of deep bidirectional transformers for language understanding, 2019, NAACL-HLT, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": [
+                    "Jacob Devlin",
+                    "Ming-Wei Chang",
+                    "Kenton Lee",
+                    "Kristina Toutanova"
+                ],
+                "title": "Bert: Pre-training of deep bidirectional transformers for language understanding",
+                "pub_date": "2019",
+                "pub_title": "NAACL-HLT",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_39",
+            "content": "Li Dong, Nan Yang, Wenhui Wang, Furu Wei, Xiaodong Liu, Yu Wang, Jianfeng Gao, Ming Zhou, Hsiao-Wuen Hon, Unified language model pre-training for natural language understanding and generation, 2019, NIPS, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": [
+                    "Li Dong",
+                    "Nan Yang",
+                    "Wenhui Wang",
+                    "Furu Wei",
+                    "Xiaodong Liu",
+                    "Yu Wang",
+                    "Jianfeng Gao",
+                    "Ming Zhou",
+                    "Hsiao-Wuen Hon"
+                ],
+                "title": "Unified language model pre-training for natural language understanding and generation",
+                "pub_date": "2019",
+                "pub_title": "NIPS",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_40",
+            "content": "Junjie Hu, Sebastian Ruder, Aditya Siddhant, Graham Neubig, Orhan Firat, Melvin Johnson, Xtreme: A massively multilingual multi-task benchmark for evaluating cross-lingual generalisation, 2020, ICML, PMLR.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": [
+                    "Junjie Hu",
+                    "Sebastian Ruder",
+                    "Aditya Siddhant",
+                    "Graham Neubig",
+                    "Orhan Firat",
+                    "Melvin Johnson"
+                ],
+                "title": "Xtreme: A massively multilingual multi-task benchmark for evaluating cross-lingual generalisation",
+                "pub_date": "2020",
+                "pub_title": "ICML",
+                "pub": "PMLR"
+            }
+        },
+        {
+            "ix": "9-ARR_v2_41",
+            "content": "Cheolhyoung Lee, Kyunghyun Cho, Wanmo Kang, Mixout: Effective regularization to finetune large-scale pretrained language models, 2020, ICLR, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    "Cheolhyoung Lee",
+                    "Kyunghyun Cho",
+                    "Wanmo Kang"
+                ],
+                "title": "Mixout: Effective regularization to finetune large-scale pretrained language models",
+                "pub_date": "2020",
+                "pub_title": "ICLR",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_42",
+            "content": "UNKNOWN, None, 2019, Roberta: A robustly optimized bert pretraining approach, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "Roberta: A robustly optimized bert pretraining approach",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_43",
+            "content": "Weizhen Qi, Yu Yan, Yeyun Gong, Dayiheng Liu, Nan Duan, Jiusheng Chen, Ruofei Zhang, Ming Zhou, Prophetnet: Predicting future n-gram for sequence-to-sequencepre-training, 2020, EMNLP Findings, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": [
+                    "Weizhen Qi",
+                    "Yu Yan",
+                    "Yeyun Gong",
+                    "Dayiheng Liu",
+                    "Nan Duan",
+                    "Jiusheng Chen",
+                    "Ruofei Zhang",
+                    "Ming Zhou"
+                ],
+                "title": "Prophetnet: Predicting future n-gram for sequence-to-sequencepre-training",
+                "pub_date": "2020",
+                "pub_title": "EMNLP Findings",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_44",
+            "content": "Xipeng Qiu, Tianxiang Sun, Yige Xu, Yunfan Shao, Ning Dai, Xuanjing Huang, Pre-trained models for natural language processing: A survey, 2020, Science China Technological Sciences, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": [
+                    "Xipeng Qiu",
+                    "Tianxiang Sun",
+                    "Yige Xu",
+                    "Yunfan Shao",
+                    "Ning Dai",
+                    "Xuanjing Huang"
+                ],
+                "title": "Pre-trained models for natural language processing: A survey",
+                "pub_date": "2020",
+                "pub_title": "Science China Technological Sciences",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_45",
+            "content": "Adam Roberts, Colin Raffel, Noam Shazeer, How much knowledge can you pack into the parameters of a language model, 2020, EMNLP, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": [
+                    "Adam Roberts",
+                    "Colin Raffel",
+                    "Noam Shazeer"
+                ],
+                "title": "How much knowledge can you pack into the parameters of a language model",
+                "pub_date": "2020",
+                "pub_title": "EMNLP",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_46",
+            "content": "Chi Sun, Xipeng Qiu, Yige Xu, Xuanjing Huang, How to fine-tune bert for text classification, 2019, CCL, Springer.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": [
+                    "Chi Sun",
+                    "Xipeng Qiu",
+                    "Yige Xu",
+                    "Xuanjing Huang"
+                ],
+                "title": "How to fine-tune bert for text classification",
+                "pub_date": "2019",
+                "pub_title": "CCL",
+                "pub": "Springer"
+            }
+        },
+        {
+            "ix": "9-ARR_v2_47",
+            "content": "Alex Wang, Amanpreet Singh, Julian Michael, Felix Hill, Omer Levy, Samuel Bowman, Glue: A multi-task benchmark and analysis platform for natural language understanding, 2018, BlackboxNLP, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b15",
+                "authors": [
+                    "Alex Wang",
+                    "Amanpreet Singh",
+                    "Julian Michael",
+                    "Felix Hill",
+                    "Omer Levy",
+                    "Samuel Bowman"
+                ],
+                "title": "Glue: A multi-task benchmark and analysis platform for natural language understanding",
+                "pub_date": "2018",
+                "pub_title": "BlackboxNLP",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_48",
+            "content": "UNKNOWN, None, 2020, Linformer: Self-attention with linear complexity, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b16",
+                "authors": null,
+                "title": null,
+                "pub_date": "2020",
+                "pub_title": "Linformer: Self-attention with linear complexity",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_49",
+            "content": "Chien-Sheng Wu, C Steven, Richard Hoi, Caiming Socher,  Xiong, Tod-bert: Pre-trained natural language understanding for task-oriented dialogue, 2020, EMNLP, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b17",
+                "authors": [
+                    "Chien-Sheng Wu",
+                    "C Steven",
+                    "Richard Hoi",
+                    "Caiming Socher",
+                    " Xiong"
+                ],
+                "title": "Tod-bert: Pre-trained natural language understanding for task-oriented dialogue",
+                "pub_date": "2020",
+                "pub_title": "EMNLP",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_50",
+            "content": "Chuhan Wu, Fangzhao Wu, Tao Qi, Yongfeng Huang, Empowering news recommendation with pre-trained language models, 2021, SIGIR, ACM.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b18",
+                "authors": [
+                    "Chuhan Wu",
+                    "Fangzhao Wu",
+                    "Tao Qi",
+                    "Yongfeng Huang"
+                ],
+                "title": "Empowering news recommendation with pre-trained language models",
+                "pub_date": "2021",
+                "pub_title": "SIGIR",
+                "pub": "ACM"
+            }
+        },
+        {
+            "ix": "9-ARR_v2_51",
+            "content": "Hu Xu, Bing Liu, Lei Shu, S Yu Philip, Bert post-training for review reading comprehension and aspect-based sentiment analysis, 2019, NAACL-HLT, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b19",
+                "authors": [
+                    "Hu Xu",
+                    "Bing Liu",
+                    "Lei Shu",
+                    "S Yu Philip"
+                ],
+                "title": "Bert post-training for review reading comprehension and aspect-based sentiment analysis",
+                "pub_date": "2019",
+                "pub_title": "NAACL-HLT",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_52",
+            "content": "Runxin Xu, Fuli Luo, Zhiyuan Zhang, Chuanqi Tan, Baobao Chang, Songfang Huang, Fei Huang, Raise a child in large language model: Towards effective and generalizable fine-tuning, 2021, EMNLP, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b20",
+                "authors": [
+                    "Runxin Xu",
+                    "Fuli Luo",
+                    "Zhiyuan Zhang",
+                    "Chuanqi Tan",
+                    "Baobao Chang",
+                    "Songfang Huang",
+                    "Fei Huang"
+                ],
+                "title": "Raise a child in large language model: Towards effective and generalizable fine-tuning",
+                "pub_date": "2021",
+                "pub_title": "EMNLP",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_53",
+            "content": "Zhilin Yang, Zihang Dai, Yiming Yang, Jaime Carbonell, R Russ, Quoc V Salakhutdinov,  Le, Xlnet: Generalized autoregressive pretraining for language understanding, 2019, NeurIPS, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b21",
+                "authors": [
+                    "Zhilin Yang",
+                    "Zihang Dai",
+                    "Yiming Yang",
+                    "Jaime Carbonell",
+                    "R Russ",
+                    "Quoc V Salakhutdinov",
+                    " Le"
+                ],
+                "title": "Xlnet: Generalized autoregressive pretraining for language understanding",
+                "pub_date": "2019",
+                "pub_title": "NeurIPS",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_54",
+            "content": "Yisong Yue, Thorsten Joachims, Interactively optimizing information retrieval systems as a dueling bandits problem, 2009, ICML, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b22",
+                "authors": [
+                    "Yisong Yue",
+                    "Thorsten Joachims"
+                ],
+                "title": "Interactively optimizing information retrieval systems as a dueling bandits problem",
+                "pub_date": "2009",
+                "pub_title": "ICML",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_55",
+            "content": "Tianyi Zhang, Felix Wu, Arzoo Katiyar, Q Kilian, Yoav Weinberger,  Artzi, Revisiting few-sample bert fine-tuning, 2021, ICLR, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b23",
+                "authors": [
+                    "Tianyi Zhang",
+                    "Felix Wu",
+                    "Arzoo Katiyar",
+                    "Q Kilian",
+                    "Yoav Weinberger",
+                    " Artzi"
+                ],
+                "title": "Revisiting few-sample bert fine-tuning",
+                "pub_date": "2021",
+                "pub_title": "ICLR",
+                "pub": null
+            }
+        },
+        {
+            "ix": "9-ARR_v2_56",
+            "content": "Bo Zheng, Li Dong, Shaohan Huang, Wenhui Wang, Zewen Chi, Saksham Singhal, Wanxiang Che, Ting Liu, Xia Song, Furu Wei, Consistency regularization for cross-lingual fine-tuning, 2021, ACL-IJCNLP, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b24",
+                "authors": [
+                    "Bo Zheng",
+                    "Li Dong",
+                    "Shaohan Huang",
+                    "Wenhui Wang",
+                    "Zewen Chi",
+                    "Saksham Singhal",
+                    "Wanxiang Che",
+                    "Ting Liu",
+                    "Xia Song",
+                    "Furu Wei"
+                ],
+                "title": "Consistency regularization for cross-lingual fine-tuning",
+                "pub_date": "2021",
+                "pub_title": "ACL-IJCNLP",
+                "pub": null
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "9-ARR_v2_0@0",
+            "content": "NoisyTune: A Little Noise Can Help You Finetune Pretrained Language Models Better",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_0",
+            "start": 0,
+            "end": 80,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_2@0",
+            "content": "Effectively finetuning pretrained language models (PLMs) is critical for their success in downstream tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_2",
+            "start": 0,
+            "end": 106,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_2@1",
+            "content": "However, PLMs may have risks in overfitting the pretraining tasks and data, which usually have gap with the target downstream tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_2",
+            "start": 108,
+            "end": 239,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_2@2",
+            "content": "Such gap may be difficult for existing PLM finetuning methods to overcome and lead to suboptimal performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_2",
+            "start": 241,
+            "end": 349,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_2@3",
+            "content": "In this paper, we propose a very simple yet effective method named NoisyTune to help better finetune PLMs on downstream tasks by adding some noise to the parameters of PLMs before finetuning.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_2",
+            "start": 351,
+            "end": 541,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_2@4",
+            "content": "More specifically, we propose a matrix-wise perturbing method which adds different uniform noises to different parameter matrices based on their standard deviations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_2",
+            "start": 543,
+            "end": 707,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_2@5",
+            "content": "In this way, the varied characteristics of different types of parameters in PLMs can be considered.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_2",
+            "start": 709,
+            "end": 807,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_2@6",
+            "content": "Extensive experiments on both GLUE English benchmark and XTREME multilingual benchmark show NoisyTune can consistently empower the finetuning of different PLMs on different downstream tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_2",
+            "start": 809,
+            "end": 998,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_4@0",
+            "content": "In recent years, pretrained language models (PLMs) have achieved huge success in NLP (Qiu et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_4",
+            "start": 0,
+            "end": 103,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_4@1",
+            "content": "Many PLMs such as BERT (Devlin et al., 2019), RoBERTa and UniLM (Dong et al., 2019) which are pretrained from large-scale unlabeled corpus in a selfsupervised way, have significantly improve various downstream tasks such as reading comprehension , machine translation (Brown et al., 2020), text classification (Bao et al., 2020), dialog (Wu et al., 2020) and recommendation by finetuning on these tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_4",
+            "start": 105,
+            "end": 507,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_5@0",
+            "content": "How to effectively finetune PLMs to better empower downstream tasks is an important research problem (Zheng et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_5",
+            "start": 0,
+            "end": 121,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_5@1",
+            "content": "Many existing NLP methods usually directly finetune PLMs with the * Corresponding author.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_5",
+            "start": 123,
+            "end": 211,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_5@2",
+            "content": "labeled data in downstream tasks (Sun et al., 2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_5",
+            "start": 213,
+            "end": 264,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_5@3",
+            "content": "Only a few works explore more effective and robust PLM finetuning methods Lee et al., 2020;Aghajanyan et al., 2021;Xu et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_5",
+            "start": 266,
+            "end": 397,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_5@4",
+            "content": "For example, proposed RecAdam that adds a penalty item to minimize the L 2 distance between the finetuned models and the pretrained models, where the penalty intensity is time-variant during finetuning.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_5",
+            "start": 399,
+            "end": 600,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_5@5",
+            "content": "Lee et al. (2020) proposed Mixout which randomly replaces part of the parameters in the finetuned model with their original weights in the PLMs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_5",
+            "start": 602,
+            "end": 745,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_5@6",
+            "content": "These PLM finetuning methods mainly focus on preventing PLMs from overfitting the limited labeled data in downstream tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_5",
+            "start": 747,
+            "end": 869,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_5@7",
+            "content": "Besides the overfitting of downstream task data, a rarely studied problem is that the PLMs usually overfit the pretraining tasks and data (Qi et al., 2020), which may have significant gap with the downstream task and data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_5",
+            "start": 871,
+            "end": 1092,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_5@8",
+            "content": "It is not easy for existing PLM finetuning methods to overcome such gap (Roberts et al., 2020), which may lead to suboptimal performance especially when labeled data in downstream tasks is insufficient.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_5",
+            "start": 1094,
+            "end": 1295,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_6@0",
+            "content": "In order to handle this problem, in this paper we propose a very simple yet effective method named NoisyTune, which can help better finetune PLMs for downstream tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_6",
+            "start": 0,
+            "end": 166,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_6@1",
+            "content": "Different from the standard finetuning paradigm (Fig. 1 (a)) which directly finetunes PLMs on the downstream task data, the key idea of NoisyTune is to add a small amount of noise to perturb PLMs parameters before finetuning (Fig. 1 (b)).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_6",
+            "start": 168,
+            "end": 405,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_6@2",
+            "content": "It can help prevent PLMs from overfitting the tasks and data in the pretraining stage, and reduce the gap between pretraining and downstream tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_6",
+            "start": 407,
+            "end": 553,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_6@3",
+            "content": "Since PLMs have different types of parameters which usually own different characteristics, in NoisyTune we use a matrix-wise perturbing method that adds uniform noise with different intensities to different parameter matrices according to their standard deviations for better adaptation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_6",
+            "start": 555,
+            "end": 841,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_6@4",
+            "content": "We conduct extensive experiments on two widely used NLP benchmarks, namely, GLUE (Wang et al., 2018) for English language understanding and XTREME (Hu et al., 2020) for multilingual language understanding.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_6",
+            "start": 843,
+            "end": 1047,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_6@5",
+            "content": "The results show NoisyTune can empower the finetuning of different PLMs on many different downstream NLP tasks to consistently achieve better performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_6",
+            "start": 1049,
+            "end": 1202,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_6@6",
+            "content": "In addition, the results show NoisyTune can be easily combined with many existing PLM finetuning methods and further improve their performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_6",
+            "start": 1204,
+            "end": 1346,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_7@0",
+            "content": "NoisyTune",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_7",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_8@0",
+            "content": "The goal of NoisyTune is for more effective finetuning of PLMs on downstream tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_8",
+            "start": 0,
+            "end": 82,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_8@1",
+            "content": "The motivation of NoisyTune is that PLMs are well pretrained on some unlabeled corpus with some self-supervision tasks, and they may overfit these pretraining data and tasks (Qi et al., 2020), which usually have gap with the downstream task and data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_8",
+            "start": 84,
+            "end": 333,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_8@2",
+            "content": "It may be difficult for PLMs to effectively adapt to downstream tasks especially when labeled data in these tasks are limited, which is usually the case.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_8",
+            "start": 335,
+            "end": 487,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_8@3",
+            "content": "Motivated by the dueling bandits mechanism (Yue and Joachims, 2009) that adds randomness to the model for exploration, as shown in Fig. 1, we propose to add some noise to the parameters of PLMs before finetuning them on downstream tasks to do some \"exploration\" in parameter space and reduce the risk of overfitting the pretraining tasks and data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_8",
+            "start": 489,
+            "end": 835,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_9@0",
+            "content": "PLMs usually have different kinds of parameter matrices, such as query, key, value, and feedforward network matrices (Devlin et al., 2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_9",
+            "start": 0,
+            "end": 138,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_9@1",
+            "content": "Different parameter matrices in the PLMs usually have different characteristics and scales.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_9",
+            "start": 140,
+            "end": 230,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_9@2",
+            "content": "For example, some researchers found that the self-attention parameters and the feed-forward network parameters in Transformers have very different properties, such as rank and density .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_9",
+            "start": 232,
+            "end": 416,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_9@3",
+            "content": "Thus, adding unified noise to all parameter matrices in PLMs may not be optimal for keeping their good model utility.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_9",
+            "start": 418,
+            "end": 534,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_9@4",
+            "content": "To handle this challenge, we propose a matrix-wise perturbing method that adds noise with different intensities to different parameter matrices according to their variances.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_9",
+            "start": 536,
+            "end": 708,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_9@5",
+            "content": "Denote the parameter matrices (or scalars/vectors) in a PLM as",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_9",
+            "start": 710,
+            "end": 771,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_10@0",
+            "content": "[W 1 , W 2 , ..., W N ],",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_10",
+            "start": 0,
+            "end": 23,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_11@0",
+            "content": "where N is the number of parameter matrix types.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_11",
+            "start": 0,
+            "end": 47,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_11@1",
+            "content": "Denote the perturbed version of the parameter matrix W i as Wi , which is computed as follows:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_11",
+            "start": 49,
+            "end": 142,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_12@0",
+            "content": "Wi = W i + U (\u2212 \u03bb 2 , \u03bb 2 ) * std(W i ),(1)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_12",
+            "start": 0,
+            "end": 42,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_13@0",
+            "content": "where std stands for standard deviation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_13",
+            "start": 0,
+            "end": 39,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_13@1",
+            "content": "The function U (a, b) represents uniform distribution noise ranged from a to b, and \u03bb is a hyperparameter that controls the relative noise intensity.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_13",
+            "start": 41,
+            "end": 189,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_13@2",
+            "content": "1 We can see that in NoisyTune parameters in PLMs with higher variance will be added with stronger noise.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_13",
+            "start": 191,
+            "end": 295,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_14@0",
+            "content": "In addition, in some PLMs there are some constant matrices, such as token type embeddings in RoBERTa .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_14",
+            "start": 0,
+            "end": 101,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_14@1",
+            "content": "They will not be perturbed because their standard deviation is 0.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_14",
+            "start": 103,
+            "end": 167,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_14@2",
+            "content": "It can ensure that these constant matrices will not be accidentally activated by additional noise.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_14",
+            "start": 169,
+            "end": 266,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_15@0",
+            "content": "NoisyTune is a simple and general plug-and-play technique that can be applied to the finetuning of any PLM on any task, simply by inserting the following PyTorch-style code before finetuning: * noise lambda * torch .std (para) 3 Experiments",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_15",
+            "start": 0,
+            "end": 239,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_16@0",
+            "content": "Datasets and Experimental Settings",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_16",
+            "start": 0,
+            "end": 33,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_17@0",
+            "content": "We conduct extensive experiments on two widely used benchmarks for PLM evaluation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_17",
+            "start": 0,
+            "end": 81,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_17@1",
+            "content": "The first one is GLUE (Wang et al., 2018), which is a benchmark for English language understanding that contains different tasks like natural language inference, sentiment analysis and sentence similarity evaluation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_17",
+            "start": 83,
+            "end": 298,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_17@2",
+            "content": "The second one is XTREME (Hu et al., 2020), which is a benchmark for multilingual language understanding.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_17",
+            "start": 300,
+            "end": 404,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_17@3",
+            "content": "It covers 40 languages and contains four groups of tasks, including sentence classification, structured prediction, sentence retrieval and question answering.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_17",
+            "start": 406,
+            "end": 563,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_17@4",
+            "content": "More details of these benchmarks can refer to their original papers and official websites.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_17",
+            "start": 565,
+            "end": 654,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_17@5",
+            "content": "Since the test labels of GLUE are not released, following (Bao et al., 2020) Following (Zheng et al., 2021), in sentence retrieval tasks we first train the models on the XNLI dataset, and then use the average of token representations produced by the hidden layer that yields the best performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_17",
+            "start": 656,
+            "end": 951,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_17@6",
+            "content": "In order not to harm the alignment of token embeddings across different languages, we do not add noise to the token embeddings in multilingual PLMs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_17",
+            "start": 953,
+            "end": 1100,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_17@7",
+            "content": "We repeat experiments 5 times with different random seeds and report the average scores.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_17",
+            "start": 1102,
+            "end": 1189,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_18@0",
+            "content": "Performance Evaluation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_18",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_19@0",
+            "content": "On the GLUE benchmark, we compare the performance of directly finetuning the base version of BERT (Devlin et al., 2019), XLNET , RoBERTa and ELEC-TRA (Clark et al., 2020) with that of finetuning them after applying NoisyTune.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_19",
+            "start": 0,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_19@1",
+            "content": "On the XTREME benchmark, we compare the performance of directly finetuning both base and large versions of XLM-R (Conneau et al., 2020) with that of their variants obtained by applying NoisyTune.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_19",
+            "start": 226,
+            "end": 420,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_19@2",
+            "content": "The results on these two benchmarks are shown in Tables 2 and 3, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_19",
+            "start": 422,
+            "end": 499,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_19@3",
+            "content": "On the XTREME datasets, we report two types of results.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_19",
+            "start": 501,
+            "end": 555,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_19@4",
+            "content": "The first one is zero-shot crosslingual transfer from English to other languages, and the second one is learning models on both English and translated data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_19",
+            "start": 557,
+            "end": 712,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_20@0",
+            "content": "According to these results, NoisyTune can consistently improve the performance of different PLMs on different tasks in both English and multilingual settings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_20",
+            "start": 0,
+            "end": 157,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_20@1",
+            "content": "In addition, the performance improvement brought by NoisyTune is usually larger on relatively small datasets (e.g., RTE, CoLA and WNLI).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_20",
+            "start": 159,
+            "end": 294,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_20@2",
+            "content": "These results indicate that when labeled data in downstream tasks is insufficient, it is quite difficult to effectively finetune PLMs starting from the original parameters which usually overfit the pretraining tasks and data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_20",
+            "start": 296,
+            "end": 520,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_20@3",
+            "content": "The experimental results validate that NoisyTune can properly perturb PLMs with a little noise to explore different parameter spaces and reduce the overfitting problem, making PLMs easier to be adapted to downstream tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_20",
+            "start": 522,
+            "end": 743,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_21@0",
+            "content": "Which Noise to Use and How?",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_21",
+            "start": 0,
+            "end": 26,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_22@0",
+            "content": "In this section we study which kind of noise is more suitable for NoisyTune.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_22",
+            "start": 0,
+            "end": 75,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_22@1",
+            "content": "In addition, we explore whether our proposed matrix-wise perturbing method is better than using a unified global noise for all model parameters in PLMs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_22",
+            "start": 77,
+            "end": 228,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_22@2",
+            "content": "We compare five methods, including (1) NoisyTune without any noise; (2) NoisyTune with a global Gaussian noise; (3) NoisyTune with a global uniform noise; (4) NoisyTune with matrix-wise Gaussian noise; (5) NoisyTune with matrix-wise uniform noise.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_22",
+            "start": 230,
+            "end": 476,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_22@3",
+            "content": "The results on GLUE are shown in Fig. 2, and the results on XTREME show similar patterns.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_22",
+            "start": 478,
+            "end": 566,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_22@4",
+            "content": "We find that adding global noise with the same distribution to all the PLM parameters will harm the model performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_22",
+            "start": 568,
+            "end": 685,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_22@5",
+            "content": "This is because different parameter matrices in PLMs have very different distributions and characteristics .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_22",
+            "start": 687,
+            "end": 794,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_22@6",
+            "content": "Simply adding a unified global noise to all the parameter matrices is not optimal.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_22",
+            "start": 796,
+            "end": 877,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_22@7",
+            "content": "The results show that matrix-wise noise is a much better choice, since the different characteristics of different parameter matrices can be taken into consideration.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_22",
+            "start": 879,
+            "end": 1043,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_22@8",
+            "content": "In addition, we find an interesting phenomenon that adding uniform noise is better than Gaussian noise.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_22",
+            "start": 1045,
+            "end": 1147,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_22@9",
+            "content": "This may be because Gaussian noise has wider ranges and some extreme values may affect the model performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_22",
+            "start": 1149,
+            "end": 1257,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_22@10",
+            "content": "Thus, we use matrix-wise uniform noise in NoisyTune.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_22",
+            "start": 1259,
+            "end": 1310,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_23@0",
+            "content": "Combination with Existing PLM Finetuning Methods",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_23",
+            "start": 0,
+            "end": 47,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_24@0",
+            "content": "From Fig. 1, it is very clear that NoisyTune is independent of the specific PLM finetuning method, since it is applied at the stage before finetuning PLM on the task-specific data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_24",
+            "start": 0,
+            "end": 179,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_24@1",
+            "content": "Thus, it is very easy to combine NoisyTune with any kind of existing PLM finetuning method.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_24",
+            "start": 181,
+            "end": 271,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_24@2",
+            "content": "In this section, we explore whether NoisyTune has the potential to empower the existing PLM finetuning techniques to achieve better performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_24",
+            "start": 273,
+            "end": 416,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_24@3",
+            "content": "Here we select two well-known PLM finetuning for experiments, i.e., RecAdam and Mixout (Lee et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_24",
+            "start": 418,
+            "end": 523,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_24@4",
+            "content": "The experimental results are summarized in Fig. 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_24",
+            "start": 525,
+            "end": 574,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_24@5",
+            "content": "We find that combining NoisyTune with existing PLM finetuning techniques can further improve their performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_24",
+            "start": 576,
+            "end": 686,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_24@6",
+            "content": "This is because NoisyTune aims to address the overfitting of pretraining signals while these methods aim to prevent overfitting in downstream tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_24",
+            "start": 688,
+            "end": 835,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_24@7",
+            "content": "Thus, NoisyTune and these PLM finetuning methods are complementary, and they can be empowered by NoisyTune to achieve better performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_24",
+            "start": 837,
+            "end": 973,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_25@0",
+            "content": "Empirical Analysis of NoisyTune",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_25",
+            "start": 0,
+            "end": 30,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_26@0",
+            "content": "Next, we empirically analyze why NoisyTune can help PLM finetuning.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_26",
+            "start": 0,
+            "end": 66,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_26@1",
+            "content": "We compare the accuracy of BERT with and without NoisyTune finetuned with different percentage of samples on the MRPC dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_26",
+            "start": 68,
+            "end": 193,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_26@2",
+            "content": "2 The results are shown in Fig. 4.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_26",
+            "start": 195,
+            "end": 228,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_26@3",
+            "content": "We find NoisyTune can consistently improve PLMs under different amounts of data, especially when less training data is used.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_26",
+            "start": 230,
+            "end": 353,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_26@4",
+            "content": "This is because the perturbed PLMs may have lower risks of overfitting the pretraining tasks and have better generalization abilities, which is especially beneficial for finetuning 2 We observe similar patterns on other datasets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_26",
+            "start": 355,
+            "end": 583,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_26@5",
+            "content": "PLMs on downstream task with limited data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_26",
+            "start": 585,
+            "end": 626,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_27@0",
+            "content": "To further study the impact of NoisyTune on PLM finetuning, we show the relative changes of the L 1 -norms of different kinds of parameters in the BERT model during finetuning on the MRPC dataset in Fig. 5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_27",
+            "start": 0,
+            "end": 205,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_27@1",
+            "content": "3 Since the noise we added to PLMs in NoisyTune is zero-mean uniform noise, the absolute parameter L 1 -norm will not change too much.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_27",
+            "start": 207,
+            "end": 340,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_27@2",
+            "content": "However, we can see that the relative change of L 1 -norms becomes smaller when Noisy-Tune is applied, which indicates that the PLMs can find the (sub)optimal parameters for downstream tasks more easily.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_27",
+            "start": 342,
+            "end": 544,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_27@3",
+            "content": "This result validates directly finetuning PLMs may need more updates to adapt to downstream tasks, which is due to the overfitting of pretraining tasks, and NoisyTune can provide a simple way to alleviate this problem and help finetune PLMs on downstream tasks more effectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_27",
+            "start": 546,
+            "end": 823,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_28@0",
+            "content": "Hyperparameter Analysis",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_28",
+            "start": 0,
+            "end": 22,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_29@0",
+            "content": "We study the influence of the most important hyperparameter in NoisyTune, i.e., \u03bb, which controls the relative noise intensity.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_29",
+            "start": 0,
+            "end": 126,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_29@1",
+            "content": "The average GLUE scores w.r.t. different \u03bb values are shown in Fig. 6.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_29",
+            "start": 128,
+            "end": 197,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_29@2",
+            "content": "We find that when \u03bb is too small or too large, the performance is not optimal.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_29",
+            "start": 199,
+            "end": 276,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_29@3",
+            "content": "This is because when \u03bb is too small, it is difficult for PLMs to do parameter space exploration and overcome the overfitting problem.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_29",
+            "start": 278,
+            "end": 410,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_29@4",
+            "content": "While when \u03bb is too large, the useful pretrained knowledge in PLMs may be overwhelmed by random noise.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_29",
+            "start": 412,
+            "end": 513,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_29@5",
+            "content": "Values between 0.1 and 0.15 are more suitable for NoisyTune on the GLUE datasets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_29",
+            "start": 515,
+            "end": 595,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_30@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_30",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_31@0",
+            "content": "In this paper, we propose a very simple but effective method named NoisyTune, which can help better finetune PLMs on downstream tasks by adding a little noise to them before finetuning.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_31",
+            "start": 0,
+            "end": 184,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_31@1",
+            "content": "In NoisyTune, we propose a matrix-wise perturbing method that adds noise with different intensities to different kinds of parameter matrices in PLMs according to their variances.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_31",
+            "start": 186,
+            "end": 363,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_31@2",
+            "content": "NoisyTune is a very general method, and is PLM model agnostic, downstream task agnostic, and finetuning method agnostic.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_31",
+            "start": 365,
+            "end": 484,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_31@3",
+            "content": "Extensive experiments on both monolingual GLUE benchmark and multilingual XTREME benchmark demonstrate NoisyTune can consistently empower the finetuning of different PLMs on various downstream tasks to achieve better performance.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_31",
+            "start": 486,
+            "end": 714,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_32@0",
+            "content": "Armen Aghajanyan, Akshat Shrivastava, Anchit Gupta, Naman Goyal, Luke Zettlemoyer, Sonal Gupta, Better fine-tuning by reducing representational collapse, 2021, ICLR, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_32",
+            "start": 0,
+            "end": 166,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_33@0",
+            "content": "Hangbo Bao, Li Dong, Furu Wei, Wenhui Wang, Nan Yang, Xiaodong Liu, Yu Wang, Jianfeng Gao, Songhao Piao, Ming Zhou, Unilmv2: Pseudomasked language models for unified language model pre-training, 2020, ICML, PMLR.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_33",
+            "start": 0,
+            "end": 211,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_34@0",
+            "content": "Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared Kaplan, Prafulla Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell, Language models are few-shot learners, 2020, NeurIPS, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_34",
+            "start": 0,
+            "end": 206,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_35@0",
+            "content": "Sanyuan Chen, Yutai Hou, Yiming Cui, Wanxiang Che, Ting Liu, Xiangzhan Yu, Recall and learn: Fine-tuning deep pretrained language models with less forgetting, 2020, EMNLP, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_35",
+            "start": 0,
+            "end": 172,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_36@0",
+            "content": "Kevin Clark, Minh-Thang Luong, Quoc Le, Christopher Manning, ELECTRA: pretraining text encoders as discriminators rather than generators, 2020, ICLR, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_36",
+            "start": 0,
+            "end": 150,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_37@0",
+            "content": "Alexis Conneau, Kartikay Khandelwal, Naman Goyal, Vishrav Chaudhary, Guillaume Wenzek, Francisco Guzm\u00e1n, Edouard Grave, Myle Ott, Luke Zettlemoyer, Veselin Stoyanov, Unsupervised cross-lingual representation learning at scale, 2020, ACL, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_37",
+            "start": 0,
+            "end": 238,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_38@0",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, Bert: Pre-training of deep bidirectional transformers for language understanding, 2019, NAACL-HLT, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_38",
+            "start": 0,
+            "end": 161,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_39@0",
+            "content": "Li Dong, Nan Yang, Wenhui Wang, Furu Wei, Xiaodong Liu, Yu Wang, Jianfeng Gao, Ming Zhou, Hsiao-Wuen Hon, Unified language model pre-training for natural language understanding and generation, 2019, NIPS, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_39",
+            "start": 0,
+            "end": 205,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_40@0",
+            "content": "Junjie Hu, Sebastian Ruder, Aditya Siddhant, Graham Neubig, Orhan Firat, Melvin Johnson, Xtreme: A massively multilingual multi-task benchmark for evaluating cross-lingual generalisation, 2020, ICML, PMLR.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_40",
+            "start": 0,
+            "end": 204,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_41@0",
+            "content": "Cheolhyoung Lee, Kyunghyun Cho, Wanmo Kang, Mixout: Effective regularization to finetune large-scale pretrained language models, 2020, ICLR, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_41",
+            "start": 0,
+            "end": 141,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_42@0",
+            "content": "UNKNOWN, None, 2019, Roberta: A robustly optimized bert pretraining approach, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_42",
+            "start": 0,
+            "end": 78,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_43@0",
+            "content": "Weizhen Qi, Yu Yan, Yeyun Gong, Dayiheng Liu, Nan Duan, Jiusheng Chen, Ruofei Zhang, Ming Zhou, Prophetnet: Predicting future n-gram for sequence-to-sequencepre-training, 2020, EMNLP Findings, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_43",
+            "start": 0,
+            "end": 193,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_44@0",
+            "content": "Xipeng Qiu, Tianxiang Sun, Yige Xu, Yunfan Shao, Ning Dai, Xuanjing Huang, Pre-trained models for natural language processing: A survey, 2020, Science China Technological Sciences, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_44",
+            "start": 0,
+            "end": 181,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_45@0",
+            "content": "Adam Roberts, Colin Raffel, Noam Shazeer, How much knowledge can you pack into the parameters of a language model, 2020, EMNLP, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_45",
+            "start": 0,
+            "end": 128,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_46@0",
+            "content": "Chi Sun, Xipeng Qiu, Yige Xu, Xuanjing Huang, How to fine-tune bert for text classification, 2019, CCL, Springer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_46",
+            "start": 0,
+            "end": 112,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_47@0",
+            "content": "Alex Wang, Amanpreet Singh, Julian Michael, Felix Hill, Omer Levy, Samuel Bowman, Glue: A multi-task benchmark and analysis platform for natural language understanding, 2018, BlackboxNLP, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_47",
+            "start": 0,
+            "end": 188,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_48@0",
+            "content": "UNKNOWN, None, 2020, Linformer: Self-attention with linear complexity, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_48",
+            "start": 0,
+            "end": 71,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_49@0",
+            "content": "Chien-Sheng Wu, C Steven, Richard Hoi, Caiming Socher,  Xiong, Tod-bert: Pre-trained natural language understanding for task-oriented dialogue, 2020, EMNLP, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_49",
+            "start": 0,
+            "end": 157,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_50@0",
+            "content": "Chuhan Wu, Fangzhao Wu, Tao Qi, Yongfeng Huang, Empowering news recommendation with pre-trained language models, 2021, SIGIR, ACM.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_50",
+            "start": 0,
+            "end": 129,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_51@0",
+            "content": "Hu Xu, Bing Liu, Lei Shu, S Yu Philip, Bert post-training for review reading comprehension and aspect-based sentiment analysis, 2019, NAACL-HLT, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_51",
+            "start": 0,
+            "end": 145,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_52@0",
+            "content": "Runxin Xu, Fuli Luo, Zhiyuan Zhang, Chuanqi Tan, Baobao Chang, Songfang Huang, Fei Huang, Raise a child in large language model: Towards effective and generalizable fine-tuning, 2021, EMNLP, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_52",
+            "start": 0,
+            "end": 191,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_53@0",
+            "content": "Zhilin Yang, Zihang Dai, Yiming Yang, Jaime Carbonell, R Russ, Quoc V Salakhutdinov,  Le, Xlnet: Generalized autoregressive pretraining for language understanding, 2019, NeurIPS, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_53",
+            "start": 0,
+            "end": 179,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_54@0",
+            "content": "Yisong Yue, Thorsten Joachims, Interactively optimizing information retrieval systems as a dueling bandits problem, 2009, ICML, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_54",
+            "start": 0,
+            "end": 128,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_55@0",
+            "content": "Tianyi Zhang, Felix Wu, Arzoo Katiyar, Q Kilian, Yoav Weinberger,  Artzi, Revisiting few-sample bert fine-tuning, 2021, ICLR, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_55",
+            "start": 0,
+            "end": 126,
+            "label": {}
+        },
+        {
+            "ix": "9-ARR_v2_56@0",
+            "content": "Bo Zheng, Li Dong, Shaohan Huang, Wenhui Wang, Zewen Chi, Saksham Singhal, Wanxiang Che, Ting Liu, Xia Song, Furu Wei, Consistency regularization for cross-lingual fine-tuning, 2021, ACL-IJCNLP, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-ARR_v2_56",
+            "start": 0,
+            "end": 195,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "9-ARR_v2_0",
+            "tgt_ix": "9-ARR_v2_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_0",
+            "tgt_ix": "9-ARR_v2_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_1",
+            "tgt_ix": "9-ARR_v2_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_1",
+            "tgt_ix": "9-ARR_v2_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_0",
+            "tgt_ix": "9-ARR_v2_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_2",
+            "tgt_ix": "9-ARR_v2_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_4",
+            "tgt_ix": "9-ARR_v2_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_5",
+            "tgt_ix": "9-ARR_v2_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_3",
+            "tgt_ix": "9-ARR_v2_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_3",
+            "tgt_ix": "9-ARR_v2_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_3",
+            "tgt_ix": "9-ARR_v2_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_3",
+            "tgt_ix": "9-ARR_v2_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_0",
+            "tgt_ix": "9-ARR_v2_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_6",
+            "tgt_ix": "9-ARR_v2_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_8",
+            "tgt_ix": "9-ARR_v2_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_9",
+            "tgt_ix": "9-ARR_v2_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_10",
+            "tgt_ix": "9-ARR_v2_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_11",
+            "tgt_ix": "9-ARR_v2_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_12",
+            "tgt_ix": "9-ARR_v2_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_13",
+            "tgt_ix": "9-ARR_v2_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_14",
+            "tgt_ix": "9-ARR_v2_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_7",
+            "tgt_ix": "9-ARR_v2_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_7",
+            "tgt_ix": "9-ARR_v2_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_7",
+            "tgt_ix": "9-ARR_v2_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_7",
+            "tgt_ix": "9-ARR_v2_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_7",
+            "tgt_ix": "9-ARR_v2_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_7",
+            "tgt_ix": "9-ARR_v2_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_7",
+            "tgt_ix": "9-ARR_v2_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_7",
+            "tgt_ix": "9-ARR_v2_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_7",
+            "tgt_ix": "9-ARR_v2_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_0",
+            "tgt_ix": "9-ARR_v2_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_15",
+            "tgt_ix": "9-ARR_v2_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_16",
+            "tgt_ix": "9-ARR_v2_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_16",
+            "tgt_ix": "9-ARR_v2_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_0",
+            "tgt_ix": "9-ARR_v2_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_17",
+            "tgt_ix": "9-ARR_v2_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_19",
+            "tgt_ix": "9-ARR_v2_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_18",
+            "tgt_ix": "9-ARR_v2_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_18",
+            "tgt_ix": "9-ARR_v2_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_18",
+            "tgt_ix": "9-ARR_v2_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_0",
+            "tgt_ix": "9-ARR_v2_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_20",
+            "tgt_ix": "9-ARR_v2_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_21",
+            "tgt_ix": "9-ARR_v2_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_21",
+            "tgt_ix": "9-ARR_v2_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_0",
+            "tgt_ix": "9-ARR_v2_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_22",
+            "tgt_ix": "9-ARR_v2_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_23",
+            "tgt_ix": "9-ARR_v2_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_23",
+            "tgt_ix": "9-ARR_v2_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_0",
+            "tgt_ix": "9-ARR_v2_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_24",
+            "tgt_ix": "9-ARR_v2_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_26",
+            "tgt_ix": "9-ARR_v2_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_25",
+            "tgt_ix": "9-ARR_v2_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_25",
+            "tgt_ix": "9-ARR_v2_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_25",
+            "tgt_ix": "9-ARR_v2_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_0",
+            "tgt_ix": "9-ARR_v2_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_27",
+            "tgt_ix": "9-ARR_v2_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_28",
+            "tgt_ix": "9-ARR_v2_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_28",
+            "tgt_ix": "9-ARR_v2_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_0",
+            "tgt_ix": "9-ARR_v2_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_29",
+            "tgt_ix": "9-ARR_v2_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_30",
+            "tgt_ix": "9-ARR_v2_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_30",
+            "tgt_ix": "9-ARR_v2_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "9-ARR_v2_0",
+            "tgt_ix": "9-ARR_v2_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_1",
+            "tgt_ix": "9-ARR_v2_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_2",
+            "tgt_ix": "9-ARR_v2_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_2",
+            "tgt_ix": "9-ARR_v2_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_2",
+            "tgt_ix": "9-ARR_v2_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_2",
+            "tgt_ix": "9-ARR_v2_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_2",
+            "tgt_ix": "9-ARR_v2_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_2",
+            "tgt_ix": "9-ARR_v2_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_2",
+            "tgt_ix": "9-ARR_v2_2@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_3",
+            "tgt_ix": "9-ARR_v2_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_4",
+            "tgt_ix": "9-ARR_v2_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_4",
+            "tgt_ix": "9-ARR_v2_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_5",
+            "tgt_ix": "9-ARR_v2_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_5",
+            "tgt_ix": "9-ARR_v2_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_5",
+            "tgt_ix": "9-ARR_v2_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_5",
+            "tgt_ix": "9-ARR_v2_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_5",
+            "tgt_ix": "9-ARR_v2_5@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_5",
+            "tgt_ix": "9-ARR_v2_5@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_5",
+            "tgt_ix": "9-ARR_v2_5@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_5",
+            "tgt_ix": "9-ARR_v2_5@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_5",
+            "tgt_ix": "9-ARR_v2_5@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_6",
+            "tgt_ix": "9-ARR_v2_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_6",
+            "tgt_ix": "9-ARR_v2_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_6",
+            "tgt_ix": "9-ARR_v2_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_6",
+            "tgt_ix": "9-ARR_v2_6@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_6",
+            "tgt_ix": "9-ARR_v2_6@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_6",
+            "tgt_ix": "9-ARR_v2_6@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_6",
+            "tgt_ix": "9-ARR_v2_6@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_7",
+            "tgt_ix": "9-ARR_v2_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_8",
+            "tgt_ix": "9-ARR_v2_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_8",
+            "tgt_ix": "9-ARR_v2_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_8",
+            "tgt_ix": "9-ARR_v2_8@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_8",
+            "tgt_ix": "9-ARR_v2_8@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_9",
+            "tgt_ix": "9-ARR_v2_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_9",
+            "tgt_ix": "9-ARR_v2_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_9",
+            "tgt_ix": "9-ARR_v2_9@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_9",
+            "tgt_ix": "9-ARR_v2_9@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_9",
+            "tgt_ix": "9-ARR_v2_9@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_9",
+            "tgt_ix": "9-ARR_v2_9@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_10",
+            "tgt_ix": "9-ARR_v2_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_11",
+            "tgt_ix": "9-ARR_v2_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_11",
+            "tgt_ix": "9-ARR_v2_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_12",
+            "tgt_ix": "9-ARR_v2_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_13",
+            "tgt_ix": "9-ARR_v2_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_13",
+            "tgt_ix": "9-ARR_v2_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_13",
+            "tgt_ix": "9-ARR_v2_13@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_14",
+            "tgt_ix": "9-ARR_v2_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_14",
+            "tgt_ix": "9-ARR_v2_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_14",
+            "tgt_ix": "9-ARR_v2_14@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_15",
+            "tgt_ix": "9-ARR_v2_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_16",
+            "tgt_ix": "9-ARR_v2_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_17",
+            "tgt_ix": "9-ARR_v2_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_17",
+            "tgt_ix": "9-ARR_v2_17@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_17",
+            "tgt_ix": "9-ARR_v2_17@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_17",
+            "tgt_ix": "9-ARR_v2_17@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_17",
+            "tgt_ix": "9-ARR_v2_17@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_17",
+            "tgt_ix": "9-ARR_v2_17@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_17",
+            "tgt_ix": "9-ARR_v2_17@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_17",
+            "tgt_ix": "9-ARR_v2_17@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_18",
+            "tgt_ix": "9-ARR_v2_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_19",
+            "tgt_ix": "9-ARR_v2_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_19",
+            "tgt_ix": "9-ARR_v2_19@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_19",
+            "tgt_ix": "9-ARR_v2_19@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_19",
+            "tgt_ix": "9-ARR_v2_19@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_19",
+            "tgt_ix": "9-ARR_v2_19@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_20",
+            "tgt_ix": "9-ARR_v2_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_20",
+            "tgt_ix": "9-ARR_v2_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_20",
+            "tgt_ix": "9-ARR_v2_20@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_20",
+            "tgt_ix": "9-ARR_v2_20@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_21",
+            "tgt_ix": "9-ARR_v2_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_22",
+            "tgt_ix": "9-ARR_v2_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_22",
+            "tgt_ix": "9-ARR_v2_22@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_22",
+            "tgt_ix": "9-ARR_v2_22@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_22",
+            "tgt_ix": "9-ARR_v2_22@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_22",
+            "tgt_ix": "9-ARR_v2_22@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_22",
+            "tgt_ix": "9-ARR_v2_22@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_22",
+            "tgt_ix": "9-ARR_v2_22@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_22",
+            "tgt_ix": "9-ARR_v2_22@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_22",
+            "tgt_ix": "9-ARR_v2_22@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_22",
+            "tgt_ix": "9-ARR_v2_22@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_22",
+            "tgt_ix": "9-ARR_v2_22@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_23",
+            "tgt_ix": "9-ARR_v2_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_24",
+            "tgt_ix": "9-ARR_v2_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_24",
+            "tgt_ix": "9-ARR_v2_24@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_24",
+            "tgt_ix": "9-ARR_v2_24@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_24",
+            "tgt_ix": "9-ARR_v2_24@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_24",
+            "tgt_ix": "9-ARR_v2_24@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_24",
+            "tgt_ix": "9-ARR_v2_24@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_24",
+            "tgt_ix": "9-ARR_v2_24@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_24",
+            "tgt_ix": "9-ARR_v2_24@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_25",
+            "tgt_ix": "9-ARR_v2_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_26",
+            "tgt_ix": "9-ARR_v2_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_26",
+            "tgt_ix": "9-ARR_v2_26@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_26",
+            "tgt_ix": "9-ARR_v2_26@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_26",
+            "tgt_ix": "9-ARR_v2_26@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_26",
+            "tgt_ix": "9-ARR_v2_26@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_26",
+            "tgt_ix": "9-ARR_v2_26@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_27",
+            "tgt_ix": "9-ARR_v2_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_27",
+            "tgt_ix": "9-ARR_v2_27@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_27",
+            "tgt_ix": "9-ARR_v2_27@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_27",
+            "tgt_ix": "9-ARR_v2_27@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_28",
+            "tgt_ix": "9-ARR_v2_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_29",
+            "tgt_ix": "9-ARR_v2_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_29",
+            "tgt_ix": "9-ARR_v2_29@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_29",
+            "tgt_ix": "9-ARR_v2_29@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_29",
+            "tgt_ix": "9-ARR_v2_29@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_29",
+            "tgt_ix": "9-ARR_v2_29@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_29",
+            "tgt_ix": "9-ARR_v2_29@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_30",
+            "tgt_ix": "9-ARR_v2_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_31",
+            "tgt_ix": "9-ARR_v2_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_31",
+            "tgt_ix": "9-ARR_v2_31@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_31",
+            "tgt_ix": "9-ARR_v2_31@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_31",
+            "tgt_ix": "9-ARR_v2_31@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_32",
+            "tgt_ix": "9-ARR_v2_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_33",
+            "tgt_ix": "9-ARR_v2_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_34",
+            "tgt_ix": "9-ARR_v2_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_35",
+            "tgt_ix": "9-ARR_v2_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_36",
+            "tgt_ix": "9-ARR_v2_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_37",
+            "tgt_ix": "9-ARR_v2_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_38",
+            "tgt_ix": "9-ARR_v2_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_39",
+            "tgt_ix": "9-ARR_v2_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_40",
+            "tgt_ix": "9-ARR_v2_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_41",
+            "tgt_ix": "9-ARR_v2_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_42",
+            "tgt_ix": "9-ARR_v2_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_43",
+            "tgt_ix": "9-ARR_v2_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_44",
+            "tgt_ix": "9-ARR_v2_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_45",
+            "tgt_ix": "9-ARR_v2_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_46",
+            "tgt_ix": "9-ARR_v2_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_47",
+            "tgt_ix": "9-ARR_v2_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_48",
+            "tgt_ix": "9-ARR_v2_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_49",
+            "tgt_ix": "9-ARR_v2_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_50",
+            "tgt_ix": "9-ARR_v2_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_51",
+            "tgt_ix": "9-ARR_v2_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_52",
+            "tgt_ix": "9-ARR_v2_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_53",
+            "tgt_ix": "9-ARR_v2_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_54",
+            "tgt_ix": "9-ARR_v2_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_55",
+            "tgt_ix": "9-ARR_v2_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-ARR_v2_56",
+            "tgt_ix": "9-ARR_v2_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 427,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "doc_id": "9-ARR",
+        "version": 2
+    }
+}

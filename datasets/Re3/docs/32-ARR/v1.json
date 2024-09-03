@@ -1,0 +1,4684 @@
+{
+    "nodes": [
+        {
+            "ix": "32-ARR_v1_0",
+            "content": "Embedding Hallucination for Few-shot Language Fine-tuning",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_2",
+            "content": "Few-shot language learners adapt knowledge from a pre-trained model to recognize novel classes from a few-labeled sentences. In such settings, fine-tuning a pre-trained language model can cause severe over-fitting. In this paper, we propose an Embedding Hallucination (EmbedHalluc) method, which generates auxiliary embedding-label pairs to expand the finetuning dataset. The hallucinator is trained by playing an adversarial game with the discriminator, such that the hallucinated embedding is indiscriminative to the real ones in the finetuning dataset. By training with the extended dataset, the language learner effectively learns from the diverse hallucinated embeddings to overcome the over-fitting issue. Experiments demonstrate that our proposed method is effective in a wide range of language tasks, outperforming current fine-tuning methods. Further, we show that EmbedHalluc outperforms other methods that address this over-fitting problem, such as common data augmentation, semi-supervised pseudo-labeling, and regularization.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_4",
+            "content": "Fine-tuning a pre-trained language model (LM) on a downstream task with the labeled data has been the de facto approach in many NLP tasks (Wang et al., 2019;Devlin et al., 2019). Conventional finetuning has been shown to be effective when a few thousands of labeled examples are available. Data augmentation (Wei and Zou, 2019), regularization and re-initialization (Zhang et al., 2021) further improve the results.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_5",
+            "content": "However, the performance drops drastically when the number of examples falls to only a few dozens. Experiments from recent work (Gao et al., 2021) have shown that fine-tuning performs poorly in the setting where only 16 examples per class are given. Indeed, tuning a language model with hundreds of millions of parameters (e.g., BERT-large has 300M parameters) with only a few examples inevitably faces the over-fitting problem.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_6",
+            "content": "Prior work have proposed regularization methods to overcome this problem Zhang et al., 2021). However, we show in our experiments that these methods fail in extreme data scarce setting. We speculate that the key to solve this issue is by data augmentation.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_7",
+            "content": "Current common text data augmentation methods, such as EDA (Wei and Zou, 2019) (which have been used in recent few-shot learning papers (Wei et al., 2021;Basu et al., 2021)) and AEDA (Karimi et al., 2021a) operate at the lexical level, which while resulting in human readable texts, lead to limited diversity due to the discrete nature of the lexical space. In this work, we propose to use a generative augmentation method at the embedding space for few-shot learning. The underlying hypothesis is that the intra-class relation of the observed examples can be modeled and that this can be learned from a few-samples to hallucinate diverse unseen examples. To be specific, we adapt a conditional Wasserstein Generative Adversarial Network (cW-GAN) (Arjovsky et al., 2017) as our hallucinator to hallucinate embeddings of sentences. By observing the real embeddings of examples from the fine-tuning dataset, the cWGAN plays an adversarial game to hallucinate embeddings that can fool the discriminator, while the discriminator is trying to classify the fake embeddings from the real ones. Once the halluciantor is trained, we condition it on labels to generate diverse embeddings at each fine-tuning step. This effectively extends the fine-tuning dataset with diverse embedding-label pairs which carry intra-class variation that can be a useful learning signal for the language learner. We evaluate our method, called Embedding Hallucination (Embedhalluc), on 15 tasks and show that it generally improves over recent fine-tuning methods. We further experimentally show the overall superiority of EmbedHalluc when comparing to regularization methods proposed to address the problem of over-fitting during fine-tuning of LMs, such as Mixout and Re-Init (Zhang et al., 2021). Finally, since our method is a form of data augmentation, we also compare EmbedHalluc to a common data augmentation technique EDA, and semi-supervised learning where unlabeled data is already available.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_8",
+            "content": "Related Work",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_9",
+            "content": "Fine-tuning of Language Models. Better finetuning of language models can be achieved by proper initialization (Dodge et al., 2020), regularization or prompts (Schick and Sch\u00fctze, 2021). Other tricks include bias correction in optimizer and re-initialization of top layers in Transformer (Zhang et al., 2021). Instead of fine-tuning all parameters in a model, other work explore only learning a few vectors (Lester et al., 2021;Li and Liang, 2021;Guo et al., 2021) or a few additional parameters (Houlsby et al., 2019). Hallucination Methods. Feature Hallucination of examples is first introduced for visual recognition (Hariharan and Girshick, 2017) by metalearning (Wang et al., 2018), variational inference (Luo et al., 2021;Lazarou et al., 2022), and adversarial learning Tjio et al., 2022). Label Hallucination (Jian and Torresani, 2022) assigns soft pseudo-labels for unlabelled images to extend the fine-tuning few-shot dataset. Few-shot Language Models. Few-shot learning has been successfully applied to machine translation (Arthaud et al., 2021), abstract summarizing (Fabbri et al., 2021), question and answering (Hua et al., 2020;Ram et al., 2021), and entity recognition (de Lichy et al., 2021;Tong et al., 2021;Ding et al., 2021), by meta learning (Li and Zhang, 2021;Bansal et al., 2020;Sharaf et al., 2020), data augmentation (Wei et al., 2021;Wei and Zou, 2019;Karimi et al., 2021b), and prompts (Gao et al., 2021;Tam et al., 2021).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_10",
+            "content": "Our method is a generative data augmentation method in the embedding space. Different from (Wei et al., 2021) which uses EDA (Wei and Zou, 2019) to augment examples at the discrete input space, we hallucinate auxiliary examples at the embedding space. Our method shares similarity to FDA (Kumar et al., 2019), which is also a generative data augmentation method, but at the feature space. Also, different from FDA which is focused on two intent classification tasks, our method can be applied to a wide-range of NLP task as shown by our experiments on 15 diverse tasks.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_11",
+            "content": "Method",
+            "ntype": "title",
+            "meta": {
+                "section": "3"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_12",
+            "content": "Conditional Wasserstein GAN",
+            "ntype": "title",
+            "meta": {
+                "section": "3.1"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_13",
+            "content": "GAN (Goodfellow et al., 2014) has led the revolution of generative models to achieve impressive results in synthesizing images (Zhu et al., 2017) and higher dimensional data (Wang et al., 2020). Wasserstein GAN (WGAN) (Arjovsky et al., 2017) uses the Wasserstein distance as the objective function to stabilize the training of GAN.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_14",
+            "content": "Our hallucinator is trained under the conditional WGAN framework. After the training, we use it to generate pseudo-embeddings of examples by feeding it with random noisy vectors z sampled from N (0, 1) and the corresponding condition class labels c i . The hallucinated embeddings s halluc , in principal, are indiscriminative to the embeddings of observed examples in that class.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_15",
+            "content": "Fine-tuning with Hallucinated Embedding",
+            "ntype": "title",
+            "meta": {
+                "section": "3.2"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_16",
+            "content": "For a single input sentence, we first pass it through the embedding layer to get the sentence embedding s sent . We then concatenate s sent with s halluc (c i ) to form a batch of mixture of real and fake embeddings [s sent , s halluc (c i )]. The encoder learns from the batch with the corresponding labels [c sent , c i ].",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_17",
+            "content": "Label Calibration. The hallucinated embedding s halluc (c i ) is conditioned on its label c i . However, this hard label may not best represent the class information of the hallucinated embedding. We propose Label Calibration (LabelCalib) by pseudo-labeling from a teacher model F GEN0 , where F GEN0 is first fine-tuned on the original training set (without augmentation). The soft-label of the embedding s halluc (c i ) is then c pseudo,i = F GEN0 (s halluc (c i )). Finally, the language model M learns from the hallucinated embedding by KLdivergence",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_18",
+            "content": "L halluc = KL(M(s halluc (c i )), c pseudo,i ) (1)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_19",
+            "content": "The total loss of our method is",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_20",
+            "content": "L total = L real + L halluc (2)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_21",
+            "content": "where L real is the loss learning from real embedding-label pairs. Note that baselines considered in this paper use total loss L total = L real .",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_22",
+            "content": "Computing L halluc requires one additional forward pass of the hallucinator and one more forward pass and backward pass of the language model. Thus, our method has about \u00d72 computational overhead compared to the baselines.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_23",
+            "content": "Experiments",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_24",
+            "content": "Evaluation Datasets and Protocol. We evaluate our method on 15 classification tasks. Training Details. To fairly compare our method with baselines and other methods, when learning with real sentences, we use the same learning rate of 1e \u22125 (further justification of using this learning rate can be found in Appendix D). Our method learns from hallucinated embeddings with a grid search of learning rate of 1e \u22125 , 5e \u22126 , 1e \u22126 , and batch size of 4, 6, 8. We use the same search for EDA (Wei and Zou, 2019) and semi-supervised pseduo-labeling (SSL) when learning with additional augmented or pseudo-labeled data.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_25",
+            "content": "The models are selected based on the validation accuracy every 100 steps. Finally, results are reported by testing the models on the testing dataset. The algorithm is implemented in PyTorch-1.10 and experiments are conducted on Nvidia RTX-A6000 GPU with 48GB of memory.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_26",
+            "content": "Main Results on 15 Tasks",
+            "ntype": "title",
+            "meta": {
+                "section": "4.1"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_27",
+            "content": "We compare our method EmbedHalluc (w/o or w/ LabelCalib) using RoBERTa-large on 15 tasks with two fine-tuning methods: conventional (Table 1) and prompt-based fine-tuning (Table 2). Results for BERT-large-cased can be found in Appendix B. In conventional fine-tuning, EmbedHalluc improves over the baseline in 14 tasks, only marginally under-performs in .6 of baseline). When combining with LabelCalib, our method outperforms in all tasks. When applying to prompt-based fine-tuning, while our method under-performs in MNLI, MNLI-mm and RTE, it outperforms for all other tasks, with substantial improvements over the baseline in CoLA, TREC, QNLI, MRPC.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_28",
+            "content": "The relatively smaller improvements for promptbased methods may be due to the inconsistency and randomness in the learning process since we have to insert [mask] token to a random position in the hallucinated embedding s halluc , for the calculation of the loss. Whereas, in conventional fine-tuning, the [CLS] token is always appended to the beginning of s halluc and the classification is performed at the [CLS] token.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_29",
+            "content": "Comparing to EDA and SSL",
+            "ntype": "title",
+            "meta": {
+                "section": "4.2"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_30",
+            "content": "Since our method is a generative data augmentation (DA) method, we compare it to another DA method EDA. We also consider semi-supervised learning (SSL) which relies on unlabeled data (64 examples per class in our experiments). We apply pseudo-labeling (Cascante-Bonilla et al., 2021) for SSL, i.e., we first fine-tune the model with the few-shot training set and use the fine-tuned model to pseudo-label the unlabeled data, finally we finetune the model again with the few-shot training set combined with the pseudo-labeled set.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_31",
+            "content": "EDA edits the input sentences by applying synonym replacement, random swap, random deletion and random insertion for a default 10% (\u03b1) of tokens. EDA either greatly change the sentence with a large \u03b1 or fails to introduce substantial variations (which is crucial in the extreme low data setting) of inputs with a small \u03b1. Since it operates in the continuous embedding space, EmbedHalluc hallucinates diverse embeddings that follow the distribution of few-shot set. Thus, we observe in Table 3 that EmbedHalluc is overall superior to EDA.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_32",
+            "content": "EmbedHalluc is still competitive when comparing against SSL which assumes to have additional 64 examples per class from the task distribution.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_33",
+            "content": "Negative Results from Regularizations",
+            "ntype": "title",
+            "meta": {
+                "section": "4.3"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_34",
+            "content": "Our method can also be viewed as an implicit regularization method. Thus, we also compare to two latest methods for better fine-tuning language models with regularization. Zhang et al. (2021) find that fine-tuning can be achieved by: correcting bias in the optimizer, re-initialization of top layers, and training longer. Correcting bias in the optimizer is already fixed by the default optimizer in Huggingface Transformer and training longer surely will lead to further over-fitting in our extreme data scarce scenario. Thus, we consider reinitialization (Re-Init) of top layers as one of our comparisons. We further compare against Mixout , which is shown to be an effective regularization when fine-tuning with a few thousand examples. We used the public code for both of these methods. Since we adapt their code to our extreme data deficient setting, we re-search the hyper-parameters of both methods (including their suggested values). For Re-Init, we search the top 1,2,3,4,5 layers; and for Mixout, we search mixout rate from 0.1, 0.2, ..., 0.9 and report their best results in Table 4, using RoBERTa-large. Results for BERT-large-cased can be found in Appendix C. We find that those two methods fail to alleviate the over-fitting problem in such extreme setting, though they have been to be effective when given a few thousands examples. Table 4: Comparisons of EmbedHalluc to Re-init and Mixout, using RoBERTa-large as base models and conventional fine-tuning as the base learning method.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_35",
+            "content": "Limitations",
+            "ntype": "title",
+            "meta": {
+                "section": "5"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_36",
+            "content": "While EmbedHalluc works well empirically, it relies on hallucinating non-interpretable embeddings to facilitate the learning process. Besides, the learning of cWGAN requires careful human attention to maintain a stable training.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_37",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "6"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_38",
+            "content": "In this paper, we introduce an embedding hallucination method for data augmentation for few-shot learning, based on cWGAN. The proposed method improves over the baselines in 15 tasks and outperforms a common augmentation method, and two recent regularization methods.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_39",
+            "content": "Ethics Statement",
+            "ntype": "title",
+            "meta": {
+                "section": "7"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_40",
+            "content": "As far as we are aware, our proposed work does not have any explicit ethical concerns. However, our work relies on pre-trained language models, which have been shown to be biased in prior work . As such, users of such models, specially for sensitive applications, should be aware of and if possible address such issues.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_41",
+            "content": "In addition to the experiments using RoBERTa shown in the main paper, here we show the results of BERT-large-cased with conventional fine-tuning as a further check on robustness of our method with respect to the choice of model.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_42",
+            "content": "The baseline has only one loss L real , whereas we are learning with an additional loss L halluc , making the total loss to be L real + L halluc . The learning rate for L real in the baselines and ours are kept the same. Note that we do not search for this learning rate for our method. We choose 1e \u22125 , which is the most common learning rate to finetune BERT/RoBERTa. As we show in Table D.1, this learning rate produces reasonably good results for the baselines, being the best for 13 tasks and only marginally under-performing in the other 2 tasks. The results in Table D.1 are generated by running the baselines with a batch size of 2 and different learning rates 1e \u22125 , 2e \u22125 , 5e \u22125 suggested by Gao et al. (2021).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "32-ARR_v1_43",
+            "content": "Martin Arjovsky, Soumith Chintala, L\u00e9on Bottou, Wasserstein generative adversarial networks, 2017, Proceedings of the 34th International Conference on Machine Learning, PMLR.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": [
+                    "Martin Arjovsky",
+                    "Soumith Chintala",
+                    "L\u00e9on Bottou"
+                ],
+                "title": "Wasserstein generative adversarial networks",
+                "pub_date": "2017",
+                "pub_title": "Proceedings of the 34th International Conference on Machine Learning",
+                "pub": "PMLR"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_44",
+            "content": "Farid Arthaud, Rachel Bawden, Alexandra Birch, Few-shot learning through contextual data augmentation, 2021, Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume, Online. Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": [
+                    "Farid Arthaud",
+                    "Rachel Bawden",
+                    "Alexandra Birch"
+                ],
+                "title": "Few-shot learning through contextual data augmentation",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume",
+                "pub": "Online. Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_45",
+            "content": "Trapit Bansal, Rishikesh Jha, Tsendsuren Munkhdalai, Andrew Mccallum, Self-supervised metalearning for few-shot natural language classification tasks, 2020, Proceedings of the 2020 Conference on Empirical in Natural Language Processing (EMNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": [
+                    "Trapit Bansal",
+                    "Rishikesh Jha",
+                    "Tsendsuren Munkhdalai",
+                    "Andrew Mccallum"
+                ],
+                "title": "Self-supervised metalearning for few-shot natural language classification tasks",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 2020 Conference on Empirical in Natural Language Processing (EMNLP)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_46",
+            "content": "UNKNOWN, None, 2021, Semi-supervised few-shot intent classification and slot filling, CoRR.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": null,
+                "title": null,
+                "pub_date": "2021",
+                "pub_title": "Semi-supervised few-shot intent classification and slot filling",
+                "pub": "CoRR"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_47",
+            "content": "Paola Cascante-Bonilla, Fuwen Tan, Yanjun Qi, Vicente Ordonez, Curriculum labeling: Revisiting pseudo-labeling for semi-supervised learning, 2021, Proceedings of the AAAI Conference on Artificial Intelligence, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": [
+                    "Paola Cascante-Bonilla",
+                    "Fuwen Tan",
+                    "Yanjun Qi",
+                    "Vicente Ordonez"
+                ],
+                "title": "Curriculum labeling: Revisiting pseudo-labeling for semi-supervised learning",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the AAAI Conference on Artificial Intelligence",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_48",
+            "content": "Alexa Cyprien De Lichy, Hadrien Amazon, William Glaude,  Campbell, Meta-learning for few-shot named entity recognition, 2021, MetaNLP, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "Alexa Cyprien De Lichy",
+                    "Hadrien Amazon",
+                    "William Glaude",
+                    " Campbell"
+                ],
+                "title": "Meta-learning for few-shot named entity recognition",
+                "pub_date": "2021",
+                "pub_title": "MetaNLP",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_49",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: pre-training of deep bidirectional transformers for language understanding, 2019-06-02, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, NAACL-HLT 2019, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": [
+                    "Jacob Devlin",
+                    "Ming-Wei Chang",
+                    "Kenton Lee",
+                    "Kristina Toutanova"
+                ],
+                "title": "BERT: pre-training of deep bidirectional transformers for language understanding",
+                "pub_date": "2019-06-02",
+                "pub_title": "Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, NAACL-HLT 2019",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_50",
+            "content": "Ning Ding, Guangwei Xu, Yulin Chen, Xiaobin Wang, Xu Han, Pengjun Xie, Hai-Tao Zheng, Zhiyuan Liu, Few-nerd: A few-shot named entity recognition dataset, 2021, ACL-IJCNLP, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": [
+                    "Ning Ding",
+                    "Guangwei Xu",
+                    "Yulin Chen",
+                    "Xiaobin Wang",
+                    "Xu Han",
+                    "Pengjun Xie",
+                    "Hai-Tao Zheng",
+                    "Zhiyuan Liu"
+                ],
+                "title": "Few-nerd: A few-shot named entity recognition dataset",
+                "pub_date": "2021",
+                "pub_title": "ACL-IJCNLP",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_51",
+            "content": "Jesse Dodge, Gabriel Ilharco, Roy Schwartz, Ali Farhadi, Hannaneh Hajishirzi, Noah Smith, 2020. Fine-tuning pretrained language models: Weight initializations, data orders, and early stopping, 2002, ArXiv, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": [
+                    "Jesse Dodge",
+                    "Gabriel Ilharco",
+                    "Roy Schwartz",
+                    "Ali Farhadi",
+                    "Hannaneh Hajishirzi",
+                    "Noah Smith"
+                ],
+                "title": "2020. Fine-tuning pretrained language models: Weight initializations, data orders, and early stopping",
+                "pub_date": "2002",
+                "pub_title": "ArXiv",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_52",
+            "content": "Alexander Fabbri, Simeng Han, Haoyuan Li, Haoran Li, Marjan Ghazvininejad, Shafiq Joty, Dragomir Radev, Yashar Mehdad, Improving zero and few-shot abstractive summarization with intermediate fine-tuning and data augmentation, 2021, Proceedings of the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    "Alexander Fabbri",
+                    "Simeng Han",
+                    "Haoyuan Li",
+                    "Haoran Li",
+                    "Marjan Ghazvininejad",
+                    "Shafiq Joty",
+                    "Dragomir Radev",
+                    "Yashar Mehdad"
+                ],
+                "title": "Improving zero and few-shot abstractive summarization with intermediate fine-tuning and data augmentation",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_53",
+            "content": "Tianyu Gao, Adam Fisch, Danqi Chen, Making pre-trained language models better few-shot learners, 2021, Association for Computational Linguistics (ACL), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": [
+                    "Tianyu Gao",
+                    "Adam Fisch",
+                    "Danqi Chen"
+                ],
+                "title": "Making pre-trained language models better few-shot learners",
+                "pub_date": "2021",
+                "pub_title": "Association for Computational Linguistics (ACL)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_54",
+            "content": "Ian Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing Xu, David Warde-Farley, Sherjil Ozair, Aaron Courville, Yoshua Bengio, Generative adversarial nets, 2014, Advances in Neural Information Processing Systems, Curran Associates, Inc.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": [
+                    "Ian Goodfellow",
+                    "Jean Pouget-Abadie",
+                    "Mehdi Mirza",
+                    "Bing Xu",
+                    "David Warde-Farley",
+                    "Sherjil Ozair",
+                    "Aaron Courville",
+                    "Yoshua Bengio"
+                ],
+                "title": "Generative adversarial nets",
+                "pub_date": "2014",
+                "pub_title": "Advances in Neural Information Processing Systems",
+                "pub": "Curran Associates, Inc"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_55",
+            "content": "Demi Guo, Alexander Rush, Yoon Kim, Parameter-efficient transfer learning with diff pruning, 2021, Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Online. Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": [
+                    "Demi Guo",
+                    "Alexander Rush",
+                    "Yoon Kim"
+                ],
+                "title": "Parameter-efficient transfer learning with diff pruning",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing",
+                "pub": "Online. Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_56",
+            "content": "Bharath Hariharan, Ross Girshick, Low-shot visual recognition by shrinking and hallucinating features, 2017, Proceedings of the IEEE International Conference on Computer Vision, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": [
+                    "Bharath Hariharan",
+                    "Ross Girshick"
+                ],
+                "title": "Low-shot visual recognition by shrinking and hallucinating features",
+                "pub_date": "2017",
+                "pub_title": "Proceedings of the IEEE International Conference on Computer Vision",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_57",
+            "content": "Neil Houlsby, Andrei Giurgiu, Stanislaw Jastrzebski, Bruna Morrone, Quentin De Laroussilhe, Andrea Gesmundo, Mona Attariyan, Sylvain Gelly, Parameter-efficient transfer learning for nlp, 2019, International Conference on Machine Learning, PMLR.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": [
+                    "Neil Houlsby",
+                    "Andrei Giurgiu",
+                    "Stanislaw Jastrzebski",
+                    "Bruna Morrone",
+                    "Quentin De Laroussilhe",
+                    "Andrea Gesmundo",
+                    "Mona Attariyan",
+                    "Sylvain Gelly"
+                ],
+                "title": "Parameter-efficient transfer learning for nlp",
+                "pub_date": "2019",
+                "pub_title": "International Conference on Machine Learning",
+                "pub": "PMLR"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_58",
+            "content": "Yuncheng Hua, Yuan-Fang Li, Gholamreza Haffari, Guilin Qi, Tongtong Wu, Few-shot complex knowledge base question answering via meta reinforcement learning, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b15",
+                "authors": [
+                    "Yuncheng Hua",
+                    "Yuan-Fang Li",
+                    "Gholamreza Haffari",
+                    "Guilin Qi",
+                    "Tongtong Wu"
+                ],
+                "title": "Few-shot complex knowledge base question answering via meta reinforcement learning",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_59",
+            "content": "Yiren Jian, Lorenzo Torresani, Label hallucination for few-shot classification, 2022, AAAI Conference on Artificial Intelligence, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b16",
+                "authors": [
+                    "Yiren Jian",
+                    "Lorenzo Torresani"
+                ],
+                "title": "Label hallucination for few-shot classification",
+                "pub_date": "2022",
+                "pub_title": "AAAI Conference on Artificial Intelligence",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_60",
+            "content": "Akbar Karimi, Leonardo Rossi, Andrea Prati, AEDA: An easier data augmentation technique for text classification, 2021, Findings of the Association for Computational Linguistics: EMNLP 2021, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b17",
+                "authors": [
+                    "Akbar Karimi",
+                    "Leonardo Rossi",
+                    "Andrea Prati"
+                ],
+                "title": "AEDA: An easier data augmentation technique for text classification",
+                "pub_date": "2021",
+                "pub_title": "Findings of the Association for Computational Linguistics: EMNLP 2021",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_61",
+            "content": "Akbar Karimi, Leonardo Rossi, Andrea Prati, AEDA: an easier data augmentation technique for text classification, 2021-11-20, Findings the Association for Computational Linguistics: EMNLP 2021, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b18",
+                "authors": [
+                    "Akbar Karimi",
+                    "Leonardo Rossi",
+                    "Andrea Prati"
+                ],
+                "title": "AEDA: an easier data augmentation technique for text classification",
+                "pub_date": "2021-11-20",
+                "pub_title": "Findings the Association for Computational Linguistics: EMNLP 2021",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_62",
+            "content": "Varun Kumar, Hadrien Glaude, Cyprien De Lichy, Wlliam Campbell, A closer look at feature space data augmentation for few-shot intent classification, 2019, Proceedings of the 2nd Workshop on Deep Learning Approaches for Low-Resource NLP, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b19",
+                "authors": [
+                    "Varun Kumar",
+                    "Hadrien Glaude",
+                    "Cyprien De Lichy",
+                    "Wlliam Campbell"
+                ],
+                "title": "A closer look at feature space data augmentation for few-shot intent classification",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2nd Workshop on Deep Learning Approaches for Low-Resource NLP",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_63",
+            "content": "Michalis Lazarou, Tania Stathaki, Yannis Avrithis, Tensor feature hallucination for few-shot learning, 2022, Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b20",
+                "authors": [
+                    "Michalis Lazarou",
+                    "Tania Stathaki",
+                    "Yannis Avrithis"
+                ],
+                "title": "Tensor feature hallucination for few-shot learning",
+                "pub_date": "2022",
+                "pub_title": "Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_64",
+            "content": "Cheolhyoung Lee, Kyunghyun Cho, Wanmo Kang, Mixout: Effective regularization to finetune large-scale pretrained language models, 2019, International Conference on Learning Representations, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b21",
+                "authors": [
+                    "Cheolhyoung Lee",
+                    "Kyunghyun Cho",
+                    "Wanmo Kang"
+                ],
+                "title": "Mixout: Effective regularization to finetune large-scale pretrained language models",
+                "pub_date": "2019",
+                "pub_title": "International Conference on Learning Representations",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_65",
+            "content": "Brian Lester, Rami Al-Rfou, Noah Constant, The power of scale for parameter-efficient prompt tuning, 2021, Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b22",
+                "authors": [
+                    "Brian Lester",
+                    "Rami Al-Rfou",
+                    "Noah Constant"
+                ],
+                "title": "The power of scale for parameter-efficient prompt tuning",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_66",
+            "content": "Judith , Li , Jiong Zhang, Semi-supervised meta-learning for cross-domain few-shot intent classification, 2021, MetaNLP, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b23",
+                "authors": [
+                    "Judith ",
+                    "Li ",
+                    "Jiong Zhang"
+                ],
+                "title": "Semi-supervised meta-learning for cross-domain few-shot intent classification",
+                "pub_date": "2021",
+                "pub_title": "MetaNLP",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_67",
+            "content": "Kai Li, Yulun Zhang, Kunpeng Li, Yun Fu, Adversarial feature hallucination networks for fewshot learning, 2020, Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b24",
+                "authors": [
+                    "Kai Li",
+                    "Yulun Zhang",
+                    "Kunpeng Li",
+                    "Yun Fu"
+                ],
+                "title": "Adversarial feature hallucination networks for fewshot learning",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_68",
+            "content": "Lisa Xiang, Percy Li,  Liang, Prefix-tuning: Optimizing continuous prompts for generation, 2021, Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Long Papers.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b25",
+                "authors": [
+                    "Lisa Xiang",
+                    "Percy Li",
+                    " Liang"
+                ],
+                "title": "Prefix-tuning: Optimizing continuous prompts for generation",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing",
+                "pub": "Long Papers"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_69",
+            "content": "Chiyu Paul Pu Liang, Louis-Philippe Wu, Ruslan Morency,  Salakhutdinov, Towards understanding and mitigating social biases in language models, 2021, International Conference on Machine Learning, PMLR.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b26",
+                "authors": [
+                    "Chiyu Paul Pu Liang",
+                    "Louis-Philippe Wu",
+                    "Ruslan Morency",
+                    " Salakhutdinov"
+                ],
+                "title": "Towards understanding and mitigating social biases in language models",
+                "pub_date": "2021",
+                "pub_title": "International Conference on Machine Learning",
+                "pub": "PMLR"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_70",
+            "content": "Qinxuan Luo, Lingfeng Wang, Jingguo Lv, Few-shot learning via feature hallucination with variational inference, 2021, Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b27",
+                "authors": [
+                    "Qinxuan Luo",
+                    "Lingfeng Wang",
+                    "Jingguo Lv"
+                ],
+                "title": "Few-shot learning via feature hallucination with variational inference",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_71",
+            "content": "UNKNOWN, None, , Amir Globerson, and Omer Levy. 2021. Few-shot question answering by pretraining span selection, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b28",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": "Amir Globerson, and Omer Levy. 2021. Few-shot question answering by pretraining span selection",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_72",
+            "content": "Timo Schick, Hinrich Sch\u00fctze, Exploiting cloze-questions for few-shot text classification and natural language inference, 2021, EACL, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b29",
+                "authors": [
+                    "Timo Schick",
+                    "Hinrich Sch\u00fctze"
+                ],
+                "title": "Exploiting cloze-questions for few-shot text classification and natural language inference",
+                "pub_date": "2021",
+                "pub_title": "EACL",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_73",
+            "content": "Amr Sharaf, Hany Hassan, Hal Daum\u00e9, Iii , Meta-learning for few-shot nmt adaptation, 2020, ACL, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b30",
+                "authors": [
+                    "Amr Sharaf",
+                    "Hany Hassan",
+                    "Hal Daum\u00e9",
+                    "Iii "
+                ],
+                "title": "Meta-learning for few-shot nmt adaptation",
+                "pub_date": "2020",
+                "pub_title": "ACL",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_74",
+            "content": "Derek Tam, Mohit Rakesh R Menon,  Bansal, Shashank Srivastava, and Colin Raffel. 2021. Improving and simplifying pattern exploiting training, , Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b31",
+                "authors": [
+                    "Derek Tam",
+                    "Mohit Rakesh R Menon",
+                    " Bansal"
+                ],
+                "title": "Shashank Srivastava, and Colin Raffel. 2021. Improving and simplifying pattern exploiting training",
+                "pub_date": null,
+                "pub_title": "Empirical Methods in Natural Language Processing (EMNLP)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_75",
+            "content": "Gabriel Tjio, Ping Liu, Joey Zhou, Rick Siow Mong Goh, Adversarial semantic hallucination for domain generalized semantic segmentation, 2022, IEEE Winter Conf. on Applications of Computer Vision, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b32",
+                "authors": [
+                    "Gabriel Tjio",
+                    "Ping Liu",
+                    "Joey Zhou",
+                    "Rick Siow Mong Goh"
+                ],
+                "title": "Adversarial semantic hallucination for domain generalized semantic segmentation",
+                "pub_date": "2022",
+                "pub_title": "IEEE Winter Conf. on Applications of Computer Vision",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_76",
+            "content": "Meihan Tong, Shuai Wang, Bin Xu, Yixin Cao, Minghui Liu, Lei Hou, Juanzi Li, Learning from miscellaneous other-class words for few-shot named entity recognition, 2021, Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Long Papers.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b33",
+                "authors": [
+                    "Meihan Tong",
+                    "Shuai Wang",
+                    "Bin Xu",
+                    "Yixin Cao",
+                    "Minghui Liu",
+                    "Lei Hou",
+                    "Juanzi Li"
+                ],
+                "title": "Learning from miscellaneous other-class words for few-shot named entity recognition",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing",
+                "pub": "Long Papers"
+            }
+        },
+        {
+            "ix": "32-ARR_v1_77",
+            "content": "Alex Wang, Amanpreet Singh, Julian Michael, Felix Hill, Omer Levy, Samuel Bowman, GLUE: A multi-task benchmark and analysis platform for natural language understanding, 2019, International Conference on Learning Representations, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b34",
+                "authors": [
+                    "Alex Wang",
+                    "Amanpreet Singh",
+                    "Julian Michael",
+                    "Felix Hill",
+                    "Omer Levy",
+                    "Samuel Bowman"
+                ],
+                "title": "GLUE: A multi-task benchmark and analysis platform for natural language understanding",
+                "pub_date": "2019",
+                "pub_title": "International Conference on Learning Representations",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_78",
+            "content": "Jiancong Wang, Yuhua Chen, Yifan Wu, Jianbo Shi, James Gee, Enhanced generative adversarial network for 3d brain mri super-resolution, 2020, Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b35",
+                "authors": [
+                    "Jiancong Wang",
+                    "Yuhua Chen",
+                    "Yifan Wu",
+                    "Jianbo Shi",
+                    "James Gee"
+                ],
+                "title": "Enhanced generative adversarial network for 3d brain mri super-resolution",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_79",
+            "content": "Yu-Xiong Wang, Ross Girshick, Martial Hebert, Bharath Hariharan, Low-shot learning from imaginary data, 2018, Proceedings of the IEEE conference on computer vision and pattern recognition, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b36",
+                "authors": [
+                    "Yu-Xiong Wang",
+                    "Ross Girshick",
+                    "Martial Hebert",
+                    "Bharath Hariharan"
+                ],
+                "title": "Low-shot learning from imaginary data",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the IEEE conference on computer vision and pattern recognition",
+                "pub": null
+            }
+        },
+        {
+            "ix": "32-ARR_v1_80",
+            "content": "Jason Wei, Chengyu Huang, Soroush Vosoughi, Yu Cheng, Shiqi Xu, Few-shot text classification with triplet networks, data augmentation, and curriculum learning, 2021, Proceedings of the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Online. Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b37",
+                "authors": [
+                    "Jason Wei",
+                    "Chengyu Huang",
+                    "Soroush Vosoughi",
+                    "Yu Cheng",
+                    "Shiqi Xu"
+                ],
+                "title": "Few-shot text classification with triplet networks, data augmentation, and curriculum learning",
+                "pub_date": "2021",
+                "pub_title": "Proceedings of the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies",
+                "pub": "Online. Association for Computational Linguistics"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "32-ARR_v1_0@0",
+            "content": "Embedding Hallucination for Few-shot Language Fine-tuning",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_0",
+            "start": 0,
+            "end": 56,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_2@0",
+            "content": "Few-shot language learners adapt knowledge from a pre-trained model to recognize novel classes from a few-labeled sentences.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_2",
+            "start": 0,
+            "end": 123,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_2@1",
+            "content": "In such settings, fine-tuning a pre-trained language model can cause severe over-fitting.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_2",
+            "start": 125,
+            "end": 213,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_2@2",
+            "content": "In this paper, we propose an Embedding Hallucination (EmbedHalluc) method, which generates auxiliary embedding-label pairs to expand the finetuning dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_2",
+            "start": 215,
+            "end": 370,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_2@3",
+            "content": "The hallucinator is trained by playing an adversarial game with the discriminator, such that the hallucinated embedding is indiscriminative to the real ones in the finetuning dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_2",
+            "start": 372,
+            "end": 554,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_2@4",
+            "content": "By training with the extended dataset, the language learner effectively learns from the diverse hallucinated embeddings to overcome the over-fitting issue.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_2",
+            "start": 556,
+            "end": 710,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_2@5",
+            "content": "Experiments demonstrate that our proposed method is effective in a wide range of language tasks, outperforming current fine-tuning methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_2",
+            "start": 712,
+            "end": 850,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_2@6",
+            "content": "Further, we show that EmbedHalluc outperforms other methods that address this over-fitting problem, such as common data augmentation, semi-supervised pseudo-labeling, and regularization.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_2",
+            "start": 852,
+            "end": 1037,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_4@0",
+            "content": "Fine-tuning a pre-trained language model (LM) on a downstream task with the labeled data has been the de facto approach in many NLP tasks (Wang et al., 2019;Devlin et al., 2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_4",
+            "start": 0,
+            "end": 177,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_4@1",
+            "content": "Conventional finetuning has been shown to be effective when a few thousands of labeled examples are available.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_4",
+            "start": 179,
+            "end": 288,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_4@2",
+            "content": "Data augmentation (Wei and Zou, 2019), regularization and re-initialization (Zhang et al., 2021) further improve the results.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_4",
+            "start": 290,
+            "end": 414,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_5@0",
+            "content": "However, the performance drops drastically when the number of examples falls to only a few dozens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_5",
+            "start": 0,
+            "end": 97,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_5@1",
+            "content": "Experiments from recent work (Gao et al., 2021) have shown that fine-tuning performs poorly in the setting where only 16 examples per class are given.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_5",
+            "start": 99,
+            "end": 248,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_5@2",
+            "content": "Indeed, tuning a language model with hundreds of millions of parameters (e.g., BERT-large has 300M parameters) with only a few examples inevitably faces the over-fitting problem.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_5",
+            "start": 250,
+            "end": 427,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_6@0",
+            "content": "Prior work have proposed regularization methods to overcome this problem Zhang et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_6",
+            "start": 0,
+            "end": 92,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_6@1",
+            "content": "However, we show in our experiments that these methods fail in extreme data scarce setting.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_6",
+            "start": 94,
+            "end": 184,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_6@2",
+            "content": "We speculate that the key to solve this issue is by data augmentation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_6",
+            "start": 186,
+            "end": 255,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_7@0",
+            "content": "Current common text data augmentation methods, such as EDA (Wei and Zou, 2019) (which have been used in recent few-shot learning papers (Wei et al., 2021;Basu et al., 2021)) and AEDA (Karimi et al., 2021a) operate at the lexical level, which while resulting in human readable texts, lead to limited diversity due to the discrete nature of the lexical space.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_7",
+            "start": 0,
+            "end": 356,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_7@1",
+            "content": "In this work, we propose to use a generative augmentation method at the embedding space for few-shot learning.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_7",
+            "start": 358,
+            "end": 467,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_7@2",
+            "content": "The underlying hypothesis is that the intra-class relation of the observed examples can be modeled and that this can be learned from a few-samples to hallucinate diverse unseen examples.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_7",
+            "start": 469,
+            "end": 654,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_7@3",
+            "content": "To be specific, we adapt a conditional Wasserstein Generative Adversarial Network (cW-GAN) (Arjovsky et al., 2017) as our hallucinator to hallucinate embeddings of sentences.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_7",
+            "start": 656,
+            "end": 829,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_7@4",
+            "content": "By observing the real embeddings of examples from the fine-tuning dataset, the cWGAN plays an adversarial game to hallucinate embeddings that can fool the discriminator, while the discriminator is trying to classify the fake embeddings from the real ones.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_7",
+            "start": 831,
+            "end": 1085,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_7@5",
+            "content": "Once the halluciantor is trained, we condition it on labels to generate diverse embeddings at each fine-tuning step.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_7",
+            "start": 1087,
+            "end": 1202,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_7@6",
+            "content": "This effectively extends the fine-tuning dataset with diverse embedding-label pairs which carry intra-class variation that can be a useful learning signal for the language learner.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_7",
+            "start": 1204,
+            "end": 1383,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_7@7",
+            "content": "We evaluate our method, called Embedding Hallucination (Embedhalluc), on 15 tasks and show that it generally improves over recent fine-tuning methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_7",
+            "start": 1385,
+            "end": 1534,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_7@8",
+            "content": "We further experimentally show the overall superiority of EmbedHalluc when comparing to regularization methods proposed to address the problem of over-fitting during fine-tuning of LMs, such as Mixout and Re-Init (Zhang et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_7",
+            "start": 1536,
+            "end": 1769,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_7@9",
+            "content": "Finally, since our method is a form of data augmentation, we also compare EmbedHalluc to a common data augmentation technique EDA, and semi-supervised learning where unlabeled data is already available.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_7",
+            "start": 1771,
+            "end": 1972,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_8@0",
+            "content": "Related Work",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_8",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_9@0",
+            "content": "Fine-tuning of Language Models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_9",
+            "start": 0,
+            "end": 30,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_9@1",
+            "content": "Better finetuning of language models can be achieved by proper initialization (Dodge et al., 2020), regularization or prompts (Schick and Sch\u00fctze, 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_9",
+            "start": 32,
+            "end": 184,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_9@2",
+            "content": "Other tricks include bias correction in optimizer and re-initialization of top layers in Transformer (Zhang et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_9",
+            "start": 186,
+            "end": 307,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_9@3",
+            "content": "Instead of fine-tuning all parameters in a model, other work explore only learning a few vectors (Lester et al., 2021;Li and Liang, 2021;Guo et al., 2021) or a few additional parameters (Houlsby et al., 2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_9",
+            "start": 309,
+            "end": 517,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_9@4",
+            "content": "Hallucination Methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_9",
+            "start": 519,
+            "end": 540,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_9@5",
+            "content": "Feature Hallucination of examples is first introduced for visual recognition (Hariharan and Girshick, 2017) by metalearning (Wang et al., 2018), variational inference (Luo et al., 2021;Lazarou et al., 2022), and adversarial learning Tjio et al., 2022).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_9",
+            "start": 542,
+            "end": 793,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_9@6",
+            "content": "Label Hallucination (Jian and Torresani, 2022) assigns soft pseudo-labels for unlabelled images to extend the fine-tuning few-shot dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_9",
+            "start": 795,
+            "end": 933,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_9@7",
+            "content": "Few-shot Language Models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_9",
+            "start": 935,
+            "end": 959,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_9@8",
+            "content": "Few-shot learning has been successfully applied to machine translation (Arthaud et al., 2021), abstract summarizing (Fabbri et al., 2021), question and answering (Hua et al., 2020;Ram et al., 2021), and entity recognition (de Lichy et al., 2021;Tong et al., 2021;Ding et al., 2021), by meta learning (Li and Zhang, 2021;Bansal et al., 2020;Sharaf et al., 2020), data augmentation (Wei et al., 2021;Wei and Zou, 2019;Karimi et al., 2021b), and prompts (Gao et al., 2021;Tam et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_9",
+            "start": 961,
+            "end": 1447,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_10@0",
+            "content": "Our method is a generative data augmentation method in the embedding space.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_10",
+            "start": 0,
+            "end": 74,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_10@1",
+            "content": "Different from (Wei et al., 2021) which uses EDA (Wei and Zou, 2019) to augment examples at the discrete input space, we hallucinate auxiliary examples at the embedding space.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_10",
+            "start": 76,
+            "end": 250,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_10@2",
+            "content": "Our method shares similarity to FDA (Kumar et al., 2019), which is also a generative data augmentation method, but at the feature space.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_10",
+            "start": 252,
+            "end": 387,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_10@3",
+            "content": "Also, different from FDA which is focused on two intent classification tasks, our method can be applied to a wide-range of NLP task as shown by our experiments on 15 diverse tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_10",
+            "start": 389,
+            "end": 568,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_11@0",
+            "content": "Method",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_11",
+            "start": 0,
+            "end": 5,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_12@0",
+            "content": "Conditional Wasserstein GAN",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_12",
+            "start": 0,
+            "end": 26,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_13@0",
+            "content": "GAN (Goodfellow et al., 2014) has led the revolution of generative models to achieve impressive results in synthesizing images (Zhu et al., 2017) and higher dimensional data (Wang et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_13",
+            "start": 0,
+            "end": 193,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_13@1",
+            "content": "Wasserstein GAN (WGAN) (Arjovsky et al., 2017) uses the Wasserstein distance as the objective function to stabilize the training of GAN.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_13",
+            "start": 195,
+            "end": 330,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_14@0",
+            "content": "Our hallucinator is trained under the conditional WGAN framework.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_14",
+            "start": 0,
+            "end": 64,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_14@1",
+            "content": "After the training, we use it to generate pseudo-embeddings of examples by feeding it with random noisy vectors z sampled from N (0, 1) and the corresponding condition class labels c i .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_14",
+            "start": 66,
+            "end": 251,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_14@2",
+            "content": "The hallucinated embeddings s halluc , in principal, are indiscriminative to the embeddings of observed examples in that class.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_14",
+            "start": 253,
+            "end": 379,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_15@0",
+            "content": "Fine-tuning with Hallucinated Embedding",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_15",
+            "start": 0,
+            "end": 38,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_16@0",
+            "content": "For a single input sentence, we first pass it through the embedding layer to get the sentence embedding s sent .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_16",
+            "start": 0,
+            "end": 111,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_16@1",
+            "content": "We then concatenate s sent with s halluc (c i ) to form a batch of mixture of real and fake embeddings [s sent , s halluc (c i )].",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_16",
+            "start": 113,
+            "end": 242,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_16@2",
+            "content": "The encoder learns from the batch with the corresponding labels [c sent , c i ].",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_16",
+            "start": 244,
+            "end": 323,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_17@0",
+            "content": "Label Calibration.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_17",
+            "start": 0,
+            "end": 17,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_17@1",
+            "content": "The hallucinated embedding s halluc (c i ) is conditioned on its label c i .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_17",
+            "start": 19,
+            "end": 94,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_17@2",
+            "content": "However, this hard label may not best represent the class information of the hallucinated embedding.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_17",
+            "start": 96,
+            "end": 195,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_17@3",
+            "content": "We propose Label Calibration (LabelCalib) by pseudo-labeling from a teacher model F GEN0 , where F GEN0 is first fine-tuned on the original training set (without augmentation).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_17",
+            "start": 197,
+            "end": 372,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_17@4",
+            "content": "The soft-label of the embedding s halluc (c i ) is then c pseudo,i = F GEN0 (s halluc (c i )).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_17",
+            "start": 374,
+            "end": 467,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_17@5",
+            "content": "Finally, the language model M learns from the hallucinated embedding by KLdivergence",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_17",
+            "start": 469,
+            "end": 552,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_18@0",
+            "content": "L halluc = KL(M(s halluc (c i )), c pseudo,i ) (1)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_18",
+            "start": 0,
+            "end": 49,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_19@0",
+            "content": "The total loss of our method is",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_19",
+            "start": 0,
+            "end": 30,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_20@0",
+            "content": "L total = L real + L halluc (2)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_20",
+            "start": 0,
+            "end": 30,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_21@0",
+            "content": "where L real is the loss learning from real embedding-label pairs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_21",
+            "start": 0,
+            "end": 65,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_21@1",
+            "content": "Note that baselines considered in this paper use total loss L total = L real .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_21",
+            "start": 67,
+            "end": 144,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_22@0",
+            "content": "Computing L halluc requires one additional forward pass of the hallucinator and one more forward pass and backward pass of the language model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_22",
+            "start": 0,
+            "end": 141,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_22@1",
+            "content": "Thus, our method has about \u00d72 computational overhead compared to the baselines.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_22",
+            "start": 143,
+            "end": 221,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_23@0",
+            "content": "Experiments",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_23",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_24@0",
+            "content": "Evaluation Datasets and Protocol.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_24",
+            "start": 0,
+            "end": 32,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_24@1",
+            "content": "We evaluate our method on 15 classification tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_24",
+            "start": 34,
+            "end": 83,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_24@2",
+            "content": "Training Details.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_24",
+            "start": 85,
+            "end": 101,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_24@3",
+            "content": "To fairly compare our method with baselines and other methods, when learning with real sentences, we use the same learning rate of 1e \u22125 (further justification of using this learning rate can be found in Appendix D).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_24",
+            "start": 103,
+            "end": 318,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_24@4",
+            "content": "Our method learns from hallucinated embeddings with a grid search of learning rate of 1e \u22125 , 5e \u22126 , 1e \u22126 , and batch size of 4, 6, 8.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_24",
+            "start": 320,
+            "end": 455,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_24@5",
+            "content": "We use the same search for EDA (Wei and Zou, 2019) and semi-supervised pseduo-labeling (SSL) when learning with additional augmented or pseudo-labeled data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_24",
+            "start": 457,
+            "end": 612,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_25@0",
+            "content": "The models are selected based on the validation accuracy every 100 steps.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_25",
+            "start": 0,
+            "end": 72,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_25@1",
+            "content": "Finally, results are reported by testing the models on the testing dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_25",
+            "start": 74,
+            "end": 148,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_25@2",
+            "content": "The algorithm is implemented in PyTorch-1.10 and experiments are conducted on Nvidia RTX-A6000 GPU with 48GB of memory.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_25",
+            "start": 150,
+            "end": 268,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_26@0",
+            "content": "Main Results on 15 Tasks",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_26",
+            "start": 0,
+            "end": 23,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_27@0",
+            "content": "We compare our method EmbedHalluc (w/o or w/ LabelCalib) using RoBERTa-large on 15 tasks with two fine-tuning methods: conventional (Table 1) and prompt-based fine-tuning (Table 2).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_27",
+            "start": 0,
+            "end": 180,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_27@1",
+            "content": "Results for BERT-large-cased can be found in Appendix B. In conventional fine-tuning, EmbedHalluc improves over the baseline in 14 tasks, only marginally under-performs in .6 of baseline).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_27",
+            "start": 182,
+            "end": 369,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_27@2",
+            "content": "When combining with LabelCalib, our method outperforms in all tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_27",
+            "start": 371,
+            "end": 438,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_27@3",
+            "content": "When applying to prompt-based fine-tuning, while our method under-performs in MNLI, MNLI-mm and RTE, it outperforms for all other tasks, with substantial improvements over the baseline in CoLA, TREC, QNLI, MRPC.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_27",
+            "start": 440,
+            "end": 650,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_28@0",
+            "content": "The relatively smaller improvements for promptbased methods may be due to the inconsistency and randomness in the learning process since we have to insert [mask] token to a random position in the hallucinated embedding s halluc , for the calculation of the loss.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_28",
+            "start": 0,
+            "end": 261,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_28@1",
+            "content": "Whereas, in conventional fine-tuning, the [CLS] token is always appended to the beginning of s halluc and the classification is performed at the [CLS] token.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_28",
+            "start": 263,
+            "end": 419,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_29@0",
+            "content": "Comparing to EDA and SSL",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_29",
+            "start": 0,
+            "end": 23,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_30@0",
+            "content": "Since our method is a generative data augmentation (DA) method, we compare it to another DA method EDA.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_30",
+            "start": 0,
+            "end": 102,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_30@1",
+            "content": "We also consider semi-supervised learning (SSL) which relies on unlabeled data (64 examples per class in our experiments).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_30",
+            "start": 104,
+            "end": 225,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_30@2",
+            "content": "We apply pseudo-labeling (Cascante-Bonilla et al., 2021) for SSL, i.e., we first fine-tune the model with the few-shot training set and use the fine-tuned model to pseudo-label the unlabeled data, finally we finetune the model again with the few-shot training set combined with the pseudo-labeled set.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_30",
+            "start": 227,
+            "end": 527,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_31@0",
+            "content": "EDA edits the input sentences by applying synonym replacement, random swap, random deletion and random insertion for a default 10% (\u03b1) of tokens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_31",
+            "start": 0,
+            "end": 144,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_31@1",
+            "content": "EDA either greatly change the sentence with a large \u03b1 or fails to introduce substantial variations (which is crucial in the extreme low data setting) of inputs with a small \u03b1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_31",
+            "start": 146,
+            "end": 320,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_31@2",
+            "content": "Since it operates in the continuous embedding space, EmbedHalluc hallucinates diverse embeddings that follow the distribution of few-shot set.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_31",
+            "start": 322,
+            "end": 463,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_31@3",
+            "content": "Thus, we observe in Table 3 that EmbedHalluc is overall superior to EDA.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_31",
+            "start": 465,
+            "end": 536,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_32@0",
+            "content": "EmbedHalluc is still competitive when comparing against SSL which assumes to have additional 64 examples per class from the task distribution.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_32",
+            "start": 0,
+            "end": 141,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_33@0",
+            "content": "Negative Results from Regularizations",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_33",
+            "start": 0,
+            "end": 36,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_34@0",
+            "content": "Our method can also be viewed as an implicit regularization method.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_34",
+            "start": 0,
+            "end": 66,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_34@1",
+            "content": "Thus, we also compare to two latest methods for better fine-tuning language models with regularization.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_34",
+            "start": 68,
+            "end": 170,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_34@2",
+            "content": "Zhang et al. (2021) find that fine-tuning can be achieved by: correcting bias in the optimizer, re-initialization of top layers, and training longer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_34",
+            "start": 172,
+            "end": 320,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_34@3",
+            "content": "Correcting bias in the optimizer is already fixed by the default optimizer in Huggingface Transformer and training longer surely will lead to further over-fitting in our extreme data scarce scenario.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_34",
+            "start": 322,
+            "end": 520,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_34@4",
+            "content": "Thus, we consider reinitialization (Re-Init) of top layers as one of our comparisons.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_34",
+            "start": 522,
+            "end": 606,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_34@5",
+            "content": "We further compare against Mixout , which is shown to be an effective regularization when fine-tuning with a few thousand examples.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_34",
+            "start": 608,
+            "end": 738,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_34@6",
+            "content": "We used the public code for both of these methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_34",
+            "start": 740,
+            "end": 789,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_34@7",
+            "content": "Since we adapt their code to our extreme data deficient setting, we re-search the hyper-parameters of both methods (including their suggested values).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_34",
+            "start": 791,
+            "end": 940,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_34@8",
+            "content": "For Re-Init, we search the top 1,2,3,4,5 layers; and for Mixout, we search mixout rate from 0.1, 0.2, ..., 0.9 and report their best results in Table 4, using RoBERTa-large.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_34",
+            "start": 942,
+            "end": 1114,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_34@9",
+            "content": "Results for BERT-large-cased can be found in Appendix C. We find that those two methods fail to alleviate the over-fitting problem in such extreme setting, though they have been to be effective when given a few thousands examples.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_34",
+            "start": 1116,
+            "end": 1345,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_34@10",
+            "content": "Table 4: Comparisons of EmbedHalluc to Re-init and Mixout, using RoBERTa-large as base models and conventional fine-tuning as the base learning method.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_34",
+            "start": 1347,
+            "end": 1497,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_35@0",
+            "content": "Limitations",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_35",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_36@0",
+            "content": "While EmbedHalluc works well empirically, it relies on hallucinating non-interpretable embeddings to facilitate the learning process.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_36",
+            "start": 0,
+            "end": 132,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_36@1",
+            "content": "Besides, the learning of cWGAN requires careful human attention to maintain a stable training.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_36",
+            "start": 134,
+            "end": 227,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_37@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_37",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_38@0",
+            "content": "In this paper, we introduce an embedding hallucination method for data augmentation for few-shot learning, based on cWGAN.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_38",
+            "start": 0,
+            "end": 121,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_38@1",
+            "content": "The proposed method improves over the baselines in 15 tasks and outperforms a common augmentation method, and two recent regularization methods.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_38",
+            "start": 123,
+            "end": 266,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_39@0",
+            "content": "Ethics Statement",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_39",
+            "start": 0,
+            "end": 15,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_40@0",
+            "content": "As far as we are aware, our proposed work does not have any explicit ethical concerns.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_40",
+            "start": 0,
+            "end": 85,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_40@1",
+            "content": "However, our work relies on pre-trained language models, which have been shown to be biased in prior work .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_40",
+            "start": 87,
+            "end": 193,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_40@2",
+            "content": "As such, users of such models, specially for sensitive applications, should be aware of and if possible address such issues.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_40",
+            "start": 195,
+            "end": 318,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_41@0",
+            "content": "In addition to the experiments using RoBERTa shown in the main paper, here we show the results of BERT-large-cased with conventional fine-tuning as a further check on robustness of our method with respect to the choice of model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_41",
+            "start": 0,
+            "end": 227,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_42@0",
+            "content": "The baseline has only one loss L real , whereas we are learning with an additional loss L halluc , making the total loss to be L real + L halluc .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_42",
+            "start": 0,
+            "end": 145,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_42@1",
+            "content": "The learning rate for L real in the baselines and ours are kept the same.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_42",
+            "start": 147,
+            "end": 219,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_42@2",
+            "content": "Note that we do not search for this learning rate for our method.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_42",
+            "start": 221,
+            "end": 285,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_42@3",
+            "content": "We choose 1e \u22125 , which is the most common learning rate to finetune BERT/RoBERTa.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_42",
+            "start": 287,
+            "end": 368,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_42@4",
+            "content": "As we show in Table D.1, this learning rate produces reasonably good results for the baselines, being the best for 13 tasks and only marginally under-performing in the other 2 tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_42",
+            "start": 370,
+            "end": 551,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_42@5",
+            "content": "The results in Table D.1 are generated by running the baselines with a batch size of 2 and different learning rates 1e \u22125 , 2e \u22125 , 5e \u22125 suggested by Gao et al. (2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_42",
+            "start": 553,
+            "end": 721,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_43@0",
+            "content": "Martin Arjovsky, Soumith Chintala, L\u00e9on Bottou, Wasserstein generative adversarial networks, 2017, Proceedings of the 34th International Conference on Machine Learning, PMLR.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_43",
+            "start": 0,
+            "end": 173,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_44@0",
+            "content": "Farid Arthaud, Rachel Bawden, Alexandra Birch, Few-shot learning through contextual data augmentation, 2021, Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume, Online. Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_44",
+            "start": 0,
+            "end": 280,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_45@0",
+            "content": "Trapit Bansal, Rishikesh Jha, Tsendsuren Munkhdalai, Andrew Mccallum, Self-supervised metalearning for few-shot natural language classification tasks, 2020, Proceedings of the 2020 Conference on Empirical in Natural Language Processing (EMNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_45",
+            "start": 0,
+            "end": 245,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_46@0",
+            "content": "UNKNOWN, None, 2021, Semi-supervised few-shot intent classification and slot filling, CoRR.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_46",
+            "start": 0,
+            "end": 90,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_47@0",
+            "content": "Paola Cascante-Bonilla, Fuwen Tan, Yanjun Qi, Vicente Ordonez, Curriculum labeling: Revisiting pseudo-labeling for semi-supervised learning, 2021, Proceedings of the AAAI Conference on Artificial Intelligence, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_47",
+            "start": 0,
+            "end": 210,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_48@0",
+            "content": "Alexa Cyprien De Lichy, Hadrien Amazon, William Glaude,  Campbell, Meta-learning for few-shot named entity recognition, 2021, MetaNLP, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_48",
+            "start": 0,
+            "end": 135,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_49@0",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: pre-training of deep bidirectional transformers for language understanding, 2019-06-02, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, NAACL-HLT 2019, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_49",
+            "start": 0,
+            "end": 357,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_50@0",
+            "content": "Ning Ding, Guangwei Xu, Yulin Chen, Xiaobin Wang, Xu Han, Pengjun Xie, Hai-Tao Zheng, Zhiyuan Liu, Few-nerd: A few-shot named entity recognition dataset, 2021, ACL-IJCNLP, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_50",
+            "start": 0,
+            "end": 172,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_51@0",
+            "content": "Jesse Dodge, Gabriel Ilharco, Roy Schwartz, Ali Farhadi, Hannaneh Hajishirzi, Noah Smith, 2020. Fine-tuning pretrained language models: Weight initializations, data orders, and early stopping, 2002, ArXiv, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_51",
+            "start": 0,
+            "end": 206,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_52@0",
+            "content": "Alexander Fabbri, Simeng Han, Haoyuan Li, Haoran Li, Marjan Ghazvininejad, Shafiq Joty, Dragomir Radev, Yashar Mehdad, Improving zero and few-shot abstractive summarization with intermediate fine-tuning and data augmentation, 2021, Proceedings of the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_52",
+            "start": 0,
+            "end": 376,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_53@0",
+            "content": "Tianyu Gao, Adam Fisch, Danqi Chen, Making pre-trained language models better few-shot learners, 2021, Association for Computational Linguistics (ACL), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_53",
+            "start": 0,
+            "end": 152,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_54@0",
+            "content": "Ian Goodfellow, Jean Pouget-Abadie, Mehdi Mirza, Bing Xu, David Warde-Farley, Sherjil Ozair, Aaron Courville, Yoshua Bengio, Generative adversarial nets, 2014, Advances in Neural Information Processing Systems, Curran Associates, Inc.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_54",
+            "start": 0,
+            "end": 233,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_55@0",
+            "content": "Demi Guo, Alexander Rush, Yoon Kim, Parameter-efficient transfer learning with diff pruning, 2021, Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Online. Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_55",
+            "start": 0,
+            "end": 312,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_56@0",
+            "content": "Bharath Hariharan, Ross Girshick, Low-shot visual recognition by shrinking and hallucinating features, 2017, Proceedings of the IEEE International Conference on Computer Vision, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_56",
+            "start": 0,
+            "end": 178,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_57@0",
+            "content": "Neil Houlsby, Andrei Giurgiu, Stanislaw Jastrzebski, Bruna Morrone, Quentin De Laroussilhe, Andrea Gesmundo, Mona Attariyan, Sylvain Gelly, Parameter-efficient transfer learning for nlp, 2019, International Conference on Machine Learning, PMLR.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_57",
+            "start": 0,
+            "end": 243,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_58@0",
+            "content": "Yuncheng Hua, Yuan-Fang Li, Gholamreza Haffari, Guilin Qi, Tongtong Wu, Few-shot complex knowledge base question answering via meta reinforcement learning, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_58",
+            "start": 0,
+            "end": 258,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_59@0",
+            "content": "Yiren Jian, Lorenzo Torresani, Label hallucination for few-shot classification, 2022, AAAI Conference on Artificial Intelligence, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_59",
+            "start": 0,
+            "end": 130,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_60@0",
+            "content": "Akbar Karimi, Leonardo Rossi, Andrea Prati, AEDA: An easier data augmentation technique for text classification, 2021, Findings of the Association for Computational Linguistics: EMNLP 2021, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_60",
+            "start": 0,
+            "end": 190,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_61@0",
+            "content": "Akbar Karimi, Leonardo Rossi, Andrea Prati, AEDA: an easier data augmentation technique for text classification, 2021-11-20, Findings the Association for Computational Linguistics: EMNLP 2021, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_61",
+            "start": 0,
+            "end": 234,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_62@0",
+            "content": "Varun Kumar, Hadrien Glaude, Cyprien De Lichy, Wlliam Campbell, A closer look at feature space data augmentation for few-shot intent classification, 2019, Proceedings of the 2nd Workshop on Deep Learning Approaches for Low-Resource NLP, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_62",
+            "start": 0,
+            "end": 237,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_63@0",
+            "content": "Michalis Lazarou, Tania Stathaki, Yannis Avrithis, Tensor feature hallucination for few-shot learning, 2022, Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_63",
+            "start": 0,
+            "end": 191,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_64@0",
+            "content": "Cheolhyoung Lee, Kyunghyun Cho, Wanmo Kang, Mixout: Effective regularization to finetune large-scale pretrained language models, 2019, International Conference on Learning Representations, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_64",
+            "start": 0,
+            "end": 189,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_65@0",
+            "content": "Brian Lester, Rami Al-Rfou, Noah Constant, The power of scale for parameter-efficient prompt tuning, 2021, Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_65",
+            "start": 0,
+            "end": 195,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_66@0",
+            "content": "Judith , Li , Jiong Zhang, Semi-supervised meta-learning for cross-domain few-shot intent classification, 2021, MetaNLP, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_66",
+            "start": 0,
+            "end": 121,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_67@0",
+            "content": "Kai Li, Yulun Zhang, Kunpeng Li, Yun Fu, Adversarial feature hallucination networks for fewshot learning, 2020, Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_67",
+            "start": 0,
+            "end": 195,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_68@0",
+            "content": "Lisa Xiang, Percy Li,  Liang, Prefix-tuning: Optimizing continuous prompts for generation, 2021, Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Long Papers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_68",
+            "start": 0,
+            "end": 272,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_69@0",
+            "content": "Chiyu Paul Pu Liang, Louis-Philippe Wu, Ruslan Morency,  Salakhutdinov, Towards understanding and mitigating social biases in language models, 2021, International Conference on Machine Learning, PMLR.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_69",
+            "start": 0,
+            "end": 199,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_70@0",
+            "content": "Qinxuan Luo, Lingfeng Wang, Jingguo Lv, Few-shot learning via feature hallucination with variational inference, 2021, Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_70",
+            "start": 0,
+            "end": 200,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_71@0",
+            "content": "UNKNOWN, None, , Amir Globerson, and Omer Levy. 2021. Few-shot question answering by pretraining span selection, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_71",
+            "start": 0,
+            "end": 113,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_72@0",
+            "content": "Timo Schick, Hinrich Sch\u00fctze, Exploiting cloze-questions for few-shot text classification and natural language inference, 2021, EACL, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_72",
+            "start": 0,
+            "end": 134,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_73@0",
+            "content": "Amr Sharaf, Hany Hassan, Hal Daum\u00e9, Iii , Meta-learning for few-shot nmt adaptation, 2020, ACL, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_73",
+            "start": 0,
+            "end": 96,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_74@0",
+            "content": "Derek Tam, Mohit Rakesh R Menon,  Bansal, Shashank Srivastava, and Colin Raffel. 2021. Improving and simplifying pattern exploiting training, , Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_74",
+            "start": 0,
+            "end": 202,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_75@0",
+            "content": "Gabriel Tjio, Ping Liu, Joey Zhou, Rick Siow Mong Goh, Adversarial semantic hallucination for domain generalized semantic segmentation, 2022, IEEE Winter Conf. on Applications of Computer Vision, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_75",
+            "start": 0,
+            "end": 196,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_76@0",
+            "content": "Meihan Tong, Shuai Wang, Bin Xu, Yixin Cao, Minghui Liu, Lei Hou, Juanzi Li, Learning from miscellaneous other-class words for few-shot named entity recognition, 2021, Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing, Long Papers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_76",
+            "start": 0,
+            "end": 343,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_77@0",
+            "content": "Alex Wang, Amanpreet Singh, Julian Michael, Felix Hill, Omer Levy, Samuel Bowman, GLUE: A multi-task benchmark and analysis platform for natural language understanding, 2019, International Conference on Learning Representations, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_77",
+            "start": 0,
+            "end": 229,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_78@0",
+            "content": "Jiancong Wang, Yuhua Chen, Yifan Wu, Jianbo Shi, James Gee, Enhanced generative adversarial network for 3d brain mri super-resolution, 2020, Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_78",
+            "start": 0,
+            "end": 223,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_79@0",
+            "content": "Yu-Xiong Wang, Ross Girshick, Martial Hebert, Bharath Hariharan, Low-shot learning from imaginary data, 2018, Proceedings of the IEEE conference on computer vision and pattern recognition, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_79",
+            "start": 0,
+            "end": 189,
+            "label": {}
+        },
+        {
+            "ix": "32-ARR_v1_80@0",
+            "content": "Jason Wei, Chengyu Huang, Soroush Vosoughi, Yu Cheng, Shiqi Xu, Few-shot text classification with triplet networks, data augmentation, and curriculum learning, 2021, Proceedings of the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Online. Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "32-ARR_v1_80",
+            "start": 0,
+            "end": 359,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "32-ARR_v1_0",
+            "tgt_ix": "32-ARR_v1_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_0",
+            "tgt_ix": "32-ARR_v1_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_1",
+            "tgt_ix": "32-ARR_v1_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_1",
+            "tgt_ix": "32-ARR_v1_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_0",
+            "tgt_ix": "32-ARR_v1_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_2",
+            "tgt_ix": "32-ARR_v1_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_4",
+            "tgt_ix": "32-ARR_v1_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_5",
+            "tgt_ix": "32-ARR_v1_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_6",
+            "tgt_ix": "32-ARR_v1_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_3",
+            "tgt_ix": "32-ARR_v1_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_3",
+            "tgt_ix": "32-ARR_v1_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_3",
+            "tgt_ix": "32-ARR_v1_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_3",
+            "tgt_ix": "32-ARR_v1_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_3",
+            "tgt_ix": "32-ARR_v1_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_0",
+            "tgt_ix": "32-ARR_v1_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_7",
+            "tgt_ix": "32-ARR_v1_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_9",
+            "tgt_ix": "32-ARR_v1_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_8",
+            "tgt_ix": "32-ARR_v1_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_8",
+            "tgt_ix": "32-ARR_v1_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_8",
+            "tgt_ix": "32-ARR_v1_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_0",
+            "tgt_ix": "32-ARR_v1_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_10",
+            "tgt_ix": "32-ARR_v1_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_11",
+            "tgt_ix": "32-ARR_v1_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_11",
+            "tgt_ix": "32-ARR_v1_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_13",
+            "tgt_ix": "32-ARR_v1_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_12",
+            "tgt_ix": "32-ARR_v1_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_12",
+            "tgt_ix": "32-ARR_v1_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_12",
+            "tgt_ix": "32-ARR_v1_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_11",
+            "tgt_ix": "32-ARR_v1_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_14",
+            "tgt_ix": "32-ARR_v1_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_16",
+            "tgt_ix": "32-ARR_v1_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_17",
+            "tgt_ix": "32-ARR_v1_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_18",
+            "tgt_ix": "32-ARR_v1_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_19",
+            "tgt_ix": "32-ARR_v1_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_20",
+            "tgt_ix": "32-ARR_v1_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_21",
+            "tgt_ix": "32-ARR_v1_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_15",
+            "tgt_ix": "32-ARR_v1_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_15",
+            "tgt_ix": "32-ARR_v1_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_15",
+            "tgt_ix": "32-ARR_v1_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_15",
+            "tgt_ix": "32-ARR_v1_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_15",
+            "tgt_ix": "32-ARR_v1_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_15",
+            "tgt_ix": "32-ARR_v1_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_15",
+            "tgt_ix": "32-ARR_v1_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_15",
+            "tgt_ix": "32-ARR_v1_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_0",
+            "tgt_ix": "32-ARR_v1_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_22",
+            "tgt_ix": "32-ARR_v1_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_24",
+            "tgt_ix": "32-ARR_v1_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_23",
+            "tgt_ix": "32-ARR_v1_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_23",
+            "tgt_ix": "32-ARR_v1_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_23",
+            "tgt_ix": "32-ARR_v1_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_23",
+            "tgt_ix": "32-ARR_v1_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_25",
+            "tgt_ix": "32-ARR_v1_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_27",
+            "tgt_ix": "32-ARR_v1_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_26",
+            "tgt_ix": "32-ARR_v1_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_26",
+            "tgt_ix": "32-ARR_v1_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_26",
+            "tgt_ix": "32-ARR_v1_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_23",
+            "tgt_ix": "32-ARR_v1_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_28",
+            "tgt_ix": "32-ARR_v1_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_30",
+            "tgt_ix": "32-ARR_v1_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_31",
+            "tgt_ix": "32-ARR_v1_32",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_29",
+            "tgt_ix": "32-ARR_v1_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_29",
+            "tgt_ix": "32-ARR_v1_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_29",
+            "tgt_ix": "32-ARR_v1_32",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_29",
+            "tgt_ix": "32-ARR_v1_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_23",
+            "tgt_ix": "32-ARR_v1_33",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_32",
+            "tgt_ix": "32-ARR_v1_33",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_33",
+            "tgt_ix": "32-ARR_v1_34",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_33",
+            "tgt_ix": "32-ARR_v1_34",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_0",
+            "tgt_ix": "32-ARR_v1_35",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_34",
+            "tgt_ix": "32-ARR_v1_35",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_35",
+            "tgt_ix": "32-ARR_v1_36",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_35",
+            "tgt_ix": "32-ARR_v1_36",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_0",
+            "tgt_ix": "32-ARR_v1_37",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_36",
+            "tgt_ix": "32-ARR_v1_37",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_37",
+            "tgt_ix": "32-ARR_v1_38",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_37",
+            "tgt_ix": "32-ARR_v1_38",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_0",
+            "tgt_ix": "32-ARR_v1_39",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_38",
+            "tgt_ix": "32-ARR_v1_39",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_39",
+            "tgt_ix": "32-ARR_v1_40",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_39",
+            "tgt_ix": "32-ARR_v1_40",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_39",
+            "tgt_ix": "32-ARR_v1_41",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_40",
+            "tgt_ix": "32-ARR_v1_41",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_39",
+            "tgt_ix": "32-ARR_v1_42",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_41",
+            "tgt_ix": "32-ARR_v1_42",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "32-ARR_v1_0",
+            "tgt_ix": "32-ARR_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_1",
+            "tgt_ix": "32-ARR_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_2",
+            "tgt_ix": "32-ARR_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_2",
+            "tgt_ix": "32-ARR_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_2",
+            "tgt_ix": "32-ARR_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_2",
+            "tgt_ix": "32-ARR_v1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_2",
+            "tgt_ix": "32-ARR_v1_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_2",
+            "tgt_ix": "32-ARR_v1_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_2",
+            "tgt_ix": "32-ARR_v1_2@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_3",
+            "tgt_ix": "32-ARR_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_4",
+            "tgt_ix": "32-ARR_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_4",
+            "tgt_ix": "32-ARR_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_4",
+            "tgt_ix": "32-ARR_v1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_5",
+            "tgt_ix": "32-ARR_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_5",
+            "tgt_ix": "32-ARR_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_5",
+            "tgt_ix": "32-ARR_v1_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_6",
+            "tgt_ix": "32-ARR_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_6",
+            "tgt_ix": "32-ARR_v1_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_6",
+            "tgt_ix": "32-ARR_v1_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_7",
+            "tgt_ix": "32-ARR_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_7",
+            "tgt_ix": "32-ARR_v1_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_7",
+            "tgt_ix": "32-ARR_v1_7@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_7",
+            "tgt_ix": "32-ARR_v1_7@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_7",
+            "tgt_ix": "32-ARR_v1_7@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_7",
+            "tgt_ix": "32-ARR_v1_7@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_7",
+            "tgt_ix": "32-ARR_v1_7@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_7",
+            "tgt_ix": "32-ARR_v1_7@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_7",
+            "tgt_ix": "32-ARR_v1_7@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_7",
+            "tgt_ix": "32-ARR_v1_7@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_8",
+            "tgt_ix": "32-ARR_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_9",
+            "tgt_ix": "32-ARR_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_9",
+            "tgt_ix": "32-ARR_v1_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_9",
+            "tgt_ix": "32-ARR_v1_9@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_9",
+            "tgt_ix": "32-ARR_v1_9@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_9",
+            "tgt_ix": "32-ARR_v1_9@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_9",
+            "tgt_ix": "32-ARR_v1_9@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_9",
+            "tgt_ix": "32-ARR_v1_9@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_9",
+            "tgt_ix": "32-ARR_v1_9@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_9",
+            "tgt_ix": "32-ARR_v1_9@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_10",
+            "tgt_ix": "32-ARR_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_10",
+            "tgt_ix": "32-ARR_v1_10@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_10",
+            "tgt_ix": "32-ARR_v1_10@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_10",
+            "tgt_ix": "32-ARR_v1_10@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_11",
+            "tgt_ix": "32-ARR_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_12",
+            "tgt_ix": "32-ARR_v1_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_13",
+            "tgt_ix": "32-ARR_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_13",
+            "tgt_ix": "32-ARR_v1_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_14",
+            "tgt_ix": "32-ARR_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_14",
+            "tgt_ix": "32-ARR_v1_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_14",
+            "tgt_ix": "32-ARR_v1_14@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_15",
+            "tgt_ix": "32-ARR_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_16",
+            "tgt_ix": "32-ARR_v1_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_16",
+            "tgt_ix": "32-ARR_v1_16@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_16",
+            "tgt_ix": "32-ARR_v1_16@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_17",
+            "tgt_ix": "32-ARR_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_17",
+            "tgt_ix": "32-ARR_v1_17@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_17",
+            "tgt_ix": "32-ARR_v1_17@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_17",
+            "tgt_ix": "32-ARR_v1_17@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_17",
+            "tgt_ix": "32-ARR_v1_17@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_17",
+            "tgt_ix": "32-ARR_v1_17@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_18",
+            "tgt_ix": "32-ARR_v1_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_19",
+            "tgt_ix": "32-ARR_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_20",
+            "tgt_ix": "32-ARR_v1_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_21",
+            "tgt_ix": "32-ARR_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_21",
+            "tgt_ix": "32-ARR_v1_21@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_22",
+            "tgt_ix": "32-ARR_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_22",
+            "tgt_ix": "32-ARR_v1_22@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_23",
+            "tgt_ix": "32-ARR_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_24",
+            "tgt_ix": "32-ARR_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_24",
+            "tgt_ix": "32-ARR_v1_24@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_24",
+            "tgt_ix": "32-ARR_v1_24@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_24",
+            "tgt_ix": "32-ARR_v1_24@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_24",
+            "tgt_ix": "32-ARR_v1_24@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_24",
+            "tgt_ix": "32-ARR_v1_24@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_25",
+            "tgt_ix": "32-ARR_v1_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_25",
+            "tgt_ix": "32-ARR_v1_25@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_25",
+            "tgt_ix": "32-ARR_v1_25@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_26",
+            "tgt_ix": "32-ARR_v1_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_27",
+            "tgt_ix": "32-ARR_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_27",
+            "tgt_ix": "32-ARR_v1_27@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_27",
+            "tgt_ix": "32-ARR_v1_27@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_27",
+            "tgt_ix": "32-ARR_v1_27@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_28",
+            "tgt_ix": "32-ARR_v1_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_28",
+            "tgt_ix": "32-ARR_v1_28@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_29",
+            "tgt_ix": "32-ARR_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_30",
+            "tgt_ix": "32-ARR_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_30",
+            "tgt_ix": "32-ARR_v1_30@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_30",
+            "tgt_ix": "32-ARR_v1_30@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_31",
+            "tgt_ix": "32-ARR_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_31",
+            "tgt_ix": "32-ARR_v1_31@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_31",
+            "tgt_ix": "32-ARR_v1_31@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_31",
+            "tgt_ix": "32-ARR_v1_31@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_32",
+            "tgt_ix": "32-ARR_v1_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_33",
+            "tgt_ix": "32-ARR_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_34",
+            "tgt_ix": "32-ARR_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_34",
+            "tgt_ix": "32-ARR_v1_34@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_34",
+            "tgt_ix": "32-ARR_v1_34@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_34",
+            "tgt_ix": "32-ARR_v1_34@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_34",
+            "tgt_ix": "32-ARR_v1_34@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_34",
+            "tgt_ix": "32-ARR_v1_34@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_34",
+            "tgt_ix": "32-ARR_v1_34@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_34",
+            "tgt_ix": "32-ARR_v1_34@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_34",
+            "tgt_ix": "32-ARR_v1_34@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_34",
+            "tgt_ix": "32-ARR_v1_34@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_34",
+            "tgt_ix": "32-ARR_v1_34@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_35",
+            "tgt_ix": "32-ARR_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_36",
+            "tgt_ix": "32-ARR_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_36",
+            "tgt_ix": "32-ARR_v1_36@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_37",
+            "tgt_ix": "32-ARR_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_38",
+            "tgt_ix": "32-ARR_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_38",
+            "tgt_ix": "32-ARR_v1_38@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_39",
+            "tgt_ix": "32-ARR_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_40",
+            "tgt_ix": "32-ARR_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_40",
+            "tgt_ix": "32-ARR_v1_40@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_40",
+            "tgt_ix": "32-ARR_v1_40@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_41",
+            "tgt_ix": "32-ARR_v1_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_42",
+            "tgt_ix": "32-ARR_v1_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_42",
+            "tgt_ix": "32-ARR_v1_42@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_42",
+            "tgt_ix": "32-ARR_v1_42@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_42",
+            "tgt_ix": "32-ARR_v1_42@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_42",
+            "tgt_ix": "32-ARR_v1_42@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_42",
+            "tgt_ix": "32-ARR_v1_42@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_43",
+            "tgt_ix": "32-ARR_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_44",
+            "tgt_ix": "32-ARR_v1_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_45",
+            "tgt_ix": "32-ARR_v1_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_46",
+            "tgt_ix": "32-ARR_v1_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_47",
+            "tgt_ix": "32-ARR_v1_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_48",
+            "tgt_ix": "32-ARR_v1_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_49",
+            "tgt_ix": "32-ARR_v1_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_50",
+            "tgt_ix": "32-ARR_v1_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_51",
+            "tgt_ix": "32-ARR_v1_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_52",
+            "tgt_ix": "32-ARR_v1_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_53",
+            "tgt_ix": "32-ARR_v1_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_54",
+            "tgt_ix": "32-ARR_v1_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_55",
+            "tgt_ix": "32-ARR_v1_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_56",
+            "tgt_ix": "32-ARR_v1_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_57",
+            "tgt_ix": "32-ARR_v1_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_58",
+            "tgt_ix": "32-ARR_v1_58@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_59",
+            "tgt_ix": "32-ARR_v1_59@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_60",
+            "tgt_ix": "32-ARR_v1_60@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_61",
+            "tgt_ix": "32-ARR_v1_61@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_62",
+            "tgt_ix": "32-ARR_v1_62@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_63",
+            "tgt_ix": "32-ARR_v1_63@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_64",
+            "tgt_ix": "32-ARR_v1_64@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_65",
+            "tgt_ix": "32-ARR_v1_65@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_66",
+            "tgt_ix": "32-ARR_v1_66@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_67",
+            "tgt_ix": "32-ARR_v1_67@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_68",
+            "tgt_ix": "32-ARR_v1_68@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_69",
+            "tgt_ix": "32-ARR_v1_69@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_70",
+            "tgt_ix": "32-ARR_v1_70@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_71",
+            "tgt_ix": "32-ARR_v1_71@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_72",
+            "tgt_ix": "32-ARR_v1_72@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_73",
+            "tgt_ix": "32-ARR_v1_73@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_74",
+            "tgt_ix": "32-ARR_v1_74@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_75",
+            "tgt_ix": "32-ARR_v1_75@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_76",
+            "tgt_ix": "32-ARR_v1_76@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_77",
+            "tgt_ix": "32-ARR_v1_77@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_78",
+            "tgt_ix": "32-ARR_v1_78@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_79",
+            "tgt_ix": "32-ARR_v1_79@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "32-ARR_v1_80",
+            "tgt_ix": "32-ARR_v1_80@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 772,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "position_tag_type": "from_draft",
+        "doc_id": "32-ARR",
+        "version": 1
+    }
+}

@@ -1,0 +1,3295 @@
+{
+    "nodes": [
+        {
+            "ix": "413-ARR_v1_0",
+            "content": "Improving negation detection with negation-focused pre-training",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_2",
+            "content": "Negation is a common linguistic feature that is crucial in many language understanding tasks, yet it remains a hard problem due to diversity in its expression in different types of text. Recent works show that state-of-the-art NLP models underperform on samples containing negation in various tasks, and that negation detection models do not transfer well across domains. We propose a new negation-focused pre-training strategy, involving targeted data augmentation and negation masking, to better incorporate negation information into language models. Extensive experiments on common benchmarks show that our proposed approach improves negation detection performance and generalizability over the strong baseline Neg-BERT (Khandelwal and Sawant, 2020).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "413-ARR_v1_4",
+            "content": "Negation is an important linguistic phenomenon that appears commonly in natural language but is underrepresented in common NLP benchmarks (Hossain et al., 2020). Furthermore, the Checklist benchmark (Ribeiro et al., 2020) shows that most sentiment analyzers and machine comprehension models struggle with samples containing negation. Negation is even more important in biomedical domain text, where patients are carefully defined as having/not having specific characteristics. Even within the biomedical domain, there are many types of text such as clinical notes, lab reports, or research publications, each with particular characteristics in relation to the use of negation. A recent work on negation detection in English texts found that negation detection models do not transfer well across domains, due to variations in expression of negation (Khandelwal and Sawant, 2020). It remains a challenge to solve negation in general, even with state-of-the-art NLP models.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_5",
+            "content": "Negation detection is typically defined as consisting of the two sub-tasks of: (1) cue detection, detecting the cue phrase that triggers the negation; and (2) scope resolution, determining the affected spans that are negated. Three primary datasets are used to evaluate negation; the BioScope corpus (Vincze et al., 2008) includes full papers and abstracts of biological papers, the SFU corpus (Konstantinova et al., 2012) is a collection of product reviews, and the Sherlock dataset (Morante and Blanco, 2012) consists of short literary works. There are differences in annotation schemes across the datasets, such as whether or not the cues are included inside scope annotation, and sub-optimal cross-dataset results have been observed, providing clear indications that the datasets are highly divergent in language use and negation types.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_6",
+            "content": "In this work, we aim to extend the transfer learning capability of NegBERT (Khandelwal and Sawant, 2020) through additional pre-training with task-related augmented training data, and a new masking objective. Our contributions are:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_7",
+            "content": "\u2022 We introduce an approach to augmenting data to emphasize negation in pre-training. \u2022 We propose a novel extension to the standard random masked language model objective in pre-training to explicitly mask negation cues, to make the models more robust to negation. \u2022 We conduct extensive experiments on different benchmarks to evaluate cross-domain performance of large pre-trained language models as well as the effectiveness of the proposed pre-training strategies; code available at http://ANONYMISED.",
+            "ntype": "list",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_8",
+            "content": "Related work",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "413-ARR_v1_9",
+            "content": "To date, negation detection has been heavily-reliant on rule-based systems. Chapman et al. (2001) proposed a simple system, NegEx, based on regular expressions to detect negation cues in a sentence given a concept of interest (the scope). NegEx remains the most popular approach to negation detection, especially in the clinical domain where target clinical concepts can be detected (e.g., with MetaMap (Aronson and Lang, 2010)). Further research has extended NegEx with syntactic information (Mehrabi et al., 2015;Peng et al., 2018), and shown that rule-based systems can achieve relatively good performance for detecting negation, especially in the biomedical domain, but do not generalize well to other domains or datasets.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_10",
+            "content": "To approach negation cue and negation scope detection with supervised machine learning, two classification tasks are defined: finding negation tokens and classifying tokens as the first or last (or neither) token within the scope of negation. Most works follow a common scheme in extracting various features from the sentence, in using a classifier to classify each token as the beginning, inside, or outside of a negation cue or scope span (Morante and Daelemans, 2009;Ou and Patrick, 2015;Cruz et al., 2016). Recently, research has shifted to applying deep learning methods to the task. Most approaches make use of RNN-based architectures to encode the input sentences, combined with a softmax layer for classification (Lazib et al., 2019;Chen, 2019). Despite the high performance on common benchmarks, results are biased by the fact that negation scope is often delimited by punctuation and other dataset artefacts (Fancellu et al., 2017). As such, they are potentially only learning domain-specific surface features rather than capturing the true semantics of negation. NegBERT applies a large pre-trained language model to the problem of negation detection, outperforming previous deep learning methods on negation detection, with especially high gains on scope resolution.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_11",
+            "content": "Method",
+            "ntype": "title",
+            "meta": {
+                "section": "3"
+            }
+        },
+        {
+            "ix": "413-ARR_v1_12",
+            "content": "Our proposed pre-training strategy consists of two main components: (1) negation-focused data collection in which we first collect relevant data that contain negation; and (2) negation-focused pretraining that makes use of the negation-focused data to emphasize negation instances, and adopts a novel negation-specific masking strategy.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_13",
+            "content": "Negation-focused data collection",
+            "ntype": "title",
+            "meta": {
+                "section": "3.1"
+            }
+        },
+        {
+            "ix": "413-ARR_v1_14",
+            "content": "We aim to construct a dataset that is enriched for negation, to support negation-sensitized pretraining of large language models. To obtain sentences with negations, we extend the NegEx lexicon with additional negation cues obtained from biomedical texts (Morante, 2010), and apply it to sentences extracted from a corpus using the SpaCy English sentence tokenizer, keeping only those sentences with at least one identified negation.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_15",
+            "content": "For the biomedical domain, we use texts in the TREC-CDS 2021 snapshot 1 of the clinical trials registry. 2 Clinical trials are documents describing the protocols and relevant patient characteristics of a clinical research study. Description of clinical trials can be quite long, but a core aspect of the trial description is the patient inclusion/exclusion criteria, specifying what types of characteristics or conditions a patient must have/not have in order to be suitable for the trial. The reasons for choosing this data are that: (1) it is in-domain for the biomedical domain; (2) the texts are well-formed sentences with proper grammatical structure; and",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_16",
+            "content": "(3) the texts contain many negations, especially in the inclusion/exclusion criteria sections. For the general domain, we apply this approach to wikitext (Merity et al., 2016), a set of verified articles in Wikipedia. We sample the data equally from these two sets, obtaining 1, 381, 948 negation sentences.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_17",
+            "content": "Negation-focused pre-training",
+            "ntype": "title",
+            "meta": {
+                "section": "3.2"
+            }
+        },
+        {
+            "ix": "413-ARR_v1_18",
+            "content": "Adaptive pre-training on target domain data has been shown to be an effective strategy for domain adaptation (Gururangan et al., 2020). We therefore hypothesize that pre-training language models on text with negations will help the model incorporate information about negation, and learn better representation for sentences containing negation. Using the negation-focused data, we first apply the standard random word masking strategy (Devlin et al., 2019) and train the model with the masked language model objective.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_19",
+            "content": "As part of the collection of the negation-focused data, we obtain predictions of negation cues in all the sentences, which can be explicitly incorporated to make the model more robust to negation. Inspired by various works on entity and span masking (Joshi et al., 2020;Yamada et al., 2020), we explore explicitly incorporating information about negation cues into the model by masking these cues, and targeting prediction of the masked cue in the pre-training stage. Below is an example of how a sentence is tokenized under our masking scheme: No serious complications such as hypertension, diabetes. \u21d2 [CUE] serious complications such as [MASK], diabetes.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_20",
+            "content": "A new type of token [CUE] is introduced under this masking scheme, and the model needs to reconstruct the original sentence by predicting both the [CUE] token to be No, and the randomlymasked token [MASK] to be hypertension. By always masking negation cues in all the sentences, we force the model to focus more on this type of token, and thus, aim to learn better embeddings incorporating information of how a negation cue is represented in the context of the sentence. Moreover, by using a different token to mask negation cues, we ensure that the model learns to distinguish between different types of tokens. In this work, we replace the BERT encoder of NegBERT with RoBERTa and apply whole-word masking, meaning that all the sub-word tokens that constitute a word will be masked.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_21",
+            "content": "Experiments",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "413-ARR_v1_22",
+            "content": "Experimental settings",
+            "ntype": "title",
+            "meta": {
+                "section": "4.1"
+            }
+        },
+        {
+            "ix": "413-ARR_v1_23",
+            "content": "Following the experiment settings in NegBERT, we use the three standard benchmarks for negation cue detection and scope resolution tasks, i.e. BioScope (Vincze et al., 2008) (separated into two subsets, sourced from abstracts and full-text papers, resp.), the SFU product reviews dataset (Konstantinova et al., 2012), and the Sherlock dataset (Morante and Blanco, 2012). In addition, we use the negationannotated subset of VetCompass UK 3 (Cheng et al., 2017), consisting of clinical notes in the veterinary domain, which are very informal compared to BioScope. It also contains abbreviations and shortening of terms, as well as certain unique negation cues. To investigate the cross-domain performance, we perform cue detection and scope resolution for all 4 datasets, based on training on one dataset and evaluating on all datasets. Detailed statistics of these datasets are presented in Table 1.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_24",
+            "content": "We formulate the two tasks as sequence labeling problems, where each token is tagged with a corresponding label. For cue detection, we use the annotation scheme {0: Affix, 1: Normal Cue, 2: Part of multiword cue, 3: Not part of cue}. For scope resolution, we use gold cue information and two labels {0: Outside negation scope, 1: Part of negation scope}. We adopt the same hyperparameters as NegBERT. Following the standard evaluation scheme in previous negation detection works, all systems are evaluated using token-level F 1 -score, based on whether it is inside or outside of any",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_25",
+            "content": "Main results",
+            "ntype": "title",
+            "meta": {
+                "section": "4.2"
+            }
+        },
+        {
+            "ix": "413-ARR_v1_26",
+            "content": "Tables 2 and 3 report the performance of negation cue detection and negation scope resolution, respectively. Results reported are the average of 5 runs with different random seeds. NegBERT results are produced using the official implementation. 4 We observe similar trends across all datasets for both cue detection and scope resolution. Regarding the in-dataset setting (training and evaluating on the same dataset), AugNB outperforms the baseline NegBERT on all datasets except for Sherlock. Gains are more noticeable in the biomedical datasets (BioScope, VetCompass). For Sherlock, however, we observe a slight degradation in performance with the proposed pre-training scheme. This is likely due to the fact that Sherlock has major differences in annotation scheme compared to other corpora, specifically including scopes to the left of cues, while in BioScope and SFU, the scope is usually annotated only to the right of cues. Also, the cue itself is not considered to be part of the scope in Sherlock or SFU, unlike in BioScope.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_27",
+            "content": "In the cross-dataset setting, we record gains across all benchmarks. The largest cross-dataset improvements over NegBERT are for SFU, perhaps due to SFU being the largest dataset in size, containing a relatively large number of unique cues. CueNB further improves the performance of AugNB, confirming our hypothesis that explicitly masking the cue will help the model learn better representations for negation cues and thus, better distinguish between cues and normal words. These results show that our negation-focused pre-training strategy is effective for improving the transfer learning performance of pre-trained language models on the negation detection task.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_28",
+            "content": "Discussion",
+            "ntype": "title",
+            "meta": {
+                "section": "4.3"
+            }
+        },
+        {
+            "ix": "413-ARR_v1_29",
+            "content": "We training strategy. Table 4 presents the results of different variations of the proposed pre-training scheme on the BioScope-Abstract validation split. We consider two variations, pre-training with: (1) only the negation-focused data (equivalent to the AugNB model); and (2) only the cue masking objective. To model the latter variation, we explicitly mask the cue in the BioScope training set, then pretrain on this training set. From the results, we see that both strategies help improve the baseline Neg-BERT on cue detection and scope resolution, with explicitly masking the cues being the most important. Combining both strategies (CueNB) further improves the overall results.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_30",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "5"
+            }
+        },
+        {
+            "ix": "413-ARR_v1_31",
+            "content": "In this work, we propose a new negation-focused pre-training strategy to explicitly incorporate negation information into pre-trained language models. Empirical results on common benchmarks show that the proposed strategy helps improve the performance of pre-trained language models on the negation detection task when evaluating on the same source dataset, as well as their transferability to target data in different domains. Despite the gains over previous methods, the sub-optimal results on some benchmarks show that negation remains a big challenge in NLP.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "413-ARR_v1_32",
+            "content": "Fran\u00e7ois-Michel Alan R Aronson,  Lang, An overview of MetaMap: Historical perspective and recent advances, 2010, Journal of the American Medical Informatics Association, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": [
+                    "Fran\u00e7ois-Michel Alan R Aronson",
+                    " Lang"
+                ],
+                "title": "An overview of MetaMap: Historical perspective and recent advances",
+                "pub_date": "2010",
+                "pub_title": "Journal of the American Medical Informatics Association",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_33",
+            "content": "Will Wendy W Chapman, Paul Bridewell,  Hanbury, F Gregory, Bruce G Cooper,  Buchanan, A simple algorithm for identifying negated findings and diseases in discharge summaries, 2001, Journal of biomedical informatics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": [
+                    "Will Wendy W Chapman",
+                    "Paul Bridewell",
+                    " Hanbury",
+                    "F Gregory",
+                    "Bruce G Cooper",
+                    " Buchanan"
+                ],
+                "title": "A simple algorithm for identifying negated findings and diseases in discharge summaries",
+                "pub_date": "2001",
+                "pub_title": "Journal of biomedical informatics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_34",
+            "content": "Long Chen, Attention-based deep learning system for negation and assertion detection in clinical notes, 2019, International Journal of Artificial Intelligence and Applications (IJAIA), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": [
+                    "Long Chen"
+                ],
+                "title": "Attention-based deep learning system for negation and assertion detection in clinical notes",
+                "pub_date": "2019",
+                "pub_title": "International Journal of Artificial Intelligence and Applications (IJAIA)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_35",
+            "content": "Katherine Cheng, Timothy Baldwin, Karin Verspoor, Automatic negation and speculation detection in veterinary clinical text, 2017, Proceedings of the Australasian Language Technology Association Workshop, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": [
+                    "Katherine Cheng",
+                    "Timothy Baldwin",
+                    "Karin Verspoor"
+                ],
+                "title": "Automatic negation and speculation detection in veterinary clinical text",
+                "pub_date": "2017",
+                "pub_title": "Proceedings of the Australasian Language Technology Association Workshop",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_36",
+            "content": "P Noa, Maite Cruz, Ruslan Taboada,  Mitkov, A machine-learning approach to negation and speculation detection for sentiment analysis, 2016, Journal of the Association for Information Science and Technology, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": [
+                    "P Noa",
+                    "Maite Cruz",
+                    "Ruslan Taboada",
+                    " Mitkov"
+                ],
+                "title": "A machine-learning approach to negation and speculation detection for sentiment analysis",
+                "pub_date": "2016",
+                "pub_title": "Journal of the Association for Information Science and Technology",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_37",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: Pre-training of deep bidirectional transformers for language understanding, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "Jacob Devlin",
+                    "Ming-Wei Chang",
+                    "Kenton Lee",
+                    "Kristina Toutanova"
+                ],
+                "title": "BERT: Pre-training of deep bidirectional transformers for language understanding",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_38",
+            "content": "Federico Fancellu, Adam Lopez, Bonnie Webber, Hangfeng He, Detecting negation scope is easy, except when it isn't, 2017, Proceedings of the 15th Conference of the European Chapter of the Association for Computational Linguistics, Short Papers.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": [
+                    "Federico Fancellu",
+                    "Adam Lopez",
+                    "Bonnie Webber",
+                    "Hangfeng He"
+                ],
+                "title": "Detecting negation scope is easy, except when it isn't",
+                "pub_date": "2017",
+                "pub_title": "Proceedings of the 15th Conference of the European Chapter of the Association for Computational Linguistics",
+                "pub": "Short Papers"
+            }
+        },
+        {
+            "ix": "413-ARR_v1_39",
+            "content": "Ana Suchin Gururangan, Swabha Marasovi\u0107, Kyle Swayamdipta, Iz Lo, Doug Beltagy, Noah A Downey,  Smith, Don't stop pretraining: Adapt language models to domains and tasks, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": [
+                    "Ana Suchin Gururangan",
+                    "Swabha Marasovi\u0107",
+                    "Kyle Swayamdipta",
+                    "Iz Lo",
+                    "Doug Beltagy",
+                    "Noah A Downey",
+                    " Smith"
+                ],
+                "title": "Don't stop pretraining: Adapt language models to domains and tasks",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_40",
+            "content": "Venelin Md Mosharaf Hossain, Pranoy Kovatchev, Tiffany Dutta, Elizabeth Kao, Eduardo Wei,  Blanco, An analysis of natural language inference benchmarks through the lens of negation, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": [
+                    "Venelin Md Mosharaf Hossain",
+                    "Pranoy Kovatchev",
+                    "Tiffany Dutta",
+                    "Elizabeth Kao",
+                    "Eduardo Wei",
+                    " Blanco"
+                ],
+                "title": "An analysis of natural language inference benchmarks through the lens of negation",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_41",
+            "content": "Mandar Joshi, Danqi Chen, Yinhan Liu, S Daniel, Luke Weld, Omer Zettlemoyer,  Levy, Span-BERT: Improving pre-training by representing and predicting spans, 2020, Transactions of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    "Mandar Joshi",
+                    "Danqi Chen",
+                    "Yinhan Liu",
+                    "S Daniel",
+                    "Luke Weld",
+                    "Omer Zettlemoyer",
+                    " Levy"
+                ],
+                "title": "Span-BERT: Improving pre-training by representing and predicting spans",
+                "pub_date": "2020",
+                "pub_title": "Transactions of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_42",
+            "content": "Aditya Khandelwal, Suraj Sawant, NegBERT: A transfer learning approach for negation detection and scope resolution, 2020, Proceedings of the 12th Language Resources and Evaluation Conference, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": [
+                    "Aditya Khandelwal",
+                    "Suraj Sawant"
+                ],
+                "title": "NegBERT: A transfer learning approach for negation detection and scope resolution",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 12th Language Resources and Evaluation Conference",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_43",
+            "content": "Natalia Konstantinova, Sheila Cm De Sousa, Noa P Cruz D\u00edaz, Manuel J Mana L\u00f3pez, Maite Taboada, Ruslan Mitkov, A review corpus annotated for negation, speculation and their scope, 2012, Proceedings of LREC 2012, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": [
+                    "Natalia Konstantinova",
+                    "Sheila Cm De Sousa",
+                    "Noa P Cruz D\u00edaz",
+                    "Manuel J Mana L\u00f3pez",
+                    "Maite Taboada",
+                    "Ruslan Mitkov"
+                ],
+                "title": "A review corpus annotated for negation, speculation and their scope",
+                "pub_date": "2012",
+                "pub_title": "Proceedings of LREC 2012",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_44",
+            "content": "UNKNOWN, None, 2019, Negation scope detection with recurrent neural networks models in review texts. International Journal of High Performance Computing and Networking, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "Negation scope detection with recurrent neural networks models in review texts. International Journal of High Performance Computing and Networking",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_45",
+            "content": "UNKNOWN, None, 2019, RoBERTa: A robustly optimized BERT pretraining approach, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "RoBERTa: A robustly optimized BERT pretraining approach",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_46",
+            "content": "Saeed Mehrabi, Anand Krishnan, Sunghwan Sohn, Alexandra Roch, Heidi Schmidt, Joe Kesterson, Chris Beesley, Paul Dexter, Max Schmidt, Hongfang Liu, DEEPEN: A negation detection system for clinical text incorporating dependency relation into NegEx, 2015, Journal of biomedical informatics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": [
+                    "Saeed Mehrabi",
+                    "Anand Krishnan",
+                    "Sunghwan Sohn",
+                    "Alexandra Roch",
+                    "Heidi Schmidt",
+                    "Joe Kesterson",
+                    "Chris Beesley",
+                    "Paul Dexter",
+                    "Max Schmidt",
+                    "Hongfang Liu"
+                ],
+                "title": "DEEPEN: A negation detection system for clinical text incorporating dependency relation into NegEx",
+                "pub_date": "2015",
+                "pub_title": "Journal of biomedical informatics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_47",
+            "content": "UNKNOWN, None, 2016, Pointer sentinel mixture models, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b15",
+                "authors": null,
+                "title": null,
+                "pub_date": "2016",
+                "pub_title": "Pointer sentinel mixture models",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_48",
+            "content": ", Descriptive analysis of negation cues in biomedical texts, 2010, Proceedings of the Seventh International Conference on Language Resources and Evaluation (LREC'10), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b16",
+                "authors": [],
+                "title": "Descriptive analysis of negation cues in biomedical texts",
+                "pub_date": "2010",
+                "pub_title": "Proceedings of the Seventh International Conference on Language Resources and Evaluation (LREC'10)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_49",
+            "content": "Roser Morante, Eduardo Blanco, *SEM 2012 shared task: Resolving the scope and focus of negation, 2012, * SEM 2012: The First Joint Conference on Lexical and Computational Semantics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b17",
+                "authors": [
+                    "Roser Morante",
+                    "Eduardo Blanco"
+                ],
+                "title": "*SEM 2012 shared task: Resolving the scope and focus of negation",
+                "pub_date": "2012",
+                "pub_title": "* SEM 2012: The First Joint Conference on Lexical and Computational Semantics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_50",
+            "content": "Roser Morante, Walter Daelemans, A metalearning approach to processing the scope of negation, 2009, Proceedings of the thirteenth conference on computational natural language learning, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b18",
+                "authors": [
+                    "Roser Morante",
+                    "Walter Daelemans"
+                ],
+                "title": "A metalearning approach to processing the scope of negation",
+                "pub_date": "2009",
+                "pub_title": "Proceedings of the thirteenth conference on computational natural language learning",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_51",
+            "content": "Ying Ou, Jon Patrick, Automatic negation detection in narrative pathology reports, 2015, Artificial intelligence in medicine, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b19",
+                "authors": [
+                    "Ying Ou",
+                    "Jon Patrick"
+                ],
+                "title": "Automatic negation detection in narrative pathology reports",
+                "pub_date": "2015",
+                "pub_title": "Artificial intelligence in medicine",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_52",
+            "content": "Yifan Peng, Xiaosong Wang, Le Lu, Mohammadhadi Bagheri, Ronald Summers, Zhiyong Lu, NegBio: a high-performance tool for negation and uncertainty detection in radiology reports, 2018, AMIA Summits on Translational Science Proceedings, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b20",
+                "authors": [
+                    "Yifan Peng",
+                    "Xiaosong Wang",
+                    "Le Lu",
+                    "Mohammadhadi Bagheri",
+                    "Ronald Summers",
+                    "Zhiyong Lu"
+                ],
+                "title": "NegBio: a high-performance tool for negation and uncertainty detection in radiology reports",
+                "pub_date": "2018",
+                "pub_title": "AMIA Summits on Translational Science Proceedings",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_53",
+            "content": "Tongshuang Marco Tulio Ribeiro, Carlos Wu, Sameer Guestrin,  Singh, Beyond accuracy: Behavioral testing of NLP models with checklist, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b21",
+                "authors": [
+                    "Tongshuang Marco Tulio Ribeiro",
+                    "Carlos Wu",
+                    "Sameer Guestrin",
+                    " Singh"
+                ],
+                "title": "Beyond accuracy: Behavioral testing of NLP models with checklist",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_54",
+            "content": "Veronika Vincze, Gy\u00f6rgy Szarvas, Rich\u00e1rd Farkas, Gy\u00f6rgy M\u00f3ra, J\u00e1nos Csirik, The Bio-Scope corpus: biomedical texts annotated for uncertainty, negation and their scopes, 2008, BMC bioinformatics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b22",
+                "authors": [
+                    "Veronika Vincze",
+                    "Gy\u00f6rgy Szarvas",
+                    "Rich\u00e1rd Farkas",
+                    "Gy\u00f6rgy M\u00f3ra",
+                    "J\u00e1nos Csirik"
+                ],
+                "title": "The Bio-Scope corpus: biomedical texts annotated for uncertainty, negation and their scopes",
+                "pub_date": "2008",
+                "pub_title": "BMC bioinformatics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "413-ARR_v1_55",
+            "content": "Ikuya Yamada, Akari Asai, Hiroyuki Shindo, Hideaki Takeda, Yuji Matsumoto, LUKE: Deep contextualized entity representations with entityaware self-attention, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b23",
+                "authors": [
+                    "Ikuya Yamada",
+                    "Akari Asai",
+                    "Hiroyuki Shindo",
+                    "Hideaki Takeda",
+                    "Yuji Matsumoto"
+                ],
+                "title": "LUKE: Deep contextualized entity representations with entityaware self-attention",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+                "pub": null
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "413-ARR_v1_0@0",
+            "content": "Improving negation detection with negation-focused pre-training",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_0",
+            "start": 0,
+            "end": 62,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_2@0",
+            "content": "Negation is a common linguistic feature that is crucial in many language understanding tasks, yet it remains a hard problem due to diversity in its expression in different types of text.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_2",
+            "start": 0,
+            "end": 185,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_2@1",
+            "content": "Recent works show that state-of-the-art NLP models underperform on samples containing negation in various tasks, and that negation detection models do not transfer well across domains.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_2",
+            "start": 187,
+            "end": 370,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_2@2",
+            "content": "We propose a new negation-focused pre-training strategy, involving targeted data augmentation and negation masking, to better incorporate negation information into language models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_2",
+            "start": 372,
+            "end": 551,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_2@3",
+            "content": "Extensive experiments on common benchmarks show that our proposed approach improves negation detection performance and generalizability over the strong baseline Neg-BERT (Khandelwal and Sawant, 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_2",
+            "start": 553,
+            "end": 752,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_4@0",
+            "content": "Negation is an important linguistic phenomenon that appears commonly in natural language but is underrepresented in common NLP benchmarks (Hossain et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_4",
+            "start": 0,
+            "end": 160,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_4@1",
+            "content": "Furthermore, the Checklist benchmark (Ribeiro et al., 2020) shows that most sentiment analyzers and machine comprehension models struggle with samples containing negation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_4",
+            "start": 162,
+            "end": 332,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_4@2",
+            "content": "Negation is even more important in biomedical domain text, where patients are carefully defined as having/not having specific characteristics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_4",
+            "start": 334,
+            "end": 475,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_4@3",
+            "content": "Even within the biomedical domain, there are many types of text such as clinical notes, lab reports, or research publications, each with particular characteristics in relation to the use of negation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_4",
+            "start": 477,
+            "end": 675,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_4@4",
+            "content": "A recent work on negation detection in English texts found that negation detection models do not transfer well across domains, due to variations in expression of negation (Khandelwal and Sawant, 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_4",
+            "start": 677,
+            "end": 877,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_4@5",
+            "content": "It remains a challenge to solve negation in general, even with state-of-the-art NLP models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_4",
+            "start": 879,
+            "end": 969,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_5@0",
+            "content": "Negation detection is typically defined as consisting of the two sub-tasks of: (1) cue detection, detecting the cue phrase that triggers the negation; and (2) scope resolution, determining the affected spans that are negated.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_5",
+            "start": 0,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_5@1",
+            "content": "Three primary datasets are used to evaluate negation; the BioScope corpus (Vincze et al., 2008) includes full papers and abstracts of biological papers, the SFU corpus (Konstantinova et al., 2012) is a collection of product reviews, and the Sherlock dataset (Morante and Blanco, 2012) consists of short literary works.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_5",
+            "start": 226,
+            "end": 543,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_5@2",
+            "content": "There are differences in annotation schemes across the datasets, such as whether or not the cues are included inside scope annotation, and sub-optimal cross-dataset results have been observed, providing clear indications that the datasets are highly divergent in language use and negation types.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_5",
+            "start": 545,
+            "end": 839,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_6@0",
+            "content": "In this work, we aim to extend the transfer learning capability of NegBERT (Khandelwal and Sawant, 2020) through additional pre-training with task-related augmented training data, and a new masking objective.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_6",
+            "start": 0,
+            "end": 207,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_6@1",
+            "content": "Our contributions are:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_6",
+            "start": 209,
+            "end": 230,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_7@0",
+            "content": "\u2022 We introduce an approach to augmenting data to emphasize negation in pre-training. \u2022 We propose a novel extension to the standard random masked language model objective in pre-training to explicitly mask negation cues, to make the models more robust to negation. \u2022 We conduct extensive experiments on different benchmarks to evaluate cross-domain performance of large pre-trained language models as well as the effectiveness of the proposed pre-training strategies; code available at http://ANONYMISED.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_7",
+            "start": 0,
+            "end": 503,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_8@0",
+            "content": "Related work",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_8",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_9@0",
+            "content": "To date, negation detection has been heavily-reliant on rule-based systems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_9",
+            "start": 0,
+            "end": 74,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_9@1",
+            "content": "Chapman et al. (2001) proposed a simple system, NegEx, based on regular expressions to detect negation cues in a sentence given a concept of interest (the scope).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_9",
+            "start": 76,
+            "end": 237,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_9@2",
+            "content": "NegEx remains the most popular approach to negation detection, especially in the clinical domain where target clinical concepts can be detected (e.g., with MetaMap (Aronson and Lang, 2010)).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_9",
+            "start": 239,
+            "end": 428,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_9@3",
+            "content": "Further research has extended NegEx with syntactic information (Mehrabi et al., 2015;Peng et al., 2018), and shown that rule-based systems can achieve relatively good performance for detecting negation, especially in the biomedical domain, but do not generalize well to other domains or datasets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_9",
+            "start": 430,
+            "end": 725,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_10@0",
+            "content": "To approach negation cue and negation scope detection with supervised machine learning, two classification tasks are defined: finding negation tokens and classifying tokens as the first or last (or neither) token within the scope of negation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_10",
+            "start": 0,
+            "end": 241,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_10@1",
+            "content": "Most works follow a common scheme in extracting various features from the sentence, in using a classifier to classify each token as the beginning, inside, or outside of a negation cue or scope span (Morante and Daelemans, 2009;Ou and Patrick, 2015;Cruz et al., 2016).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_10",
+            "start": 243,
+            "end": 509,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_10@2",
+            "content": "Recently, research has shifted to applying deep learning methods to the task.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_10",
+            "start": 511,
+            "end": 587,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_10@3",
+            "content": "Most approaches make use of RNN-based architectures to encode the input sentences, combined with a softmax layer for classification (Lazib et al., 2019;Chen, 2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_10",
+            "start": 589,
+            "end": 752,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_10@4",
+            "content": "Despite the high performance on common benchmarks, results are biased by the fact that negation scope is often delimited by punctuation and other dataset artefacts (Fancellu et al., 2017).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_10",
+            "start": 754,
+            "end": 941,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_10@5",
+            "content": "As such, they are potentially only learning domain-specific surface features rather than capturing the true semantics of negation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_10",
+            "start": 943,
+            "end": 1072,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_10@6",
+            "content": "NegBERT applies a large pre-trained language model to the problem of negation detection, outperforming previous deep learning methods on negation detection, with especially high gains on scope resolution.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_10",
+            "start": 1074,
+            "end": 1277,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_11@0",
+            "content": "Method",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_11",
+            "start": 0,
+            "end": 5,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_12@0",
+            "content": "Our proposed pre-training strategy consists of two main components: (1) negation-focused data collection in which we first collect relevant data that contain negation; and (2) negation-focused pretraining that makes use of the negation-focused data to emphasize negation instances, and adopts a novel negation-specific masking strategy.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_12",
+            "start": 0,
+            "end": 335,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_13@0",
+            "content": "Negation-focused data collection",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_13",
+            "start": 0,
+            "end": 31,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_14@0",
+            "content": "We aim to construct a dataset that is enriched for negation, to support negation-sensitized pretraining of large language models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_14",
+            "start": 0,
+            "end": 128,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_14@1",
+            "content": "To obtain sentences with negations, we extend the NegEx lexicon with additional negation cues obtained from biomedical texts (Morante, 2010), and apply it to sentences extracted from a corpus using the SpaCy English sentence tokenizer, keeping only those sentences with at least one identified negation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_14",
+            "start": 130,
+            "end": 432,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_15@0",
+            "content": "For the biomedical domain, we use texts in the TREC-CDS 2021 snapshot 1 of the clinical trials registry.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_15",
+            "start": 0,
+            "end": 103,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_15@1",
+            "content": "2 Clinical trials are documents describing the protocols and relevant patient characteristics of a clinical research study.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_15",
+            "start": 105,
+            "end": 227,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_15@2",
+            "content": "Description of clinical trials can be quite long, but a core aspect of the trial description is the patient inclusion/exclusion criteria, specifying what types of characteristics or conditions a patient must have/not have in order to be suitable for the trial.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_15",
+            "start": 229,
+            "end": 488,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_15@3",
+            "content": "The reasons for choosing this data are that: (1) it is in-domain for the biomedical domain; (2) the texts are well-formed sentences with proper grammatical structure; and",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_15",
+            "start": 490,
+            "end": 659,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_16@0",
+            "content": "(3) the texts contain many negations, especially in the inclusion/exclusion criteria sections.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_16",
+            "start": 0,
+            "end": 93,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_16@1",
+            "content": "For the general domain, we apply this approach to wikitext (Merity et al., 2016), a set of verified articles in Wikipedia.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_16",
+            "start": 95,
+            "end": 216,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_16@2",
+            "content": "We sample the data equally from these two sets, obtaining 1, 381, 948 negation sentences.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_16",
+            "start": 218,
+            "end": 306,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_17@0",
+            "content": "Negation-focused pre-training",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_17",
+            "start": 0,
+            "end": 28,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_18@0",
+            "content": "Adaptive pre-training on target domain data has been shown to be an effective strategy for domain adaptation (Gururangan et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_18",
+            "start": 0,
+            "end": 134,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_18@1",
+            "content": "We therefore hypothesize that pre-training language models on text with negations will help the model incorporate information about negation, and learn better representation for sentences containing negation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_18",
+            "start": 136,
+            "end": 343,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_18@2",
+            "content": "Using the negation-focused data, we first apply the standard random word masking strategy (Devlin et al., 2019) and train the model with the masked language model objective.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_18",
+            "start": 345,
+            "end": 517,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_19@0",
+            "content": "As part of the collection of the negation-focused data, we obtain predictions of negation cues in all the sentences, which can be explicitly incorporated to make the model more robust to negation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_19",
+            "start": 0,
+            "end": 195,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_19@1",
+            "content": "Inspired by various works on entity and span masking (Joshi et al., 2020;Yamada et al., 2020), we explore explicitly incorporating information about negation cues into the model by masking these cues, and targeting prediction of the masked cue in the pre-training stage.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_19",
+            "start": 197,
+            "end": 466,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_19@2",
+            "content": "Below is an example of how a sentence is tokenized under our masking scheme: No serious complications such as hypertension, diabetes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_19",
+            "start": 468,
+            "end": 600,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_19@3",
+            "content": "\u21d2 [CUE] serious complications such as [MASK], diabetes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_19",
+            "start": 602,
+            "end": 656,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_20@0",
+            "content": "A new type of token [CUE] is introduced under this masking scheme, and the model needs to reconstruct the original sentence by predicting both the [CUE] token to be No, and the randomlymasked token [MASK] to be hypertension.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_20",
+            "start": 0,
+            "end": 223,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_20@1",
+            "content": "By always masking negation cues in all the sentences, we force the model to focus more on this type of token, and thus, aim to learn better embeddings incorporating information of how a negation cue is represented in the context of the sentence.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_20",
+            "start": 225,
+            "end": 469,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_20@2",
+            "content": "Moreover, by using a different token to mask negation cues, we ensure that the model learns to distinguish between different types of tokens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_20",
+            "start": 471,
+            "end": 611,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_20@3",
+            "content": "In this work, we replace the BERT encoder of NegBERT with RoBERTa and apply whole-word masking, meaning that all the sub-word tokens that constitute a word will be masked.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_20",
+            "start": 613,
+            "end": 783,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_21@0",
+            "content": "Experiments",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_21",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_22@0",
+            "content": "Experimental settings",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_22",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_23@0",
+            "content": "Following the experiment settings in NegBERT, we use the three standard benchmarks for negation cue detection and scope resolution tasks, i.e. BioScope (Vincze et al., 2008) (separated into two subsets, sourced from abstracts and full-text papers, resp.), the SFU product reviews dataset (Konstantinova et al., 2012), and the Sherlock dataset (Morante and Blanco, 2012).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_23",
+            "start": 0,
+            "end": 369,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_23@1",
+            "content": "In addition, we use the negationannotated subset of VetCompass UK 3 (Cheng et al., 2017), consisting of clinical notes in the veterinary domain, which are very informal compared to BioScope.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_23",
+            "start": 371,
+            "end": 560,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_23@2",
+            "content": "It also contains abbreviations and shortening of terms, as well as certain unique negation cues.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_23",
+            "start": 562,
+            "end": 657,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_23@3",
+            "content": "To investigate the cross-domain performance, we perform cue detection and scope resolution for all 4 datasets, based on training on one dataset and evaluating on all datasets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_23",
+            "start": 659,
+            "end": 833,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_23@4",
+            "content": "Detailed statistics of these datasets are presented in Table 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_23",
+            "start": 835,
+            "end": 897,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_24@0",
+            "content": "We formulate the two tasks as sequence labeling problems, where each token is tagged with a corresponding label.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_24",
+            "start": 0,
+            "end": 111,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_24@1",
+            "content": "For cue detection, we use the annotation scheme {0: Affix, 1: Normal Cue, 2: Part of multiword cue, 3: Not part of cue}. For scope resolution, we use gold cue information and two labels {0: Outside negation scope, 1: Part of negation scope}. We adopt the same hyperparameters as NegBERT.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_24",
+            "start": 113,
+            "end": 399,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_24@2",
+            "content": "Following the standard evaluation scheme in previous negation detection works, all systems are evaluated using token-level F 1 -score, based on whether it is inside or outside of any",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_24",
+            "start": 401,
+            "end": 582,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_25@0",
+            "content": "Main results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_25",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_26@0",
+            "content": "Tables 2 and 3 report the performance of negation cue detection and negation scope resolution, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_26",
+            "start": 0,
+            "end": 107,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_26@1",
+            "content": "Results reported are the average of 5 runs with different random seeds.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_26",
+            "start": 109,
+            "end": 179,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_26@2",
+            "content": "NegBERT results are produced using the official implementation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_26",
+            "start": 181,
+            "end": 243,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_26@3",
+            "content": "4 We observe similar trends across all datasets for both cue detection and scope resolution.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_26",
+            "start": 245,
+            "end": 336,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_26@4",
+            "content": "Regarding the in-dataset setting (training and evaluating on the same dataset), AugNB outperforms the baseline NegBERT on all datasets except for Sherlock.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_26",
+            "start": 338,
+            "end": 492,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_26@5",
+            "content": "Gains are more noticeable in the biomedical datasets (BioScope, VetCompass).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_26",
+            "start": 494,
+            "end": 569,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_26@6",
+            "content": "For Sherlock, however, we observe a slight degradation in performance with the proposed pre-training scheme.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_26",
+            "start": 571,
+            "end": 678,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_26@7",
+            "content": "This is likely due to the fact that Sherlock has major differences in annotation scheme compared to other corpora, specifically including scopes to the left of cues, while in BioScope and SFU, the scope is usually annotated only to the right of cues.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_26",
+            "start": 680,
+            "end": 929,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_26@8",
+            "content": "Also, the cue itself is not considered to be part of the scope in Sherlock or SFU, unlike in BioScope.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_26",
+            "start": 931,
+            "end": 1032,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_27@0",
+            "content": "In the cross-dataset setting, we record gains across all benchmarks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_27",
+            "start": 0,
+            "end": 67,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_27@1",
+            "content": "The largest cross-dataset improvements over NegBERT are for SFU, perhaps due to SFU being the largest dataset in size, containing a relatively large number of unique cues.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_27",
+            "start": 69,
+            "end": 239,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_27@2",
+            "content": "CueNB further improves the performance of AugNB, confirming our hypothesis that explicitly masking the cue will help the model learn better representations for negation cues and thus, better distinguish between cues and normal words.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_27",
+            "start": 241,
+            "end": 473,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_27@3",
+            "content": "These results show that our negation-focused pre-training strategy is effective for improving the transfer learning performance of pre-trained language models on the negation detection task.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_27",
+            "start": 475,
+            "end": 664,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_28@0",
+            "content": "Discussion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_28",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_29@0",
+            "content": "We training strategy.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_29",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_29@1",
+            "content": "Table 4 presents the results of different variations of the proposed pre-training scheme on the BioScope-Abstract validation split.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_29",
+            "start": 22,
+            "end": 152,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_29@2",
+            "content": "We consider two variations, pre-training with: (1) only the negation-focused data (equivalent to the AugNB model); and (2) only the cue masking objective.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_29",
+            "start": 154,
+            "end": 307,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_29@3",
+            "content": "To model the latter variation, we explicitly mask the cue in the BioScope training set, then pretrain on this training set.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_29",
+            "start": 309,
+            "end": 431,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_29@4",
+            "content": "From the results, we see that both strategies help improve the baseline Neg-BERT on cue detection and scope resolution, with explicitly masking the cues being the most important.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_29",
+            "start": 433,
+            "end": 610,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_29@5",
+            "content": "Combining both strategies (CueNB) further improves the overall results.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_29",
+            "start": 612,
+            "end": 682,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_30@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_30",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_31@0",
+            "content": "In this work, we propose a new negation-focused pre-training strategy to explicitly incorporate negation information into pre-trained language models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_31",
+            "start": 0,
+            "end": 149,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_31@1",
+            "content": "Empirical results on common benchmarks show that the proposed strategy helps improve the performance of pre-trained language models on the negation detection task when evaluating on the same source dataset, as well as their transferability to target data in different domains.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_31",
+            "start": 151,
+            "end": 426,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_31@2",
+            "content": "Despite the gains over previous methods, the sub-optimal results on some benchmarks show that negation remains a big challenge in NLP.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_31",
+            "start": 428,
+            "end": 561,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_32@0",
+            "content": "Fran\u00e7ois-Michel Alan R Aronson,  Lang, An overview of MetaMap: Historical perspective and recent advances, 2010, Journal of the American Medical Informatics Association, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_32",
+            "start": 0,
+            "end": 170,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_33@0",
+            "content": "Will Wendy W Chapman, Paul Bridewell,  Hanbury, F Gregory, Bruce G Cooper,  Buchanan, A simple algorithm for identifying negated findings and diseases in discharge summaries, 2001, Journal of biomedical informatics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_33",
+            "start": 0,
+            "end": 216,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_34@0",
+            "content": "Long Chen, Attention-based deep learning system for negation and assertion detection in clinical notes, 2019, International Journal of Artificial Intelligence and Applications (IJAIA), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_34",
+            "start": 0,
+            "end": 185,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_35@0",
+            "content": "Katherine Cheng, Timothy Baldwin, Karin Verspoor, Automatic negation and speculation detection in veterinary clinical text, 2017, Proceedings of the Australasian Language Technology Association Workshop, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_35",
+            "start": 0,
+            "end": 204,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_36@0",
+            "content": "P Noa, Maite Cruz, Ruslan Taboada,  Mitkov, A machine-learning approach to negation and speculation detection for sentiment analysis, 2016, Journal of the Association for Information Science and Technology, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_36",
+            "start": 0,
+            "end": 207,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_37@0",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: Pre-training of deep bidirectional transformers for language understanding, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_37",
+            "start": 0,
+            "end": 294,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_38@0",
+            "content": "Federico Fancellu, Adam Lopez, Bonnie Webber, Hangfeng He, Detecting negation scope is easy, except when it isn't, 2017, Proceedings of the 15th Conference of the European Chapter of the Association for Computational Linguistics, Short Papers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_38",
+            "start": 0,
+            "end": 242,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_39@0",
+            "content": "Ana Suchin Gururangan, Swabha Marasovi\u0107, Kyle Swayamdipta, Iz Lo, Doug Beltagy, Noah A Downey,  Smith, Don't stop pretraining: Adapt language models to domains and tasks, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_39",
+            "start": 0,
+            "end": 266,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_40@0",
+            "content": "Venelin Md Mosharaf Hossain, Pranoy Kovatchev, Tiffany Dutta, Elizabeth Kao, Eduardo Wei,  Blanco, An analysis of natural language inference benchmarks through the lens of negation, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_40",
+            "start": 0,
+            "end": 284,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_41@0",
+            "content": "Mandar Joshi, Danqi Chen, Yinhan Liu, S Daniel, Luke Weld, Omer Zettlemoyer,  Levy, Span-BERT: Improving pre-training by representing and predicting spans, 2020, Transactions of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_41",
+            "start": 0,
+            "end": 225,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_42@0",
+            "content": "Aditya Khandelwal, Suraj Sawant, NegBERT: A transfer learning approach for negation detection and scope resolution, 2020, Proceedings of the 12th Language Resources and Evaluation Conference, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_42",
+            "start": 0,
+            "end": 192,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_43@0",
+            "content": "Natalia Konstantinova, Sheila Cm De Sousa, Noa P Cruz D\u00edaz, Manuel J Mana L\u00f3pez, Maite Taboada, Ruslan Mitkov, A review corpus annotated for negation, speculation and their scope, 2012, Proceedings of LREC 2012, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_43",
+            "start": 0,
+            "end": 212,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_44@0",
+            "content": "UNKNOWN, None, 2019, Negation scope detection with recurrent neural networks models in review texts. International Journal of High Performance Computing and Networking, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_44",
+            "start": 0,
+            "end": 169,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_45@0",
+            "content": "UNKNOWN, None, 2019, RoBERTa: A robustly optimized BERT pretraining approach, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_45",
+            "start": 0,
+            "end": 78,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_46@0",
+            "content": "Saeed Mehrabi, Anand Krishnan, Sunghwan Sohn, Alexandra Roch, Heidi Schmidt, Joe Kesterson, Chris Beesley, Paul Dexter, Max Schmidt, Hongfang Liu, DEEPEN: A negation detection system for clinical text incorporating dependency relation into NegEx, 2015, Journal of biomedical informatics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_46",
+            "start": 0,
+            "end": 288,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_47@0",
+            "content": "UNKNOWN, None, 2016, Pointer sentinel mixture models, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_47",
+            "start": 0,
+            "end": 54,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_48@0",
+            "content": ", Descriptive analysis of negation cues in biomedical texts, 2010, Proceedings of the Seventh International Conference on Language Resources and Evaluation (LREC'10), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_48",
+            "start": 0,
+            "end": 167,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_49@0",
+            "content": "Roser Morante, Eduardo Blanco, *SEM 2012 shared task: Resolving the scope and focus of negation, 2012, * SEM 2012: The First Joint Conference on Lexical and Computational Semantics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_49",
+            "start": 0,
+            "end": 182,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_50@0",
+            "content": "Roser Morante, Walter Daelemans, A metalearning approach to processing the scope of negation, 2009, Proceedings of the thirteenth conference on computational natural language learning, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_50",
+            "start": 0,
+            "end": 185,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_51@0",
+            "content": "Ying Ou, Jon Patrick, Automatic negation detection in narrative pathology reports, 2015, Artificial intelligence in medicine, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_51",
+            "start": 0,
+            "end": 126,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_52@0",
+            "content": "Yifan Peng, Xiaosong Wang, Le Lu, Mohammadhadi Bagheri, Ronald Summers, Zhiyong Lu, NegBio: a high-performance tool for negation and uncertainty detection in radiology reports, 2018, AMIA Summits on Translational Science Proceedings, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_52",
+            "start": 0,
+            "end": 234,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_53@0",
+            "content": "Tongshuang Marco Tulio Ribeiro, Carlos Wu, Sameer Guestrin,  Singh, Beyond accuracy: Behavioral testing of NLP models with checklist, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_53",
+            "start": 0,
+            "end": 229,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_54@0",
+            "content": "Veronika Vincze, Gy\u00f6rgy Szarvas, Rich\u00e1rd Farkas, Gy\u00f6rgy M\u00f3ra, J\u00e1nos Csirik, The Bio-Scope corpus: biomedical texts annotated for uncertainty, negation and their scopes, 2008, BMC bioinformatics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_54",
+            "start": 0,
+            "end": 195,
+            "label": {}
+        },
+        {
+            "ix": "413-ARR_v1_55@0",
+            "content": "Ikuya Yamada, Akari Asai, Hiroyuki Shindo, Hideaki Takeda, Yuji Matsumoto, LUKE: Deep contextualized entity representations with entityaware self-attention, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "413-ARR_v1_55",
+            "start": 0,
+            "end": 259,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "413-ARR_v1_0",
+            "tgt_ix": "413-ARR_v1_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_0",
+            "tgt_ix": "413-ARR_v1_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_1",
+            "tgt_ix": "413-ARR_v1_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_1",
+            "tgt_ix": "413-ARR_v1_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_0",
+            "tgt_ix": "413-ARR_v1_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_2",
+            "tgt_ix": "413-ARR_v1_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_4",
+            "tgt_ix": "413-ARR_v1_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_5",
+            "tgt_ix": "413-ARR_v1_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_6",
+            "tgt_ix": "413-ARR_v1_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_3",
+            "tgt_ix": "413-ARR_v1_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_3",
+            "tgt_ix": "413-ARR_v1_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_3",
+            "tgt_ix": "413-ARR_v1_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_3",
+            "tgt_ix": "413-ARR_v1_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_3",
+            "tgt_ix": "413-ARR_v1_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_0",
+            "tgt_ix": "413-ARR_v1_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_9",
+            "tgt_ix": "413-ARR_v1_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_8",
+            "tgt_ix": "413-ARR_v1_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_8",
+            "tgt_ix": "413-ARR_v1_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_8",
+            "tgt_ix": "413-ARR_v1_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_0",
+            "tgt_ix": "413-ARR_v1_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_10",
+            "tgt_ix": "413-ARR_v1_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_11",
+            "tgt_ix": "413-ARR_v1_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_11",
+            "tgt_ix": "413-ARR_v1_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_11",
+            "tgt_ix": "413-ARR_v1_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_12",
+            "tgt_ix": "413-ARR_v1_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_14",
+            "tgt_ix": "413-ARR_v1_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_15",
+            "tgt_ix": "413-ARR_v1_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_13",
+            "tgt_ix": "413-ARR_v1_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_13",
+            "tgt_ix": "413-ARR_v1_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_13",
+            "tgt_ix": "413-ARR_v1_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_13",
+            "tgt_ix": "413-ARR_v1_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_11",
+            "tgt_ix": "413-ARR_v1_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_16",
+            "tgt_ix": "413-ARR_v1_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_18",
+            "tgt_ix": "413-ARR_v1_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_19",
+            "tgt_ix": "413-ARR_v1_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_17",
+            "tgt_ix": "413-ARR_v1_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_17",
+            "tgt_ix": "413-ARR_v1_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_17",
+            "tgt_ix": "413-ARR_v1_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_17",
+            "tgt_ix": "413-ARR_v1_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_0",
+            "tgt_ix": "413-ARR_v1_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_20",
+            "tgt_ix": "413-ARR_v1_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_21",
+            "tgt_ix": "413-ARR_v1_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_21",
+            "tgt_ix": "413-ARR_v1_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_23",
+            "tgt_ix": "413-ARR_v1_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_22",
+            "tgt_ix": "413-ARR_v1_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_22",
+            "tgt_ix": "413-ARR_v1_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_22",
+            "tgt_ix": "413-ARR_v1_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_21",
+            "tgt_ix": "413-ARR_v1_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_24",
+            "tgt_ix": "413-ARR_v1_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_26",
+            "tgt_ix": "413-ARR_v1_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_25",
+            "tgt_ix": "413-ARR_v1_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_25",
+            "tgt_ix": "413-ARR_v1_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_25",
+            "tgt_ix": "413-ARR_v1_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_21",
+            "tgt_ix": "413-ARR_v1_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_27",
+            "tgt_ix": "413-ARR_v1_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_28",
+            "tgt_ix": "413-ARR_v1_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_28",
+            "tgt_ix": "413-ARR_v1_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_0",
+            "tgt_ix": "413-ARR_v1_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_29",
+            "tgt_ix": "413-ARR_v1_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_30",
+            "tgt_ix": "413-ARR_v1_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_30",
+            "tgt_ix": "413-ARR_v1_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "413-ARR_v1_0",
+            "tgt_ix": "413-ARR_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_1",
+            "tgt_ix": "413-ARR_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_2",
+            "tgt_ix": "413-ARR_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_2",
+            "tgt_ix": "413-ARR_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_2",
+            "tgt_ix": "413-ARR_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_2",
+            "tgt_ix": "413-ARR_v1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_3",
+            "tgt_ix": "413-ARR_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_4",
+            "tgt_ix": "413-ARR_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_4",
+            "tgt_ix": "413-ARR_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_4",
+            "tgt_ix": "413-ARR_v1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_4",
+            "tgt_ix": "413-ARR_v1_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_4",
+            "tgt_ix": "413-ARR_v1_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_4",
+            "tgt_ix": "413-ARR_v1_4@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_5",
+            "tgt_ix": "413-ARR_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_5",
+            "tgt_ix": "413-ARR_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_5",
+            "tgt_ix": "413-ARR_v1_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_6",
+            "tgt_ix": "413-ARR_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_6",
+            "tgt_ix": "413-ARR_v1_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_7",
+            "tgt_ix": "413-ARR_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_8",
+            "tgt_ix": "413-ARR_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_9",
+            "tgt_ix": "413-ARR_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_9",
+            "tgt_ix": "413-ARR_v1_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_9",
+            "tgt_ix": "413-ARR_v1_9@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_9",
+            "tgt_ix": "413-ARR_v1_9@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_10",
+            "tgt_ix": "413-ARR_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_10",
+            "tgt_ix": "413-ARR_v1_10@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_10",
+            "tgt_ix": "413-ARR_v1_10@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_10",
+            "tgt_ix": "413-ARR_v1_10@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_10",
+            "tgt_ix": "413-ARR_v1_10@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_10",
+            "tgt_ix": "413-ARR_v1_10@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_10",
+            "tgt_ix": "413-ARR_v1_10@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_11",
+            "tgt_ix": "413-ARR_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_12",
+            "tgt_ix": "413-ARR_v1_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_13",
+            "tgt_ix": "413-ARR_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_14",
+            "tgt_ix": "413-ARR_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_14",
+            "tgt_ix": "413-ARR_v1_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_15",
+            "tgt_ix": "413-ARR_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_15",
+            "tgt_ix": "413-ARR_v1_15@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_15",
+            "tgt_ix": "413-ARR_v1_15@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_15",
+            "tgt_ix": "413-ARR_v1_15@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_16",
+            "tgt_ix": "413-ARR_v1_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_16",
+            "tgt_ix": "413-ARR_v1_16@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_16",
+            "tgt_ix": "413-ARR_v1_16@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_17",
+            "tgt_ix": "413-ARR_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_18",
+            "tgt_ix": "413-ARR_v1_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_18",
+            "tgt_ix": "413-ARR_v1_18@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_18",
+            "tgt_ix": "413-ARR_v1_18@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_19",
+            "tgt_ix": "413-ARR_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_19",
+            "tgt_ix": "413-ARR_v1_19@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_19",
+            "tgt_ix": "413-ARR_v1_19@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_19",
+            "tgt_ix": "413-ARR_v1_19@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_20",
+            "tgt_ix": "413-ARR_v1_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_20",
+            "tgt_ix": "413-ARR_v1_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_20",
+            "tgt_ix": "413-ARR_v1_20@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_20",
+            "tgt_ix": "413-ARR_v1_20@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_21",
+            "tgt_ix": "413-ARR_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_22",
+            "tgt_ix": "413-ARR_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_23",
+            "tgt_ix": "413-ARR_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_23",
+            "tgt_ix": "413-ARR_v1_23@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_23",
+            "tgt_ix": "413-ARR_v1_23@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_23",
+            "tgt_ix": "413-ARR_v1_23@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_23",
+            "tgt_ix": "413-ARR_v1_23@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_24",
+            "tgt_ix": "413-ARR_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_24",
+            "tgt_ix": "413-ARR_v1_24@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_24",
+            "tgt_ix": "413-ARR_v1_24@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_25",
+            "tgt_ix": "413-ARR_v1_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_26",
+            "tgt_ix": "413-ARR_v1_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_26",
+            "tgt_ix": "413-ARR_v1_26@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_26",
+            "tgt_ix": "413-ARR_v1_26@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_26",
+            "tgt_ix": "413-ARR_v1_26@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_26",
+            "tgt_ix": "413-ARR_v1_26@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_26",
+            "tgt_ix": "413-ARR_v1_26@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_26",
+            "tgt_ix": "413-ARR_v1_26@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_26",
+            "tgt_ix": "413-ARR_v1_26@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_26",
+            "tgt_ix": "413-ARR_v1_26@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_27",
+            "tgt_ix": "413-ARR_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_27",
+            "tgt_ix": "413-ARR_v1_27@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_27",
+            "tgt_ix": "413-ARR_v1_27@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_27",
+            "tgt_ix": "413-ARR_v1_27@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_28",
+            "tgt_ix": "413-ARR_v1_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_29",
+            "tgt_ix": "413-ARR_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_29",
+            "tgt_ix": "413-ARR_v1_29@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_29",
+            "tgt_ix": "413-ARR_v1_29@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_29",
+            "tgt_ix": "413-ARR_v1_29@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_29",
+            "tgt_ix": "413-ARR_v1_29@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_29",
+            "tgt_ix": "413-ARR_v1_29@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_30",
+            "tgt_ix": "413-ARR_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_31",
+            "tgt_ix": "413-ARR_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_31",
+            "tgt_ix": "413-ARR_v1_31@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_31",
+            "tgt_ix": "413-ARR_v1_31@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_32",
+            "tgt_ix": "413-ARR_v1_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_33",
+            "tgt_ix": "413-ARR_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_34",
+            "tgt_ix": "413-ARR_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_35",
+            "tgt_ix": "413-ARR_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_36",
+            "tgt_ix": "413-ARR_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_37",
+            "tgt_ix": "413-ARR_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_38",
+            "tgt_ix": "413-ARR_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_39",
+            "tgt_ix": "413-ARR_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_40",
+            "tgt_ix": "413-ARR_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_41",
+            "tgt_ix": "413-ARR_v1_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_42",
+            "tgt_ix": "413-ARR_v1_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_43",
+            "tgt_ix": "413-ARR_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_44",
+            "tgt_ix": "413-ARR_v1_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_45",
+            "tgt_ix": "413-ARR_v1_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_46",
+            "tgt_ix": "413-ARR_v1_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_47",
+            "tgt_ix": "413-ARR_v1_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_48",
+            "tgt_ix": "413-ARR_v1_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_49",
+            "tgt_ix": "413-ARR_v1_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_50",
+            "tgt_ix": "413-ARR_v1_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_51",
+            "tgt_ix": "413-ARR_v1_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_52",
+            "tgt_ix": "413-ARR_v1_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_53",
+            "tgt_ix": "413-ARR_v1_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_54",
+            "tgt_ix": "413-ARR_v1_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "413-ARR_v1_55",
+            "tgt_ix": "413-ARR_v1_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 634,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "position_tag_type": "from_draft",
+        "doc_id": "413-ARR",
+        "version": 1
+    }
+}

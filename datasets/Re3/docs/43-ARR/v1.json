@@ -1,0 +1,3417 @@
+{
+    "nodes": [
+        {
+            "ix": "43-ARR_v1_0",
+            "content": "Machine Translation for Livonian: Catering for 20 Speakers",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_2",
+            "content": "Livonian is one of the most endangered languages in Europe with just a tiny handful of speakers and virtually no publicly available corpora. In this paper we tackle the task of developing neural machine translation (NMT) between Livonian and English, with a two-fold aim: on one hand, preserving the language and on the other -enabling access to Livonian folklore, lifestories and other textual intangible heritage as well as making it easier to create further parallel corpora. We rely on Livonian's linguistic similarity to Estonian and Latvian and collect parallel and monolingual data for the four languages for translation experiments. We combine different low-resource NMT techniques like zero-shot translation, cross-lingual transfer and synthetic data creation to reach the highest possible translation quality as well as to find which base languages are empirically more helpful for transfer to Livonian. The resulting NMT systems and the collected monolingual and parallel data, including a manually translated and verified translation benchmark, are publicly released. 1",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "43-ARR_v1_4",
+            "content": "Many state-of-the-art natural language processing tasks have reached admirable quality on languages with abundant linguistic resources (Vaswani et al., 2017;Devlin et al., 2019). Furthermore, some neural language models and translation systems have been created for 100 and more languages (e.g. Conneau et al., 2020;Fan et al., 2021). However smaller, less or not at all spoken languages continue to struggle not only in terms of applicable computational approaches, but 1 https://opus.nlpl.eu/liv4ever.php, agreed to be kept anonymous with OPUS administration.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_5",
+            "content": "Models and corpora will also be added to the Huggingface repository after de-anonymization (https://huggingface.co/). more critically -in terms of usable resources for training natural language processing (NLP) models or even just linguistic exploration.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_6",
+            "content": "In this paper we set the goal of developing usable machine translation between English and Livonian. Currently there are over 20 fluent speakers of the language (Ern\u0161treits, 2016). Although some digital linguistic resources exist for Livonian (including a dictionary with example sentences and a written monolingual corpus, (Ern\u0161treits, 2016)), there is virtually no open parallel corpora with it, with the single exception of 35 parallel sentences in the OPUS Tatoeba corpus (Tiedemann, 2020).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_7",
+            "content": "At the same time, cross-lingual transfer learning has recently helped improve the performance of several low-resource NLP tasks with the support of related languages (e.g. Hu et al., 2020). This also includes zero-shot translation (Johnson et al., 2017), the ability of multilingual NMT systems to translate between seen languages that were not represented in the parallel training data as a pair. The case of Livonian is especially interesting in this regard, as there are two different sources of such support: on one hand, it is a Uralic language, closely related to Estonian and Finnish. On the other hand, Livonian has taken part in forming Latvian language and Livonian speakers have historically co-existed side-by-side with Latvian speakers. As a result of mutual influence these two languages also share a number of grammatical, lexical and orthographic similarities.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_8",
+            "content": "Our main contributions are two-fold. vian/Estonian/English so that each sentence would have all four translations. 2",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_9",
+            "content": "The second half of our work focuses on neural machine translation (NMT, Vaswani et al., 2017), mainly targeting Livonian\u2194English. We explore several options of coping with the extremely lowresource settings and use Estonian and Latvian for cross-lingual transfer. Our experiments answer the following research questions:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_10",
+            "content": "1. Can we achieve machine translation for Livonian\u2194English at a usable level?",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_11",
+            "content": "2. Which base language suits better for serving as base for cross-lingual transfer to Livonian, Estonian or Latvian?",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_12",
+            "content": "3. Does zero-shot multilingual translation deliver better translation quality than pivottranslation through Estonian or Latvian?",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_13",
+            "content": "Next we briefly describe the Livonian Language in Section 2, then introduce the collected parallel and monolingual data in Section 3. Section 4 provides the details of our NMT experiments and Section 5 concludes the paper. the mid-20th century around 1500 speakers. Nowadays Livonian is listed in UNESCO's Atlas of the World's Languages in Danger as a critically endangered language (Moseley, 2014). According to the 2011 census, there are 250 Livonians in Latvia. Although there are just over 20 people who can speak the language, the Livonian community is active in preserving and developing the Livonian heritage (Ern\u0161treits, 2016) and language plays key role in this process (Ern\u0161treits and Kl , ava, 2020).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_14",
+            "content": "The Livonian language developed in the contact area of Baltic and Finnic languages. Livonian and Latvian share a similar geographical location over a prolonged period of time, as a result of which they both contain traces of contact. Next to other loanwords, the Livonian loanword strata consists of words borrowed from Latvian (Suhonen, 1973;Winkler, 2014) and vice versa. The most obvious Latvian influence on Livonian grammar is found in the Livonian case system (Ern\u0161treits and Kl , ava, 2014). Livonian has the prosodic characteristics typical of a Finnic language such as word-initial stress and the phonological opposition of short and long phoneme duration. It is the only Finnic language that differentiates lexical tones -the plain tone and the broken tone or st\u00f8d -and therefore shares similar characteristics with Latvian as well as Danish (Tuisk, 2016).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_15",
+            "content": "Collected Data",
+            "ntype": "title",
+            "meta": {
+                "section": "3"
+            }
+        },
+        {
+            "ix": "43-ARR_v1_16",
+            "content": "The first step in developing (supervised) machine translation is collecting parallel data. While there was no pre-existing open parallel corpus with Livonian, we used all the possible sources of translations. This was limited to already digital resources, future work might include texts extracted by scanning older books and other materials. The main sources of data included Livonian-Latvian as well as Livonian-Estonian translations. Thus we use these two languages as base for crosslingual transfer and e.g. leave Finnish out, as there was no data for it.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_17",
+            "content": "The sources of data included:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_18",
+            "content": "\u2022 the Constitution of the Republic of Latvia, translated into 9 languages, including Livonian, Estonian and English, \u2022 a database of dictionary entries, phrases and example sentences from the University of Latvia Livonian Institute's website 5 , with examples in Livonian, Estonian and Latvian \u2022 the Livonian Institute's Facebook page posts, partially parallel between our 4 languages \u2022 books (Stalte, 2011;Kurs and et al., 2016;Ern\u0161treit et al., 2020) with prefaces and content in Livonian-Estonian or Livonian-Latvian \u2022 and abstracts from the Journal of Estonian and Finno-Ugric Linguistics' (JEFUL) Special Issues on Livonian Studies (2014,2016,2018) in Livonian, Estonian and English Concerning sentence alignment, the dictionary examples consisted of already aligned Livonian sentences. We aligned the rest of the data manually with the help of language experts -first on paragraph level, then on sentence level.",
+            "ntype": "list",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_19",
+            "content": "The total amount of sentences in the resulting dataset is shown in Table 1.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_20",
+            "content": "We separated balanced portions of development (503 sentences) and evaluation (749 sentences) splits from the full dataset. The splits are balanced in terms of the original source of the texts to resemble proportions from the remaining training data.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_21",
+            "content": "We hired professional translators to create translations for any missing parts so that these splits would be parallel between all four languages. We further turned to experts of the Livonian language to make sure that the newly created translations truly convey the meaning of the original text as a quality control measure.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_22",
+            "content": "The resulting benchmark and the whole corpus is published in the OPUS collection (currently, anonymously). 6",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_23",
+            "content": "Machine Translation Experiments",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "43-ARR_v1_24",
+            "content": "Having just over 10, 000 parallel examples constitutes extremely low-resource settings for neural machine translation. Added to this, the number of monolingual Livonian sentences (about 40, 000) is also too small for approaches like unsupervised machine translation (Artetxe et al., 2018;.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_25",
+            "content": "We implement the support of neighboring and related languages (Estonian and Latvian) via multilingual machine translation (Johnson et al., 2017). As a first step the model is pre-trained with the larger languages (Estonian, Latvian, English) and then used as base for following experiments.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_26",
+            "content": "Technical Setup",
+            "ntype": "title",
+            "meta": {
+                "section": "4.1"
+            }
+        },
+        {
+            "ix": "43-ARR_v1_27",
+            "content": "We used FairSeq (Ott et al., 2019) to train transformer architecture models with 6 encoder and decoder layers, 8 transformer attention heads per layer, word embeddings and hidden layers of size 512, dropout of 0.3, maximum sentence length of 128 symbols, and a batch size of 1024 words. All models were trained until they reached convergence (no improvement for 10 checkpoints) on development data. We used Sentencepiece (Kudo and Richardson, 2018) ies of size 25,000, and SacreBLEU 7 (Post, 2018) to generate BLEU scores for translations.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_28",
+            "content": "Base models were trained on LV\u2192EN, ET\u2192EN, ET+LV\u2192EN data, and a multilingual model using the tagged approach (Johnson et al., 2017) for translating in all directions between ENG/EST/LAT. The base models were then used as initialization for tuning on LIV\u2192EN data. For training the base models we used all available parallel data from Opus (Tiedemann and Nygaard, 2004). To facilitate further use of the base models for tuning on Livonian data, all Livonian sentences were used in addition to other data when creating the shared vocabularies. Finally, we used the highest-scoring tuned model to perform performed backtranslation on the monolingual LIV data to generate additional training data for training the final models.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_29",
+            "content": "Results",
+            "ntype": "title",
+            "meta": {
+                "section": "4.2"
+            }
+        },
+        {
+            "ix": "43-ARR_v1_30",
+            "content": "Table 2 shows results from MT experiments. All BLEU scores are calculated for translations of our evaluation We compare the base single direction MT models to our multidirection model, as well as online translations from Google Translate 8 and Neurotolge 9 to evaluate performance from ET and LV into EN. While the multilingual model was noticeably weaker, the others hold comparable results to the online systems. However, when attempting to perform zero-shot translation from LIV into EN, the ET\u2192EN model was able to outperform LV\u2192EN (3.22 vs. 2.20), and the multilingual model achieved a very respectable BLEU score 8.92.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_31",
+            "content": "We then turned to tuning each of these models with LIV-EN data mixed 1:1 with a random equal amount of the original training data for each of the models. In the case of the multilingual model, we also added LV/ET-LIV data to the mix. This improved all scores by 1-3 BLEU points, but the multilingual model remained on top with 11.62 for LIV\u2192EN. In order to perform backtranslation models for both directions are required, so we scored the tuned multilingual model on the EN\u2192LIV data as well, reaching 8.10 BLEU. Finally, to verify how much the tiny amount (503 sentences) of LIV-EN parallel data brings for tuning we ran a separate experiment excluding it and achieved 11.87 BLEU for LIV-EN and 8.25 BLEU for EN-LIV, which is even slightly higher than with the data there.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_32",
+            "content": "For comparison we also used the same tuned multilingual model to perform pivotal translation by first translating into ET or LV and then into the desired target language. Results from these experiments in Table 3 show that not only ET is better than LV to pivot translate between EN and LIV, but also that this approach was able to reach the highest BLEU scores so far. Tuning on the backtranslated data seemed to overwhelm the far lower amount of clean parallel data and did not produce a higher BLEU score in any direction.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_33",
+            "content": "To answer the research questions, posed in the introduction, it seems that the resulting translation quality is still far from being usable. Comparisons between the base languages have shown slight preference towards Estonian over Latvian. Interestingly, pivot-translation through Estonian showed higher translation quality than direct Livonian\u2194English trained in a zero-shot / few-shot manner.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_34",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "5"
+            }
+        },
+        {
+            "ix": "43-ARR_v1_35",
+            "content": "In this paper we presented a novel dataset for the highly endangered Livonian language, which can be useful for machine translation, language modelling and many other natural language processing and computational linguistic research tasks.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_36",
+            "content": "In our experiments we show how far one can get in training modern machine translation models with very scarce data, and which languages are more suitable for transfer learning when working with Livonian data. While perhaps not being usable as-is in any kind of production scale, the achieved BLEU scores of 13.00 and 9.47 show that some transfer of meaning can still be achieved between Livonian and English with the currently available resources.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "43-ARR_v1_37",
+            "content": "Mikel Artetxe, Gorka Labaka, Eneko Agirre, Unsupervised statistical machine translation, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": [
+                    "Mikel Artetxe",
+                    "Gorka Labaka",
+                    "Eneko Agirre"
+                ],
+                "title": "Unsupervised statistical machine translation",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_38",
+            "content": "Alexis Conneau, Kartikay Khandelwal, Naman Goyal, Vishrav Chaudhary, Guillaume Wenzek, Francisco Guzm\u00e1n, Edouard Grave, Myle Ott, Luke Zettlemoyer, Veselin Stoyanov, Unsupervised cross-lingual representation learning at scale, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": [
+                    "Alexis Conneau",
+                    "Kartikay Khandelwal",
+                    "Naman Goyal",
+                    "Vishrav Chaudhary",
+                    "Guillaume Wenzek",
+                    "Francisco Guzm\u00e1n",
+                    "Edouard Grave",
+                    "Myle Ott",
+                    "Luke Zettlemoyer",
+                    "Veselin Stoyanov"
+                ],
+                "title": "Unsupervised cross-lingual representation learning at scale",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_39",
+            "content": "Alexis Conneau, Ruty Rinott, Guillaume Lample, Adina Williams, Samuel Bowman, Holger Schwenk, Veselin Stoyanov, XNLI: Evaluating cross-lingual sentence representations, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": [
+                    "Alexis Conneau",
+                    "Ruty Rinott",
+                    "Guillaume Lample",
+                    "Adina Williams",
+                    "Samuel Bowman",
+                    "Holger Schwenk",
+                    "Veselin Stoyanov"
+                ],
+                "title": "XNLI: Evaluating cross-lingual sentence representations",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "43-ARR_v1_40",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: Pre-training of deep bidirectional transformers for language understanding, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Long and Short Papers.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": [
+                    "Jacob Devlin",
+                    "Ming-Wei Chang",
+                    "Kenton Lee",
+                    "Kristina Toutanova"
+                ],
+                "title": "BERT: Pre-training of deep bidirectional transformers for language understanding",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies",
+                "pub": "Long and Short Papers"
+            }
+        },
+        {
+            "ix": "43-ARR_v1_41",
+            "content": "Valts Ern\u0161treits, Eesti ja soome-ugri keeleteaduse ajakiri, 2016, Journal of Estonian and Finno-Ugric Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": [
+                    "Valts Ern\u0161treits"
+                ],
+                "title": "Eesti ja soome-ugri keeleteaduse ajakiri",
+                "pub_date": "2016",
+                "pub_title": "Journal of Estonian and Finno-Ugric Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_42",
+            "content": "Valts Ern\u0161treits, Gunta Kl, Grammatical changes caused by contact between livonian and latvian. Eesti ja soome-ugri keeleteaduse ajakiri, 2014, Journal of Estonian and Finno-Ugric Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "Valts Ern\u0161treits",
+                    "Gunta Kl"
+                ],
+                "title": "Grammatical changes caused by contact between livonian and latvian. Eesti ja soome-ugri keeleteaduse ajakiri",
+                "pub_date": "2014",
+                "pub_title": "Journal of Estonian and Finno-Ugric Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_43",
+            "content": "Valts Ern\u0161treits, Gunta Kl, Taking the livonians into the digital space, 2020, Proceedings of the 5th Conference Digital Humanities in the Nordic Countries, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": [
+                    "Valts Ern\u0161treits",
+                    "Gunta Kl"
+                ],
+                "title": "Taking the livonians into the digital space",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 5th Conference Digital Humanities in the Nordic Countries",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_44",
+            "content": "Valt Ern\u0161treit, Baiba Damberg, Karl Pajusalu, Trilium 2.0. L\u012bv\u00f5 l\u016bolkub, 2020, The International Society of Livonian Friends, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": [
+                    "Valt Ern\u0161treit",
+                    "Baiba Damberg",
+                    "Karl Pajusalu"
+                ],
+                "title": "Trilium 2.0. L\u012bv\u00f5 l\u016bolkub",
+                "pub_date": "2020",
+                "pub_title": "The International Society of Livonian Friends",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_45",
+            "content": "Angela Fan, Shruti Bhosale, Holger Schwenk, Zhiyi Ma, Ahmed El-Kishky, Siddharth Goyal, Mandeep Baines, Onur Celebi, Guillaume Wenzek, Vishrav Chaudhary, Beyond english-centric multilingual machine translation, 2021, Journal of Machine Learning Research, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": [
+                    "Angela Fan",
+                    "Shruti Bhosale",
+                    "Holger Schwenk",
+                    "Zhiyi Ma",
+                    "Ahmed El-Kishky",
+                    "Siddharth Goyal",
+                    "Mandeep Baines",
+                    "Onur Celebi",
+                    "Guillaume Wenzek",
+                    "Vishrav Chaudhary"
+                ],
+                "title": "Beyond english-centric multilingual machine translation",
+                "pub_date": "2021",
+                "pub_title": "Journal of Machine Learning Research",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_46",
+            "content": "Junjie Hu, Sebastian Ruder, Aditya Siddhant, Graham Neubig, Orhan Firat, Melvin Johnson, Xtreme: A massively multilingual multitask benchmark for evaluating cross-lingual generalisation, 2020, International Conference on Machine Learning, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    "Junjie Hu",
+                    "Sebastian Ruder",
+                    "Aditya Siddhant",
+                    "Graham Neubig",
+                    "Orhan Firat",
+                    "Melvin Johnson"
+                ],
+                "title": "Xtreme: A massively multilingual multitask benchmark for evaluating cross-lingual generalisation",
+                "pub_date": "2020",
+                "pub_title": "International Conference on Machine Learning",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_47",
+            "content": "Melvin Johnson, Mike Schuster, Quoc Le, Maxim Krikun, Yonghui Wu, Zhifeng Chen, Nikhil Thorat, Fernanda Vi\u00e9gas, Martin Wattenberg, Greg Corrado, Macduff Hughes, Jeffrey Dean, Google's multilingual neural machine translation system: Enabling zero-shot translation, 2017, Transactions of the Association for Computational Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": [
+                    "Melvin Johnson",
+                    "Mike Schuster",
+                    "Quoc Le",
+                    "Maxim Krikun",
+                    "Yonghui Wu",
+                    "Zhifeng Chen",
+                    "Nikhil Thorat",
+                    "Fernanda Vi\u00e9gas",
+                    "Martin Wattenberg",
+                    "Greg Corrado",
+                    "Macduff Hughes",
+                    "Jeffrey Dean"
+                ],
+                "title": "Google's multilingual neural machine translation system: Enabling zero-shot translation",
+                "pub_date": "2017",
+                "pub_title": "Transactions of the Association for Computational Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_48",
+            "content": "Taku Kudo, John Richardson, SentencePiece: A simple and language independent subword tokenizer and detokenizer for neural text processing, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing: System Demonstrations, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": [
+                    "Taku Kudo",
+                    "John Richardson"
+                ],
+                "title": "SentencePiece: A simple and language independent subword tokenizer and detokenizer for neural text processing",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing: System Demonstrations",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "43-ARR_v1_49",
+            "content": "UNKNOWN, None, 2016, Eduard V\u00e4\u00e4ri's publications on Livonians and the Livonian language, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": null,
+                "title": null,
+                "pub_date": "2016",
+                "pub_title": "Eduard V\u00e4\u00e4ri's publications on Livonians and the Livonian language",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_50",
+            "content": "Guillaume Lample, Myle Ott, Alexis Conneau, Ludovic Denoyer, Marc'aurelio Ranzato, Phrase-based & neural unsupervised machine translation, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": [
+                    "Guillaume Lample",
+                    "Myle Ott",
+                    "Alexis Conneau",
+                    "Ludovic Denoyer",
+                    "Marc'aurelio Ranzato"
+                ],
+                "title": "Phrase-based & neural unsupervised machine translation",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "43-ARR_v1_51",
+            "content": "Christopher Moseley, Livonian-the most endangered language in europe? Eesti ja soome-ugri keeleteaduse ajakiri, 2014, Journal of Estonian and Finno-Ugric Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": [
+                    "Christopher Moseley"
+                ],
+                "title": "Livonian-the most endangered language in europe? Eesti ja soome-ugri keeleteaduse ajakiri",
+                "pub_date": "2014",
+                "pub_title": "Journal of Estonian and Finno-Ugric Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_52",
+            "content": "Myle Ott, Sergey Edunov, Alexei Baevski, Angela Fan, Sam Gross, Nathan Ng, David Grangier, Michael Auli, fairseq: A fast, extensible toolkit for sequence modeling, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics (Demonstrations), Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b15",
+                "authors": [
+                    "Myle Ott",
+                    "Sergey Edunov",
+                    "Alexei Baevski",
+                    "Angela Fan",
+                    "Sam Gross",
+                    "Nathan Ng",
+                    "David Grangier",
+                    "Michael Auli"
+                ],
+                "title": "fairseq: A fast, extensible toolkit for sequence modeling",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics (Demonstrations)",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "43-ARR_v1_53",
+            "content": "Matt Post, A call for clarity in reporting BLEU scores, 2018, Proceedings of the Third Conference on Machine Translation: Research Papers, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b16",
+                "authors": [
+                    "Matt Post"
+                ],
+                "title": "A call for clarity in reporting BLEU scores",
+                "pub_date": "2018",
+                "pub_title": "Proceedings of the Third Conference on Machine Translation: Research Papers",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_54",
+            "content": "UNKNOWN, None, 2011, Jelzi S\u00f5n\u0101: \u0101b\u0113d ja \u012brgand\u00f5ks lugd\u00f5br\u014dnt\u00f5z. Jem\u0101k\u012bel sel , t\u0161, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b17",
+                "authors": null,
+                "title": null,
+                "pub_date": "2011",
+                "pub_title": "Jelzi S\u00f5n\u0101: \u0101b\u0113d ja \u012brgand\u00f5ks lugd\u00f5br\u014dnt\u00f5z. Jem\u0101k\u012bel sel , t\u0161",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_55",
+            "content": "UNKNOWN, None, 1973, Die jungen lettischen lehnw\u00f6rter im livischen. Suomalais-ugrilaisen seuran toimituksia, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b18",
+                "authors": null,
+                "title": null,
+                "pub_date": "1973",
+                "pub_title": "Die jungen lettischen lehnw\u00f6rter im livischen. Suomalais-ugrilaisen seuran toimituksia",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_56",
+            "content": "J\u00f6rg Tiedemann, The tatoeba translation challenge -realistic data sets for low resource and multilingual MT, 2020, Proceedings of the Fifth Conference on Machine Translation, Online. Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b19",
+                "authors": [
+                    "J\u00f6rg Tiedemann"
+                ],
+                "title": "The tatoeba translation challenge -realistic data sets for low resource and multilingual MT",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the Fifth Conference on Machine Translation",
+                "pub": "Online. Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "43-ARR_v1_57",
+            "content": "UNKNOWN, None, 2004, Proceedings of the Fourth International Conference on Language Resources and Evaluation (LREC'04), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b20",
+                "authors": null,
+                "title": null,
+                "pub_date": "2004",
+                "pub_title": "Proceedings of the Fourth International Conference on Language Resources and Evaluation (LREC'04)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_58",
+            "content": "Tuuli Tuisk, Main features of the livonian sound system and pronunciation. Eesti ja soomeugri keeleteaduse ajakiri, 2016, Journal of Estonian and Finno-Ugric Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b21",
+                "authors": [
+                    "Tuuli Tuisk"
+                ],
+                "title": "Main features of the livonian sound system and pronunciation. Eesti ja soomeugri keeleteaduse ajakiri",
+                "pub_date": "2016",
+                "pub_title": "Journal of Estonian and Finno-Ugric Linguistics",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_59",
+            "content": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan Gomez, Illia Kaiser,  Polosukhin, Attention is all you need, 2017, Advances in Neural Information Processing Systems, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b22",
+                "authors": [
+                    "Ashish Vaswani",
+                    "Noam Shazeer",
+                    "Niki Parmar",
+                    "Jakob Uszkoreit",
+                    "Llion Jones",
+                    "Aidan Gomez",
+                    "Illia Kaiser",
+                    " Polosukhin"
+                ],
+                "title": "Attention is all you need",
+                "pub_date": "2017",
+                "pub_title": "Advances in Neural Information Processing Systems",
+                "pub": null
+            }
+        },
+        {
+            "ix": "43-ARR_v1_60",
+            "content": "Eberhard Winkler, Eesti ja soome-ugri keeleteaduse ajakiri, 2014, Journal of Estonian and Finno-Ugric Linguistics, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b23",
+                "authors": [
+                    "Eberhard Winkler"
+                ],
+                "title": "Eesti ja soome-ugri keeleteaduse ajakiri",
+                "pub_date": "2014",
+                "pub_title": "Journal of Estonian and Finno-Ugric Linguistics",
+                "pub": null
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "43-ARR_v1_0@0",
+            "content": "Machine Translation for Livonian: Catering for 20 Speakers",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_0",
+            "start": 0,
+            "end": 57,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_2@0",
+            "content": "Livonian is one of the most endangered languages in Europe with just a tiny handful of speakers and virtually no publicly available corpora.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_2",
+            "start": 0,
+            "end": 139,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_2@1",
+            "content": "In this paper we tackle the task of developing neural machine translation (NMT) between Livonian and English, with a two-fold aim: on one hand, preserving the language and on the other -enabling access to Livonian folklore, lifestories and other textual intangible heritage as well as making it easier to create further parallel corpora.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_2",
+            "start": 141,
+            "end": 477,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_2@2",
+            "content": "We rely on Livonian's linguistic similarity to Estonian and Latvian and collect parallel and monolingual data for the four languages for translation experiments.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_2",
+            "start": 479,
+            "end": 639,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_2@3",
+            "content": "We combine different low-resource NMT techniques like zero-shot translation, cross-lingual transfer and synthetic data creation to reach the highest possible translation quality as well as to find which base languages are empirically more helpful for transfer to Livonian.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_2",
+            "start": 641,
+            "end": 912,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_2@4",
+            "content": "The resulting NMT systems and the collected monolingual and parallel data, including a manually translated and verified translation benchmark, are publicly released.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_2",
+            "start": 914,
+            "end": 1078,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_2@5",
+            "content": "1",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_2",
+            "start": 1080,
+            "end": 1080,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_4@0",
+            "content": "Many state-of-the-art natural language processing tasks have reached admirable quality on languages with abundant linguistic resources (Vaswani et al., 2017;Devlin et al., 2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_4",
+            "start": 0,
+            "end": 177,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_4@1",
+            "content": "Furthermore, some neural language models and translation systems have been created for 100 and more languages (e.g. Conneau et al., 2020;Fan et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_4",
+            "start": 179,
+            "end": 333,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_4@2",
+            "content": "However smaller, less or not at all spoken languages continue to struggle not only in terms of applicable computational approaches, but 1 https://opus.nlpl.eu/liv4ever.php, agreed to be kept anonymous with OPUS administration.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_4",
+            "start": 335,
+            "end": 560,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_5@0",
+            "content": "Models and corpora will also be added to the Huggingface repository after de-anonymization (https://huggingface.co/).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_5",
+            "start": 0,
+            "end": 116,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_5@1",
+            "content": "more critically -in terms of usable resources for training natural language processing (NLP) models or even just linguistic exploration.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_5",
+            "start": 118,
+            "end": 253,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_6@0",
+            "content": "In this paper we set the goal of developing usable machine translation between English and Livonian.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_6",
+            "start": 0,
+            "end": 99,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_6@1",
+            "content": "Currently there are over 20 fluent speakers of the language (Ern\u0161treits, 2016).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_6",
+            "start": 101,
+            "end": 179,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_6@2",
+            "content": "Although some digital linguistic resources exist for Livonian (including a dictionary with example sentences and a written monolingual corpus, (Ern\u0161treits, 2016)), there is virtually no open parallel corpora with it, with the single exception of 35 parallel sentences in the OPUS Tatoeba corpus (Tiedemann, 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_6",
+            "start": 181,
+            "end": 493,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_7@0",
+            "content": "At the same time, cross-lingual transfer learning has recently helped improve the performance of several low-resource NLP tasks with the support of related languages (e.g. Hu et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_7",
+            "start": 0,
+            "end": 188,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_7@1",
+            "content": "This also includes zero-shot translation (Johnson et al., 2017), the ability of multilingual NMT systems to translate between seen languages that were not represented in the parallel training data as a pair.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_7",
+            "start": 190,
+            "end": 396,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_7@2",
+            "content": "The case of Livonian is especially interesting in this regard, as there are two different sources of such support: on one hand, it is a Uralic language, closely related to Estonian and Finnish.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_7",
+            "start": 398,
+            "end": 590,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_7@3",
+            "content": "On the other hand, Livonian has taken part in forming Latvian language and Livonian speakers have historically co-existed side-by-side with Latvian speakers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_7",
+            "start": 592,
+            "end": 748,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_7@4",
+            "content": "As a result of mutual influence these two languages also share a number of grammatical, lexical and orthographic similarities.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_7",
+            "start": 750,
+            "end": 875,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_8@0",
+            "content": "Our main contributions are two-fold.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_8",
+            "start": 0,
+            "end": 35,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_8@1",
+            "content": "vian/Estonian/English so that each sentence would have all four translations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_8",
+            "start": 37,
+            "end": 113,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_8@2",
+            "content": "2",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_8",
+            "start": 115,
+            "end": 115,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_9@0",
+            "content": "The second half of our work focuses on neural machine translation (NMT, Vaswani et al., 2017), mainly targeting Livonian\u2194English.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_9",
+            "start": 0,
+            "end": 128,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_9@1",
+            "content": "We explore several options of coping with the extremely lowresource settings and use Estonian and Latvian for cross-lingual transfer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_9",
+            "start": 130,
+            "end": 262,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_9@2",
+            "content": "Our experiments answer the following research questions:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_9",
+            "start": 264,
+            "end": 319,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_10@0",
+            "content": "1. Can we achieve machine translation for Livonian\u2194English at a usable level?",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_10",
+            "start": 0,
+            "end": 76,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_11@0",
+            "content": "2. Which base language suits better for serving as base for cross-lingual transfer to Livonian, Estonian or Latvian?",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_11",
+            "start": 0,
+            "end": 115,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_12@0",
+            "content": "3. Does zero-shot multilingual translation deliver better translation quality than pivottranslation through Estonian or Latvian?",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_12",
+            "start": 0,
+            "end": 127,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_13@0",
+            "content": "Next we briefly describe the Livonian Language in Section 2, then introduce the collected parallel and monolingual data in Section 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_13",
+            "start": 0,
+            "end": 132,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_13@1",
+            "content": "Section 4 provides the details of our NMT experiments and Section 5 concludes the paper.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_13",
+            "start": 134,
+            "end": 221,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_13@2",
+            "content": "the mid-20th century around 1500 speakers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_13",
+            "start": 223,
+            "end": 264,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_13@3",
+            "content": "Nowadays Livonian is listed in UNESCO's Atlas of the World's Languages in Danger as a critically endangered language (Moseley, 2014).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_13",
+            "start": 266,
+            "end": 398,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_13@4",
+            "content": "According to the 2011 census, there are 250 Livonians in Latvia.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_13",
+            "start": 400,
+            "end": 463,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_13@5",
+            "content": "Although there are just over 20 people who can speak the language, the Livonian community is active in preserving and developing the Livonian heritage (Ern\u0161treits, 2016) and language plays key role in this process (Ern\u0161treits and Kl , ava, 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_13",
+            "start": 465,
+            "end": 710,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_14@0",
+            "content": "The Livonian language developed in the contact area of Baltic and Finnic languages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_14",
+            "start": 0,
+            "end": 82,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_14@1",
+            "content": "Livonian and Latvian share a similar geographical location over a prolonged period of time, as a result of which they both contain traces of contact.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_14",
+            "start": 84,
+            "end": 232,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_14@2",
+            "content": "Next to other loanwords, the Livonian loanword strata consists of words borrowed from Latvian (Suhonen, 1973;Winkler, 2014) and vice versa.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_14",
+            "start": 234,
+            "end": 372,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_14@3",
+            "content": "The most obvious Latvian influence on Livonian grammar is found in the Livonian case system (Ern\u0161treits and Kl , ava, 2014).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_14",
+            "start": 374,
+            "end": 497,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_14@4",
+            "content": "Livonian has the prosodic characteristics typical of a Finnic language such as word-initial stress and the phonological opposition of short and long phoneme duration.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_14",
+            "start": 499,
+            "end": 664,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_14@5",
+            "content": "It is the only Finnic language that differentiates lexical tones -the plain tone and the broken tone or st\u00f8d -and therefore shares similar characteristics with Latvian as well as Danish (Tuisk, 2016).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_14",
+            "start": 666,
+            "end": 865,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_15@0",
+            "content": "Collected Data",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_15",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_16@0",
+            "content": "The first step in developing (supervised) machine translation is collecting parallel data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_16",
+            "start": 0,
+            "end": 89,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_16@1",
+            "content": "While there was no pre-existing open parallel corpus with Livonian, we used all the possible sources of translations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_16",
+            "start": 91,
+            "end": 207,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_16@2",
+            "content": "This was limited to already digital resources, future work might include texts extracted by scanning older books and other materials.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_16",
+            "start": 209,
+            "end": 341,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_16@3",
+            "content": "The main sources of data included Livonian-Latvian as well as Livonian-Estonian translations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_16",
+            "start": 343,
+            "end": 435,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_16@4",
+            "content": "Thus we use these two languages as base for crosslingual transfer and e.g. leave Finnish out, as there was no data for it.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_16",
+            "start": 437,
+            "end": 558,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_17@0",
+            "content": "The sources of data included:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_17",
+            "start": 0,
+            "end": 28,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_18@0",
+            "content": "\u2022 the Constitution of the Republic of Latvia, translated into 9 languages, including Livonian, Estonian and English, \u2022 a database of dictionary entries, phrases and example sentences from the University of Latvia Livonian Institute's website 5 , with examples in Livonian, Estonian and Latvian \u2022 the Livonian Institute's Facebook page posts, partially parallel between our 4 languages \u2022 books (Stalte, 2011;Kurs and et al., 2016;Ern\u0161treit et al., 2020) with prefaces and content in Livonian-Estonian or Livonian-Latvian \u2022 and abstracts from the Journal of Estonian and Finno-Ugric Linguistics' (JEFUL) Special Issues on Livonian Studies (2014,2016,2018) in Livonian, Estonian and English Concerning sentence alignment, the dictionary examples consisted of already aligned Livonian sentences. We aligned the rest of the data manually with the help of language experts -first on paragraph level, then on sentence level.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_18",
+            "start": 0,
+            "end": 916,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_19@0",
+            "content": "The total amount of sentences in the resulting dataset is shown in Table 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_19",
+            "start": 0,
+            "end": 74,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_20@0",
+            "content": "We separated balanced portions of development (503 sentences) and evaluation (749 sentences) splits from the full dataset.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_20",
+            "start": 0,
+            "end": 121,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_20@1",
+            "content": "The splits are balanced in terms of the original source of the texts to resemble proportions from the remaining training data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_20",
+            "start": 123,
+            "end": 248,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_21@0",
+            "content": "We hired professional translators to create translations for any missing parts so that these splits would be parallel between all four languages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_21",
+            "start": 0,
+            "end": 144,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_21@1",
+            "content": "We further turned to experts of the Livonian language to make sure that the newly created translations truly convey the meaning of the original text as a quality control measure.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_21",
+            "start": 146,
+            "end": 323,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_22@0",
+            "content": "The resulting benchmark and the whole corpus is published in the OPUS collection (currently, anonymously).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_22",
+            "start": 0,
+            "end": 105,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_22@1",
+            "content": "6",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_22",
+            "start": 107,
+            "end": 107,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_23@0",
+            "content": "Machine Translation Experiments",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_23",
+            "start": 0,
+            "end": 30,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_24@0",
+            "content": "Having just over 10, 000 parallel examples constitutes extremely low-resource settings for neural machine translation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_24",
+            "start": 0,
+            "end": 117,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_24@1",
+            "content": "Added to this, the number of monolingual Livonian sentences (about 40, 000) is also too small for approaches like unsupervised machine translation (Artetxe et al., 2018;.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_24",
+            "start": 119,
+            "end": 288,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_25@0",
+            "content": "We implement the support of neighboring and related languages (Estonian and Latvian) via multilingual machine translation (Johnson et al., 2017).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_25",
+            "start": 0,
+            "end": 144,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_25@1",
+            "content": "As a first step the model is pre-trained with the larger languages (Estonian, Latvian, English) and then used as base for following experiments.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_25",
+            "start": 146,
+            "end": 289,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_26@0",
+            "content": "Technical Setup",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_26",
+            "start": 0,
+            "end": 14,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_27@0",
+            "content": "We used FairSeq (Ott et al., 2019) to train transformer architecture models with 6 encoder and decoder layers, 8 transformer attention heads per layer, word embeddings and hidden layers of size 512, dropout of 0.3, maximum sentence length of 128 symbols, and a batch size of 1024 words.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_27",
+            "start": 0,
+            "end": 285,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_27@1",
+            "content": "All models were trained until they reached convergence (no improvement for 10 checkpoints) on development data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_27",
+            "start": 287,
+            "end": 397,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_27@2",
+            "content": "We used Sentencepiece (Kudo and Richardson, 2018) ies of size 25,000, and SacreBLEU 7 (Post, 2018) to generate BLEU scores for translations.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_27",
+            "start": 399,
+            "end": 538,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_28@0",
+            "content": "Base models were trained on LV\u2192EN, ET\u2192EN, ET+LV\u2192EN data, and a multilingual model using the tagged approach (Johnson et al., 2017) for translating in all directions between ENG/EST/LAT.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_28",
+            "start": 0,
+            "end": 184,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_28@1",
+            "content": "The base models were then used as initialization for tuning on LIV\u2192EN data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_28",
+            "start": 186,
+            "end": 260,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_28@2",
+            "content": "For training the base models we used all available parallel data from Opus (Tiedemann and Nygaard, 2004).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_28",
+            "start": 262,
+            "end": 366,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_28@3",
+            "content": "To facilitate further use of the base models for tuning on Livonian data, all Livonian sentences were used in addition to other data when creating the shared vocabularies.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_28",
+            "start": 368,
+            "end": 538,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_28@4",
+            "content": "Finally, we used the highest-scoring tuned model to perform performed backtranslation on the monolingual LIV data to generate additional training data for training the final models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_28",
+            "start": 540,
+            "end": 720,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_29@0",
+            "content": "Results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_29",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_30@0",
+            "content": "Table 2 shows results from MT experiments.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_30",
+            "start": 0,
+            "end": 41,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_30@1",
+            "content": "All BLEU scores are calculated for translations of our evaluation We compare the base single direction MT models to our multidirection model, as well as online translations from Google Translate 8 and Neurotolge 9 to evaluate performance from ET and LV into EN.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_30",
+            "start": 43,
+            "end": 303,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_30@2",
+            "content": "While the multilingual model was noticeably weaker, the others hold comparable results to the online systems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_30",
+            "start": 305,
+            "end": 413,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_30@3",
+            "content": "However, when attempting to perform zero-shot translation from LIV into EN, the ET\u2192EN model was able to outperform LV\u2192EN (3.22 vs. 2.20), and the multilingual model achieved a very respectable BLEU score 8.92.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_30",
+            "start": 415,
+            "end": 623,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_31@0",
+            "content": "We then turned to tuning each of these models with LIV-EN data mixed 1:1 with a random equal amount of the original training data for each of the models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_31",
+            "start": 0,
+            "end": 152,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_31@1",
+            "content": "In the case of the multilingual model, we also added LV/ET-LIV data to the mix.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_31",
+            "start": 154,
+            "end": 232,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_31@2",
+            "content": "This improved all scores by 1-3 BLEU points, but the multilingual model remained on top with 11.62 for LIV\u2192EN.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_31",
+            "start": 234,
+            "end": 343,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_31@3",
+            "content": "In order to perform backtranslation models for both directions are required, so we scored the tuned multilingual model on the EN\u2192LIV data as well, reaching 8.10 BLEU.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_31",
+            "start": 345,
+            "end": 510,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_31@4",
+            "content": "Finally, to verify how much the tiny amount (503 sentences) of LIV-EN parallel data brings for tuning we ran a separate experiment excluding it and achieved 11.87 BLEU for LIV-EN and 8.25 BLEU for EN-LIV, which is even slightly higher than with the data there.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_31",
+            "start": 512,
+            "end": 771,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_32@0",
+            "content": "For comparison we also used the same tuned multilingual model to perform pivotal translation by first translating into ET or LV and then into the desired target language.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_32",
+            "start": 0,
+            "end": 169,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_32@1",
+            "content": "Results from these experiments in Table 3 show that not only ET is better than LV to pivot translate between EN and LIV, but also that this approach was able to reach the highest BLEU scores so far.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_32",
+            "start": 171,
+            "end": 368,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_32@2",
+            "content": "Tuning on the backtranslated data seemed to overwhelm the far lower amount of clean parallel data and did not produce a higher BLEU score in any direction.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_32",
+            "start": 370,
+            "end": 524,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_33@0",
+            "content": "To answer the research questions, posed in the introduction, it seems that the resulting translation quality is still far from being usable.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_33",
+            "start": 0,
+            "end": 139,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_33@1",
+            "content": "Comparisons between the base languages have shown slight preference towards Estonian over Latvian.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_33",
+            "start": 141,
+            "end": 238,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_33@2",
+            "content": "Interestingly, pivot-translation through Estonian showed higher translation quality than direct Livonian\u2194English trained in a zero-shot / few-shot manner.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_33",
+            "start": 240,
+            "end": 393,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_34@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_34",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_35@0",
+            "content": "In this paper we presented a novel dataset for the highly endangered Livonian language, which can be useful for machine translation, language modelling and many other natural language processing and computational linguistic research tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_35",
+            "start": 0,
+            "end": 238,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_36@0",
+            "content": "In our experiments we show how far one can get in training modern machine translation models with very scarce data, and which languages are more suitable for transfer learning when working with Livonian data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_36",
+            "start": 0,
+            "end": 207,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_36@1",
+            "content": "While perhaps not being usable as-is in any kind of production scale, the achieved BLEU scores of 13.00 and 9.47 show that some transfer of meaning can still be achieved between Livonian and English with the currently available resources.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_36",
+            "start": 209,
+            "end": 446,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_37@0",
+            "content": "Mikel Artetxe, Gorka Labaka, Eneko Agirre, Unsupervised statistical machine translation, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_37",
+            "start": 0,
+            "end": 183,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_38@0",
+            "content": "Alexis Conneau, Kartikay Khandelwal, Naman Goyal, Vishrav Chaudhary, Guillaume Wenzek, Francisco Guzm\u00e1n, Edouard Grave, Myle Ott, Luke Zettlemoyer, Veselin Stoyanov, Unsupervised cross-lingual representation learning at scale, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_38",
+            "start": 0,
+            "end": 322,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_39@0",
+            "content": "Alexis Conneau, Ruty Rinott, Guillaume Lample, Adina Williams, Samuel Bowman, Holger Schwenk, Veselin Stoyanov, XNLI: Evaluating cross-lingual sentence representations, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_39",
+            "start": 0,
+            "end": 304,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_40@0",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: Pre-training of deep bidirectional transformers for language understanding, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Long and Short Papers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_40",
+            "start": 0,
+            "end": 315,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_41@0",
+            "content": "Valts Ern\u0161treits, Eesti ja soome-ugri keeleteaduse ajakiri, 2016, Journal of Estonian and Finno-Ugric Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_41",
+            "start": 0,
+            "end": 115,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_42@0",
+            "content": "Valts Ern\u0161treits, Gunta Kl, Grammatical changes caused by contact between livonian and latvian. Eesti ja soome-ugri keeleteaduse ajakiri, 2014, Journal of Estonian and Finno-Ugric Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_42",
+            "start": 0,
+            "end": 193,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_43@0",
+            "content": "Valts Ern\u0161treits, Gunta Kl, Taking the livonians into the digital space, 2020, Proceedings of the 5th Conference Digital Humanities in the Nordic Countries, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_43",
+            "start": 0,
+            "end": 157,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_44@0",
+            "content": "Valt Ern\u0161treit, Baiba Damberg, Karl Pajusalu, Trilium 2.0. L\u012bv\u00f5 l\u016bolkub, 2020, The International Society of Livonian Friends, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_44",
+            "start": 0,
+            "end": 126,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_45@0",
+            "content": "Angela Fan, Shruti Bhosale, Holger Schwenk, Zhiyi Ma, Ahmed El-Kishky, Siddharth Goyal, Mandeep Baines, Onur Celebi, Guillaume Wenzek, Vishrav Chaudhary, Beyond english-centric multilingual machine translation, 2021, Journal of Machine Learning Research, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_45",
+            "start": 0,
+            "end": 255,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_46@0",
+            "content": "Junjie Hu, Sebastian Ruder, Aditya Siddhant, Graham Neubig, Orhan Firat, Melvin Johnson, Xtreme: A massively multilingual multitask benchmark for evaluating cross-lingual generalisation, 2020, International Conference on Machine Learning, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_46",
+            "start": 0,
+            "end": 239,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_47@0",
+            "content": "Melvin Johnson, Mike Schuster, Quoc Le, Maxim Krikun, Yonghui Wu, Zhifeng Chen, Nikhil Thorat, Fernanda Vi\u00e9gas, Martin Wattenberg, Greg Corrado, Macduff Hughes, Jeffrey Dean, Google's multilingual neural machine translation system: Enabling zero-shot translation, 2017, Transactions of the Association for Computational Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_47",
+            "start": 0,
+            "end": 333,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_48@0",
+            "content": "Taku Kudo, John Richardson, SentencePiece: A simple and language independent subword tokenizer and detokenizer for neural text processing, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing: System Demonstrations, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_48",
+            "start": 0,
+            "end": 297,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_49@0",
+            "content": "UNKNOWN, None, 2016, Eduard V\u00e4\u00e4ri's publications on Livonians and the Livonian language, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_49",
+            "start": 0,
+            "end": 89,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_50@0",
+            "content": "Guillaume Lample, Myle Ott, Alexis Conneau, Ludovic Denoyer, Marc'aurelio Ranzato, Phrase-based & neural unsupervised machine translation, 2018, Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_50",
+            "start": 0,
+            "end": 274,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_51@0",
+            "content": "Christopher Moseley, Livonian-the most endangered language in europe? Eesti ja soome-ugri keeleteaduse ajakiri, 2014, Journal of Estonian and Finno-Ugric Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_51",
+            "start": 0,
+            "end": 167,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_52@0",
+            "content": "Myle Ott, Sergey Edunov, Alexei Baevski, Angela Fan, Sam Gross, Nathan Ng, David Grangier, Michael Auli, fairseq: A fast, extensible toolkit for sequence modeling, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics (Demonstrations), Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_52",
+            "start": 0,
+            "end": 343,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_53@0",
+            "content": "Matt Post, A call for clarity in reporting BLEU scores, 2018, Proceedings of the Third Conference on Machine Translation: Research Papers, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_53",
+            "start": 0,
+            "end": 139,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_54@0",
+            "content": "UNKNOWN, None, 2011, Jelzi S\u00f5n\u0101: \u0101b\u0113d ja \u012brgand\u00f5ks lugd\u00f5br\u014dnt\u00f5z. Jem\u0101k\u012bel sel , t\u0161, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_54",
+            "start": 0,
+            "end": 84,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_55@0",
+            "content": "UNKNOWN, None, 1973, Die jungen lettischen lehnw\u00f6rter im livischen. Suomalais-ugrilaisen seuran toimituksia, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_55",
+            "start": 0,
+            "end": 109,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_56@0",
+            "content": "J\u00f6rg Tiedemann, The tatoeba translation challenge -realistic data sets for low resource and multilingual MT, 2020, Proceedings of the Fifth Conference on Machine Translation, Online. Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_56",
+            "start": 0,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_57@0",
+            "content": "UNKNOWN, None, 2004, Proceedings of the Fourth International Conference on Language Resources and Evaluation (LREC'04), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_57",
+            "start": 0,
+            "end": 120,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_58@0",
+            "content": "Tuuli Tuisk, Main features of the livonian sound system and pronunciation. Eesti ja soomeugri keeleteaduse ajakiri, 2016, Journal of Estonian and Finno-Ugric Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_58",
+            "start": 0,
+            "end": 171,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_59@0",
+            "content": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan Gomez, Illia Kaiser,  Polosukhin, Attention is all you need, 2017, Advances in Neural Information Processing Systems, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_59",
+            "start": 0,
+            "end": 197,
+            "label": {}
+        },
+        {
+            "ix": "43-ARR_v1_60@0",
+            "content": "Eberhard Winkler, Eesti ja soome-ugri keeleteaduse ajakiri, 2014, Journal of Estonian and Finno-Ugric Linguistics, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "43-ARR_v1_60",
+            "start": 0,
+            "end": 115,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "43-ARR_v1_0",
+            "tgt_ix": "43-ARR_v1_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_0",
+            "tgt_ix": "43-ARR_v1_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_1",
+            "tgt_ix": "43-ARR_v1_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_1",
+            "tgt_ix": "43-ARR_v1_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_0",
+            "tgt_ix": "43-ARR_v1_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_2",
+            "tgt_ix": "43-ARR_v1_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_4",
+            "tgt_ix": "43-ARR_v1_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_5",
+            "tgt_ix": "43-ARR_v1_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_6",
+            "tgt_ix": "43-ARR_v1_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_7",
+            "tgt_ix": "43-ARR_v1_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_8",
+            "tgt_ix": "43-ARR_v1_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_9",
+            "tgt_ix": "43-ARR_v1_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_10",
+            "tgt_ix": "43-ARR_v1_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_11",
+            "tgt_ix": "43-ARR_v1_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_12",
+            "tgt_ix": "43-ARR_v1_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_13",
+            "tgt_ix": "43-ARR_v1_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_3",
+            "tgt_ix": "43-ARR_v1_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_3",
+            "tgt_ix": "43-ARR_v1_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_3",
+            "tgt_ix": "43-ARR_v1_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_3",
+            "tgt_ix": "43-ARR_v1_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_3",
+            "tgt_ix": "43-ARR_v1_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_3",
+            "tgt_ix": "43-ARR_v1_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_3",
+            "tgt_ix": "43-ARR_v1_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_3",
+            "tgt_ix": "43-ARR_v1_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_3",
+            "tgt_ix": "43-ARR_v1_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_3",
+            "tgt_ix": "43-ARR_v1_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_3",
+            "tgt_ix": "43-ARR_v1_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_3",
+            "tgt_ix": "43-ARR_v1_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_0",
+            "tgt_ix": "43-ARR_v1_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_14",
+            "tgt_ix": "43-ARR_v1_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_15",
+            "tgt_ix": "43-ARR_v1_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_15",
+            "tgt_ix": "43-ARR_v1_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_17",
+            "tgt_ix": "43-ARR_v1_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_19",
+            "tgt_ix": "43-ARR_v1_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_20",
+            "tgt_ix": "43-ARR_v1_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_21",
+            "tgt_ix": "43-ARR_v1_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_15",
+            "tgt_ix": "43-ARR_v1_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_15",
+            "tgt_ix": "43-ARR_v1_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_15",
+            "tgt_ix": "43-ARR_v1_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_15",
+            "tgt_ix": "43-ARR_v1_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_15",
+            "tgt_ix": "43-ARR_v1_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_15",
+            "tgt_ix": "43-ARR_v1_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_16",
+            "tgt_ix": "43-ARR_v1_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_0",
+            "tgt_ix": "43-ARR_v1_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_22",
+            "tgt_ix": "43-ARR_v1_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_24",
+            "tgt_ix": "43-ARR_v1_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_23",
+            "tgt_ix": "43-ARR_v1_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_23",
+            "tgt_ix": "43-ARR_v1_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_23",
+            "tgt_ix": "43-ARR_v1_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_23",
+            "tgt_ix": "43-ARR_v1_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_25",
+            "tgt_ix": "43-ARR_v1_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_27",
+            "tgt_ix": "43-ARR_v1_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_26",
+            "tgt_ix": "43-ARR_v1_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_26",
+            "tgt_ix": "43-ARR_v1_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_26",
+            "tgt_ix": "43-ARR_v1_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_23",
+            "tgt_ix": "43-ARR_v1_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_28",
+            "tgt_ix": "43-ARR_v1_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_30",
+            "tgt_ix": "43-ARR_v1_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_31",
+            "tgt_ix": "43-ARR_v1_32",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_32",
+            "tgt_ix": "43-ARR_v1_33",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_29",
+            "tgt_ix": "43-ARR_v1_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_29",
+            "tgt_ix": "43-ARR_v1_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_29",
+            "tgt_ix": "43-ARR_v1_32",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_29",
+            "tgt_ix": "43-ARR_v1_33",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_29",
+            "tgt_ix": "43-ARR_v1_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_0",
+            "tgt_ix": "43-ARR_v1_34",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_33",
+            "tgt_ix": "43-ARR_v1_34",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_35",
+            "tgt_ix": "43-ARR_v1_36",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_34",
+            "tgt_ix": "43-ARR_v1_35",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_34",
+            "tgt_ix": "43-ARR_v1_36",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_34",
+            "tgt_ix": "43-ARR_v1_35",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "43-ARR_v1_0",
+            "tgt_ix": "43-ARR_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_1",
+            "tgt_ix": "43-ARR_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_2",
+            "tgt_ix": "43-ARR_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_2",
+            "tgt_ix": "43-ARR_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_2",
+            "tgt_ix": "43-ARR_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_2",
+            "tgt_ix": "43-ARR_v1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_2",
+            "tgt_ix": "43-ARR_v1_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_2",
+            "tgt_ix": "43-ARR_v1_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_3",
+            "tgt_ix": "43-ARR_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_4",
+            "tgt_ix": "43-ARR_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_4",
+            "tgt_ix": "43-ARR_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_4",
+            "tgt_ix": "43-ARR_v1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_5",
+            "tgt_ix": "43-ARR_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_5",
+            "tgt_ix": "43-ARR_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_6",
+            "tgt_ix": "43-ARR_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_6",
+            "tgt_ix": "43-ARR_v1_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_6",
+            "tgt_ix": "43-ARR_v1_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_7",
+            "tgt_ix": "43-ARR_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_7",
+            "tgt_ix": "43-ARR_v1_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_7",
+            "tgt_ix": "43-ARR_v1_7@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_7",
+            "tgt_ix": "43-ARR_v1_7@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_7",
+            "tgt_ix": "43-ARR_v1_7@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_8",
+            "tgt_ix": "43-ARR_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_8",
+            "tgt_ix": "43-ARR_v1_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_8",
+            "tgt_ix": "43-ARR_v1_8@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_9",
+            "tgt_ix": "43-ARR_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_9",
+            "tgt_ix": "43-ARR_v1_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_9",
+            "tgt_ix": "43-ARR_v1_9@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_10",
+            "tgt_ix": "43-ARR_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_11",
+            "tgt_ix": "43-ARR_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_12",
+            "tgt_ix": "43-ARR_v1_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_13",
+            "tgt_ix": "43-ARR_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_13",
+            "tgt_ix": "43-ARR_v1_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_13",
+            "tgt_ix": "43-ARR_v1_13@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_13",
+            "tgt_ix": "43-ARR_v1_13@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_13",
+            "tgt_ix": "43-ARR_v1_13@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_13",
+            "tgt_ix": "43-ARR_v1_13@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_14",
+            "tgt_ix": "43-ARR_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_14",
+            "tgt_ix": "43-ARR_v1_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_14",
+            "tgt_ix": "43-ARR_v1_14@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_14",
+            "tgt_ix": "43-ARR_v1_14@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_14",
+            "tgt_ix": "43-ARR_v1_14@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_14",
+            "tgt_ix": "43-ARR_v1_14@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_15",
+            "tgt_ix": "43-ARR_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_16",
+            "tgt_ix": "43-ARR_v1_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_16",
+            "tgt_ix": "43-ARR_v1_16@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_16",
+            "tgt_ix": "43-ARR_v1_16@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_16",
+            "tgt_ix": "43-ARR_v1_16@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_16",
+            "tgt_ix": "43-ARR_v1_16@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_17",
+            "tgt_ix": "43-ARR_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_18",
+            "tgt_ix": "43-ARR_v1_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_19",
+            "tgt_ix": "43-ARR_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_20",
+            "tgt_ix": "43-ARR_v1_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_20",
+            "tgt_ix": "43-ARR_v1_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_21",
+            "tgt_ix": "43-ARR_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_21",
+            "tgt_ix": "43-ARR_v1_21@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_22",
+            "tgt_ix": "43-ARR_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_22",
+            "tgt_ix": "43-ARR_v1_22@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_23",
+            "tgt_ix": "43-ARR_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_24",
+            "tgt_ix": "43-ARR_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_24",
+            "tgt_ix": "43-ARR_v1_24@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_25",
+            "tgt_ix": "43-ARR_v1_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_25",
+            "tgt_ix": "43-ARR_v1_25@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_26",
+            "tgt_ix": "43-ARR_v1_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_27",
+            "tgt_ix": "43-ARR_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_27",
+            "tgt_ix": "43-ARR_v1_27@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_27",
+            "tgt_ix": "43-ARR_v1_27@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_28",
+            "tgt_ix": "43-ARR_v1_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_28",
+            "tgt_ix": "43-ARR_v1_28@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_28",
+            "tgt_ix": "43-ARR_v1_28@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_28",
+            "tgt_ix": "43-ARR_v1_28@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_28",
+            "tgt_ix": "43-ARR_v1_28@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_29",
+            "tgt_ix": "43-ARR_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_30",
+            "tgt_ix": "43-ARR_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_30",
+            "tgt_ix": "43-ARR_v1_30@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_30",
+            "tgt_ix": "43-ARR_v1_30@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_30",
+            "tgt_ix": "43-ARR_v1_30@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_31",
+            "tgt_ix": "43-ARR_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_31",
+            "tgt_ix": "43-ARR_v1_31@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_31",
+            "tgt_ix": "43-ARR_v1_31@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_31",
+            "tgt_ix": "43-ARR_v1_31@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_31",
+            "tgt_ix": "43-ARR_v1_31@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_32",
+            "tgt_ix": "43-ARR_v1_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_32",
+            "tgt_ix": "43-ARR_v1_32@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_32",
+            "tgt_ix": "43-ARR_v1_32@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_33",
+            "tgt_ix": "43-ARR_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_33",
+            "tgt_ix": "43-ARR_v1_33@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_33",
+            "tgt_ix": "43-ARR_v1_33@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_34",
+            "tgt_ix": "43-ARR_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_35",
+            "tgt_ix": "43-ARR_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_36",
+            "tgt_ix": "43-ARR_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_36",
+            "tgt_ix": "43-ARR_v1_36@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_37",
+            "tgt_ix": "43-ARR_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_38",
+            "tgt_ix": "43-ARR_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_39",
+            "tgt_ix": "43-ARR_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_40",
+            "tgt_ix": "43-ARR_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_41",
+            "tgt_ix": "43-ARR_v1_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_42",
+            "tgt_ix": "43-ARR_v1_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_43",
+            "tgt_ix": "43-ARR_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_44",
+            "tgt_ix": "43-ARR_v1_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_45",
+            "tgt_ix": "43-ARR_v1_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_46",
+            "tgt_ix": "43-ARR_v1_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_47",
+            "tgt_ix": "43-ARR_v1_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_48",
+            "tgt_ix": "43-ARR_v1_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_49",
+            "tgt_ix": "43-ARR_v1_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_50",
+            "tgt_ix": "43-ARR_v1_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_51",
+            "tgt_ix": "43-ARR_v1_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_52",
+            "tgt_ix": "43-ARR_v1_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_53",
+            "tgt_ix": "43-ARR_v1_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_54",
+            "tgt_ix": "43-ARR_v1_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_55",
+            "tgt_ix": "43-ARR_v1_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_56",
+            "tgt_ix": "43-ARR_v1_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_57",
+            "tgt_ix": "43-ARR_v1_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_58",
+            "tgt_ix": "43-ARR_v1_58@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_59",
+            "tgt_ix": "43-ARR_v1_59@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "43-ARR_v1_60",
+            "tgt_ix": "43-ARR_v1_60@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 635,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "position_tag_type": "from_draft",
+        "doc_id": "43-ARR",
+        "version": 1
+    }
+}

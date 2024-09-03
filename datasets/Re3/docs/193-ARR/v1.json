@@ -1,0 +1,3314 @@
+{
+    "nodes": [
+        {
+            "ix": "193-ARR_v1_0",
+            "content": "Models In a Spelling Bee: Language Models Implicitly Learn the Character Composition of Tokens",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_2",
+            "content": "Standard pretrained language models operate on sequences of subword tokens without direct access to the characters that compose each token's string representation. We probe the embedding layer of pretrained language models and show that models learn the internal character composition of whole word and subword tokens to a surprising extent, without ever seeing the characters coupled with the tokens. Our results show that the embedding layer of RoBERTa holds enough information to accurately spell up to a third of the vocabulary and reach high average character ngram overlap on all token types. We further test whether enriching subword models with additional character information can improve language modeling, and observe that this method has a near-identical learning curve as training without spelling-based enrichment. Overall, our results suggest that language modeling objectives incentivize the model to implicitly learn some notion of spelling, and that explicitly teaching the model how to spell does not enhance its performance on such tasks.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "193-ARR_v1_4",
+            "content": "Contemporary subword tokenization algorithms such as BPE (Sennrich et al., 2016) partition a string into contiguous spans of characters. Each span represents a frequent character ngram, from individual characters (a), through prefixes (uni) and suffixes (tion), and even complete words (cats). The tokenizer then converts each such span into a discrete symbol (a token) with no internal structure, effectively discarding the token's orthographic information. Therefore, a model operating over sequences of subword tokens should be oblivious to the spelling of each token. In this work, we show that despite having no direct access to the subwords' internal character composition, pretrained language models do learn some notion of spelling.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_5",
+            "content": "To examine what pretrained language models learn about spelling, we present the SpellingBee probe. SpellingBee is a generative language model that predicts the character composition of a token given only its (uncontextualized) vector representation from the pretrained model's embeddings matrix. SpellingBee is trained on part of the model's vocabulary, and then tested by spelling unseen token types. If the probe can successfully reconstruct the correct character sequence from an unseen token's embedding, then there must be significant orthographic information encoded in the vector.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_6",
+            "content": "We find that the embedding layers of several pretrained language models contain surprising amounts of character information. SpellingBee accurately spells 31.8% of the held-out vocabulary for RoBERTa-Large (Liu et al., 2019), 32.9% for GPT2-Medium (Radford et al., 2019), and 40.9% for the Arabic language model AraBERT-Large (Antoun et al., 2020). A softer metric that is sensitive to partially-correct spellings (chrF) (Popovi\u0107, 2015) shows a similar trend, with 48.7 for RoBERTa-Large and 62.3 for AraBERT-Large. These results are much higher than the baseline of applying SpellingBee to randomly-initialized vectors, which fails to spell a single token.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_7",
+            "content": "Given that subword models learn some notion of character composition to fulfill language modeling objectives, could they perhaps benefit from knowing the exact spelling of each token a priori? To that end, we reverse SpellingBee's role and use it to pretrain the embedding layer of a randomlyinitialized model, thus imbuing each token representation with its orthographic information before training the whole model on the masked language modeling objective. We compare the pretraining process of the character-infused model to that of an identical model whose embedding layer is randomly initialized (and not pretrained), and find that both learning curves converge to virtually identical values within the first 1000 gradient updates, a fraction of the total optimization process. This experiment suggests that while language models may need to learn some notion of spelling to optimize their objectives, they can quickly acquire all the character-level information they need without directly observing the composition of each token.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_8",
+            "content": "Spelling Bee",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "193-ARR_v1_9",
+            "content": "To measure how much a model knows the character composition of its tokens, we introduce Spelling-Bee, a generative probe that tries to spell out a token character-by-character. Specifically, Spelling-Bee probes the original model's embedding matrix, since spelling is a property of token types, invariant to context. For example, given the embedding of the token cats, SpellingBee will try to generate the sequence [c, a, t, s]. We do so by modeling SpellingBee as a character-based language model, where the first token is a vector representation of the vocabulary item. 1 Training We split the vocabulary to train and test sets, 2 and use teacher forcing to train SpellingBee. In the example of cats, SpellingBee will compute the following probabilities:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_10",
+            "content": "P (x 1 = c | x 0 = cats) P (x 2 = a | x 0 = cats, x 1 = c) P (x 3 = t | x 0 = cats, x 1 = c, x 2 = a)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_11",
+            "content": ". . .",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_12",
+            "content": "All of SpellingBee's parameters are randomly initialized. The only parameters that are pretrained are the token embeddings (e.g. the representation of cats or a), which are taken from the original pretrained language model we intend to probe, and treated as constants; i.e. kept frozen during SpellingBee's training.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_13",
+            "content": "Inference & Evaluation Once SpellingBee is trained, we apply it to the test set using greedy decoding. For each vocabulary item w in the test set, SpellingBee is given only the corresponding embedding vector e w , and is expected to generate the character sequence w 1 , . . . , w n that defines w. We measure success on the test set using two metrics:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_14",
+            "content": "exact match (EM), and character ngram overlap score using chrF (Popovi\u0107, 2015). While EM is strict, chrF allows us to measure partial success. We also report edit distance using Levenshtein distance ratio in Appendix A.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_15",
+            "content": "While we mainly use SpellingBee as a probe, a variation of our method could potentially imbue the embedding layer with character information before training a language model. We could train a probe with randomly-initialized embeddings (instead of pretrained embeddings from another model) to predict the spelling of all vocabulary items, and use these trained probe embeddings to initialize any target model's embedding layer (instead of random initialization). We experiment with this method in Section 5, but find that it does not have any significant impact on the convergence of language models.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_16",
+            "content": "Experiment Setup",
+            "ntype": "title",
+            "meta": {
+                "section": "3"
+            }
+        },
+        {
+            "ix": "193-ARR_v1_17",
+            "content": "We begin with a series of probing experiments, where we apply SpellingBee to the embedding layer of various pretrained models. 3",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_18",
+            "content": "Pretrained Models We probe four pretrained models: RoBERTa-Base and Large (Liu et al., 2019), GPT2-Medium (Radford et al., 2019), and AraBERT-Large (Antoun et al., 2020). This set introduces some diversity in vocabulary, objective, and scale: the first three models are trained on English corpora, while AraBERT is trained on text in Arabic; GPT2 is an autoregressive language model, while the rest are masked language models; RoBERTa-Base consists of 125M parameters (with 768 dimensions per embedding), while the other models have approximately 350M parameters (with 1024 dimensions per embedding).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_19",
+            "content": "Control Since SpellingBee is a trained probe, we wish to establish the probe's baseline performance when provided with inputs with no orthographic information. As an empirical control, we train and test SpellingBee on randomly-initialized vectors, in addition to the main experiments where we utilize the pretrained embedding layers.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_20",
+            "content": "Training & Testing Data We split the vocabulary into training and testing data using the following protocol. First, we randomly sample 1000 token types as test. We then filter the remaining 4 The lemma filter always applies the similarity filter first, providing an even more adversarial approach for splitting the data.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_21",
+            "content": "To control for variance, we create 10 such splits for each model and filter, and report the averaged evaluation metrics over all 10 test sets.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_22",
+            "content": "Results",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "193-ARR_v1_23",
+            "content": "Main Result Table 1 shows how well Spelling-Bee can spell a vocabulary token using only its frozen pretrained embedding. We observe that SpellingBee is able to accurately recover the spelling of up to 40.9% of the test set, while the control is unable to spell even a single word correctly. A similar trend can be seen when considering the finer character ngram metric (chrF but does not affect EM. These results are persistent across different models and filters, strongly indicating that the embedding layer of pretrained models contain significant amounts of information about each token's character composition.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_24",
+            "content": "One may suggest that training SpellingBee over 32000 examples may leak information from the test set. For example, if dog was seen during training, then spelling out dogs might be easy. We thus consider the similarity and lemma filters, which remove such near-neighbors from the training set. While results are indeed lower (and probably do account for some level of information leakage), they are still considerably higher than the control, both in terms of EM and chrF. Results using the similarity and lemma filters are rather similar, suggesting that embedding-space similarity captures some information about each token's lemma.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_25",
+            "content": "Finally, we find that the properties of pretrained models also seem to have a significant effect on the amount of spelling information SpellingBee can extract. Larger models tend to score higher in the probe, and the model trained on text in Arabic appears to have substantially higher EM and chrF scores than those trained on English corpora. One possibility is that Arabic's rich morphology incentivizes the model to store more information about each token's character composition, however it is also possible that AraBERT's different vocabulary, which allocates shorter character sequences to each token type, might explain this difference (we discuss the link between sequence length and accuracy later in this section). Overall, our probing experiments show that even though subword-based language models do not have direct access to spelling, they can and do learn a surprising amount of information about the character composition of each vocabulary token.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_26",
+            "content": "We further examine whether SpellingBee can extract information when trained on less examples. Figure 1 shows how well SpellingBee can spell RoBERTa-Large's vocabulary when trained on varying amounts of data, across all filters. We find that more data makes for a better probe, but that even a few thousand examples are enough to train SpellingBee to extract significant character information from the embeddings, which cannot be extracted from randomized vectors (the control). 5",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_27",
+            "content": "Pretraining Language Models to Spell",
+            "ntype": "title",
+            "meta": {
+                "section": "5"
+            }
+        },
+        {
+            "ix": "193-ARR_v1_28",
+            "content": "Our probing experiments reveal that language models learn some partial notion of spelling, despite the lack of direct access to characters. Therefore, we hypothesize that learning to spell is beneficial for language models, and propose pretraining the embedding layer using a variant of the SpellingBee probe described in Section 2. Here, the goal is to imbue each embedding with enough information for SpellingBee to accurately generate its surface form, and then initialize the language model with the pretrained embeddings before it starts training on the language modeling objective. 5 We provide additional analysis on spelling accuracy by subword frequency and length in Appendices B and C.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_29",
+            "content": "We apply this process to RoBERTa-Large, training the model's embedding layer with SpellingBee using the same hyperparameter settings from Appendix E, with the key difference being that the embeddings are now tunable parameters (not frozen). 6 We train RoBERTa-Large on English Wikipedia using the hyperparameter configuration of 24hBERT (Izsak et al., 2021), and cease training after 24 hours (\u223c16000 steps). For comparison, we train exactly the same model with a randomly-initialized embedding layer.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_30",
+            "content": "Figure 2 shows the masked language modeling loss with and without pretrained embeddings. We see that the curves quickly converge into one. After only 1000 training steps, the difference between the validation losses never exceeds 0.01. This result indicates that the model does not utilize the character information injected into the tokens' embeddings. Along with the results from Section 4, we conjecture that the model learns an implicit notion of spelling during pretraining, which is sufficient for masked language modeling, and does not benefit from explicitly adding orthographic information.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_31",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "6"
+            }
+        },
+        {
+            "ix": "193-ARR_v1_32",
+            "content": "This work reveals that pretrained language models learn, to some extent, the character composition of subword tokens. We show that our Spelling-Bee probe can spell many vocabulary items using their uncontextualized embedding-layer representations alone. Trying to explicitly infuse character information into the model appears to have a minimal effect on the model's ability to optimize its language modeling objective, suggesting that the model can independently learn all the characterlevel information it needs for the task.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_33",
+            "content": "Levenshtein distance (Levenshtein et al., 1966) is an edit distance metric that, given two strings, calculates the minimal number of changes needed to be done in order to make the two strings identical. Levenshtein distance ratio is the length-normalized version, which is computed by adding the sum of lengths of both strings to the edit distance and dividing by the same sum of lengths. We report the main experiment's results using this ratio in Table 2.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_34",
+            "content": "We test whether pretrained models tend to store more spelling-related information in higherfrequency token types. We focus on RoBERTa-Large, and assign each token in the test set to its frequency quintile according to the number of times it appeared in the pretraining corpus -from the 10000 most frequent token types (top 20%) to those ranked 40000-50000 in the vocabulary (bottom 20%) -and measure the average performance of SpellingBee within each quintile. Figures 3 and 4 shows the results with and without the similarity filter. We observe that SpellingBee is indeed able to extract more information from higher-frequency token types, suggesting that the pretrained model has more information about their character composition.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_35",
+            "content": "We analyze the effect of token length on the probe's ability to spell. A priori, it is reasonable to assume that it is easier for the probe to spell shorter tokens, since less information needs to be extracted from the embedding and there are less discrete decisions to be made while decoding. Indeed, Figure 5 shows that with the none filter most vocabulary tokens with 2-4 characters can be accurately reproduced from their vector representations, while longer tokens are harder to replicate. This trend is particularly sharp when the similarity filter is applied, as the probe is hardly able to spell tokens with 6 or more characters accurately; having said that, the probe is able to generate many partially correct spellings, as measured by chrF (Figure 6). Perhaps a less intuitive result is the probe's failure to spell single-character tokens. A closer look reveals that many of these examples are rare or non-alphanumeric characters (e.g. c \u00b8and $), which are probably very difficult for the probe to generate if it had not seen them during training. While these results show strong trends with respect to length, token length is also highly correlated with frequency, and it is not necessarily clear which of the two factors has a stronger impact on the amount and resolution of character-level information stored in the embedding layer of pretrained models.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_36",
+            "content": "We manually analyze 100 random tokens that SpellingBee spelled incorrectly with the lemma filter to understand the nature of the spelling mistakes.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_37",
+            "content": "Out of those 100 we display 20 mistakes in Table 3 alongside the spelling prediction of the control baseline. SpellingBee's mistakes vary from singlecharacter typos to completely different words. Having said that, the vast majority of mistakes have significant overlap with the correct spelling, such as shared prefixes and capitalization.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_38",
+            "content": "We implement SpellingBee with a 6-layer encoderdecoder model, with 512 model dimensions.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_39",
+            "content": "The model parameters are optimized with Adam (Kingma and Ba, 2015) for 1000 steps with up to 1024 tokens per batch, a learning rate of 5e-4, and a dropout rate of 0.1. These are the default hyperparameters for training a transformer language model in Fairseq .",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "193-ARR_v1_40",
+            "content": "Wissam Antoun, Fady Baly, Hazem Hajj, AraBERT: Transformer-based model for Arabic language understanding, 2020, Proceedings of the 4th Workshop on Open-Source Arabic Corpora and Processing Tools, with a Shared Task on Offensive Language Detection, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": [
+                    "Wissam Antoun",
+                    "Fady Baly",
+                    "Hazem Hajj"
+                ],
+                "title": "AraBERT: Transformer-based model for Arabic language understanding",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 4th Workshop on Open-Source Arabic Corpora and Processing Tools, with a Shared Task on Offensive Language Detection",
+                "pub": null
+            }
+        },
+        {
+            "ix": "193-ARR_v1_41",
+            "content": "Steven Bird, Edward Loper, NLTK: The natural language toolkit, 2004, Proceedings of the ACL Interactive Poster and Demonstration Sessions, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": [
+                    "Steven Bird",
+                    "Edward Loper"
+                ],
+                "title": "NLTK: The natural language toolkit",
+                "pub_date": "2004",
+                "pub_title": "Proceedings of the ACL Interactive Poster and Demonstration Sessions",
+                "pub": null
+            }
+        },
+        {
+            "ix": "193-ARR_v1_42",
+            "content": "Kareem Darwish, Hamdy Mubarak, Farasa: A new fast and accurate Arabic word segmenter, 2016, Proceedings of the Tenth International Conference on Language Resources and Evaluation (LREC'16), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": [
+                    "Kareem Darwish",
+                    "Hamdy Mubarak"
+                ],
+                "title": "Farasa: A new fast and accurate Arabic word segmenter",
+                "pub_date": "2016",
+                "pub_title": "Proceedings of the Tenth International Conference on Language Resources and Evaluation (LREC'16)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "193-ARR_v1_43",
+            "content": "UNKNOWN, None, 2021, How to train bert with an academic budget, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": null,
+                "title": null,
+                "pub_date": "2021",
+                "pub_title": "How to train bert with an academic budget",
+                "pub": null
+            }
+        },
+        {
+            "ix": "193-ARR_v1_44",
+            "content": "UNKNOWN, None, 2015, Adam: A method for stochastic optimization, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": null,
+                "title": null,
+                "pub_date": "2015",
+                "pub_title": "Adam: A method for stochastic optimization",
+                "pub": null
+            }
+        },
+        {
+            "ix": "193-ARR_v1_45",
+            "content": "Vladimir I Levenshtein, Binary codes capable of correcting deletions, insertions, and reversals, 1966, Soviet physics doklady, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    " Vladimir I Levenshtein"
+                ],
+                "title": "Binary codes capable of correcting deletions, insertions, and reversals",
+                "pub_date": "1966",
+                "pub_title": "Soviet physics doklady",
+                "pub": null
+            }
+        },
+        {
+            "ix": "193-ARR_v1_46",
+            "content": "UNKNOWN, None, 2019, Roberta: A robustly optimized bert pretraining approach, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "Roberta: A robustly optimized bert pretraining approach",
+                "pub": null
+            }
+        },
+        {
+            "ix": "193-ARR_v1_47",
+            "content": "Myle Ott, Sergey Edunov, Alexei Baevski, Angela Fan, Sam Gross, Nathan Ng, David Grangier, Michael Auli, fairseq: A fast, extensible toolkit for sequence modeling, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics (Demonstrations), Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": [
+                    "Myle Ott",
+                    "Sergey Edunov",
+                    "Alexei Baevski",
+                    "Angela Fan",
+                    "Sam Gross",
+                    "Nathan Ng",
+                    "David Grangier",
+                    "Michael Auli"
+                ],
+                "title": "fairseq: A fast, extensible toolkit for sequence modeling",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics (Demonstrations)",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "193-ARR_v1_48",
+            "content": "Maja Popovi\u0107, chrF: character n-gram F-score for automatic MT evaluation, 2015, Proceedings of the Tenth Workshop on Statistical Machine Translation, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": [
+                    "Maja Popovi\u0107"
+                ],
+                "title": "chrF: character n-gram F-score for automatic MT evaluation",
+                "pub_date": "2015",
+                "pub_title": "Proceedings of the Tenth Workshop on Statistical Machine Translation",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "193-ARR_v1_49",
+            "content": "Alec Radford, Jeffrey Wu, Rewon Child, David Luan, Dario Amodei, Ilya Sutskever, Language models are unsupervised multitask learners, 2019, OpenAI blog, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    "Alec Radford",
+                    "Jeffrey Wu",
+                    "Rewon Child",
+                    "David Luan",
+                    "Dario Amodei",
+                    "Ilya Sutskever"
+                ],
+                "title": "Language models are unsupervised multitask learners",
+                "pub_date": "2019",
+                "pub_title": "OpenAI blog",
+                "pub": null
+            }
+        },
+        {
+            "ix": "193-ARR_v1_50",
+            "content": "Rico Sennrich, Barry Haddow, Alexandra Birch, Neural machine translation of rare words with subword units, 2016, Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics, Long Papers.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": [
+                    "Rico Sennrich",
+                    "Barry Haddow",
+                    "Alexandra Birch"
+                ],
+                "title": "Neural machine translation of rare words with subword units",
+                "pub_date": "2016",
+                "pub_title": "Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics",
+                "pub": "Long Papers"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "193-ARR_v1_0@0",
+            "content": "Models In a Spelling Bee: Language Models Implicitly Learn the Character Composition of Tokens",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_0",
+            "start": 0,
+            "end": 93,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_2@0",
+            "content": "Standard pretrained language models operate on sequences of subword tokens without direct access to the characters that compose each token's string representation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_2",
+            "start": 0,
+            "end": 162,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_2@1",
+            "content": "We probe the embedding layer of pretrained language models and show that models learn the internal character composition of whole word and subword tokens to a surprising extent, without ever seeing the characters coupled with the tokens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_2",
+            "start": 164,
+            "end": 400,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_2@2",
+            "content": "Our results show that the embedding layer of RoBERTa holds enough information to accurately spell up to a third of the vocabulary and reach high average character ngram overlap on all token types.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_2",
+            "start": 402,
+            "end": 597,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_2@3",
+            "content": "We further test whether enriching subword models with additional character information can improve language modeling, and observe that this method has a near-identical learning curve as training without spelling-based enrichment.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_2",
+            "start": 599,
+            "end": 827,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_2@4",
+            "content": "Overall, our results suggest that language modeling objectives incentivize the model to implicitly learn some notion of spelling, and that explicitly teaching the model how to spell does not enhance its performance on such tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_2",
+            "start": 829,
+            "end": 1057,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_4@0",
+            "content": "Contemporary subword tokenization algorithms such as BPE (Sennrich et al., 2016) partition a string into contiguous spans of characters.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_4",
+            "start": 0,
+            "end": 135,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_4@1",
+            "content": "Each span represents a frequent character ngram, from individual characters (a), through prefixes (uni) and suffixes (tion), and even complete words (cats).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_4",
+            "start": 137,
+            "end": 292,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_4@2",
+            "content": "The tokenizer then converts each such span into a discrete symbol (a token) with no internal structure, effectively discarding the token's orthographic information.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_4",
+            "start": 294,
+            "end": 457,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_4@3",
+            "content": "Therefore, a model operating over sequences of subword tokens should be oblivious to the spelling of each token.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_4",
+            "start": 459,
+            "end": 570,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_4@4",
+            "content": "In this work, we show that despite having no direct access to the subwords' internal character composition, pretrained language models do learn some notion of spelling.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_4",
+            "start": 572,
+            "end": 739,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_5@0",
+            "content": "To examine what pretrained language models learn about spelling, we present the SpellingBee probe.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_5",
+            "start": 0,
+            "end": 97,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_5@1",
+            "content": "SpellingBee is a generative language model that predicts the character composition of a token given only its (uncontextualized) vector representation from the pretrained model's embeddings matrix.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_5",
+            "start": 99,
+            "end": 294,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_5@2",
+            "content": "SpellingBee is trained on part of the model's vocabulary, and then tested by spelling unseen token types.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_5",
+            "start": 296,
+            "end": 400,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_5@3",
+            "content": "If the probe can successfully reconstruct the correct character sequence from an unseen token's embedding, then there must be significant orthographic information encoded in the vector.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_5",
+            "start": 402,
+            "end": 586,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_6@0",
+            "content": "We find that the embedding layers of several pretrained language models contain surprising amounts of character information.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_6",
+            "start": 0,
+            "end": 123,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_6@1",
+            "content": "SpellingBee accurately spells 31.8% of the held-out vocabulary for RoBERTa-Large (Liu et al., 2019), 32.9% for GPT2-Medium (Radford et al., 2019), and 40.9% for the Arabic language model AraBERT-Large (Antoun et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_6",
+            "start": 125,
+            "end": 347,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_6@2",
+            "content": "A softer metric that is sensitive to partially-correct spellings (chrF) (Popovi\u0107, 2015) shows a similar trend, with 48.7 for RoBERTa-Large and 62.3 for AraBERT-Large.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_6",
+            "start": 349,
+            "end": 514,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_6@3",
+            "content": "These results are much higher than the baseline of applying SpellingBee to randomly-initialized vectors, which fails to spell a single token.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_6",
+            "start": 516,
+            "end": 656,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_7@0",
+            "content": "Given that subword models learn some notion of character composition to fulfill language modeling objectives, could they perhaps benefit from knowing the exact spelling of each token a priori? To that end, we reverse SpellingBee's role and use it to pretrain the embedding layer of a randomlyinitialized model, thus imbuing each token representation with its orthographic information before training the whole model on the masked language modeling objective.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_7",
+            "start": 0,
+            "end": 457,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_7@1",
+            "content": "We compare the pretraining process of the character-infused model to that of an identical model whose embedding layer is randomly initialized (and not pretrained), and find that both learning curves converge to virtually identical values within the first 1000 gradient updates, a fraction of the total optimization process.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_7",
+            "start": 459,
+            "end": 781,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_7@2",
+            "content": "This experiment suggests that while language models may need to learn some notion of spelling to optimize their objectives, they can quickly acquire all the character-level information they need without directly observing the composition of each token.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_7",
+            "start": 783,
+            "end": 1034,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_8@0",
+            "content": "Spelling Bee",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_8",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_9@0",
+            "content": "To measure how much a model knows the character composition of its tokens, we introduce Spelling-Bee, a generative probe that tries to spell out a token character-by-character.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_9",
+            "start": 0,
+            "end": 175,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_9@1",
+            "content": "Specifically, Spelling-Bee probes the original model's embedding matrix, since spelling is a property of token types, invariant to context.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_9",
+            "start": 177,
+            "end": 315,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_9@2",
+            "content": "For example, given the embedding of the token cats, SpellingBee will try to generate the sequence [c, a, t, s].",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_9",
+            "start": 317,
+            "end": 427,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_9@3",
+            "content": "We do so by modeling SpellingBee as a character-based language model, where the first token is a vector representation of the vocabulary item.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_9",
+            "start": 429,
+            "end": 570,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_9@4",
+            "content": "1 Training We split the vocabulary to train and test sets, 2 and use teacher forcing to train SpellingBee.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_9",
+            "start": 572,
+            "end": 677,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_9@5",
+            "content": "In the example of cats, SpellingBee will compute the following probabilities:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_9",
+            "start": 679,
+            "end": 755,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_10@0",
+            "content": "P (x 1 = c | x 0 = cats) P (x 2 = a | x 0 = cats, x 1 = c) P (x 3 = t | x 0 = cats, x 1 = c, x 2 = a)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_10",
+            "start": 0,
+            "end": 100,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_11@0",
+            "content": ". . .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_11",
+            "start": 0,
+            "end": 4,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_12@0",
+            "content": "All of SpellingBee's parameters are randomly initialized.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_12",
+            "start": 0,
+            "end": 56,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_12@1",
+            "content": "The only parameters that are pretrained are the token embeddings (e.g. the representation of cats or a), which are taken from the original pretrained language model we intend to probe, and treated as constants; i.e. kept frozen during SpellingBee's training.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_12",
+            "start": 58,
+            "end": 315,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_13@0",
+            "content": "Inference & Evaluation Once SpellingBee is trained, we apply it to the test set using greedy decoding.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_13",
+            "start": 0,
+            "end": 101,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_13@1",
+            "content": "For each vocabulary item w in the test set, SpellingBee is given only the corresponding embedding vector e w , and is expected to generate the character sequence w 1 , . . . , w n that defines w. We measure success on the test set using two metrics:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_13",
+            "start": 103,
+            "end": 351,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_14@0",
+            "content": "exact match (EM), and character ngram overlap score using chrF (Popovi\u0107, 2015).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_14",
+            "start": 0,
+            "end": 78,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_14@1",
+            "content": "While EM is strict, chrF allows us to measure partial success.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_14",
+            "start": 80,
+            "end": 141,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_14@2",
+            "content": "We also report edit distance using Levenshtein distance ratio in Appendix A.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_14",
+            "start": 143,
+            "end": 218,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_15@0",
+            "content": "While we mainly use SpellingBee as a probe, a variation of our method could potentially imbue the embedding layer with character information before training a language model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_15",
+            "start": 0,
+            "end": 173,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_15@1",
+            "content": "We could train a probe with randomly-initialized embeddings (instead of pretrained embeddings from another model) to predict the spelling of all vocabulary items, and use these trained probe embeddings to initialize any target model's embedding layer (instead of random initialization).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_15",
+            "start": 175,
+            "end": 460,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_15@2",
+            "content": "We experiment with this method in Section 5, but find that it does not have any significant impact on the convergence of language models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_15",
+            "start": 462,
+            "end": 598,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_16@0",
+            "content": "Experiment Setup",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_16",
+            "start": 0,
+            "end": 15,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_17@0",
+            "content": "We begin with a series of probing experiments, where we apply SpellingBee to the embedding layer of various pretrained models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_17",
+            "start": 0,
+            "end": 125,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_17@1",
+            "content": "3",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_17",
+            "start": 127,
+            "end": 127,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_18@0",
+            "content": "Pretrained Models We probe four pretrained models: RoBERTa-Base and Large (Liu et al., 2019), GPT2-Medium (Radford et al., 2019), and AraBERT-Large (Antoun et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_18",
+            "start": 0,
+            "end": 169,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_18@1",
+            "content": "This set introduces some diversity in vocabulary, objective, and scale: the first three models are trained on English corpora, while AraBERT is trained on text in Arabic; GPT2 is an autoregressive language model, while the rest are masked language models; RoBERTa-Base consists of 125M parameters (with 768 dimensions per embedding), while the other models have approximately 350M parameters (with 1024 dimensions per embedding).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_18",
+            "start": 171,
+            "end": 599,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_19@0",
+            "content": "Control Since SpellingBee is a trained probe, we wish to establish the probe's baseline performance when provided with inputs with no orthographic information.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_19",
+            "start": 0,
+            "end": 158,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_19@1",
+            "content": "As an empirical control, we train and test SpellingBee on randomly-initialized vectors, in addition to the main experiments where we utilize the pretrained embedding layers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_19",
+            "start": 160,
+            "end": 332,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_20@0",
+            "content": "Training & Testing Data We split the vocabulary into training and testing data using the following protocol.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_20",
+            "start": 0,
+            "end": 107,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_20@1",
+            "content": "First, we randomly sample 1000 token types as test.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_20",
+            "start": 109,
+            "end": 159,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_20@2",
+            "content": "We then filter the remaining 4 The lemma filter always applies the similarity filter first, providing an even more adversarial approach for splitting the data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_20",
+            "start": 161,
+            "end": 319,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_21@0",
+            "content": "To control for variance, we create 10 such splits for each model and filter, and report the averaged evaluation metrics over all 10 test sets.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_21",
+            "start": 0,
+            "end": 141,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_22@0",
+            "content": "Results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_22",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_23@0",
+            "content": "Main Result Table 1 shows how well Spelling-Bee can spell a vocabulary token using only its frozen pretrained embedding.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_23",
+            "start": 0,
+            "end": 119,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_23@1",
+            "content": "We observe that SpellingBee is able to accurately recover the spelling of up to 40.9% of the test set, while the control is unable to spell even a single word correctly.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_23",
+            "start": 121,
+            "end": 289,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_23@2",
+            "content": "A similar trend can be seen when considering the finer character ngram metric (chrF but does not affect EM.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_23",
+            "start": 291,
+            "end": 397,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_23@3",
+            "content": "These results are persistent across different models and filters, strongly indicating that the embedding layer of pretrained models contain significant amounts of information about each token's character composition.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_23",
+            "start": 399,
+            "end": 614,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_24@0",
+            "content": "One may suggest that training SpellingBee over 32000 examples may leak information from the test set.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_24",
+            "start": 0,
+            "end": 100,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_24@1",
+            "content": "For example, if dog was seen during training, then spelling out dogs might be easy.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_24",
+            "start": 102,
+            "end": 184,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_24@2",
+            "content": "We thus consider the similarity and lemma filters, which remove such near-neighbors from the training set.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_24",
+            "start": 186,
+            "end": 291,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_24@3",
+            "content": "While results are indeed lower (and probably do account for some level of information leakage), they are still considerably higher than the control, both in terms of EM and chrF.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_24",
+            "start": 293,
+            "end": 470,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_24@4",
+            "content": "Results using the similarity and lemma filters are rather similar, suggesting that embedding-space similarity captures some information about each token's lemma.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_24",
+            "start": 472,
+            "end": 632,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_25@0",
+            "content": "Finally, we find that the properties of pretrained models also seem to have a significant effect on the amount of spelling information SpellingBee can extract.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_25",
+            "start": 0,
+            "end": 158,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_25@1",
+            "content": "Larger models tend to score higher in the probe, and the model trained on text in Arabic appears to have substantially higher EM and chrF scores than those trained on English corpora.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_25",
+            "start": 160,
+            "end": 342,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_25@2",
+            "content": "One possibility is that Arabic's rich morphology incentivizes the model to store more information about each token's character composition, however it is also possible that AraBERT's different vocabulary, which allocates shorter character sequences to each token type, might explain this difference (we discuss the link between sequence length and accuracy later in this section).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_25",
+            "start": 344,
+            "end": 723,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_25@3",
+            "content": "Overall, our probing experiments show that even though subword-based language models do not have direct access to spelling, they can and do learn a surprising amount of information about the character composition of each vocabulary token.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_25",
+            "start": 725,
+            "end": 962,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_26@0",
+            "content": "We further examine whether SpellingBee can extract information when trained on less examples.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_26",
+            "start": 0,
+            "end": 92,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_26@1",
+            "content": "Figure 1 shows how well SpellingBee can spell RoBERTa-Large's vocabulary when trained on varying amounts of data, across all filters.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_26",
+            "start": 94,
+            "end": 226,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_26@2",
+            "content": "We find that more data makes for a better probe, but that even a few thousand examples are enough to train SpellingBee to extract significant character information from the embeddings, which cannot be extracted from randomized vectors (the control).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_26",
+            "start": 228,
+            "end": 476,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_26@3",
+            "content": "5",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_26",
+            "start": 478,
+            "end": 478,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_27@0",
+            "content": "Pretraining Language Models to Spell",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_27",
+            "start": 0,
+            "end": 35,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_28@0",
+            "content": "Our probing experiments reveal that language models learn some partial notion of spelling, despite the lack of direct access to characters.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_28",
+            "start": 0,
+            "end": 138,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_28@1",
+            "content": "Therefore, we hypothesize that learning to spell is beneficial for language models, and propose pretraining the embedding layer using a variant of the SpellingBee probe described in Section 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_28",
+            "start": 140,
+            "end": 331,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_28@2",
+            "content": "Here, the goal is to imbue each embedding with enough information for SpellingBee to accurately generate its surface form, and then initialize the language model with the pretrained embeddings before it starts training on the language modeling objective.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_28",
+            "start": 333,
+            "end": 586,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_28@3",
+            "content": "5 We provide additional analysis on spelling accuracy by subword frequency and length in Appendices B and C.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_28",
+            "start": 588,
+            "end": 695,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_29@0",
+            "content": "We apply this process to RoBERTa-Large, training the model's embedding layer with SpellingBee using the same hyperparameter settings from Appendix E, with the key difference being that the embeddings are now tunable parameters (not frozen).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_29",
+            "start": 0,
+            "end": 239,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_29@1",
+            "content": "6 We train RoBERTa-Large on English Wikipedia using the hyperparameter configuration of 24hBERT (Izsak et al., 2021), and cease training after 24 hours (\u223c16000 steps).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_29",
+            "start": 241,
+            "end": 407,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_29@2",
+            "content": "For comparison, we train exactly the same model with a randomly-initialized embedding layer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_29",
+            "start": 409,
+            "end": 500,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_30@0",
+            "content": "Figure 2 shows the masked language modeling loss with and without pretrained embeddings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_30",
+            "start": 0,
+            "end": 87,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_30@1",
+            "content": "We see that the curves quickly converge into one.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_30",
+            "start": 89,
+            "end": 137,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_30@2",
+            "content": "After only 1000 training steps, the difference between the validation losses never exceeds 0.01.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_30",
+            "start": 139,
+            "end": 234,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_30@3",
+            "content": "This result indicates that the model does not utilize the character information injected into the tokens' embeddings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_30",
+            "start": 236,
+            "end": 352,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_30@4",
+            "content": "Along with the results from Section 4, we conjecture that the model learns an implicit notion of spelling during pretraining, which is sufficient for masked language modeling, and does not benefit from explicitly adding orthographic information.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_30",
+            "start": 354,
+            "end": 598,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_31@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_31",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_32@0",
+            "content": "This work reveals that pretrained language models learn, to some extent, the character composition of subword tokens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_32",
+            "start": 0,
+            "end": 116,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_32@1",
+            "content": "We show that our Spelling-Bee probe can spell many vocabulary items using their uncontextualized embedding-layer representations alone.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_32",
+            "start": 118,
+            "end": 252,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_32@2",
+            "content": "Trying to explicitly infuse character information into the model appears to have a minimal effect on the model's ability to optimize its language modeling objective, suggesting that the model can independently learn all the characterlevel information it needs for the task.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_32",
+            "start": 254,
+            "end": 526,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_33@0",
+            "content": "Levenshtein distance (Levenshtein et al., 1966) is an edit distance metric that, given two strings, calculates the minimal number of changes needed to be done in order to make the two strings identical.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_33",
+            "start": 0,
+            "end": 201,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_33@1",
+            "content": "Levenshtein distance ratio is the length-normalized version, which is computed by adding the sum of lengths of both strings to the edit distance and dividing by the same sum of lengths.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_33",
+            "start": 203,
+            "end": 387,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_33@2",
+            "content": "We report the main experiment's results using this ratio in Table 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_33",
+            "start": 389,
+            "end": 456,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_34@0",
+            "content": "We test whether pretrained models tend to store more spelling-related information in higherfrequency token types.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_34",
+            "start": 0,
+            "end": 112,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_34@1",
+            "content": "We focus on RoBERTa-Large, and assign each token in the test set to its frequency quintile according to the number of times it appeared in the pretraining corpus -from the 10000 most frequent token types (top 20%) to those ranked 40000-50000 in the vocabulary (bottom 20%) -and measure the average performance of SpellingBee within each quintile.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_34",
+            "start": 114,
+            "end": 459,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_34@2",
+            "content": "Figures 3 and 4 shows the results with and without the similarity filter.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_34",
+            "start": 461,
+            "end": 533,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_34@3",
+            "content": "We observe that SpellingBee is indeed able to extract more information from higher-frequency token types, suggesting that the pretrained model has more information about their character composition.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_34",
+            "start": 535,
+            "end": 732,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_35@0",
+            "content": "We analyze the effect of token length on the probe's ability to spell.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_35",
+            "start": 0,
+            "end": 69,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_35@1",
+            "content": "A priori, it is reasonable to assume that it is easier for the probe to spell shorter tokens, since less information needs to be extracted from the embedding and there are less discrete decisions to be made while decoding.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_35",
+            "start": 71,
+            "end": 292,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_35@2",
+            "content": "Indeed, Figure 5 shows that with the none filter most vocabulary tokens with 2-4 characters can be accurately reproduced from their vector representations, while longer tokens are harder to replicate.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_35",
+            "start": 294,
+            "end": 493,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_35@3",
+            "content": "This trend is particularly sharp when the similarity filter is applied, as the probe is hardly able to spell tokens with 6 or more characters accurately; having said that, the probe is able to generate many partially correct spellings, as measured by chrF (Figure 6).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_35",
+            "start": 495,
+            "end": 761,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_35@4",
+            "content": "Perhaps a less intuitive result is the probe's failure to spell single-character tokens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_35",
+            "start": 763,
+            "end": 850,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_35@5",
+            "content": "A closer look reveals that many of these examples are rare or non-alphanumeric characters (e.g. c \u00b8and $), which are probably very difficult for the probe to generate if it had not seen them during training.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_35",
+            "start": 852,
+            "end": 1058,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_35@6",
+            "content": "While these results show strong trends with respect to length, token length is also highly correlated with frequency, and it is not necessarily clear which of the two factors has a stronger impact on the amount and resolution of character-level information stored in the embedding layer of pretrained models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_35",
+            "start": 1060,
+            "end": 1367,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_36@0",
+            "content": "We manually analyze 100 random tokens that SpellingBee spelled incorrectly with the lemma filter to understand the nature of the spelling mistakes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_36",
+            "start": 0,
+            "end": 146,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_37@0",
+            "content": "Out of those 100 we display 20 mistakes in Table 3 alongside the spelling prediction of the control baseline.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_37",
+            "start": 0,
+            "end": 108,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_37@1",
+            "content": "SpellingBee's mistakes vary from singlecharacter typos to completely different words. Having said that, the vast majority of mistakes have significant overlap with the correct spelling, such as shared prefixes and capitalization.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_37",
+            "start": 110,
+            "end": 338,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_38@0",
+            "content": "We implement SpellingBee with a 6-layer encoderdecoder model, with 512 model dimensions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_38",
+            "start": 0,
+            "end": 87,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_39@0",
+            "content": "The model parameters are optimized with Adam (Kingma and Ba, 2015) for 1000 steps with up to 1024 tokens per batch, a learning rate of 5e-4, and a dropout rate of 0.1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_39",
+            "start": 0,
+            "end": 166,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_39@1",
+            "content": "These are the default hyperparameters for training a transformer language model in Fairseq .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_39",
+            "start": 168,
+            "end": 259,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_40@0",
+            "content": "Wissam Antoun, Fady Baly, Hazem Hajj, AraBERT: Transformer-based model for Arabic language understanding, 2020, Proceedings of the 4th Workshop on Open-Source Arabic Corpora and Processing Tools, with a Shared Task on Offensive Language Detection, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_40",
+            "start": 0,
+            "end": 248,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_41@0",
+            "content": "Steven Bird, Edward Loper, NLTK: The natural language toolkit, 2004, Proceedings of the ACL Interactive Poster and Demonstration Sessions, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_41",
+            "start": 0,
+            "end": 139,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_42@0",
+            "content": "Kareem Darwish, Hamdy Mubarak, Farasa: A new fast and accurate Arabic word segmenter, 2016, Proceedings of the Tenth International Conference on Language Resources and Evaluation (LREC'16), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_42",
+            "start": 0,
+            "end": 190,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_43@0",
+            "content": "UNKNOWN, None, 2021, How to train bert with an academic budget, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_43",
+            "start": 0,
+            "end": 64,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_44@0",
+            "content": "UNKNOWN, None, 2015, Adam: A method for stochastic optimization, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_44",
+            "start": 0,
+            "end": 65,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_45@0",
+            "content": "Vladimir I Levenshtein, Binary codes capable of correcting deletions, insertions, and reversals, 1966, Soviet physics doklady, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_45",
+            "start": 0,
+            "end": 127,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_46@0",
+            "content": "UNKNOWN, None, 2019, Roberta: A robustly optimized bert pretraining approach, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_46",
+            "start": 0,
+            "end": 78,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_47@0",
+            "content": "Myle Ott, Sergey Edunov, Alexei Baevski, Angela Fan, Sam Gross, Nathan Ng, David Grangier, Michael Auli, fairseq: A fast, extensible toolkit for sequence modeling, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics (Demonstrations), Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_47",
+            "start": 0,
+            "end": 343,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_48@0",
+            "content": "Maja Popovi\u0107, chrF: character n-gram F-score for automatic MT evaluation, 2015, Proceedings of the Tenth Workshop on Statistical Machine Translation, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_48",
+            "start": 0,
+            "end": 191,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_49@0",
+            "content": "Alec Radford, Jeffrey Wu, Rewon Child, David Luan, Dario Amodei, Ilya Sutskever, Language models are unsupervised multitask learners, 2019, OpenAI blog, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_49",
+            "start": 0,
+            "end": 153,
+            "label": {}
+        },
+        {
+            "ix": "193-ARR_v1_50@0",
+            "content": "Rico Sennrich, Barry Haddow, Alexandra Birch, Neural machine translation of rare words with subword units, 2016, Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics, Long Papers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "193-ARR_v1_50",
+            "start": 0,
+            "end": 213,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "193-ARR_v1_0",
+            "tgt_ix": "193-ARR_v1_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_0",
+            "tgt_ix": "193-ARR_v1_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_1",
+            "tgt_ix": "193-ARR_v1_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_1",
+            "tgt_ix": "193-ARR_v1_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_0",
+            "tgt_ix": "193-ARR_v1_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_2",
+            "tgt_ix": "193-ARR_v1_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_4",
+            "tgt_ix": "193-ARR_v1_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_5",
+            "tgt_ix": "193-ARR_v1_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_6",
+            "tgt_ix": "193-ARR_v1_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_3",
+            "tgt_ix": "193-ARR_v1_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_3",
+            "tgt_ix": "193-ARR_v1_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_3",
+            "tgt_ix": "193-ARR_v1_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_3",
+            "tgt_ix": "193-ARR_v1_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_3",
+            "tgt_ix": "193-ARR_v1_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_0",
+            "tgt_ix": "193-ARR_v1_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_7",
+            "tgt_ix": "193-ARR_v1_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_9",
+            "tgt_ix": "193-ARR_v1_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_10",
+            "tgt_ix": "193-ARR_v1_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_11",
+            "tgt_ix": "193-ARR_v1_12",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_12",
+            "tgt_ix": "193-ARR_v1_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_13",
+            "tgt_ix": "193-ARR_v1_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_8",
+            "tgt_ix": "193-ARR_v1_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_8",
+            "tgt_ix": "193-ARR_v1_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_8",
+            "tgt_ix": "193-ARR_v1_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_8",
+            "tgt_ix": "193-ARR_v1_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_8",
+            "tgt_ix": "193-ARR_v1_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_8",
+            "tgt_ix": "193-ARR_v1_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_8",
+            "tgt_ix": "193-ARR_v1_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_8",
+            "tgt_ix": "193-ARR_v1_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_14",
+            "tgt_ix": "193-ARR_v1_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_0",
+            "tgt_ix": "193-ARR_v1_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_15",
+            "tgt_ix": "193-ARR_v1_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_17",
+            "tgt_ix": "193-ARR_v1_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_18",
+            "tgt_ix": "193-ARR_v1_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_19",
+            "tgt_ix": "193-ARR_v1_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_20",
+            "tgt_ix": "193-ARR_v1_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_16",
+            "tgt_ix": "193-ARR_v1_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_16",
+            "tgt_ix": "193-ARR_v1_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_16",
+            "tgt_ix": "193-ARR_v1_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_16",
+            "tgt_ix": "193-ARR_v1_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_16",
+            "tgt_ix": "193-ARR_v1_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_16",
+            "tgt_ix": "193-ARR_v1_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_0",
+            "tgt_ix": "193-ARR_v1_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_21",
+            "tgt_ix": "193-ARR_v1_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_23",
+            "tgt_ix": "193-ARR_v1_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_24",
+            "tgt_ix": "193-ARR_v1_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_22",
+            "tgt_ix": "193-ARR_v1_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_22",
+            "tgt_ix": "193-ARR_v1_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_22",
+            "tgt_ix": "193-ARR_v1_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_22",
+            "tgt_ix": "193-ARR_v1_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_22",
+            "tgt_ix": "193-ARR_v1_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_25",
+            "tgt_ix": "193-ARR_v1_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_0",
+            "tgt_ix": "193-ARR_v1_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_26",
+            "tgt_ix": "193-ARR_v1_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_28",
+            "tgt_ix": "193-ARR_v1_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_29",
+            "tgt_ix": "193-ARR_v1_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_27",
+            "tgt_ix": "193-ARR_v1_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_27",
+            "tgt_ix": "193-ARR_v1_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_27",
+            "tgt_ix": "193-ARR_v1_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_27",
+            "tgt_ix": "193-ARR_v1_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_0",
+            "tgt_ix": "193-ARR_v1_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_30",
+            "tgt_ix": "193-ARR_v1_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_31",
+            "tgt_ix": "193-ARR_v1_32",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_31",
+            "tgt_ix": "193-ARR_v1_32",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_31",
+            "tgt_ix": "193-ARR_v1_33",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_32",
+            "tgt_ix": "193-ARR_v1_33",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_31",
+            "tgt_ix": "193-ARR_v1_34",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_33",
+            "tgt_ix": "193-ARR_v1_34",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_31",
+            "tgt_ix": "193-ARR_v1_35",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_34",
+            "tgt_ix": "193-ARR_v1_35",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_36",
+            "tgt_ix": "193-ARR_v1_37",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_31",
+            "tgt_ix": "193-ARR_v1_36",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_31",
+            "tgt_ix": "193-ARR_v1_37",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_35",
+            "tgt_ix": "193-ARR_v1_36",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_38",
+            "tgt_ix": "193-ARR_v1_39",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_31",
+            "tgt_ix": "193-ARR_v1_38",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_31",
+            "tgt_ix": "193-ARR_v1_39",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_37",
+            "tgt_ix": "193-ARR_v1_38",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "193-ARR_v1_0",
+            "tgt_ix": "193-ARR_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_1",
+            "tgt_ix": "193-ARR_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_2",
+            "tgt_ix": "193-ARR_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_2",
+            "tgt_ix": "193-ARR_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_2",
+            "tgt_ix": "193-ARR_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_2",
+            "tgt_ix": "193-ARR_v1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_2",
+            "tgt_ix": "193-ARR_v1_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_3",
+            "tgt_ix": "193-ARR_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_4",
+            "tgt_ix": "193-ARR_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_4",
+            "tgt_ix": "193-ARR_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_4",
+            "tgt_ix": "193-ARR_v1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_4",
+            "tgt_ix": "193-ARR_v1_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_4",
+            "tgt_ix": "193-ARR_v1_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_5",
+            "tgt_ix": "193-ARR_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_5",
+            "tgt_ix": "193-ARR_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_5",
+            "tgt_ix": "193-ARR_v1_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_5",
+            "tgt_ix": "193-ARR_v1_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_6",
+            "tgt_ix": "193-ARR_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_6",
+            "tgt_ix": "193-ARR_v1_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_6",
+            "tgt_ix": "193-ARR_v1_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_6",
+            "tgt_ix": "193-ARR_v1_6@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_7",
+            "tgt_ix": "193-ARR_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_7",
+            "tgt_ix": "193-ARR_v1_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_7",
+            "tgt_ix": "193-ARR_v1_7@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_8",
+            "tgt_ix": "193-ARR_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_9",
+            "tgt_ix": "193-ARR_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_9",
+            "tgt_ix": "193-ARR_v1_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_9",
+            "tgt_ix": "193-ARR_v1_9@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_9",
+            "tgt_ix": "193-ARR_v1_9@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_9",
+            "tgt_ix": "193-ARR_v1_9@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_9",
+            "tgt_ix": "193-ARR_v1_9@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_10",
+            "tgt_ix": "193-ARR_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_11",
+            "tgt_ix": "193-ARR_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_12",
+            "tgt_ix": "193-ARR_v1_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_12",
+            "tgt_ix": "193-ARR_v1_12@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_13",
+            "tgt_ix": "193-ARR_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_13",
+            "tgt_ix": "193-ARR_v1_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_14",
+            "tgt_ix": "193-ARR_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_14",
+            "tgt_ix": "193-ARR_v1_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_14",
+            "tgt_ix": "193-ARR_v1_14@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_15",
+            "tgt_ix": "193-ARR_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_15",
+            "tgt_ix": "193-ARR_v1_15@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_15",
+            "tgt_ix": "193-ARR_v1_15@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_16",
+            "tgt_ix": "193-ARR_v1_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_17",
+            "tgt_ix": "193-ARR_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_17",
+            "tgt_ix": "193-ARR_v1_17@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_18",
+            "tgt_ix": "193-ARR_v1_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_18",
+            "tgt_ix": "193-ARR_v1_18@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_19",
+            "tgt_ix": "193-ARR_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_19",
+            "tgt_ix": "193-ARR_v1_19@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_20",
+            "tgt_ix": "193-ARR_v1_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_20",
+            "tgt_ix": "193-ARR_v1_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_20",
+            "tgt_ix": "193-ARR_v1_20@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_21",
+            "tgt_ix": "193-ARR_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_22",
+            "tgt_ix": "193-ARR_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_23",
+            "tgt_ix": "193-ARR_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_23",
+            "tgt_ix": "193-ARR_v1_23@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_23",
+            "tgt_ix": "193-ARR_v1_23@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_23",
+            "tgt_ix": "193-ARR_v1_23@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_24",
+            "tgt_ix": "193-ARR_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_24",
+            "tgt_ix": "193-ARR_v1_24@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_24",
+            "tgt_ix": "193-ARR_v1_24@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_24",
+            "tgt_ix": "193-ARR_v1_24@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_24",
+            "tgt_ix": "193-ARR_v1_24@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_25",
+            "tgt_ix": "193-ARR_v1_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_25",
+            "tgt_ix": "193-ARR_v1_25@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_25",
+            "tgt_ix": "193-ARR_v1_25@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_25",
+            "tgt_ix": "193-ARR_v1_25@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_26",
+            "tgt_ix": "193-ARR_v1_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_26",
+            "tgt_ix": "193-ARR_v1_26@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_26",
+            "tgt_ix": "193-ARR_v1_26@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_26",
+            "tgt_ix": "193-ARR_v1_26@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_27",
+            "tgt_ix": "193-ARR_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_28",
+            "tgt_ix": "193-ARR_v1_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_28",
+            "tgt_ix": "193-ARR_v1_28@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_28",
+            "tgt_ix": "193-ARR_v1_28@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_28",
+            "tgt_ix": "193-ARR_v1_28@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_29",
+            "tgt_ix": "193-ARR_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_29",
+            "tgt_ix": "193-ARR_v1_29@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_29",
+            "tgt_ix": "193-ARR_v1_29@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_30",
+            "tgt_ix": "193-ARR_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_30",
+            "tgt_ix": "193-ARR_v1_30@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_30",
+            "tgt_ix": "193-ARR_v1_30@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_30",
+            "tgt_ix": "193-ARR_v1_30@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_30",
+            "tgt_ix": "193-ARR_v1_30@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_31",
+            "tgt_ix": "193-ARR_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_32",
+            "tgt_ix": "193-ARR_v1_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_32",
+            "tgt_ix": "193-ARR_v1_32@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_32",
+            "tgt_ix": "193-ARR_v1_32@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_33",
+            "tgt_ix": "193-ARR_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_33",
+            "tgt_ix": "193-ARR_v1_33@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_33",
+            "tgt_ix": "193-ARR_v1_33@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_34",
+            "tgt_ix": "193-ARR_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_34",
+            "tgt_ix": "193-ARR_v1_34@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_34",
+            "tgt_ix": "193-ARR_v1_34@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_34",
+            "tgt_ix": "193-ARR_v1_34@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_35",
+            "tgt_ix": "193-ARR_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_35",
+            "tgt_ix": "193-ARR_v1_35@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_35",
+            "tgt_ix": "193-ARR_v1_35@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_35",
+            "tgt_ix": "193-ARR_v1_35@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_35",
+            "tgt_ix": "193-ARR_v1_35@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_35",
+            "tgt_ix": "193-ARR_v1_35@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_35",
+            "tgt_ix": "193-ARR_v1_35@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_36",
+            "tgt_ix": "193-ARR_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_37",
+            "tgt_ix": "193-ARR_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_37",
+            "tgt_ix": "193-ARR_v1_37@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_38",
+            "tgt_ix": "193-ARR_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_39",
+            "tgt_ix": "193-ARR_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_39",
+            "tgt_ix": "193-ARR_v1_39@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_40",
+            "tgt_ix": "193-ARR_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_41",
+            "tgt_ix": "193-ARR_v1_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_42",
+            "tgt_ix": "193-ARR_v1_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_43",
+            "tgt_ix": "193-ARR_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_44",
+            "tgt_ix": "193-ARR_v1_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_45",
+            "tgt_ix": "193-ARR_v1_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_46",
+            "tgt_ix": "193-ARR_v1_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_47",
+            "tgt_ix": "193-ARR_v1_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_48",
+            "tgt_ix": "193-ARR_v1_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_49",
+            "tgt_ix": "193-ARR_v1_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "193-ARR_v1_50",
+            "tgt_ix": "193-ARR_v1_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 1074,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "position_tag_type": "from_draft",
+        "doc_id": "193-ARR",
+        "version": 1
+    }
+}

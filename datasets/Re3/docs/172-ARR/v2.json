@@ -1,0 +1,4842 @@
+{
+    "nodes": [
+        {
+            "ix": "172-ARR_v2_0",
+            "content": "XDBERT: Distilling Visual Information to BERT from Cross-Modal Systems to Improve Language Understanding",
+            "ntype": "article-title",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_2",
+            "content": "Transformer-based models are widely used in natural language understanding (NLU) tasks, and multimodal transformers have been effective in visual-language tasks. This study explores distilling visual information from pretrained multimodal transformers to pretrained language encoders. Our framework is inspired by cross-modal encoders' success in visual-language tasks while we alter the learning objective to cater to the language-heavy characteristics of NLU. After training with a small number of extra adapting steps and finetuned, the proposed XDBERT (cross-modal distilled BERT) outperforms pretrained-BERT in general language understanding evaluation (GLUE), situations with adversarial generations (SWAG) benchmarks, and readability benchmarks. We analyze the performance of XDBERT on GLUE to show that the improvement is likely visually grounded.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_4",
+            "content": "Transformer-based models are extensively used in natural language understanding (NLU) tasks, and some prominent pretraining strategies include BERT (Devlin et al., 2019), RoBERTa (Liu et al., 2019), ALBERT (Lan et al., 2020), and ELEC-TRA (Clark et al., 2020). Despite their differences in curating the learning objectives, they all utilize text-based datasets only. In the real world, however, humans can benefit from the visual modality when acquiring knowledge from language; an obvious example is learning visually grounded words, such as colors and shapes.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_5",
+            "content": "Some studies have succeeded with visually grounded information used in NLU. ViCo (Gupta et al., 2019) learned visual co-occurrences in text and reported superior performance to GloVe in word analogy problems. and Huang et al. (2020) used images to boost translation performance in supervised and unsupervised settings. Tan and Bansal (2020) reported improvements over BERT on NLU by proposing the concept of vokenization.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_6",
+            "content": "Another branch of research focuses on solving multimodal downstream tasks such as visual question answering and image retrieval. Li et al. (2019); Lu et al. (2019); Su et al. (2020); trained visual-text transformers, while LXMERT (Tan and Bansal, 2019) used different encoders for text and image and a cross-modal encoder. Tan and Bansal (2020) tested these models with general language understanding evaluation (GLUE Wang et al. (2018)) and found that the performance does not exceed using BERT (Appendix A), drawing the conclusion that vision-and-language pretraining on visually-grounded language dataset failed to distill useful information for general NLU. CLIP (Radford et al., 2021) utilizes contrastive loss to reach SOTA on zero-shot image classification in a retrieval fashion.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_7",
+            "content": "In this work, we establish the link between pretrained multimodal transformers and visuallygrounded language learning. We devise a way to distill visual information from components of a pretrained multimodal transformer (CLIP texttransfomer, abbreviated as CLIP-T) to pretrained language transformers (BERT/ELECTRA), to incorporate versatile perception of words into the model (Figure 1). The usage of a visually grounded text-transformer as a teacher allows us to implement straightforward and non-fuzzy adapting tasks for distillation. We show that it is mathematically logical that the CLIP-T output approximates visual features (Sec. 2.2), and also the linguistic competence of CLIP-T is low (Sec. 3), to prove that the distilled information is predominantly visual and thus non-trivial to the pretrained-language transformer despite having textual inputs.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_8",
+            "content": "Methodologically, we use the cross-modal encoder structure inspired by Tan and Bansal (2019), to concatenate the two models and further adapt the ensemble for some extra steps (a lot fewer than the original pretraining steps). While adapting pretrained-BERT, we favor a document-level corpus (wiki103) over a vision-language corpus (MSCOCO) due to claims from Devlin et al. (2019) 1 and results from Tan and Bansal (2020) (Appendix A). The adapting tasks are joint masked language modeling (MLM), same sentence prediction, and CLIP token classification tasks, which are resemblant of BERT pretraining tasks to cater to the language-heavy characteristics of NLU. We do ablation studies to show that each of the task provides improvement (Section 5).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_9",
+            "content": "During finetuning, we finetune XDBERT (crossmodal distilled BERT), which is the language encoder after adaptation. We evaluate the linguistic capabilities of the model by finetuning on GLUE, situations with adversarial generations (SWAG (Zellers et al., 2018)) benchmarks, and readability benchmarks 2 . The resulting XDBERT outperforms pretrained BERT, proving that our adaptation strategy distills useful visual knowledge into BERT (right of Figure 2). We provide analysis to show that the improvements are visually grounded.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_10",
+            "content": "We summarize our contribution as follow:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_11",
+            "content": "\u2022 We explore distilling visual information from a pretrained multimodal transformer to a pretrained language transformer and improved NLU performance. \u2022 Our adapting method is efficient and extensible to different combinations of pretrainedlanguage encoders (BERT/ELECTRA).",
+            "ntype": "list",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_12",
+            "content": "1 \"It is critical to use a document-level corpus rather than a shuffled sentence-level corpus such as the BillionWord Benchmark in order to extract long contiguous sequences\" 2 https://www.kaggle.com/c/commonlitreadabilityprize",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_13",
+            "content": "Proposed Method",
+            "ntype": "title",
+            "meta": {
+                "section": "2"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_14",
+            "content": "The training process consists of three phases: pretraining, adaptation, and finetuning (Figure 2). Our proposed method focuses on the adaptation phase with pretrained models, so pretraining is not a part of our experiment, but we explain all three phases for completeness. The adaptation phase incorporates the cross-modal transformer structure to jointly learn from CLIP-T and BERT outputs.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_15",
+            "content": "Model Architecture",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_16",
+            "content": "The cross-modal transformer (middle of Figure 2) consists of a cross-modal encoder, CLIP-T and BERT. CLIP-T has the same module connections as BERT with only parameter differences (specifications in Appendix B). The cross-modal encoder consists of repeating cross-modal encoder layers, which is an extension to single-modality encoder layers (layers of BERT/CLIP-T) in Figure 3. The added cross-attention module follows the attention formula (Vaswani et al., 2017):",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_17",
+            "content": "Attention output = sof tmax Q * K T / \u221a D V",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_18",
+            "content": "(1) for queries (Q), keys (K) and values (V) of dimension D, however, Q is generated from a modality other than K and V. We choose the number of cross-modal encoder layers to be 2.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_19",
+            "content": "Pretraining",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_20",
+            "content": "BERT is trained using the next sentence prediction and masked language modeling. CLIP is an imagetext matching system with two components, a text encoder (CLIP-T), and an image encoder (CLIP-ViT), which learn to encode paired inputs to closer output embeddings via contrastive loss. The trained representation has the following properties:",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_21",
+            "content": "cos(H i , V i ) >> cos(H i , V j )(i \u0338 = j) (2) cos(H i , V i ) >> cos(H j , V i )(i \u0338 = j)(3)",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_22",
+            "content": "where H i is the CLIP text encoder output of X i , and V i is the CLIP image encoder output of Y i . The text-image input (X i , Y i ) is paired, and every (X j , Y k ) (j \u0338 = k) is a non-pair. Since H i and V i are normalized and have a length of 1, H i can be used to approximate V i . The similarity of H i and V i is also shown in multi-modal arithmetic propreties discovered in Tewel et al. (2021) Therefore, we use the CLIP text encoder output to approximate CLIP image encoder output for a straightforward adaptation process.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_23",
+            "content": "Adaptation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_24",
+            "content": "We define three adapting tasks that can be learned in a self-supervised manner, which is visualized in Figure 2. In these tasks, BERT and CLIP-T takes sentences A and B respectively as input, and losses are calculated from both BERT output and CLIP-T output. Our adapting tasks closely follow BERT text pretraining strategies to retain linguistic competence. Unlike pretraining, the adaptation is computationally inexpensive, as we found that training 1 epoch on wiki103 was already effective. Further training details can be found in Appendix C.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_25",
+            "content": "Joint Masked Language Modeling (MLM)",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3.1"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_26",
+            "content": "The MLM objective teaches the model to reconstruct masked tokens. The masked ratio and masked token replacement probabilities follow Devlin et al. (2019). Since there is no equivalent of a [MASK] token in CLIP, we leave the sentence as is.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_27",
+            "content": "Same sentence prediction (MATCH)",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3.2"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_28",
+            "content": "The Image-Text Matching (ITM) objective is widely used in multimodal learning (Tan and Bansal, 2020;Radford et al., 2021). We modify this objective to same sentence prediction as both streams of our model takes text as input. When choosing the input sentences for BERT and CLIP-T, we make the inputs nonidentical 50% of the time. A binary classifier over [CLS] differentiates between the two cases. This motivates the [CLS] output to encode sentence related information, and trains the cross-attention weights.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_29",
+            "content": "Cross-modality encoder layer Single-modality encoder layer",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_30",
+            "content": "Q,K,V K,V Q",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_31",
+            "content": "CLIP Token Classification",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3.3"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_32",
+            "content": "This is the MLM objective done on the CLIP-T side of the full model, omitting the masking part because CLIP has no mask token. Same as MLM, 15% of the tokens are randomly selected for reconstruction. We address concerns on trivial solutions learned by the model in Section 5 and 9 in the appendix.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_33",
+            "content": "Finetuning",
+            "ntype": "title",
+            "meta": {
+                "section": "2.4"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_34",
+            "content": "Finetuning follows the methods described in Devlin et al. (2019), and is applied to the language encoder only (XDBERT), therefore the number of parameters are kept equal to pretrained-BERT.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_35",
+            "content": "Experimental Results",
+            "ntype": "title",
+            "meta": {
+                "section": "3"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_36",
+            "content": "We evaluated our model on three NLU benchmarks, namely GLUE, SWAG and READ. We tested our adaptation strategy on three different language encoders coupled with CLIP-T, including BERT-base, ELECTRA-base, and ELECTRA-large. We fix the finetuning parameters between models where comparison is intended, and select the median result of Table 1 shows experimental results. Each of our XD-model constantly outperforms the original encoder (For fair comparison, we train the original encoder with one more epoch of wiki103). We found that performance gains are more significant on smaller datasets (RTE, MRPC, STSB, CoLA), indicating that visual features help increase generalization when the amount of training data is limited. The gains are also significant on the readability benchmark (READ).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_37",
+            "content": "We show that the results of finetuning CLIP-T alone on GLUE does not perform well. Since the language capability of the CLIP-T model is weak, the distilled information obtained by XD-BERT/XDELECTRA is predominantly visual.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_38",
+            "content": "It is also possible to finetune the entire crossmodal transformer after adaptation. The performance further increases but the model has more parameters. The results are in Appendix C.3.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_39",
+            "content": "Analysis",
+            "ntype": "title",
+            "meta": {
+                "section": "4"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_40",
+            "content": "To justify the use of a cross-modal encoder, we first conducted a pairwise projection weighted canonical correlation analysis (PWCCA) on word embeddings. The PWCCA is a good measure to determine how close the distributions of two vector groups are to each other. The PWCCA results in Table 2 show low scores on both BERT/CLIP and ELEC-TRA/CLIP before co-training, so the cross-modal encoder is useful in learning from both distributions.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_41",
+            "content": "We inspect RTE, MRPC, and CoLA results of 5 runs in detail to show that the improvements are likely from visual information of CLIP-T. Over the 5 runs, XDBERT-b has accumulated +38 more correct classifications than BERT-b, or +2.74% (38/5/277) and CoLA show +0.3% and +0.9% gains in accuracy respectively, and translates to a larger gain in performance with their original metric (MRPC F1: +0.83%, CoLA Corr: +2.2%). We then separate each of the glue datasets entries into two categories: entries that XDBERT-b improves classification over BERT-b, and entries of the opposite. Entries where both models obtain the same performance are set aside. Analyzing the separated entries as a whole, we discovered that the betterperforming entries have a larger visually grounded ratio (Figure 4), as the quartile, median and mean values are generally higher for improved samples. resentations is a rough indicator that XDBERT has obtained distilled visual information from CLIP-T. We show examples of each category in Appendix D.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_42",
+            "content": "Ablation study",
+            "ntype": "title",
+            "meta": {
+                "section": "5"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_43",
+            "content": "We tried various combinations of adaptation tasks and found out that using all three yielded the best results. We also tried to reduce the number of cross-modal encoder layers to one; however, no further improvements were made upon the visually grounded language encoder. Other experiments include changing the number of layers in the crossmodal encoder, training for longer, and swapping to a much larger wiki (14G). Swapping to wiki reduces potential overfitting from the 20 Epochs setting trained on wiki103, as training for the same amount of steps on wiki is less than 1 epoch. We tested these changes on RTE, MPRC, STSB, and CoLA on 5 random seeds, and the results are shown in Table 3, where MLM refers to the joint MLM objective, MATCH refers to the cross-modal matching objective, and CLIPTC refers to the CLIP token classification objective.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_44",
+            "content": "Besides experimental evidence, we also justify the CLIPTC loss via further analysis, as the CLIPTC objective can theoretically be trivially solved by identity mapping. Despite this possibility, we find that the loss is crucial to cross attention learning. Since we do not impose negative hard samples from sampled sentences, the MATCH objective can be solved sufficiently simply by guiding the cross attention to focus on common trivial words. With the CLIPTC objective, the diversity of the input embeddings corresponding to different tokens must be retained in the cross-modal encoder, leading to more robust cross-modal attention. We show comparisons of the attention maps generated from the cross-modal encoders with a random sequence from RTE in Table 9 in the Appendix to verify this claim.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_45",
+            "content": "Conclusion",
+            "ntype": "title",
+            "meta": {
+                "section": "6"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_46",
+            "content": "In this study, we explored using cross-modal encoders to distill visual information to BERT. We adapted the model with multiple objectives, and we were able to achieve improved performance on NLU tasks. Our adaptation techniques are computationally inexpensive and straightforward. Furthermore, our method is language encoder agnostic, as we show similar performance gains on XDELEC-TRA.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_47",
+            "content": "While BERT and CLIP have similar forwarding mechanisms, the specifications of the transformer architecture are different, resulting in challenges to jointly model both models (Table 4).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_48",
+            "content": "Mismatching dimensions pose a problem in cross-attention. We use a linear transformation to generate Q, K, and V of matching dimensions, but clarify that this linear transformation layer exists in the original LXMERT setting where hidden representations have unified dimensions.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_49",
+            "content": "We modify the input to address the mismatched max_len of the two systems. In the joint MLM, we used a fixed sequence length of 512 for the BERT. However, the same cannot be done for CLIP as the maxmum model sequence length is 77 for CLIP. We found that most BERT sequences (>99%) of length 512 encode into CLIP sequences of length less than 693, so we pad the CLIP sequence to length 693, and then split the CLIP sequence into 9 sub-sequences of length 77. Therefore, a batch of inputs will contain BERT inputs of size (batch_size, 512) and CLIP inputs of size (batch_size, 9, 77). The output was resized to (batch_size, 693) in the cross-modal encoder. The issue is also present in the finetuning phase, and the maximum sequence length of GLUE and SWAG is 128; therefore we used 2 blocks of CLIP sub-sequences to model it. For bi-sequence classification tasks such as RTE and MRPC, we ensure that separate sentences do not use the same block in the CLIP encoder. Therefore, uni-sequence classification tasks will have a CLIP input size of (batch_size, 2, 77) and the bisequence classification task will have a CLIP input size of (batch_size, 4, 77).",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_50",
+            "content": "We use publicly available wiki103 and preprocessing methods similar to Tan and Bansal (2020) 3 . Wiki103 (500MB) is a subset of the Wikipedia corpus consisting of only good and featured articles. The adaptation of 1 epoch on wiki103 finished in 35 minutes on 8 V100s (BERT-base). We trained for at most 20 epochs( 16k steps) and found that further adaptation steps did not increase scores in early epochs, and significantly decreased performance in late epochs. We used the following parameters for adaptation : learning rate = 1e-4, max_epoch = 40 (although we stopped early due to plummeting performance), warmup ratio = 0.05",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_51",
+            "content": "The learning rates are listed in Table 5.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_52",
+            "content": "base-sized large-sized RTE,MRPC,STSB 1e-4 5e-5 others 2e-5 1e-5 We used a warmup ratio of 0.1, with a learning rate decay of 0.9, and trained the model for 3 epochs. We report the median results of 5 runs on different random seeds, except for RTE, which is unstable; therefore, we report the median results of 9 runs instead. The reproduce results of ELECTRA on RTE and STSB are lower than values reported by Clark et al. (2020) because we did not start from an MNLI checkpoint.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_53",
+            "content": "Since our cross-modal transformer itself is can also be viewed as a language encoder, finetuning can be done on the full model. This approach, however, adds extra parameters to pretrained-BERT, so comparison with pretrained-BERT is not intended, instead, we focus on showing the feasibility of this approach. The number of additional parameters is only a function of the hidden size in BERT/ELECTRA, so when the language encoder is large, the ratio of additional parameters is much more insignificant. To simplify notations, we use X-(language encoder) to represent the full model. The number of parameters of the full model is shown in Table 6 and the results on NLU tasks are shown in Table 8.",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_54",
+            "content": "We provide three RTE example of each type in Figure4, and we choose extreme examples where performance difference is huge over 5 runs for both \"Improved\" and \"Worsened\" categories. We follow Tan and Bansal (2020) Example2 : Visually-grounded ratio : 4/(10+4) = 0.2857 BERT answered correctly : 0/5 XDBERT answered correctly : 5/5 (it) (is) hoped (that) women (,) (who) constitute (more) (than) half (of) (the) population (,) (will) vote (for) (other) women (and) ensure (that) (their) issues (are) represented (in) parliament (.) women (are) poorly represented (in) parliament (.)",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_55",
+            "content": "Example3 :",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_56",
+            "content": "Visually-grounded ratio : 13/(13+17) = 0.4333 BERT answered correctly : 0/5 XDBERT answered correctly : 5/5 ho ##dler claimed (there) (were) also irregularities (in) (the) campaigns organized (by) atlanta (for) (the) 1996 summer games (,) sydney (for) (the) summer olympics (in) 2000 (and) salt lake city (for) (the) 2002 winter games (.) (before) salt lake city (,) winter olympic games took place (in) naga ##no (.)",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_57",
+            "content": "Example1 : Visually-grounded ratio : 6/(6+32) = 0.1375 BERT answered correctly : 0/5 XDBERT answered correctly : 0/5 (on) october 1 2001 (,) eu (and) (other) countries introduced (the) option (for) domestic animal owners (to) apply (for) pet passports (under) (the) pets travel scheme (() pets (for) short ()) (,) (for) pets returning (from) abroad (to) (the) united kingdom (.) (this) replaced (the) old system(of) 6 months compulsory qu ##aran ##tine (for) (all) domestic pets (.) (in) 2001 (,) (the) eu introduced (a) passport(for) pets (.) Example2 : Visually-grounded ratio : 5/(5+16) = 0.2381 BERT answered correctly : 5/5 XDBERT answered correctly : 5/5 security forces (were) (on) high alert (after) (an) election campaign (in) (which) (more) (than) 1 (,) 000 people (,) including seven election candidates (,) (have) (been) killed (.) security forces (were) (on) high alert (after) (a) campaign marred (by) violence (.)",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_58",
+            "content": "Example3 : Visually-grounded ratio : 8/(8+16) = 0.3333 BERT answered correctly : 5/5 XDBERT answered correctly : 5/5 (in) 1979 (,) (the) leaders signed (the) egypt (-) israel peace treaty (on) (the) white house lawn (.) (both) president begin (and) sad ##at received (the) nobel peace prize (for) (their) Visually-grounded ratio : 11/(11+29) = 0.4167 BERT answered correctly : 5/5 XDBERT answered correctly : 0/5 (about) half (were) along (a) 20 (-) mile stretch (of) santa monica bay (from) top anga canyon boulevard (to) (the) palo s verde s peninsula (.) (the) coastline (of) santa monica bay (is) 50 miles long (.) Example3 : Visually-grounded ratio : 32/(32+55) = 0.3678 BERT answered correctly : 5/5 XDBERT answered correctly : 0/5 cairo (is) (now) home (to) (some) 15 million people (-) (a) bu ##rgeon ##ing population (that) produces approximately 10 (,) 000 tonnes (of) rubbish per day (,) putting (an) enormous strain (on) public services (.) (in) (the) past 10 years (,) (the) government (has) tried hard (to) encourage private investment (in) (the) refuse sector (,) (but) (some) estimate 4 (,) 000 tonnes (of) waste (is) left behind every day (,) fest ##ering (in) (the) heat (as) (it) waits (for) someone (to) clear (it) (up) (.) (it) (is) often (the) people (in) (the) poor ##est neighbourhoods (that) (are) worst affected (.) (but) (in) (some) areas (they) (are) fighting back (.) (in) shu ##bra (,) one (of) (the) northern districts (of) (the) city (,) (the) residents (have) taken (to) (the) streets armed (with) dust ##pan ##s (and) brushes (to) clean (up) public areas (which) (have) (been) used (as) public dump ##s (.)",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_59",
+            "content": "15 million tonnes (of) rubbish (are) produced daily (in) cairo (.)",
+            "ntype": "p",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_60",
+            "content": "Diff",
+            "ntype": "formula",
+            "meta": null
+        },
+        {
+            "ix": "172-ARR_v2_61",
+            "content": "Kevin Clark, Minh-Thang Luong, Quoc Le, Christopher Manning, ELECTRA: pretraining text encoders as discriminators rather than generators, 2020-04-26, 8th International Conference on Learning Representations, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b0",
+                "authors": [
+                    "Kevin Clark",
+                    "Minh-Thang Luong",
+                    "Quoc Le",
+                    "Christopher Manning"
+                ],
+                "title": "ELECTRA: pretraining text encoders as discriminators rather than generators",
+                "pub_date": "2020-04-26",
+                "pub_title": "8th International Conference on Learning Representations",
+                "pub": null
+            }
+        },
+        {
+            "ix": "172-ARR_v2_62",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: Pre-training of deep bidirectional transformers for language understanding, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b1",
+                "authors": [
+                    "Jacob Devlin",
+                    "Ming-Wei Chang",
+                    "Kenton Lee",
+                    "Kristina Toutanova"
+                ],
+                "title": "BERT: Pre-training of deep bidirectional transformers for language understanding",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies",
+                "pub": "Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_63",
+            "content": "Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Sylvain Gelly, Jakob Uszkoreit, Neil Houlsby, An image is worth 16x16 words: Transformers for image recognition at scale, 2021, International Conference on Learning Representations, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b2",
+                "authors": [
+                    "Alexey Dosovitskiy",
+                    "Lucas Beyer",
+                    "Alexander Kolesnikov",
+                    "Dirk Weissenborn",
+                    "Xiaohua Zhai",
+                    "Thomas Unterthiner",
+                    "Mostafa Dehghani",
+                    "Matthias Minderer",
+                    "Georg Heigold",
+                    "Sylvain Gelly",
+                    "Jakob Uszkoreit",
+                    "Neil Houlsby"
+                ],
+                "title": "An image is worth 16x16 words: Transformers for image recognition at scale",
+                "pub_date": "2021",
+                "pub_title": "International Conference on Learning Representations",
+                "pub": null
+            }
+        },
+        {
+            "ix": "172-ARR_v2_64",
+            "content": "Tanmay Gupta, Alexander Schwing, Derek Hoiem, Vico: Word embeddings from visual co-occurrences, 2019-10-27, 2019 IEEE/CVF International Conference on Computer Vision, ICCV 2019, Seoul, Korea (South), IEEE.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b3",
+                "authors": [
+                    "Tanmay Gupta",
+                    "Alexander Schwing",
+                    "Derek Hoiem"
+                ],
+                "title": "Vico: Word embeddings from visual co-occurrences",
+                "pub_date": "2019-10-27",
+                "pub_title": "2019 IEEE/CVF International Conference on Computer Vision, ICCV 2019, Seoul, Korea (South)",
+                "pub": "IEEE"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_65",
+            "content": "Po-Yao Huang, Junjie Hu, Xiaojun Chang, Alexander Hauptmann, Unsupervised multimodal neural machine translation with pseudo visual pivoting, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, Online. Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b4",
+                "authors": [
+                    "Po-Yao Huang",
+                    "Junjie Hu",
+                    "Xiaojun Chang",
+                    "Alexander Hauptmann"
+                ],
+                "title": "Unsupervised multimodal neural machine translation with pseudo visual pivoting",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics",
+                "pub": "Online. Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_66",
+            "content": "Zhenzhong Lan, Mingda Chen, Sebastian Goodman, Kevin Gimpel, Piyush Sharma, Radu Soricut, ALBERT: A lite BERT for self-supervised learning of language representations, 2020-04-26, 8th International Conference on Learning Representations, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b5",
+                "authors": [
+                    "Zhenzhong Lan",
+                    "Mingda Chen",
+                    "Sebastian Goodman",
+                    "Kevin Gimpel",
+                    "Piyush Sharma",
+                    "Radu Soricut"
+                ],
+                "title": "ALBERT: A lite BERT for self-supervised learning of language representations",
+                "pub_date": "2020-04-26",
+                "pub_title": "8th International Conference on Learning Representations",
+                "pub": null
+            }
+        },
+        {
+            "ix": "172-ARR_v2_67",
+            "content": "UNKNOWN, None, 1908, Visualbert: A simple and performant baseline for vision and language, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b6",
+                "authors": null,
+                "title": null,
+                "pub_date": "1908",
+                "pub_title": "Visualbert: A simple and performant baseline for vision and language",
+                "pub": null
+            }
+        },
+        {
+            "ix": "172-ARR_v2_68",
+            "content": "Xiujun Li, Xi Yin, Chunyuan Li, Pengchuan Zhang, Xiaowei Hu, Lei Zhang, Lijuan Wang, Houdong Hu, Li Dong, Furu Wei, Yejin Choi, Jianfeng Gao, Oscar: Object-semantics aligned pretraining for vision-language tasks, 2020-08-23, Computer Vision -ECCV 2020 -16th European Conference, Springer.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b7",
+                "authors": [
+                    "Xiujun Li",
+                    "Xi Yin",
+                    "Chunyuan Li",
+                    "Pengchuan Zhang",
+                    "Xiaowei Hu",
+                    "Lei Zhang",
+                    "Lijuan Wang",
+                    "Houdong Hu",
+                    "Li Dong",
+                    "Furu Wei",
+                    "Yejin Choi",
+                    "Jianfeng Gao"
+                ],
+                "title": "Oscar: Object-semantics aligned pretraining for vision-language tasks",
+                "pub_date": "2020-08-23",
+                "pub_title": "Computer Vision -ECCV 2020 -16th European Conference",
+                "pub": "Springer"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_69",
+            "content": "UNKNOWN, None, 2019, Roberta: A robustly optimized bert pretraining approach, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b8",
+                "authors": null,
+                "title": null,
+                "pub_date": "2019",
+                "pub_title": "Roberta: A robustly optimized bert pretraining approach",
+                "pub": null
+            }
+        },
+        {
+            "ix": "172-ARR_v2_70",
+            "content": "Jiasen Lu, Dhruv Batra, Devi Parikh, Stefan Lee, Vilbert: Pretraining task-agnostic visiolinguistic representations for vision-and-language tasks, 2019-12-08, Advances in Neural Information Processing Systems 32: Annual Conference on Neural Information Processing Systems, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b9",
+                "authors": [
+                    "Jiasen Lu",
+                    "Dhruv Batra",
+                    "Devi Parikh",
+                    "Stefan Lee"
+                ],
+                "title": "Vilbert: Pretraining task-agnostic visiolinguistic representations for vision-and-language tasks",
+                "pub_date": "2019-12-08",
+                "pub_title": "Advances in Neural Information Processing Systems 32: Annual Conference on Neural Information Processing Systems",
+                "pub": null
+            }
+        },
+        {
+            "ix": "172-ARR_v2_71",
+            "content": "UNKNOWN, None, , Gretchen Krueger, and Ilya Sutskever. 2021. Learning transferable visual models from natural language supervision, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b10",
+                "authors": null,
+                "title": null,
+                "pub_date": null,
+                "pub_title": "Gretchen Krueger, and Ilya Sutskever. 2021. Learning transferable visual models from natural language supervision",
+                "pub": null
+            }
+        },
+        {
+            "ix": "172-ARR_v2_72",
+            "content": "UNKNOWN, None, 2020, VL-BERT: pretraining of generic visual-linguistic representations, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b11",
+                "authors": null,
+                "title": null,
+                "pub_date": "2020",
+                "pub_title": "VL-BERT: pretraining of generic visual-linguistic representations",
+                "pub": null
+            }
+        },
+        {
+            "ix": "172-ARR_v2_73",
+            "content": "UNKNOWN, None, 2020, 8th International Conference on Learning Representations, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b12",
+                "authors": null,
+                "title": null,
+                "pub_date": "2020",
+                "pub_title": "8th International Conference on Learning Representations",
+                "pub": null
+            }
+        },
+        {
+            "ix": "172-ARR_v2_74",
+            "content": "Hao Tan, Mohit Bansal, LXMERT: Learning cross-modality encoder representations from transformers, 2019, Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP), .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b13",
+                "authors": [
+                    "Hao Tan",
+                    "Mohit Bansal"
+                ],
+                "title": "LXMERT: Learning cross-modality encoder representations from transformers",
+                "pub_date": "2019",
+                "pub_title": "Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)",
+                "pub": null
+            }
+        },
+        {
+            "ix": "172-ARR_v2_75",
+            "content": "Hao Tan, Mohit Bansal, Vokenization: Improving language understanding with contextualized, visual-grounded supervision, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), Online. Association for Computational Linguistics.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b14",
+                "authors": [
+                    "Hao Tan",
+                    "Mohit Bansal"
+                ],
+                "title": "Vokenization: Improving language understanding with contextualized, visual-grounded supervision",
+                "pub_date": "2020",
+                "pub_title": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+                "pub": "Online. Association for Computational Linguistics"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_76",
+            "content": "UNKNOWN, None, 2021, Zero-shot image-to-text generation for visualsemantic arithmetic, CoRR.",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b15",
+                "authors": null,
+                "title": null,
+                "pub_date": "2021",
+                "pub_title": "Zero-shot image-to-text generation for visualsemantic arithmetic",
+                "pub": "CoRR"
+            }
+        },
+        {
+            "ix": "172-ARR_v2_77",
+            "content": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan Gomez, Lukasz Kaiser, Illia Polosukhin, Attention is all you need, 2017-12-04, Advances in Neural Information Processing Systems 30: Annual Conference on Neural Information Processing Systems, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b16",
+                "authors": [
+                    "Ashish Vaswani",
+                    "Noam Shazeer",
+                    "Niki Parmar",
+                    "Jakob Uszkoreit",
+                    "Llion Jones",
+                    "Aidan Gomez",
+                    "Lukasz Kaiser",
+                    "Illia Polosukhin"
+                ],
+                "title": "Attention is all you need",
+                "pub_date": "2017-12-04",
+                "pub_title": "Advances in Neural Information Processing Systems 30: Annual Conference on Neural Information Processing Systems",
+                "pub": null
+            }
+        },
+        {
+            "ix": "172-ARR_v2_78",
+            "content": "UNKNOWN, None, 2018, Glue: A multi-task benchmark and analysis platform for natural language understanding, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b17",
+                "authors": null,
+                "title": null,
+                "pub_date": "2018",
+                "pub_title": "Glue: A multi-task benchmark and analysis platform for natural language understanding",
+                "pub": null
+            }
+        },
+        {
+            "ix": "172-ARR_v2_79",
+            "content": "UNKNOWN, None, 2018, Swag: A large-scale adversarial dataset for grounded commonsense inference, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b18",
+                "authors": null,
+                "title": null,
+                "pub_date": "2018",
+                "pub_title": "Swag: A large-scale adversarial dataset for grounded commonsense inference",
+                "pub": null
+            }
+        },
+        {
+            "ix": "172-ARR_v2_80",
+            "content": "Zhuosheng Zhang, Kehai Chen, Rui Wang, Masao Utiyama, Eiichiro Sumita, Zuchao Li, Hai Zhao, Neural machine translation with universal visual representation, 2020-04-26, 8th International Conference on Learning Representations, .",
+            "ntype": "ref",
+            "meta": {
+                "xid": "b19",
+                "authors": [
+                    "Zhuosheng Zhang",
+                    "Kehai Chen",
+                    "Rui Wang",
+                    "Masao Utiyama",
+                    "Eiichiro Sumita",
+                    "Zuchao Li",
+                    "Hai Zhao"
+                ],
+                "title": "Neural machine translation with universal visual representation",
+                "pub_date": "2020-04-26",
+                "pub_title": "8th International Conference on Learning Representations",
+                "pub": null
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "172-ARR_v2_0@0",
+            "content": "XDBERT: Distilling Visual Information to BERT from Cross-Modal Systems to Improve Language Understanding",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_0",
+            "start": 0,
+            "end": 103,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_2@0",
+            "content": "Transformer-based models are widely used in natural language understanding (NLU) tasks, and multimodal transformers have been effective in visual-language tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_2",
+            "start": 0,
+            "end": 160,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_2@1",
+            "content": "This study explores distilling visual information from pretrained multimodal transformers to pretrained language encoders.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_2",
+            "start": 162,
+            "end": 283,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_2@2",
+            "content": "Our framework is inspired by cross-modal encoders' success in visual-language tasks while we alter the learning objective to cater to the language-heavy characteristics of NLU.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_2",
+            "start": 285,
+            "end": 460,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_2@3",
+            "content": "After training with a small number of extra adapting steps and finetuned, the proposed XDBERT (cross-modal distilled BERT) outperforms pretrained-BERT in general language understanding evaluation (GLUE), situations with adversarial generations (SWAG) benchmarks, and readability benchmarks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_2",
+            "start": 462,
+            "end": 751,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_2@4",
+            "content": "We analyze the performance of XDBERT on GLUE to show that the improvement is likely visually grounded.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_2",
+            "start": 753,
+            "end": 854,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_4@0",
+            "content": "Transformer-based models are extensively used in natural language understanding (NLU) tasks, and some prominent pretraining strategies include BERT (Devlin et al., 2019), RoBERTa (Liu et al., 2019), ALBERT (Lan et al., 2020), and ELEC-TRA (Clark et al., 2020).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_4",
+            "start": 0,
+            "end": 259,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_4@1",
+            "content": "Despite their differences in curating the learning objectives, they all utilize text-based datasets only.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_4",
+            "start": 261,
+            "end": 365,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_4@2",
+            "content": "In the real world, however, humans can benefit from the visual modality when acquiring knowledge from language; an obvious example is learning visually grounded words, such as colors and shapes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_4",
+            "start": 367,
+            "end": 560,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_5@0",
+            "content": "Some studies have succeeded with visually grounded information used in NLU.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_5",
+            "start": 0,
+            "end": 74,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_5@1",
+            "content": "ViCo (Gupta et al., 2019) learned visual co-occurrences in text and reported superior performance to GloVe in word analogy problems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_5",
+            "start": 76,
+            "end": 207,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_5@2",
+            "content": "and Huang et al. (2020) used images to boost translation performance in supervised and unsupervised settings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_5",
+            "start": 209,
+            "end": 317,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_5@3",
+            "content": "Tan and Bansal (2020) reported improvements over BERT on NLU by proposing the concept of vokenization.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_5",
+            "start": 319,
+            "end": 420,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_6@0",
+            "content": "Another branch of research focuses on solving multimodal downstream tasks such as visual question answering and image retrieval.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_6",
+            "start": 0,
+            "end": 127,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_6@1",
+            "content": "Li et al. (2019); Lu et al. (2019); Su et al. (2020); trained visual-text transformers, while LXMERT (Tan and Bansal, 2019) used different encoders for text and image and a cross-modal encoder.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_6",
+            "start": 129,
+            "end": 321,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_6@2",
+            "content": "Tan and Bansal (2020) tested these models with general language understanding evaluation (GLUE Wang et al. (2018)) and found that the performance does not exceed using BERT (Appendix A), drawing the conclusion that vision-and-language pretraining on visually-grounded language dataset failed to distill useful information for general NLU.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_6",
+            "start": 323,
+            "end": 660,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_6@3",
+            "content": "CLIP (Radford et al., 2021) utilizes contrastive loss to reach SOTA on zero-shot image classification in a retrieval fashion.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_6",
+            "start": 662,
+            "end": 786,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_7@0",
+            "content": "In this work, we establish the link between pretrained multimodal transformers and visuallygrounded language learning.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_7",
+            "start": 0,
+            "end": 117,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_7@1",
+            "content": "We devise a way to distill visual information from components of a pretrained multimodal transformer (CLIP texttransfomer, abbreviated as CLIP-T) to pretrained language transformers (BERT/ELECTRA), to incorporate versatile perception of words into the model (Figure 1).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_7",
+            "start": 119,
+            "end": 387,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_7@2",
+            "content": "The usage of a visually grounded text-transformer as a teacher allows us to implement straightforward and non-fuzzy adapting tasks for distillation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_7",
+            "start": 389,
+            "end": 536,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_7@3",
+            "content": "We show that it is mathematically logical that the CLIP-T output approximates visual features (Sec. 2.2), and also the linguistic competence of CLIP-T is low (Sec. 3), to prove that the distilled information is predominantly visual and thus non-trivial to the pretrained-language transformer despite having textual inputs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_7",
+            "start": 538,
+            "end": 859,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_8@0",
+            "content": "Methodologically, we use the cross-modal encoder structure inspired by Tan and Bansal (2019), to concatenate the two models and further adapt the ensemble for some extra steps (a lot fewer than the original pretraining steps).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_8",
+            "start": 0,
+            "end": 225,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_8@1",
+            "content": "While adapting pretrained-BERT, we favor a document-level corpus (wiki103) over a vision-language corpus (MSCOCO) due to claims from Devlin et al. (2019) 1 and results from Tan and Bansal (2020) (Appendix A).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_8",
+            "start": 227,
+            "end": 434,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_8@2",
+            "content": "The adapting tasks are joint masked language modeling (MLM), same sentence prediction, and CLIP token classification tasks, which are resemblant of BERT pretraining tasks to cater to the language-heavy characteristics of NLU.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_8",
+            "start": 436,
+            "end": 660,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_8@3",
+            "content": "We do ablation studies to show that each of the task provides improvement (Section 5).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_8",
+            "start": 662,
+            "end": 747,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_9@0",
+            "content": "During finetuning, we finetune XDBERT (crossmodal distilled BERT), which is the language encoder after adaptation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_9",
+            "start": 0,
+            "end": 113,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_9@1",
+            "content": "We evaluate the linguistic capabilities of the model by finetuning on GLUE, situations with adversarial generations (SWAG (Zellers et al., 2018)) benchmarks, and readability benchmarks 2 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_9",
+            "start": 115,
+            "end": 302,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_9@2",
+            "content": "The resulting XDBERT outperforms pretrained BERT, proving that our adaptation strategy distills useful visual knowledge into BERT (right of Figure 2).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_9",
+            "start": 304,
+            "end": 453,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_9@3",
+            "content": "We provide analysis to show that the improvements are visually grounded.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_9",
+            "start": 455,
+            "end": 526,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_10@0",
+            "content": "We summarize our contribution as follow:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_10",
+            "start": 0,
+            "end": 39,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_11@0",
+            "content": "\u2022 We explore distilling visual information from a pretrained multimodal transformer to a pretrained language transformer and improved NLU performance. \u2022 Our adapting method is efficient and extensible to different combinations of pretrainedlanguage encoders (BERT/ELECTRA).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_11",
+            "start": 0,
+            "end": 272,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_12@0",
+            "content": "1 \"It is critical to use a document-level corpus rather than a shuffled sentence-level corpus such as the BillionWord Benchmark in order to extract long contiguous sequences\" 2 https://www.kaggle.com/c/commonlitreadabilityprize",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_12",
+            "start": 0,
+            "end": 226,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_13@0",
+            "content": "Proposed Method",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_13",
+            "start": 0,
+            "end": 14,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_14@0",
+            "content": "The training process consists of three phases: pretraining, adaptation, and finetuning (Figure 2).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_14",
+            "start": 0,
+            "end": 97,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_14@1",
+            "content": "Our proposed method focuses on the adaptation phase with pretrained models, so pretraining is not a part of our experiment, but we explain all three phases for completeness.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_14",
+            "start": 99,
+            "end": 271,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_14@2",
+            "content": "The adaptation phase incorporates the cross-modal transformer structure to jointly learn from CLIP-T and BERT outputs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_14",
+            "start": 273,
+            "end": 390,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_15@0",
+            "content": "Model Architecture",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_15",
+            "start": 0,
+            "end": 17,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_16@0",
+            "content": "The cross-modal transformer (middle of Figure 2) consists of a cross-modal encoder, CLIP-T and BERT.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_16",
+            "start": 0,
+            "end": 99,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_16@1",
+            "content": "CLIP-T has the same module connections as BERT with only parameter differences (specifications in Appendix B).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_16",
+            "start": 101,
+            "end": 210,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_16@2",
+            "content": "The cross-modal encoder consists of repeating cross-modal encoder layers, which is an extension to single-modality encoder layers (layers of BERT/CLIP-T) in Figure 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_16",
+            "start": 212,
+            "end": 377,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_16@3",
+            "content": "The added cross-attention module follows the attention formula (Vaswani et al., 2017):",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_16",
+            "start": 379,
+            "end": 464,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_17@0",
+            "content": "Attention output = sof tmax Q * K T / \u221a D V",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_17",
+            "start": 0,
+            "end": 42,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_18@0",
+            "content": "(1) for queries (Q), keys (K) and values (V) of dimension D, however, Q is generated from a modality other than K and V. We choose the number of cross-modal encoder layers to be 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_18",
+            "start": 0,
+            "end": 179,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_19@0",
+            "content": "Pretraining",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_19",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_20@0",
+            "content": "BERT is trained using the next sentence prediction and masked language modeling.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_20",
+            "start": 0,
+            "end": 79,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_20@1",
+            "content": "CLIP is an imagetext matching system with two components, a text encoder (CLIP-T), and an image encoder (CLIP-ViT), which learn to encode paired inputs to closer output embeddings via contrastive loss.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_20",
+            "start": 81,
+            "end": 281,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_20@2",
+            "content": "The trained representation has the following properties:",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_20",
+            "start": 283,
+            "end": 338,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_21@0",
+            "content": "cos(H i , V i ) >> cos(H i , V j )(i \u0338 = j) (2) cos(H i , V i ) >> cos(H j , V i )(i \u0338 = j)(3)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_21",
+            "start": 0,
+            "end": 93,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_22@0",
+            "content": "where H i is the CLIP text encoder output of X i , and V i is the CLIP image encoder output of Y i .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_22",
+            "start": 0,
+            "end": 99,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_22@1",
+            "content": "The text-image input (X i , Y i ) is paired, and every (X j , Y k ) (j \u0338 = k) is a non-pair.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_22",
+            "start": 101,
+            "end": 192,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_22@2",
+            "content": "Since H i and V i are normalized and have a length of 1, H i can be used to approximate V i .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_22",
+            "start": 194,
+            "end": 286,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_22@3",
+            "content": "The similarity of H i and V i is also shown in multi-modal arithmetic propreties discovered in Tewel et al. (2021) Therefore, we use the CLIP text encoder output to approximate CLIP image encoder output for a straightforward adaptation process.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_22",
+            "start": 288,
+            "end": 531,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_23@0",
+            "content": "Adaptation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_23",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_24@0",
+            "content": "We define three adapting tasks that can be learned in a self-supervised manner, which is visualized in Figure 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_24",
+            "start": 0,
+            "end": 111,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_24@1",
+            "content": "In these tasks, BERT and CLIP-T takes sentences A and B respectively as input, and losses are calculated from both BERT output and CLIP-T output.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_24",
+            "start": 113,
+            "end": 257,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_24@2",
+            "content": "Our adapting tasks closely follow BERT text pretraining strategies to retain linguistic competence.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_24",
+            "start": 259,
+            "end": 357,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_24@3",
+            "content": "Unlike pretraining, the adaptation is computationally inexpensive, as we found that training 1 epoch on wiki103 was already effective.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_24",
+            "start": 359,
+            "end": 492,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_24@4",
+            "content": "Further training details can be found in Appendix C.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_24",
+            "start": 494,
+            "end": 545,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_25@0",
+            "content": "Joint Masked Language Modeling (MLM)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_25",
+            "start": 0,
+            "end": 35,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_26@0",
+            "content": "The MLM objective teaches the model to reconstruct masked tokens.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_26",
+            "start": 0,
+            "end": 64,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_26@1",
+            "content": "The masked ratio and masked token replacement probabilities follow Devlin et al. (2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_26",
+            "start": 66,
+            "end": 153,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_26@2",
+            "content": "Since there is no equivalent of a [MASK] token in CLIP, we leave the sentence as is.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_26",
+            "start": 155,
+            "end": 238,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_27@0",
+            "content": "Same sentence prediction (MATCH)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_27",
+            "start": 0,
+            "end": 31,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_28@0",
+            "content": "The Image-Text Matching (ITM) objective is widely used in multimodal learning (Tan and Bansal, 2020;Radford et al., 2021).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_28",
+            "start": 0,
+            "end": 121,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_28@1",
+            "content": "We modify this objective to same sentence prediction as both streams of our model takes text as input.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_28",
+            "start": 123,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_28@2",
+            "content": "When choosing the input sentences for BERT and CLIP-T, we make the inputs nonidentical 50% of the time.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_28",
+            "start": 226,
+            "end": 328,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_28@3",
+            "content": "A binary classifier over [CLS] differentiates between the two cases.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_28",
+            "start": 330,
+            "end": 397,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_28@4",
+            "content": "This motivates the [CLS] output to encode sentence related information, and trains the cross-attention weights.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_28",
+            "start": 399,
+            "end": 509,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_29@0",
+            "content": "Cross-modality encoder layer Single-modality encoder layer",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_29",
+            "start": 0,
+            "end": 57,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_30@0",
+            "content": "Q,K,V K,V Q",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_30",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_31@0",
+            "content": "CLIP Token Classification",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_31",
+            "start": 0,
+            "end": 24,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_32@0",
+            "content": "This is the MLM objective done on the CLIP-T side of the full model, omitting the masking part because CLIP has no mask token.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_32",
+            "start": 0,
+            "end": 125,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_32@1",
+            "content": "Same as MLM, 15% of the tokens are randomly selected for reconstruction.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_32",
+            "start": 127,
+            "end": 198,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_32@2",
+            "content": "We address concerns on trivial solutions learned by the model in Section 5 and 9 in the appendix.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_32",
+            "start": 200,
+            "end": 296,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_33@0",
+            "content": "Finetuning",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_33",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_34@0",
+            "content": "Finetuning follows the methods described in Devlin et al. (2019), and is applied to the language encoder only (XDBERT), therefore the number of parameters are kept equal to pretrained-BERT.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_34",
+            "start": 0,
+            "end": 188,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_35@0",
+            "content": "Experimental Results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_35",
+            "start": 0,
+            "end": 19,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_36@0",
+            "content": "We evaluated our model on three NLU benchmarks, namely GLUE, SWAG and READ.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_36",
+            "start": 0,
+            "end": 74,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_36@1",
+            "content": "We tested our adaptation strategy on three different language encoders coupled with CLIP-T, including BERT-base, ELECTRA-base, and ELECTRA-large.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_36",
+            "start": 76,
+            "end": 220,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_36@2",
+            "content": "We fix the finetuning parameters between models where comparison is intended, and select the median result of Table 1 shows experimental results.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_36",
+            "start": 222,
+            "end": 366,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_36@3",
+            "content": "Each of our XD-model constantly outperforms the original encoder (For fair comparison, we train the original encoder with one more epoch of wiki103).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_36",
+            "start": 368,
+            "end": 516,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_36@4",
+            "content": "We found that performance gains are more significant on smaller datasets (RTE, MRPC, STSB, CoLA), indicating that visual features help increase generalization when the amount of training data is limited.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_36",
+            "start": 518,
+            "end": 720,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_36@5",
+            "content": "The gains are also significant on the readability benchmark (READ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_36",
+            "start": 722,
+            "end": 788,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_37@0",
+            "content": "We show that the results of finetuning CLIP-T alone on GLUE does not perform well.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_37",
+            "start": 0,
+            "end": 81,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_37@1",
+            "content": "Since the language capability of the CLIP-T model is weak, the distilled information obtained by XD-BERT/XDELECTRA is predominantly visual.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_37",
+            "start": 83,
+            "end": 221,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_38@0",
+            "content": "It is also possible to finetune the entire crossmodal transformer after adaptation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_38",
+            "start": 0,
+            "end": 82,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_38@1",
+            "content": "The performance further increases but the model has more parameters.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_38",
+            "start": 84,
+            "end": 151,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_38@2",
+            "content": "The results are in Appendix C.3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_38",
+            "start": 153,
+            "end": 184,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_39@0",
+            "content": "Analysis",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_39",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_40@0",
+            "content": "To justify the use of a cross-modal encoder, we first conducted a pairwise projection weighted canonical correlation analysis (PWCCA) on word embeddings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_40",
+            "start": 0,
+            "end": 152,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_40@1",
+            "content": "The PWCCA is a good measure to determine how close the distributions of two vector groups are to each other.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_40",
+            "start": 154,
+            "end": 261,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_40@2",
+            "content": "The PWCCA results in Table 2 show low scores on both BERT/CLIP and ELEC-TRA/CLIP before co-training, so the cross-modal encoder is useful in learning from both distributions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_40",
+            "start": 263,
+            "end": 436,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_41@0",
+            "content": "We inspect RTE, MRPC, and CoLA results of 5 runs in detail to show that the improvements are likely from visual information of CLIP-T. Over the 5 runs, XDBERT-b has accumulated +38 more correct classifications than BERT-b, or +2.74% (38/5/277) and CoLA show +0.3% and +0.9% gains in accuracy respectively, and translates to a larger gain in performance with their original metric (MRPC F1: +0.83%, CoLA Corr: +2.2%).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_41",
+            "start": 0,
+            "end": 415,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_41@1",
+            "content": "We then separate each of the glue datasets entries into two categories: entries that XDBERT-b improves classification over BERT-b, and entries of the opposite.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_41",
+            "start": 417,
+            "end": 575,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_41@2",
+            "content": "Entries where both models obtain the same performance are set aside.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_41",
+            "start": 577,
+            "end": 644,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_41@3",
+            "content": "Analyzing the separated entries as a whole, we discovered that the betterperforming entries have a larger visually grounded ratio (Figure 4), as the quartile, median and mean values are generally higher for improved samples.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_41",
+            "start": 646,
+            "end": 869,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_41@4",
+            "content": "resentations is a rough indicator that XDBERT has obtained distilled visual information from CLIP-T. We show examples of each category in Appendix D.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_41",
+            "start": 871,
+            "end": 1019,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_42@0",
+            "content": "Ablation study",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_42",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_43@0",
+            "content": "We tried various combinations of adaptation tasks and found out that using all three yielded the best results.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_43",
+            "start": 0,
+            "end": 109,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_43@1",
+            "content": "We also tried to reduce the number of cross-modal encoder layers to one; however, no further improvements were made upon the visually grounded language encoder.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_43",
+            "start": 111,
+            "end": 270,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_43@2",
+            "content": "Other experiments include changing the number of layers in the crossmodal encoder, training for longer, and swapping to a much larger wiki (14G).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_43",
+            "start": 272,
+            "end": 416,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_43@3",
+            "content": "Swapping to wiki reduces potential overfitting from the 20 Epochs setting trained on wiki103, as training for the same amount of steps on wiki is less than 1 epoch.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_43",
+            "start": 418,
+            "end": 581,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_43@4",
+            "content": "We tested these changes on RTE, MPRC, STSB, and CoLA on 5 random seeds, and the results are shown in Table 3, where MLM refers to the joint MLM objective, MATCH refers to the cross-modal matching objective, and CLIPTC refers to the CLIP token classification objective.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_43",
+            "start": 583,
+            "end": 850,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_44@0",
+            "content": "Besides experimental evidence, we also justify the CLIPTC loss via further analysis, as the CLIPTC objective can theoretically be trivially solved by identity mapping.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_44",
+            "start": 0,
+            "end": 166,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_44@1",
+            "content": "Despite this possibility, we find that the loss is crucial to cross attention learning.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_44",
+            "start": 168,
+            "end": 254,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_44@2",
+            "content": "Since we do not impose negative hard samples from sampled sentences, the MATCH objective can be solved sufficiently simply by guiding the cross attention to focus on common trivial words.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_44",
+            "start": 256,
+            "end": 442,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_44@3",
+            "content": "With the CLIPTC objective, the diversity of the input embeddings corresponding to different tokens must be retained in the cross-modal encoder, leading to more robust cross-modal attention.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_44",
+            "start": 444,
+            "end": 632,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_44@4",
+            "content": "We show comparisons of the attention maps generated from the cross-modal encoders with a random sequence from RTE in Table 9 in the Appendix to verify this claim.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_44",
+            "start": 634,
+            "end": 795,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_45@0",
+            "content": "Conclusion",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_45",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_46@0",
+            "content": "In this study, we explored using cross-modal encoders to distill visual information to BERT.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_46",
+            "start": 0,
+            "end": 91,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_46@1",
+            "content": "We adapted the model with multiple objectives, and we were able to achieve improved performance on NLU tasks.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_46",
+            "start": 93,
+            "end": 201,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_46@2",
+            "content": "Our adaptation techniques are computationally inexpensive and straightforward.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_46",
+            "start": 203,
+            "end": 280,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_46@3",
+            "content": "Furthermore, our method is language encoder agnostic, as we show similar performance gains on XDELEC-TRA.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_46",
+            "start": 282,
+            "end": 386,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_47@0",
+            "content": "While BERT and CLIP have similar forwarding mechanisms, the specifications of the transformer architecture are different, resulting in challenges to jointly model both models (Table 4).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_47",
+            "start": 0,
+            "end": 184,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_48@0",
+            "content": "Mismatching dimensions pose a problem in cross-attention.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_48",
+            "start": 0,
+            "end": 56,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_48@1",
+            "content": "We use a linear transformation to generate Q, K, and V of matching dimensions, but clarify that this linear transformation layer exists in the original LXMERT setting where hidden representations have unified dimensions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_48",
+            "start": 58,
+            "end": 277,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_49@0",
+            "content": "We modify the input to address the mismatched max_len of the two systems.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_49",
+            "start": 0,
+            "end": 72,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_49@1",
+            "content": "In the joint MLM, we used a fixed sequence length of 512 for the BERT.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_49",
+            "start": 74,
+            "end": 143,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_49@2",
+            "content": "However, the same cannot be done for CLIP as the maxmum model sequence length is 77 for CLIP.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_49",
+            "start": 145,
+            "end": 237,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_49@3",
+            "content": "We found that most BERT sequences (>99%) of length 512 encode into CLIP sequences of length less than 693, so we pad the CLIP sequence to length 693, and then split the CLIP sequence into 9 sub-sequences of length 77.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_49",
+            "start": 239,
+            "end": 455,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_49@4",
+            "content": "Therefore, a batch of inputs will contain BERT inputs of size (batch_size, 512) and CLIP inputs of size (batch_size, 9, 77).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_49",
+            "start": 457,
+            "end": 580,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_49@5",
+            "content": "The output was resized to (batch_size, 693) in the cross-modal encoder.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_49",
+            "start": 582,
+            "end": 652,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_49@6",
+            "content": "The issue is also present in the finetuning phase, and the maximum sequence length of GLUE and SWAG is 128; therefore we used 2 blocks of CLIP sub-sequences to model it.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_49",
+            "start": 654,
+            "end": 822,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_49@7",
+            "content": "For bi-sequence classification tasks such as RTE and MRPC, we ensure that separate sentences do not use the same block in the CLIP encoder.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_49",
+            "start": 824,
+            "end": 962,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_49@8",
+            "content": "Therefore, uni-sequence classification tasks will have a CLIP input size of (batch_size, 2, 77) and the bisequence classification task will have a CLIP input size of (batch_size, 4, 77).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_49",
+            "start": 964,
+            "end": 1149,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_50@0",
+            "content": "We use publicly available wiki103 and preprocessing methods similar to Tan and Bansal (2020) 3 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_50",
+            "start": 0,
+            "end": 95,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_50@1",
+            "content": "Wiki103 (500MB) is a subset of the Wikipedia corpus consisting of only good and featured articles.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_50",
+            "start": 97,
+            "end": 194,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_50@2",
+            "content": "The adaptation of 1 epoch on wiki103 finished in 35 minutes on 8 V100s (BERT-base).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_50",
+            "start": 196,
+            "end": 278,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_50@3",
+            "content": "We trained for at most 20 epochs( 16k steps) and found that further adaptation steps did not increase scores in early epochs, and significantly decreased performance in late epochs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_50",
+            "start": 280,
+            "end": 460,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_50@4",
+            "content": "We used the following parameters for adaptation : learning rate = 1e-4, max_epoch = 40 (although we stopped early due to plummeting performance), warmup ratio = 0.05",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_50",
+            "start": 462,
+            "end": 626,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_51@0",
+            "content": "The learning rates are listed in Table 5.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_51",
+            "start": 0,
+            "end": 40,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_52@0",
+            "content": "base-sized large-sized RTE,MRPC,STSB 1e-4 5e-5 others 2e-5 1e-5 We used a warmup ratio of 0.1, with a learning rate decay of 0.9, and trained the model for 3 epochs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_52",
+            "start": 0,
+            "end": 164,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_52@1",
+            "content": "We report the median results of 5 runs on different random seeds, except for RTE, which is unstable; therefore, we report the median results of 9 runs instead.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_52",
+            "start": 166,
+            "end": 324,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_52@2",
+            "content": "The reproduce results of ELECTRA on RTE and STSB are lower than values reported by Clark et al. (2020) because we did not start from an MNLI checkpoint.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_52",
+            "start": 326,
+            "end": 477,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_53@0",
+            "content": "Since our cross-modal transformer itself is can also be viewed as a language encoder, finetuning can be done on the full model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_53",
+            "start": 0,
+            "end": 126,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_53@1",
+            "content": "This approach, however, adds extra parameters to pretrained-BERT, so comparison with pretrained-BERT is not intended, instead, we focus on showing the feasibility of this approach.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_53",
+            "start": 128,
+            "end": 307,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_53@2",
+            "content": "The number of additional parameters is only a function of the hidden size in BERT/ELECTRA, so when the language encoder is large, the ratio of additional parameters is much more insignificant.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_53",
+            "start": 309,
+            "end": 500,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_53@3",
+            "content": "To simplify notations, we use X-(language encoder) to represent the full model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_53",
+            "start": 502,
+            "end": 580,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_53@4",
+            "content": "The number of parameters of the full model is shown in Table 6 and the results on NLU tasks are shown in Table 8.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_53",
+            "start": 582,
+            "end": 694,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_54@0",
+            "content": "We provide three RTE example of each type in Figure4, and we choose extreme examples where performance difference is huge over 5 runs for both \"Improved\" and \"Worsened\" categories.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_54",
+            "start": 0,
+            "end": 179,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_54@1",
+            "content": "We follow Tan and Bansal (2020) Example2 : Visually-grounded ratio : 4/(10+4) = 0.2857 BERT answered correctly : 0/5 XDBERT answered correctly : 5/5 (it) (is) hoped (that) women (,) (who) constitute (more) (than) half (of) (the) population (,) (will) vote (for) (other) women (and) ensure (that) (their) issues (are) represented (in) parliament (.) women (are) poorly represented (in) parliament (.)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_54",
+            "start": 181,
+            "end": 579,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_55@0",
+            "content": "Example3 :",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_55",
+            "start": 0,
+            "end": 9,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_56@0",
+            "content": "Visually-grounded ratio : 13/(13+17) = 0.4333 BERT answered correctly : 0/5 XDBERT answered correctly : 5/5 ho ##dler claimed (there) (were) also irregularities (in) (the) campaigns organized (by) atlanta (for) (the) 1996 summer games (,) sydney (for) (the) summer olympics (in) 2000 (and) salt lake city (for) (the) 2002 winter games (.) (before) salt lake city (,) winter olympic games took place (in) naga ##no (.)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_56",
+            "start": 0,
+            "end": 416,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_57@0",
+            "content": "Example1 : Visually-grounded ratio : 6/(6+32) = 0.1375 BERT answered correctly : 0/5 XDBERT answered correctly : 0/5 (on) october 1 2001 (,) eu (and) (other) countries introduced (the) option (for) domestic animal owners (to) apply (for) pet passports (under) (the) pets travel scheme (() pets (for) short ()) (,) (for) pets returning (from) abroad (to) (the) united kingdom (.) (this) replaced (the) old system(of) 6 months compulsory qu ##aran ##tine (for) (all) domestic pets (.) (in) 2001 (,) (the) eu introduced (a) passport(for) pets (.) Example2 : Visually-grounded ratio : 5/(5+16) = 0.2381 BERT answered correctly : 5/5 XDBERT answered correctly : 5/5 security forces (were) (on) high alert (after) (an) election campaign (in) (which) (more) (than) 1 (,) 000 people (,) including seven election candidates (,) (have) (been) killed (.) security forces (were) (on) high alert (after) (a) campaign marred (by) violence (.)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_57",
+            "start": 0,
+            "end": 927,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_58@0",
+            "content": "Example3 : Visually-grounded ratio : 8/(8+16) = 0.3333 BERT answered correctly : 5/5 XDBERT answered correctly : 5/5 (in) 1979 (,) (the) leaders signed (the) egypt (-) israel peace treaty (on) (the) white house lawn (.) (both) president begin (and) sad ##at received (the) nobel peace prize (for) (their) Visually-grounded ratio : 11/(11+29) = 0.4167 BERT answered correctly : 5/5 XDBERT answered correctly : 0/5 (about) half (were) along (a) 20 (-) mile stretch (of) santa monica bay (from) top anga canyon boulevard (to) (the) palo s verde s peninsula (.) (the) coastline (of) santa monica bay (is) 50 miles long (.) Example3 : Visually-grounded ratio : 32/(32+55) = 0.3678 BERT answered correctly : 5/5 XDBERT answered correctly : 0/5 cairo (is) (now) home (to) (some) 15 million people (-) (a) bu ##rgeon ##ing population (that) produces approximately 10 (,) 000 tonnes (of) rubbish per day (,) putting (an) enormous strain (on) public services (.) (in) (the) past 10 years (,) (the) government (has) tried hard (to) encourage private investment (in) (the) refuse sector (,) (but) (some) estimate 4 (,) 000 tonnes (of) waste (is) left behind every day (,) fest ##ering (in) (the) heat (as) (it) waits (for) someone (to) clear (it) (up) (.) (it) (is) often (the) people (in) (the) poor ##est neighbourhoods (that) (are) worst affected (.) (but) (in) (some) areas (they) (are) fighting back (.) (in) shu ##bra (,) one (of) (the) northern districts (of) (the) city (,) (the) residents (have) taken (to) (the) streets armed (with) dust ##pan ##s (and) brushes (to) clean (up) public areas (which) (have) (been) used (as) public dump ##s (.)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_58",
+            "start": 0,
+            "end": 1639,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_59@0",
+            "content": "15 million tonnes (of) rubbish (are) produced daily (in) cairo (.)",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_59",
+            "start": 0,
+            "end": 65,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_60@0",
+            "content": "Diff",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_60",
+            "start": 0,
+            "end": 3,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_61@0",
+            "content": "Kevin Clark, Minh-Thang Luong, Quoc Le, Christopher Manning, ELECTRA: pretraining text encoders as discriminators rather than generators, 2020-04-26, 8th International Conference on Learning Representations, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_61",
+            "start": 0,
+            "end": 208,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_62@0",
+            "content": "Jacob Devlin, Ming-Wei Chang, Kenton Lee, Kristina Toutanova, BERT: Pre-training of deep bidirectional transformers for language understanding, 2019, Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_62",
+            "start": 0,
+            "end": 335,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_63@0",
+            "content": "Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Sylvain Gelly, Jakob Uszkoreit, Neil Houlsby, An image is worth 16x16 words: Transformers for image recognition at scale, 2021, International Conference on Learning Representations, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_63",
+            "start": 0,
+            "end": 341,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_64@0",
+            "content": "Tanmay Gupta, Alexander Schwing, Derek Hoiem, Vico: Word embeddings from visual co-occurrences, 2019-10-27, 2019 IEEE/CVF International Conference on Computer Vision, ICCV 2019, Seoul, Korea (South), IEEE.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_64",
+            "start": 0,
+            "end": 204,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_65@0",
+            "content": "Po-Yao Huang, Junjie Hu, Xiaojun Chang, Alexander Hauptmann, Unsupervised multimodal neural machine translation with pseudo visual pivoting, 2020, Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, Online. Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_65",
+            "start": 0,
+            "end": 285,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_66@0",
+            "content": "Zhenzhong Lan, Mingda Chen, Sebastian Goodman, Kevin Gimpel, Piyush Sharma, Radu Soricut, ALBERT: A lite BERT for self-supervised learning of language representations, 2020-04-26, 8th International Conference on Learning Representations, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_66",
+            "start": 0,
+            "end": 238,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_67@0",
+            "content": "UNKNOWN, None, 1908, Visualbert: A simple and performant baseline for vision and language, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_67",
+            "start": 0,
+            "end": 91,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_68@0",
+            "content": "Xiujun Li, Xi Yin, Chunyuan Li, Pengchuan Zhang, Xiaowei Hu, Lei Zhang, Lijuan Wang, Houdong Hu, Li Dong, Furu Wei, Yejin Choi, Jianfeng Gao, Oscar: Object-semantics aligned pretraining for vision-language tasks, 2020-08-23, Computer Vision -ECCV 2020 -16th European Conference, Springer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_68",
+            "start": 0,
+            "end": 287,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_69@0",
+            "content": "UNKNOWN, None, 2019, Roberta: A robustly optimized bert pretraining approach, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_69",
+            "start": 0,
+            "end": 78,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_70@0",
+            "content": "Jiasen Lu, Dhruv Batra, Devi Parikh, Stefan Lee, Vilbert: Pretraining task-agnostic visiolinguistic representations for vision-and-language tasks, 2019-12-08, Advances in Neural Information Processing Systems 32: Annual Conference on Neural Information Processing Systems, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_70",
+            "start": 0,
+            "end": 273,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_71@0",
+            "content": "UNKNOWN, None, , Gretchen Krueger, and Ilya Sutskever. 2021. Learning transferable visual models from natural language supervision, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_71",
+            "start": 0,
+            "end": 132,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_72@0",
+            "content": "UNKNOWN, None, 2020, VL-BERT: pretraining of generic visual-linguistic representations, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_72",
+            "start": 0,
+            "end": 88,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_73@0",
+            "content": "UNKNOWN, None, 2020, 8th International Conference on Learning Representations, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_73",
+            "start": 0,
+            "end": 79,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_74@0",
+            "content": "Hao Tan, Mohit Bansal, LXMERT: Learning cross-modality encoder representations from transformers, 2019, Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP), .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_74",
+            "start": 0,
+            "end": 281,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_75@0",
+            "content": "Hao Tan, Mohit Bansal, Vokenization: Improving language understanding with contextualized, visual-grounded supervision, 2020, Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), Online. Association for Computational Linguistics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_75",
+            "start": 0,
+            "end": 271,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_76@0",
+            "content": "UNKNOWN, None, 2021, Zero-shot image-to-text generation for visualsemantic arithmetic, CoRR.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_76",
+            "start": 0,
+            "end": 91,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_77@0",
+            "content": "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan Gomez, Lukasz Kaiser, Illia Polosukhin, Attention is all you need, 2017-12-04, Advances in Neural Information Processing Systems 30: Annual Conference on Neural Information Processing Systems, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_77",
+            "start": 0,
+            "end": 272,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_78@0",
+            "content": "UNKNOWN, None, 2018, Glue: A multi-task benchmark and analysis platform for natural language understanding, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_78",
+            "start": 0,
+            "end": 108,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_79@0",
+            "content": "UNKNOWN, None, 2018, Swag: A large-scale adversarial dataset for grounded commonsense inference, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_79",
+            "start": 0,
+            "end": 97,
+            "label": {}
+        },
+        {
+            "ix": "172-ARR_v2_80@0",
+            "content": "Zhuosheng Zhang, Kehai Chen, Rui Wang, Masao Utiyama, Eiichiro Sumita, Zuchao Li, Hai Zhao, Neural machine translation with universal visual representation, 2020-04-26, 8th International Conference on Learning Representations, .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "172-ARR_v2_80",
+            "start": 0,
+            "end": 227,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "172-ARR_v2_0",
+            "tgt_ix": "172-ARR_v2_1",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_0",
+            "tgt_ix": "172-ARR_v2_1",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_1",
+            "tgt_ix": "172-ARR_v2_2",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_1",
+            "tgt_ix": "172-ARR_v2_2",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_0",
+            "tgt_ix": "172-ARR_v2_3",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_2",
+            "tgt_ix": "172-ARR_v2_3",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_4",
+            "tgt_ix": "172-ARR_v2_5",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_5",
+            "tgt_ix": "172-ARR_v2_6",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_6",
+            "tgt_ix": "172-ARR_v2_7",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_7",
+            "tgt_ix": "172-ARR_v2_8",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_8",
+            "tgt_ix": "172-ARR_v2_9",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_9",
+            "tgt_ix": "172-ARR_v2_10",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_10",
+            "tgt_ix": "172-ARR_v2_11",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_3",
+            "tgt_ix": "172-ARR_v2_4",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_3",
+            "tgt_ix": "172-ARR_v2_5",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_3",
+            "tgt_ix": "172-ARR_v2_6",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_3",
+            "tgt_ix": "172-ARR_v2_7",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_3",
+            "tgt_ix": "172-ARR_v2_8",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_3",
+            "tgt_ix": "172-ARR_v2_9",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_3",
+            "tgt_ix": "172-ARR_v2_10",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_3",
+            "tgt_ix": "172-ARR_v2_11",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_3",
+            "tgt_ix": "172-ARR_v2_12",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_3",
+            "tgt_ix": "172-ARR_v2_4",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_0",
+            "tgt_ix": "172-ARR_v2_13",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_12",
+            "tgt_ix": "172-ARR_v2_13",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_13",
+            "tgt_ix": "172-ARR_v2_14",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_13",
+            "tgt_ix": "172-ARR_v2_14",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_13",
+            "tgt_ix": "172-ARR_v2_15",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_14",
+            "tgt_ix": "172-ARR_v2_15",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_16",
+            "tgt_ix": "172-ARR_v2_17",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_17",
+            "tgt_ix": "172-ARR_v2_18",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_15",
+            "tgt_ix": "172-ARR_v2_16",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_15",
+            "tgt_ix": "172-ARR_v2_17",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_15",
+            "tgt_ix": "172-ARR_v2_18",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_15",
+            "tgt_ix": "172-ARR_v2_16",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_13",
+            "tgt_ix": "172-ARR_v2_19",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_18",
+            "tgt_ix": "172-ARR_v2_19",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_20",
+            "tgt_ix": "172-ARR_v2_21",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_21",
+            "tgt_ix": "172-ARR_v2_22",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_19",
+            "tgt_ix": "172-ARR_v2_20",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_19",
+            "tgt_ix": "172-ARR_v2_21",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_19",
+            "tgt_ix": "172-ARR_v2_22",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_19",
+            "tgt_ix": "172-ARR_v2_20",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_13",
+            "tgt_ix": "172-ARR_v2_23",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_22",
+            "tgt_ix": "172-ARR_v2_23",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_23",
+            "tgt_ix": "172-ARR_v2_24",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_23",
+            "tgt_ix": "172-ARR_v2_24",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_13",
+            "tgt_ix": "172-ARR_v2_25",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_24",
+            "tgt_ix": "172-ARR_v2_25",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_25",
+            "tgt_ix": "172-ARR_v2_26",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_25",
+            "tgt_ix": "172-ARR_v2_26",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_13",
+            "tgt_ix": "172-ARR_v2_27",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_26",
+            "tgt_ix": "172-ARR_v2_27",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_28",
+            "tgt_ix": "172-ARR_v2_29",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_27",
+            "tgt_ix": "172-ARR_v2_28",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_27",
+            "tgt_ix": "172-ARR_v2_29",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_27",
+            "tgt_ix": "172-ARR_v2_28",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_27",
+            "tgt_ix": "172-ARR_v2_30",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_29",
+            "tgt_ix": "172-ARR_v2_30",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_13",
+            "tgt_ix": "172-ARR_v2_31",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_30",
+            "tgt_ix": "172-ARR_v2_31",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_31",
+            "tgt_ix": "172-ARR_v2_32",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_31",
+            "tgt_ix": "172-ARR_v2_32",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_13",
+            "tgt_ix": "172-ARR_v2_33",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_32",
+            "tgt_ix": "172-ARR_v2_33",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_33",
+            "tgt_ix": "172-ARR_v2_34",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_33",
+            "tgt_ix": "172-ARR_v2_34",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_0",
+            "tgt_ix": "172-ARR_v2_35",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_34",
+            "tgt_ix": "172-ARR_v2_35",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_36",
+            "tgt_ix": "172-ARR_v2_37",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_37",
+            "tgt_ix": "172-ARR_v2_38",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_35",
+            "tgt_ix": "172-ARR_v2_36",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_35",
+            "tgt_ix": "172-ARR_v2_37",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_35",
+            "tgt_ix": "172-ARR_v2_38",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_35",
+            "tgt_ix": "172-ARR_v2_36",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_0",
+            "tgt_ix": "172-ARR_v2_39",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_38",
+            "tgt_ix": "172-ARR_v2_39",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_40",
+            "tgt_ix": "172-ARR_v2_41",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_39",
+            "tgt_ix": "172-ARR_v2_40",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_39",
+            "tgt_ix": "172-ARR_v2_41",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_39",
+            "tgt_ix": "172-ARR_v2_40",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_0",
+            "tgt_ix": "172-ARR_v2_42",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_41",
+            "tgt_ix": "172-ARR_v2_42",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_43",
+            "tgt_ix": "172-ARR_v2_44",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_42",
+            "tgt_ix": "172-ARR_v2_43",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_42",
+            "tgt_ix": "172-ARR_v2_44",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_42",
+            "tgt_ix": "172-ARR_v2_43",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_0",
+            "tgt_ix": "172-ARR_v2_45",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_44",
+            "tgt_ix": "172-ARR_v2_45",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_46",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_46",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_47",
+            "tgt_ix": "172-ARR_v2_48",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_48",
+            "tgt_ix": "172-ARR_v2_49",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_47",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_48",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_49",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_46",
+            "tgt_ix": "172-ARR_v2_47",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_50",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_49",
+            "tgt_ix": "172-ARR_v2_50",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_51",
+            "tgt_ix": "172-ARR_v2_52",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_51",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_52",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_50",
+            "tgt_ix": "172-ARR_v2_51",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_53",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_52",
+            "tgt_ix": "172-ARR_v2_53",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_54",
+            "tgt_ix": "172-ARR_v2_55",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_55",
+            "tgt_ix": "172-ARR_v2_56",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_54",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_55",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_56",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_53",
+            "tgt_ix": "172-ARR_v2_54",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_57",
+            "tgt_ix": "172-ARR_v2_58",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_58",
+            "tgt_ix": "172-ARR_v2_59",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_59",
+            "tgt_ix": "172-ARR_v2_60",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_57",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_58",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_59",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_60",
+            "etype": "parent",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_56",
+            "tgt_ix": "172-ARR_v2_57",
+            "etype": "next",
+            "meta": null
+        },
+        {
+            "src_ix": "172-ARR_v2_0",
+            "tgt_ix": "172-ARR_v2_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_1",
+            "tgt_ix": "172-ARR_v2_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_2",
+            "tgt_ix": "172-ARR_v2_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_2",
+            "tgt_ix": "172-ARR_v2_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_2",
+            "tgt_ix": "172-ARR_v2_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_2",
+            "tgt_ix": "172-ARR_v2_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_2",
+            "tgt_ix": "172-ARR_v2_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_3",
+            "tgt_ix": "172-ARR_v2_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_4",
+            "tgt_ix": "172-ARR_v2_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_4",
+            "tgt_ix": "172-ARR_v2_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_4",
+            "tgt_ix": "172-ARR_v2_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_5",
+            "tgt_ix": "172-ARR_v2_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_5",
+            "tgt_ix": "172-ARR_v2_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_5",
+            "tgt_ix": "172-ARR_v2_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_5",
+            "tgt_ix": "172-ARR_v2_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_6",
+            "tgt_ix": "172-ARR_v2_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_6",
+            "tgt_ix": "172-ARR_v2_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_6",
+            "tgt_ix": "172-ARR_v2_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_6",
+            "tgt_ix": "172-ARR_v2_6@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_7",
+            "tgt_ix": "172-ARR_v2_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_7",
+            "tgt_ix": "172-ARR_v2_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_7",
+            "tgt_ix": "172-ARR_v2_7@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_7",
+            "tgt_ix": "172-ARR_v2_7@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_8",
+            "tgt_ix": "172-ARR_v2_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_8",
+            "tgt_ix": "172-ARR_v2_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_8",
+            "tgt_ix": "172-ARR_v2_8@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_8",
+            "tgt_ix": "172-ARR_v2_8@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_9",
+            "tgt_ix": "172-ARR_v2_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_9",
+            "tgt_ix": "172-ARR_v2_9@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_9",
+            "tgt_ix": "172-ARR_v2_9@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_9",
+            "tgt_ix": "172-ARR_v2_9@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_10",
+            "tgt_ix": "172-ARR_v2_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_11",
+            "tgt_ix": "172-ARR_v2_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_12",
+            "tgt_ix": "172-ARR_v2_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_13",
+            "tgt_ix": "172-ARR_v2_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_14",
+            "tgt_ix": "172-ARR_v2_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_14",
+            "tgt_ix": "172-ARR_v2_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_14",
+            "tgt_ix": "172-ARR_v2_14@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_15",
+            "tgt_ix": "172-ARR_v2_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_16",
+            "tgt_ix": "172-ARR_v2_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_16",
+            "tgt_ix": "172-ARR_v2_16@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_16",
+            "tgt_ix": "172-ARR_v2_16@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_16",
+            "tgt_ix": "172-ARR_v2_16@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_17",
+            "tgt_ix": "172-ARR_v2_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_18",
+            "tgt_ix": "172-ARR_v2_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_19",
+            "tgt_ix": "172-ARR_v2_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_20",
+            "tgt_ix": "172-ARR_v2_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_20",
+            "tgt_ix": "172-ARR_v2_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_20",
+            "tgt_ix": "172-ARR_v2_20@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_21",
+            "tgt_ix": "172-ARR_v2_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_22",
+            "tgt_ix": "172-ARR_v2_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_22",
+            "tgt_ix": "172-ARR_v2_22@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_22",
+            "tgt_ix": "172-ARR_v2_22@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_22",
+            "tgt_ix": "172-ARR_v2_22@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_23",
+            "tgt_ix": "172-ARR_v2_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_24",
+            "tgt_ix": "172-ARR_v2_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_24",
+            "tgt_ix": "172-ARR_v2_24@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_24",
+            "tgt_ix": "172-ARR_v2_24@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_24",
+            "tgt_ix": "172-ARR_v2_24@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_24",
+            "tgt_ix": "172-ARR_v2_24@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_25",
+            "tgt_ix": "172-ARR_v2_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_26",
+            "tgt_ix": "172-ARR_v2_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_26",
+            "tgt_ix": "172-ARR_v2_26@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_26",
+            "tgt_ix": "172-ARR_v2_26@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_27",
+            "tgt_ix": "172-ARR_v2_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_28",
+            "tgt_ix": "172-ARR_v2_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_28",
+            "tgt_ix": "172-ARR_v2_28@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_28",
+            "tgt_ix": "172-ARR_v2_28@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_28",
+            "tgt_ix": "172-ARR_v2_28@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_28",
+            "tgt_ix": "172-ARR_v2_28@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_29",
+            "tgt_ix": "172-ARR_v2_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_30",
+            "tgt_ix": "172-ARR_v2_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_31",
+            "tgt_ix": "172-ARR_v2_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_32",
+            "tgt_ix": "172-ARR_v2_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_32",
+            "tgt_ix": "172-ARR_v2_32@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_32",
+            "tgt_ix": "172-ARR_v2_32@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_33",
+            "tgt_ix": "172-ARR_v2_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_34",
+            "tgt_ix": "172-ARR_v2_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_35",
+            "tgt_ix": "172-ARR_v2_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_36",
+            "tgt_ix": "172-ARR_v2_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_36",
+            "tgt_ix": "172-ARR_v2_36@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_36",
+            "tgt_ix": "172-ARR_v2_36@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_36",
+            "tgt_ix": "172-ARR_v2_36@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_36",
+            "tgt_ix": "172-ARR_v2_36@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_36",
+            "tgt_ix": "172-ARR_v2_36@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_37",
+            "tgt_ix": "172-ARR_v2_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_37",
+            "tgt_ix": "172-ARR_v2_37@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_38",
+            "tgt_ix": "172-ARR_v2_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_38",
+            "tgt_ix": "172-ARR_v2_38@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_38",
+            "tgt_ix": "172-ARR_v2_38@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_39",
+            "tgt_ix": "172-ARR_v2_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_40",
+            "tgt_ix": "172-ARR_v2_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_40",
+            "tgt_ix": "172-ARR_v2_40@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_40",
+            "tgt_ix": "172-ARR_v2_40@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_41",
+            "tgt_ix": "172-ARR_v2_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_41",
+            "tgt_ix": "172-ARR_v2_41@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_41",
+            "tgt_ix": "172-ARR_v2_41@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_41",
+            "tgt_ix": "172-ARR_v2_41@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_41",
+            "tgt_ix": "172-ARR_v2_41@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_42",
+            "tgt_ix": "172-ARR_v2_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_43",
+            "tgt_ix": "172-ARR_v2_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_43",
+            "tgt_ix": "172-ARR_v2_43@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_43",
+            "tgt_ix": "172-ARR_v2_43@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_43",
+            "tgt_ix": "172-ARR_v2_43@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_43",
+            "tgt_ix": "172-ARR_v2_43@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_44",
+            "tgt_ix": "172-ARR_v2_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_44",
+            "tgt_ix": "172-ARR_v2_44@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_44",
+            "tgt_ix": "172-ARR_v2_44@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_44",
+            "tgt_ix": "172-ARR_v2_44@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_44",
+            "tgt_ix": "172-ARR_v2_44@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_45",
+            "tgt_ix": "172-ARR_v2_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_46",
+            "tgt_ix": "172-ARR_v2_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_46",
+            "tgt_ix": "172-ARR_v2_46@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_46",
+            "tgt_ix": "172-ARR_v2_46@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_46",
+            "tgt_ix": "172-ARR_v2_46@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_47",
+            "tgt_ix": "172-ARR_v2_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_48",
+            "tgt_ix": "172-ARR_v2_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_48",
+            "tgt_ix": "172-ARR_v2_48@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_49",
+            "tgt_ix": "172-ARR_v2_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_49",
+            "tgt_ix": "172-ARR_v2_49@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_49",
+            "tgt_ix": "172-ARR_v2_49@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_49",
+            "tgt_ix": "172-ARR_v2_49@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_49",
+            "tgt_ix": "172-ARR_v2_49@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_49",
+            "tgt_ix": "172-ARR_v2_49@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_49",
+            "tgt_ix": "172-ARR_v2_49@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_49",
+            "tgt_ix": "172-ARR_v2_49@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_49",
+            "tgt_ix": "172-ARR_v2_49@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_50",
+            "tgt_ix": "172-ARR_v2_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_50",
+            "tgt_ix": "172-ARR_v2_50@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_50",
+            "tgt_ix": "172-ARR_v2_50@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_50",
+            "tgt_ix": "172-ARR_v2_50@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_50",
+            "tgt_ix": "172-ARR_v2_50@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_51",
+            "tgt_ix": "172-ARR_v2_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_52",
+            "tgt_ix": "172-ARR_v2_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_52",
+            "tgt_ix": "172-ARR_v2_52@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_52",
+            "tgt_ix": "172-ARR_v2_52@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_53",
+            "tgt_ix": "172-ARR_v2_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_53",
+            "tgt_ix": "172-ARR_v2_53@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_53",
+            "tgt_ix": "172-ARR_v2_53@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_53",
+            "tgt_ix": "172-ARR_v2_53@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_53",
+            "tgt_ix": "172-ARR_v2_53@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_54",
+            "tgt_ix": "172-ARR_v2_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_54",
+            "tgt_ix": "172-ARR_v2_54@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_55",
+            "tgt_ix": "172-ARR_v2_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_56",
+            "tgt_ix": "172-ARR_v2_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_57",
+            "tgt_ix": "172-ARR_v2_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_58",
+            "tgt_ix": "172-ARR_v2_58@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_59",
+            "tgt_ix": "172-ARR_v2_59@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_60",
+            "tgt_ix": "172-ARR_v2_60@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_61",
+            "tgt_ix": "172-ARR_v2_61@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_62",
+            "tgt_ix": "172-ARR_v2_62@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_63",
+            "tgt_ix": "172-ARR_v2_63@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_64",
+            "tgt_ix": "172-ARR_v2_64@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_65",
+            "tgt_ix": "172-ARR_v2_65@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_66",
+            "tgt_ix": "172-ARR_v2_66@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_67",
+            "tgt_ix": "172-ARR_v2_67@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_68",
+            "tgt_ix": "172-ARR_v2_68@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_69",
+            "tgt_ix": "172-ARR_v2_69@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_70",
+            "tgt_ix": "172-ARR_v2_70@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_71",
+            "tgt_ix": "172-ARR_v2_71@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_72",
+            "tgt_ix": "172-ARR_v2_72@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_73",
+            "tgt_ix": "172-ARR_v2_73@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_74",
+            "tgt_ix": "172-ARR_v2_74@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_75",
+            "tgt_ix": "172-ARR_v2_75@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_76",
+            "tgt_ix": "172-ARR_v2_76@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_77",
+            "tgt_ix": "172-ARR_v2_77@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_78",
+            "tgt_ix": "172-ARR_v2_78@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_79",
+            "tgt_ix": "172-ARR_v2_79@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "172-ARR_v2_80",
+            "tgt_ix": "172-ARR_v2_80@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "paper.tei",
+    "meta": {
+        "ix_counter": 567,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy",
+        "doc_id": "172-ARR",
+        "version": 2
+    }
+}

@@ -1,0 +1,4392 @@
+{
+    "nodes": [
+        {
+            "ix": "7-704_v2_0",
+            "content": "Head models of healthy and depressed adults for simulating the electric fields of non-invasive electric brain stimulation",
+            "ntype": "article-title",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_2",
+            "content": "During the past decade, it became clear that the electric field elicited by non-invasive brain stimulation (NIBS) techniques such as transcranial direct current stimulation (tDCS) and transcranial magnetic stimulation (TMS) are substantially influenced by variations in individual head and brain anatomy. In addition to structural variations in the healthy, several psychiatric disorders are characterized by anatomical alterations that are likely to further constrain the intracerebral effects of NIBS. Here, we present high-resolution realistic head models derived from structural magnetic resonance imaging data of 19 healthy adults and 19 patients diagnosed with major depressive disorder (MDD). By using a freely available software package for modelling the electric fields induced by different NIBS protocols, we show that our head models are well-suited for assessing inter-individual and between-group variability in the magnitude and focality of tDCS-induced electric fields for two protocols targeting the left dorsolateral prefrontal cortex.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1",
+                "sec-type": "intro",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_4",
+            "content": "Non-invasive brain stimulation (NIBS) techniques such as transcranial direct current stimulation (tDCS) and transcranial magnetic stimulation (TMS) have been used to investigate the relationship between activity in different cortical regions and cognitive processes <REF-1> , <REF-2> . A key advantage of NIBS is that it allows direct manipulation of neural excitability <REF-3> . Therefore when used carefully, it allows causal interpretation of how specific brain regions might be involved in mental phenomena such as perception <REF-4> , working memory <REF-5> , attention <REF-6> , decision-making <REF-7> or emotional regulation <REF-8> . In addition, NIBS has been used as a clinical tool to obtain symptom reduction in several neurological and psychiatric conditions <REF-9> \u2013 <REF-12> . Importantly, the same stimulation protocol can result in different neural effects across individuals because the distribution of stimulation-induced electric fields (E-fields) in the brain is strongly contingent on anatomical variability <REF-13> , <REF-14> . This can manifest in strong variability in the effects of NIBS on cognitive performance in healthy individuals (e.g., working memory <REF-15> , <REF-16> ) and on treatment outcomes in patients (e.g., depression <REF-17> \u2013 <REF-21> ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_5",
+            "content": "Given the heterogeneity in the efficacy of NIBS protocols in modulating behavior and clinical symptoms, there has been a move towards computational modelling of the spatial distribution of E-fields in the brain to understand how stimulation parameters such as electrode placement, electrode rotation or electrode type affects current flow in the neural tissue. After an initial phase during which simplistic spherical head models were used <REF-22> , the focus has shifted to very detailed, realistic head models created from individual structural magnetic resonance (MR) images using freely available tools (e.g. SimNIBS <REF-23> or ROAST <REF-24> ). Creating individual head models remains challenging, however, due to (1) the requirement of high-quality structural MR images for each study participant and (2) the need to manually improve the automatic segmentation of the MR images into the different tissue types (i.e., bone, cerebrospinal fluid, white and grey matter, air, etc). As a consequence, individual head models are rarely used in practice. Instead, researchers usually rely on E-fields induced in a reference individual which is generalized to all participants. This approach, of course, neglects the importance of individual brain anatomy which can have strong influences on E-field distribution <REF-13> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_6",
+            "content": "To circumvent this issue, the New York (NY) Head model <REF-25> was created from the ICBM152 (v6 template <REF-26> , <REF-27> and v2009b template <REF-28> ), which is a non-linear average of 152 individual MRIs and is extended to the full head and neck region by fusing it with an average of an additional 26 brains. Therefore, this head model represents an unbiased population average and should be a better representation of the individual participants than any randomly picked reference individual. However, calculation of the electric field on a single head model does not allow to quantify variation across individuals that can be substantial both in cortical regions directly below the electrodes and those that are farther away from the stimulation sites. Also, given that the NY Head was created using healthy individuals, possible systematic differences between patient groups may not be noticed.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_7",
+            "content": "To improve this situation, we present 38 head models created from MR images of 19 healthy participants and 19 patients with major depressive disorder (MDD). These head models were manually checked and edited to improve their accuracy in giving a faithful representation of cortical regions. Our head models can aid future research in at least three ways: First, calculating electric fields across a large sample allows to get a sense of the variability of the induced E-field due to anatomical differences. Second, our head models also enable comparison of the neural effects on NIBS protocols in healthy vs. depressed brains. Given the different protocols used for left dorsolateral prefrontal cortex (lDLPFC) targeting with NIBS <REF-29> , <REF-30> , computational modelling using these head models will enable the development of protocols for more selective lDLPFC stimulation in this disorder. Third, EEG source localization also relies on head models to calculate the spatial location of possible current sources in the brain. Usually, boundary element models (BEM) are used which have the limitation of less anatomical detail. Therefore, finite element models (FEM) derived from high resolution MR images have become more widespread because they are able to incorporate more tissue types, increasing the precision of EEG source localization. Our head models can be used for source localization using open-source software <REF-31> . Thus, our head models can help researchers to optimize NIBS protocols and EEG source localization methods, and to test them on a larger sample (including both healthy and patient data).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_8",
+            "content": "Methods and results",
+            "ntype": "title",
+            "meta": {
+                "section": "2",
+                "sec-type": "methods | results",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_9",
+            "content": "Participants",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1",
+                "sec-type": "subjects",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_10",
+            "content": "High-resolution head models were created from T1-weighted anatomical images that were collected in a separate functional magnetic resonance imaging (fMRI) study <REF-32> . The data was obtained from the OpenfMRI database (accession number: ds000171 ). Structural scans of 19 healthy adult participants with no history of depression or other psychiatric disorders (11 females; mean \u00b1 SD age: 28.79 \u00b1 10.86; range: 18\u201359) and 19 individuals diagnosed with MDD and experiencing a depressive episode at the time of the scanning (11 females; mean \u00b1 SD age: 33.52 \u00b1 13.35; range: 18\u201356) were used. Data of one control participant (\u2019sub-control20\u2019) was excluded due to technical problems with head model creation. Patients did not suffer from current or past manic episodes, current comorbid anxiety disorders or current alcohol dependence or abuse. At the time of data collection, all patients were unmedicated, but 6 received antidepressant pharmacotherapy in the past. For full details regarding demographic data, we refer to the supporting information of the original paper <REF-32> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_11",
+            "content": "Creation of head models",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_12",
+            "content": "As the very first step, we inspected scans of all participants, and manually removed signals corresponding to the MRI marker placed on the forehead of each subject using FreeSurfer 5.3.0 <REF-33> . Automated tissue segmentation was performed in SPM12 <REF-34> for skin, skull, eyeballs, CSF and major air cavities, and in FreeSurfer for gray and white matter. Subsequently, segmented images of each participant were visually inspected and manually corrected with FreeSurfer (done by investigator G.Cs., verified by O.P.). Manual corrections were primarily restricted to the skull-CSF boundary, but in some cases also involved the skin-skull interface. In addition, during manual corrections we verified that the segmentation of the cortical gray matter corresponded to the anatomical scans except for medial temporal lobe structures (i.e., the parahippocampal gyrus and the hippocampus proper). Moreover, the resulting masks were not corrected for inconsistencies relating to subcortical nuclei and thus, these head models are not suitable for estimating stimulation-related E-fields in structures such as the thalamus, basal ganglia, amygdala or the cerebellum. Additionally, the segmentation of the brainstem is not accurate because it arbitrarily assigned brain tissue to white and grey matter. Furthermore, because the original dataset was de-faced and did not include the neck/shoulder region, our head models do not include these regions. This has 2 implications: Firstly, this limits their usability regarding the simulation of tDCS montages with extracephalic return electrodes. Nevertheless, they can be used for all tES protocols using scalp electrodes and most TMS protocols. Secondly, an extended head model with field of view covering the entire head would further increase the predictive accuracy of the head models <REF-35> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_13",
+            "content": "Head models were created with a custom version of SimNIBS 2.1 <REF-23> , a freely available software package for simulating the effects of NIBS techniques. The final head mesh of each participant consisted of a total number of approximately 3,200,000 tetrahedral elements, assigned to six tissue types ( Figure 1 ). The initial segmentation included more than 6 tissue compartments (e.g., separate tissue types for cerebellar gray and white matter; available in the m2m_sub-* folders) but they were later combined into one of 6 tissue types: skin, skull, CSF, GM, WM and eyeballs in the final head models for simulation purposes. In addition, air cavities were modeled by not adding tetrahedra to these locations, similar to the air surrounding the head. For comparability with other datasets, we also report measurements for head size: The distance between the nasion and inion (mean \u00b1 SD: 19.2 cm \u00b1 1.01 cm; range: 16.7 cm - 21.3 cm) and the distance between the right and left pre-auricular points (mean \u00b1 SD: 14.8 cm \u00b1 0.65 cm; range: 13.6 cm - 16.3 cm). The total volume of the brain was 1.22 dm 3 \u00b1 0.11 dm 3 (range: 1.02 dm 3 - 1.49 dm 3 ). Individual measurements are found at our data repository <REF-36>",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_14",
+            "content": "Figure 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "f1",
+                "caption": "The six tissue compartments of the head models.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/18435/e690bf13-f0b0-47a4-95bb-f43337e87c4f_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_15",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f1\" position=\"float\"> <caption> <title>The six tissue compartments of the head models.</title> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/18435/e690bf13-f0b0-47a4-95bb-f43337e87c4f_figure1.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f1",
+                "caption": "The six tissue compartments of the head models.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/18435/e690bf13-f0b0-47a4-95bb-f43337e87c4f_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_16",
+            "content": "Tissue conductivities were set as follows: 0.465 S/m (skin), 0.01 S/m (skull), 0.5 S/m (eyeballs), 1.654 S/m (cerebrospinal fluid), 0.275 S/m (gray matter), 0.126 S/m (white matter). Although our head models do not account for white matter anisotropy, this property has been shown to primarily influence current density in deeper structures, leaving superficial gray matter relatively unaffected <REF-37> . The accuracy of tissue segmentation and the good correspondence between anatomical scans and the resulting head models for 8 individuals are shown in Figure 2 .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_17",
+            "content": "Figure 2.",
+            "ntype": "label",
+            "meta": {
+                "id": "f2",
+                "caption": "Cross-sections showing the correspondence between anatomical scans overlaid with results of the tissue segmentation (skin: dark blue; skull: turquoise; cerebrospinal fluid: green; gray matter: yellow; white matter: red; air cavities: purple, eyeballs: dark red) and the head models (meshes) for 4 individuals from both groups.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/18435/e690bf13-f0b0-47a4-95bb-f43337e87c4f_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_18",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f2\" position=\"float\"> <caption> <title>Cross-sections showing the correspondence between anatomical scans overlaid with results of the tissue segmentation (skin: dark blue; skull: turquoise; cerebrospinal fluid: green; gray matter: yellow; white matter: red; air cavities: purple, eyeballs: dark red) and the head models (meshes) for 4 individuals from both groups.</title> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/18435/e690bf13-f0b0-47a4-95bb-f43337e87c4f_figure2.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f2",
+                "caption": "Cross-sections showing the correspondence between anatomical scans overlaid with results of the tissue segmentation (skin: dark blue; skull: turquoise; cerebrospinal fluid: green; gray matter: yellow; white matter: red; air cavities: purple, eyeballs: dark red) and the head models (meshes) for 4 individuals from both groups.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/18435/e690bf13-f0b0-47a4-95bb-f43337e87c4f_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_19",
+            "content": "Dataset validation",
+            "ntype": "title",
+            "meta": {
+                "section": "3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_20",
+            "content": "Except for two manual steps (removal of MRI markers from the forehead, manual correction of tissue segmentations), the process of head model creation was automated using a custom version of SimNIBS 2.1 that employed FreeSurfer 5.3.0 for brain segmentation (as described in <REF-38> and implemented in mri2mesh) and SPM12 for segmentation of the remaining tissues (similarly to <REF-39> and implemented in headreco). This pipeline provides more accurate tissue segmentation relative to other protocols. It was a custom pipeline developed before the official release of SimNIBS 2.1 . However, using headreco combined with the CAT12 toolbox (included with SimNIBS 2.1.1 ) for cortical reconstruction, the same accuracy can be achieved. We provide scripts compatible with SimNIBS 2.1.1 for automated simulation of tDCS-induced electric fields for all head models available for download at our data repository <REF-36> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_21",
+            "content": "For validating the reliability of our head models, we compared the effects of two tDCS protocols targeting the lDLPFC (one conventional bipolar montage and one multi-electrode 4x1 setup) against the effects observed in the NY Head <REF-25> . The mesh for the NY Head (abaqus format; https://www.parralab.org/nyhead/ ) has been reformatted to be compatible with SimNIBS and is also available for download in our data repository <REF-36> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_22",
+            "content": "For each head model, tDCS electrodes of appropriate size (bipolar montage: 5 x 5 cm, circular connectors (diameter: 0.5 cm) at the middle of the electrode pads; 4x1 montage: diameter of 1.2 cm) and thickness (1 mm for all electrodes + a sponge pocket of 2.5 mm thickness for the bipolar montages and a gel layer of 2.5 mm thickness for the 4x1 montages) were placed at scalp locations corresponding to electrode positions of the International 10/10 system (bipolar montage: anode - F3, cathode - F4; 4x1 montage: anode: F3, cathodes: C3, FT7, Fp1, Fz). Stimulation intensity for the anode was set to 2 mA, with equal distribution of return currents for the 4 cathodes (0.5 mA for each) in the 4x1 protocol. Results of the simulations were visualized using Gmsh <REF-40> ( Figure 3 ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_23",
+            "content": "Figure 3.",
+            "ntype": "label",
+            "meta": {
+                "id": "f3",
+                "caption": "The spatial distribution of tDCS-induced E-fields in the NY Head and our 38 head models for the bipolar and the 4\u00d71 montages. Please note the large degree of variability in E-field magnitude (both protocols) and in the lateralization of effects (bipolar protocol).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/18435/e690bf13-f0b0-47a4-95bb-f43337e87c4f_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_24",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f3\" position=\"float\"> <caption> <title>The spatial distribution of tDCS-induced E-fields in the NY Head and our 38 head models for the bipolar and the 4&#215;1 montages.</title> <p>Please note the large degree of variability in E-field magnitude (both protocols) and in the lateralization of effects (bipolar protocol).</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/18435/e690bf13-f0b0-47a4-95bb-f43337e87c4f_figure3.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f3",
+                "caption": "The spatial distribution of tDCS-induced E-fields in the NY Head and our 38 head models for the bipolar and the 4\u00d71 montages. Please note the large degree of variability in E-field magnitude (both protocols) and in the lateralization of effects (bipolar protocol).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/18435/e690bf13-f0b0-47a4-95bb-f43337e87c4f_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_25",
+            "content": "In our previous study <REF-14> , we reported stronger stimulation-induced E-fields in the lDLPFC for the bipolar montage used by Brunoni and colleagues (2013) <REF-17> than for the 4x1 protocol, albeit the bipolar montage was also associated with reduced focality (i.e., more intensive stimulation of other cortical areas). Therefore, we extracted three measures for both tDCS protocols for our 38 head models: stimulation strength (the norm of the electric field vector, \u2019normfield\u2019) in the lDLPFC was assessed by extracting individual mean (calculated across all nodes in this region) and maximum (peak) E-field values, whereas spatial focality of the stimulation was analyzed by calculating the focality-index (FI), with the target region as reference. FI was quantified as the proportion of highest-intensity nodes (nodes within the upper 1% percentile of all E-field values) in the lDLPFC relative to the whole cortex. Mean and peak E-field values corresponding to both tDCS montages were extracted by reconstructing the two-dimensional cortical surface (more precisely, the middle of the cortical sheet) of each individual along with the corresponding E-field cortical map in FreeSurfer, and an automated atlas-based parcellation of the frontal lobe <REF-41> was applied to each individual brain to delineate the lDLPFC. As a result, we show that (1) both protocols induce strong E-fields in the DLPFC (with symmetrical effects for the bipolar montage and unilateral E-field distribution for the 4x1 protocol), (2) E-field magnitudes and distributions are similar for our head models and for the NY Head, (3) all E-field measures (peak and mean strength, FI) show great degree of variability, and (4) montage-specific effects are consistent with previous results reported in the literature regarding both the spatial distribution and the magnitude of E-fields <REF-35> , <REF-42> \u2013 <REF-45> ( Figure 3 , Figure 4 ). Accessing group differences between MDD and healthy subjects was not the primary aim of the current data note, however, analysis of the spatial distribution of tDCS-induced E-fields in the bilateral DLPFC and medial prefrontal cortex showed subtle group differences between the healthy and MDD groups. For detailed discussion of these results and that of Figure 4 we refer the reader to our accompanying paper <REF-14> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_26",
+            "content": "Figure 4.",
+            "ntype": "label",
+            "meta": {
+                "id": "f4",
+                "caption": "Variability of tDCS-induced E-field strengths across head models for the two montages. Both peak (left panel) and mean (middle panel) E-field magnitudes in the lDLPFC are stronger for the bipolar montage, whereas the 4\u00d71 protocol yields more focal stimulation of the target region (right panel). Group means (red: healthy individuals, green: MDD patients) do not differ substantially, but large degree of inter-individual variability can be observed in both groups. The triangles show data for the New York Head. Horizontal lines within boxes represent median values, whereas lower and upper box hinges correspond to the first and third quartiles (25 th and 75 th percentiles). Lengths of upper/lower whiskers extend to the largest/smallest values that do not exceed 1.5* the inter-quartile range; dots represent individual data.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/18435/e690bf13-f0b0-47a4-95bb-f43337e87c4f_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_27",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f4\" position=\"float\"> <caption> <title>Variability of tDCS-induced E-field strengths across head models for the two montages.</title> <p>Both peak (left panel) and mean (middle panel) E-field magnitudes in the lDLPFC are stronger for the bipolar montage, whereas the 4&#215;1 protocol yields more focal stimulation of the target region (right panel). Group means (red: healthy individuals, green: MDD patients) do not differ substantially, but large degree of inter-individual variability can be observed in both groups. The triangles show data for the New York Head. Horizontal lines within boxes represent median values, whereas lower and upper box hinges correspond to the first and third quartiles (25 <sup>th</sup> and 75 <sup>th</sup> percentiles). Lengths of upper/lower whiskers extend to the largest/smallest values that do not exceed 1.5* the inter-quartile range; dots represent individual data.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/18435/e690bf13-f0b0-47a4-95bb-f43337e87c4f_figure4.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f4",
+                "caption": "Variability of tDCS-induced E-field strengths across head models for the two montages. Both peak (left panel) and mean (middle panel) E-field magnitudes in the lDLPFC are stronger for the bipolar montage, whereas the 4\u00d71 protocol yields more focal stimulation of the target region (right panel). Group means (red: healthy individuals, green: MDD patients) do not differ substantially, but large degree of inter-individual variability can be observed in both groups. The triangles show data for the New York Head. Horizontal lines within boxes represent median values, whereas lower and upper box hinges correspond to the first and third quartiles (25 th and 75 th percentiles). Lengths of upper/lower whiskers extend to the largest/smallest values that do not exceed 1.5* the inter-quartile range; dots represent individual data.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/18435/e690bf13-f0b0-47a4-95bb-f43337e87c4f_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_28",
+            "content": "Data availability",
+            "ntype": "title",
+            "meta": {
+                "section": "4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_29",
+            "content": "Open Science Framework (OSF) : Dataset 1. Head models of healthy and depressed adults for simulating the effects of non-invasive brain stimulation, http://doi.org/10.17605/OSF.IO/EXBD5 <REF-36>",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_30",
+            "content": "License: CC0 1.0 Universal",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_31",
+            "content": "At our data repository <REF-36> , the following data are available for download for all subjects (healthy adults: \u2019sub-control\u2019, patients: \u2019sub-mdd\u2019): T1-weighted anatomical scans registered to FreeSurfer conform space (\u2019nii.gz\u2019 files), the corresponding segmentation masks for the 7 (6 tissue types of the final meshes + a mask for major air cavities) tissue types (\u2019nii.gz\u2019 files), the final head models (\u2019msh\u2019 files), the files containing electrode coordinates (International 10/10 system) for all participants (\u2019txt\u2019 files can be used for performing new script-based simulations, whereas the \u2019geo\u2019 files can be used to plot electrode positions directly onto the mesh files in Gmsh <REF-40> ), and files organized in 2 folders (\u2019fs_*.tar.gz\u2019 and \u2019m2m_*.tar.gz\u2019) that enable creating simulation outputs in average FreeSurfer space (\u2019fsaverage\u2019). We also included a README file with a detailed description of the data and scripts.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_32",
+            "content": "Usage notes",
+            "ntype": "title",
+            "meta": {
+                "section": "4.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_33",
+            "content": "Our head models are compatible with SimNIBS 2.1.1 ( http://simnibs.de/ ) for simulating the effects of tDCS and TMS protocols. This software package has an easy-to-use graphical user interface (GUI) for setting all stimulation parameters (scalp location, intensity, etc.) for both NIBS techniques. By using our custom-written script <REF-36> , it is also possible to run tDCS simulations for any given montage for all participants at once. The script will also output data registered to an average surface (\u2019fsaverage\u2019) which allows creating group averaged data, as we have shown previously <REF-14> . In addition, researchers have the opportunity to extract E-field components that are either radial (normal) or tangential relative to the cortical surface, and have been associated with different cellular effects <REF-46> . At our data repository <REF-36> we also provide the manually corrected segmentations for the different tissue types for those who would like to create high-quality meshes of their own using open-source software such as iso2mesh <REF-47> . Finally, our meshes can be used for improving the anatomic precision of EEG source localization, using open-source tools <REF-31> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_34",
+            "content": "<REF-1> Polan\u00eda R Nitsche MA Ruff CC : Studying and modifying brain function with non-invasive brain stimulation. Nat Neurosci. 2018 ; 21 ( 2 ): 174 \u2013 187 . 29311747 10.1038/s41593-017-0054-4",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_35",
+            "content": "<REF-2> Bestmann S de Berker AO Bonaiuto J : Understanding the behavioural consequences of noninvasive brain stimulation. Trends Cogn Sci. 2015 ; 19 ( 1 ): 13 \u2013 20 . 25467129 10.1016/j.tics.2014.10.003",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_36",
+            "content": "<REF-3> Stagg CJ Nitsche MA : Physiological basis of transcranial direct current stimulation. Neuroscientist. 2011 ; 17 ( 1 ): 37 \u2013 53 . 21343407 10.1177/1073858410386614",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_37",
+            "content": "<REF-4> Antal A Nitsche MA Kruse W : Direct current stimulation over v5 enhances visuomotor coordination by improving motion perception in humans. J Cogn Neurosci. 2004 ; 16 ( 4 ): 521 \u2013 527 . 15165345 10.1162/089892904323057263",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_38",
+            "content": "<REF-5> Fregni F Boggio PS Nitsche M : Anodal transcranial direct current stimulation of prefrontal cortex enhances working memory. Exp Brain Res. 2005 ; 166 ( 1 ): 23 \u2013 30 . 15999258 10.1007/s00221-005-2334-6",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_39",
+            "content": "<REF-6> Coffman BA Trumbo MC Clark VP : Enhancement of object detection with transcranial direct current stimulation is associated with increased attention. BMC Neurosci. 2012 ; 13 ( 1 ): 108 . 22963503 10.1186/1471-2202-13-108 3494452",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_40",
+            "content": "<REF-7> Boggio PS Campanh\u00e3 C Valasek CA : Modulation of decision-making in a gambling task in older adults with transcranial direct current stimulation. Eur J Neurosci. 2010 ; 31 ( 3 ): 593 \u2013 597 . 20105234 10.1111/j.1460-9568.2010.07080.x",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-7",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_41",
+            "content": "<REF-8> Feeser M Prehn K Kazzer P : Transcranial direct current stimulation enhances cognitive control during emotion regulation. Brain Stimul. 2014 ; 7 ( 1 ): 105 \u2013 112 . 24095257 10.1016/j.brs.2013.08.006",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-8",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_42",
+            "content": "<REF-9> Ridding MC Rothwell JC : Is there a future for therapeutic use of transcranial magnetic stimulation? Nat Rev Neurosci. 2007 ; 8 ( 7 ): 559 \u2013 67 . 17565358 10.1038/nrn2169",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-9",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_43",
+            "content": "<REF-12> Di Lazzaro V Profice P Pilato F : Motor cortex plasticity predicts recovery in acute stroke. Cereb Cortex. 2009 ; 20 ( 7 ): 1523 \u2013 1528 . 19805417 10.1093/cercor/bhp216",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-12",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_44",
+            "content": "<REF-13> Opitz A Paulus W Will S : Determinants of the electric field during transcranial direct current stimulation. NeuroImage. 2015 ; 109 : 140 \u2013 150 . 25613437 10.1016/j.neuroimage.2015.01.033",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-13",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_45",
+            "content": "<REF-14> Csifcs\u00e1k G Boayue NM Puonti O : Effects of transcranial direct current stimulation for treating depression: A modeling study. J Affect Disord. 2018 ; 234 : 164 \u2013 173 . 29529550 10.1016/j.jad.2018.02.077",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-14",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_46",
+            "content": "<REF-15> Brunoni AR Vanderhasselt MA : Working memory improvement with non-invasive brain stimulation of the dorsolateral prefrontal cortex: a systematic review and meta-analysis. Brain Cogn. 2014 ; 86 : 1 \u2013 9 . 24514153 10.1016/j.bandc.2014.01.008",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-15",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_47",
+            "content": "<REF-16> Hill AT Fitzgerald PB Hoy KE : Effects of anodal transcranial direct current stimulation on working memory: a systematic review and meta-analysis of findings from healthy and neuropsychiatric populations. Brain Stimul. 2016 ; 9 ( 2 ): 197 \u2013 208 . 26597929 10.1016/j.brs.2015.10.006",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-16",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_48",
+            "content": "<REF-17> Brunoni AR Valiengo L Baccaro A : The sertraline vs. electrical current therapy for treating depression clinical study: results from a factorial, randomized, controlled trial. JAMA Psychiatry. 2013 ; 70 ( 4 ): 383 \u2013 391 . 23389323 10.1001/2013.jamapsychiatry.32",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-17",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_49",
+            "content": "<REF-21> Loo CK Alonzo A Martin D : Transcranial direct current stimulation for depression: 3-week, randomised, sham-controlled trial. Br J Psychiatry. 2012 ; 200 ( 1 ): 52 \u2013 59 . 22215866 10.1192/bjp.bp.111.097634",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-21",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_50",
+            "content": "<REF-22> Miranda PC Lomarev M Hallett M : Modeling the current distribution during transcranial direct current stimulation. Clin Neurophysiol. 2006 ; 117 ( 7 ): 1623 \u2013 1629 . 16762592 10.1016/j.clinph.2006.04.009",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-22",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_51",
+            "content": "<REF-23> Thielscher A Antunes A Saturnino GB : Field modeling for transcranial magnetic stimulation: A useful tool to understand the physiological effects of TMS? Conf Proc IEEE Eng Med Biol Soc. 2015 ; 2015 : 222 \u2013 225 . 26736240 10.1109/EMBC.2015.7318340",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-23",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_52",
+            "content": "<REF-24> Huang Y Datta A Bikson M : Realistic volumetric-approach to simulate transcranial electric stimulation\u2013roast\u2013a fully automated open-source pipeline. bioRxiv. 2017 ; 217331. 10.1101/217331",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-24",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_53",
+            "content": "<REF-25> Huang Y Parra LC Haufe S : The New York Head-A precise standardized volume conductor model for EEG source localization and tES targeting. NeuroImage. 2016 ; 140 : 150 \u2013 162 . 26706450 10.1016/j.neuroimage.2015.12.019 5778879",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-25",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_54",
+            "content": "<REF-26> Fonov VS Evans AC McKinstry RC : Unbiased nonlinear average age-appropriate brain templates from birth to adulthood. NeuroImage. 2009 ; 47 ( Suppl 1 ): S102 . 10.1016/S1053-8119(09)70884-5",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-26",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_55",
+            "content": "<REF-27> Fonov V Evans AC Botteron K : Unbiased average age-appropriate atlases for pediatric studies. NeuroImage. 2011 ; 54 ( 1 ): 313 \u2013 327 . 20656036 10.1016/j.neuroimage.2010.07.033 2962759",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-27",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_56",
+            "content": "<REF-28> Grabner G Janke AL Budge MM : Symmetric atlasing and model based segmentation: an application to the hippocampus in older adults. Med Image Comput Comput Assist Interv. Springer, 2006 ; 9 ( Pt 2 ): 58 \u2013 66 . 17354756 10.1007/11866763_8",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-28",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_57",
+            "content": "<REF-29> Fitzgerald PB Maller JJ Hoy KE : Exploring the optimal site for the localization of dorsolateral prefrontal cortex in brain stimulation experiments. Brain Stimul. 2009 ; 2 ( 4 ): 234 \u2013 237 . 20633422 10.1016/j.brs.2009.03.002",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-29",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_58",
+            "content": "<REF-30> De Witte S Klooster D Dedoncker J : Left prefrontal neuronavigated electrode localization in tDCS: 10-20 EEG system versus MRI-guided neuronavigation. Psychiatry Res Neuroimaging. 2018 ; 274 : 1 \u2013 6 . 29429773 10.1016/j.pscychresns.2018.02.001",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-30",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_59",
+            "content": "<REF-31> Ziegler E Chellappa SL Gaggioni G : A finite-element reciprocity solution for EEG forward modeling with realistic individual head models. NeuroImage. 2014 ; 103 : 542 \u2013 551 . 25204867 10.1016/j.neuroimage.2014.08.056",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-31",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_60",
+            "content": "<REF-32> Lepping RJ Atchley RA Chrysikou E : Neural Processing of Emotional Musical and Nonmusical Stimuli in Depression. PLoS One. 2016 ; 11 ( 6 ): e0156859 . 27284693 10.1371/journal.pone.0156859 4902194",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-32",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_61",
+            "content": "<REF-33> Fischl B Sereno MI Dale AM : Cortical surface-based analysis. II: Inflation, flattening, and a surface-based coordinate system. NeuroImage. 1999 ; 9 ( 2 ): 195 \u2013 207 . 9931269 10.1006/nimg.1998.0396",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-33",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_62",
+            "content": "<REF-34> Friston KJ Holmes AP Worsley KJ : Statistical parametric maps in functional imaging: a general linear approach. Hum Brain Mapp. 1994 ; 2 ( 4 ): 189 \u2013 210 . 10.1002/hbm.460020402",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-34",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_63",
+            "content": "<REF-35> Huang Y Liu AA Lafon B : Measurements and models of electric fields in the in vivo human brain during transcranial electric stimulation. eLife. 2017 ; 6 : pii: e18834. 28169833 10.7554/eLife.18834 5370189",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-35",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_64",
+            "content": "<REF-36> Boayue NM Csifcs\u00e1k G Puonti O : Dataset 1. Head models of healthy and depressed adults for simulating the effects of non-invasive brain stimulation . 2018 . http://www.doi.org/10.17605/OSF.IO/EXBD5",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-36",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_65",
+            "content": "<REF-37> Wagner S Rampersad SM Aydin \u00dc : Investigation of tDCS volume conduction effects in a highly realistic head model. J Neural Eng. 2014 ; 11 ( 1 ): 016002 . 24310982 10.1088/1741-2560/11/1/016002",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-37",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_66",
+            "content": "<REF-38> Windhoff M Opitz A Thielscher A : Electric field calculations in brain stimulation based on finite elements: an optimized processing pipeline for the generation and usage of accurate individual head models. Hum Brain Mapp. 2013 ; 34 ( 4 ): 923 \u2013 935 . 22109746 10.1002/hbm.21479",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-38",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_67",
+            "content": "<REF-39> Nielsen JD Madsen KH Puonti O : Automatic skull segmentation from MR images for realistic volume conductor models of the head: Assessment of the state-of-the-art. NeuroImage. 2018 ; 174 : 587 \u2013 598 . 29518567 10.1016/j.neuroimage.2018.03.001",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-39",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_68",
+            "content": "<REF-40> Geuzaine C Remacle JF : Gmsh: A 3-d finite element mesh generator with built-in pre- and post- processing facilities. Int J Numer Meth Eng. 2009 ; 79 ( 11 ): 1309 \u2013 1331 . 10.1002/nme.2579",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-40",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_69",
+            "content": "<REF-41> Ranta ME Chen M Crocetti D : Automated MRI parcellation of the frontal lobe. Hum Brain Mapp. 2014 ; 35 ( 5 ): 2009 \u2013 2026 . 23897577 10.1002/hbm.22309 4034317",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-41",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_70",
+            "content": "<REF-42> Bai S Dokos S Ho KA : A computational modelling study of transcranial direct current stimulation montages used in depression. NeuroImage. 2014 ; 87 : 332 \u2013 344 . 24246487 10.1016/j.neuroimage.2013.11.015",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-42",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_71",
+            "content": "<REF-45> Opitz A Falchier A Yan CG : Spatiotemporal structure of intracranial electric fields induced by transcranial electric stimulation in humans and nonhuman primates. Sci Rep. 2016 ; 6 : 31236. 27535462 10.1038/srep31236 4989141",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-45",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_72",
+            "content": "<REF-46> Rahman A Reato D Arlotti M : Cellular effects of acute direct current stimulation: somatic and synaptic terminal effects. J Physiol. 2013 ; 591 ( 10 ): 2563 \u2013 2578 . 23478132 10.1113/jphysiol.2012.247171 3678043",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-46",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-704_v2_73",
+            "content": "<REF-47> Fang Q Boas DA : Tetrahedral mesh generation from volumetric binary and grayscale images . In Biomedical Imaging: From Nano to Macro, 2009. ISBI\u201909. IEEE International Symposium on . Ieee, 2009 ; 1142 \u2013 1145 . 10.1109/ISBI.2009.5193259",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-47",
+                "created_by": "F1000XMLParser"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "7-704_v2_0@0",
+            "content": "Head models of healthy and depressed adults for simulating the electric fields of non-invasive electric brain stimulation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_0",
+            "start": 0,
+            "end": 120,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_2@0",
+            "content": "During the past decade, it became clear that the electric field elicited by non-invasive brain stimulation (NIBS) techniques such as transcranial direct current stimulation (tDCS) and transcranial magnetic stimulation (TMS) are substantially influenced by variations in individual head and brain anatomy.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_2",
+            "start": 0,
+            "end": 303,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_2@1",
+            "content": "In addition to structural variations in the healthy, several psychiatric disorders are characterized by anatomical alterations that are likely to further constrain the intracerebral effects of NIBS.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_2",
+            "start": 305,
+            "end": 502,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_2@2",
+            "content": "Here, we present high-resolution realistic head models derived from structural magnetic resonance imaging data of 19 healthy adults and 19 patients diagnosed with major depressive disorder (MDD).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_2",
+            "start": 504,
+            "end": 698,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_2@3",
+            "content": "By using a freely available software package for modelling the electric fields induced by different NIBS protocols, we show that our head models are well-suited for assessing inter-individual and between-group variability in the magnitude and focality of tDCS-induced electric fields for two protocols targeting the left dorsolateral prefrontal cortex.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_2",
+            "start": 700,
+            "end": 1051,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_4@0",
+            "content": "Non-invasive brain stimulation (NIBS) techniques such as transcranial direct current stimulation (tDCS) and transcranial magnetic stimulation (TMS) have been used to investigate the relationship between activity in different cortical regions and cognitive processes <REF-1> , <REF-2> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_4",
+            "start": 0,
+            "end": 284,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_4@1",
+            "content": "A key advantage of NIBS is that it allows direct manipulation of neural excitability <REF-3> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_4",
+            "start": 286,
+            "end": 379,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_4@2",
+            "content": "Therefore when used carefully, it allows causal interpretation of how specific brain regions might be involved in mental phenomena such as perception <REF-4> , working memory <REF-5> , attention <REF-6> , decision-making <REF-7> or emotional regulation <REF-8> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_4",
+            "start": 381,
+            "end": 642,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_4@3",
+            "content": "In addition, NIBS has been used as a clinical tool to obtain symptom reduction in several neurological and psychiatric conditions <REF-9> \u2013 <REF-12> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_4",
+            "start": 644,
+            "end": 793,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_4@4",
+            "content": "Importantly, the same stimulation protocol can result in different neural effects across individuals because the distribution of stimulation-induced electric fields (E-fields) in the brain is strongly contingent on anatomical variability <REF-13> , <REF-14> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_4",
+            "start": 795,
+            "end": 1053,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_4@5",
+            "content": "This can manifest in strong variability in the effects of NIBS on cognitive performance in healthy individuals (e.g., working memory <REF-15> , <REF-16> ) and on treatment outcomes in patients (e.g., depression <REF-17> \u2013 <REF-21> ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_4",
+            "start": 1055,
+            "end": 1287,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_5@0",
+            "content": "Given the heterogeneity in the efficacy of NIBS protocols in modulating behavior and clinical symptoms, there has been a move towards computational modelling of the spatial distribution of E-fields in the brain to understand how stimulation parameters such as electrode placement, electrode rotation or electrode type affects current flow in the neural tissue.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_5",
+            "start": 0,
+            "end": 359,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_5@1",
+            "content": "After an initial phase during which simplistic spherical head models were used <REF-22> , the focus has shifted to very detailed, realistic head models created from individual structural magnetic resonance (MR) images using freely available tools (e.g. SimNIBS <REF-23> or ROAST <REF-24> ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_5",
+            "start": 361,
+            "end": 650,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_5@2",
+            "content": "Creating individual head models remains challenging, however, due to (1) the requirement of high-quality structural MR images for each study participant and (2) the need to manually improve the automatic segmentation of the MR images into the different tissue types (i.e., bone, cerebrospinal fluid, white and grey matter, air, etc).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_5",
+            "start": 652,
+            "end": 984,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_5@3",
+            "content": "As a consequence, individual head models are rarely used in practice.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_5",
+            "start": 986,
+            "end": 1054,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_5@4",
+            "content": "Instead, researchers usually rely on E-fields induced in a reference individual which is generalized to all participants.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_5",
+            "start": 1056,
+            "end": 1176,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_5@5",
+            "content": "This approach, of course, neglects the importance of individual brain anatomy which can have strong influences on E-field distribution <REF-13> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_5",
+            "start": 1178,
+            "end": 1322,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_6@0",
+            "content": "To circumvent this issue, the New York (NY) Head model <REF-25> was created from the ICBM152 (v6 template <REF-26> , <REF-27> and v2009b template <REF-28> ), which is a non-linear average of 152 individual MRIs and is extended to the full head and neck region by fusing it with an average of an additional 26 brains.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_6",
+            "start": 0,
+            "end": 315,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_6@1",
+            "content": "Therefore, this head model represents an unbiased population average and should be a better representation of the individual participants than any randomly picked reference individual.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_6",
+            "start": 317,
+            "end": 500,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_6@2",
+            "content": "However, calculation of the electric field on a single head model does not allow to quantify variation across individuals that can be substantial both in cortical regions directly below the electrodes and those that are farther away from the stimulation sites.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_6",
+            "start": 502,
+            "end": 761,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_6@3",
+            "content": "Also, given that the NY Head was created using healthy individuals, possible systematic differences between patient groups may not be noticed.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_6",
+            "start": 763,
+            "end": 904,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_7@0",
+            "content": "To improve this situation, we present 38 head models created from MR images of 19 healthy participants and 19 patients with major depressive disorder (MDD).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_7",
+            "start": 0,
+            "end": 155,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_7@1",
+            "content": "These head models were manually checked and edited to improve their accuracy in giving a faithful representation of cortical regions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_7",
+            "start": 157,
+            "end": 289,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_7@2",
+            "content": "Our head models can aid future research in at least three ways: First, calculating electric fields across a large sample allows to get a sense of the variability of the induced E-field due to anatomical differences.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_7",
+            "start": 291,
+            "end": 505,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_7@3",
+            "content": "Second, our head models also enable comparison of the neural effects on NIBS protocols in healthy vs. depressed brains.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_7",
+            "start": 507,
+            "end": 625,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_7@4",
+            "content": "Given the different protocols used for left dorsolateral prefrontal cortex (lDLPFC) targeting with NIBS <REF-29> , <REF-30> , computational modelling using these head models will enable the development of protocols for more selective lDLPFC stimulation in this disorder.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_7",
+            "start": 627,
+            "end": 896,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_7@5",
+            "content": "Third, EEG source localization also relies on head models to calculate the spatial location of possible current sources in the brain.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_7",
+            "start": 898,
+            "end": 1030,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_7@6",
+            "content": "Usually, boundary element models (BEM) are used which have the limitation of less anatomical detail.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_7",
+            "start": 1032,
+            "end": 1131,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_7@7",
+            "content": "Therefore, finite element models (FEM) derived from high resolution MR images have become more widespread because they are able to incorporate more tissue types, increasing the precision of EEG source localization.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_7",
+            "start": 1133,
+            "end": 1346,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_7@8",
+            "content": "Our head models can be used for source localization using open-source software <REF-31> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_7",
+            "start": 1348,
+            "end": 1436,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_7@9",
+            "content": "Thus, our head models can help researchers to optimize NIBS protocols and EEG source localization methods, and to test them on a larger sample (including both healthy and patient data).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_7",
+            "start": 1438,
+            "end": 1622,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_8@0",
+            "content": "Methods and results",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_8",
+            "start": 0,
+            "end": 18,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_9@0",
+            "content": "Participants",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_9",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_10@0",
+            "content": "High-resolution head models were created from T1-weighted anatomical images that were collected in a separate functional magnetic resonance imaging (fMRI) study <REF-32> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_10",
+            "start": 0,
+            "end": 170,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_10@1",
+            "content": "The data was obtained from the OpenfMRI database (accession number: ds000171 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_10",
+            "start": 172,
+            "end": 250,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_10@2",
+            "content": "Structural scans of 19 healthy adult participants with no history of depression or other psychiatric disorders (11 females; mean \u00b1 SD age: 28.79 \u00b1 10.86; range: 18\u201359) and 19 individuals diagnosed with MDD and experiencing a depressive episode at the time of the scanning (11 females; mean \u00b1 SD age: 33.52 \u00b1 13.35; range: 18\u201356) were used.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_10",
+            "start": 252,
+            "end": 590,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_10@3",
+            "content": "Data of one control participant (\u2019sub-control20\u2019) was excluded due to technical problems with head model creation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_10",
+            "start": 592,
+            "end": 705,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_10@4",
+            "content": "Patients did not suffer from current or past manic episodes, current comorbid anxiety disorders or current alcohol dependence or abuse.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_10",
+            "start": 707,
+            "end": 841,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_10@5",
+            "content": "At the time of data collection, all patients were unmedicated, but 6 received antidepressant pharmacotherapy in the past.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_10",
+            "start": 843,
+            "end": 963,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_10@6",
+            "content": "For full details regarding demographic data, we refer to the supporting information of the original paper <REF-32> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_10",
+            "start": 965,
+            "end": 1080,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_11@0",
+            "content": "Creation of head models",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_11",
+            "start": 0,
+            "end": 22,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_12@0",
+            "content": "As the very first step, we inspected scans of all participants, and manually removed signals corresponding to the MRI marker placed on the forehead of each subject using FreeSurfer 5.3.0 <REF-33> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_12",
+            "start": 0,
+            "end": 196,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_12@1",
+            "content": "Automated tissue segmentation was performed in SPM12 <REF-34> for skin, skull, eyeballs, CSF and major air cavities, and in FreeSurfer for gray and white matter.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_12",
+            "start": 198,
+            "end": 358,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_12@2",
+            "content": "Subsequently, segmented images of each participant were visually inspected and manually corrected with FreeSurfer (done by investigator G.Cs., verified by O.P.).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_12",
+            "start": 360,
+            "end": 520,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_12@3",
+            "content": "Manual corrections were primarily restricted to the skull-CSF boundary, but in some cases also involved the skin-skull interface.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_12",
+            "start": 522,
+            "end": 650,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_12@4",
+            "content": "In addition, during manual corrections we verified that the segmentation of the cortical gray matter corresponded to the anatomical scans except for medial temporal lobe structures (i.e., the parahippocampal gyrus and the hippocampus proper).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_12",
+            "start": 652,
+            "end": 893,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_12@5",
+            "content": "Moreover, the resulting masks were not corrected for inconsistencies relating to subcortical nuclei and thus, these head models are not suitable for estimating stimulation-related E-fields in structures such as the thalamus, basal ganglia, amygdala or the cerebellum.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_12",
+            "start": 895,
+            "end": 1161,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_12@6",
+            "content": "Additionally, the segmentation of the brainstem is not accurate because it arbitrarily assigned brain tissue to white and grey matter.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_12",
+            "start": 1163,
+            "end": 1296,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_12@7",
+            "content": "Furthermore, because the original dataset was de-faced and did not include the neck/shoulder region, our head models do not include these regions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_12",
+            "start": 1298,
+            "end": 1443,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_12@8",
+            "content": "This has 2 implications: Firstly, this limits their usability regarding the simulation of tDCS montages with extracephalic return electrodes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_12",
+            "start": 1445,
+            "end": 1585,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_12@9",
+            "content": "Nevertheless, they can be used for all tES protocols using scalp electrodes and most TMS protocols.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_12",
+            "start": 1587,
+            "end": 1685,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_12@10",
+            "content": "Secondly, an extended head model with field of view covering the entire head would further increase the predictive accuracy of the head models <REF-35> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_12",
+            "start": 1687,
+            "end": 1839,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_13@0",
+            "content": "Head models were created with a custom version of SimNIBS 2.1 <REF-23> , a freely available software package for simulating the effects of NIBS techniques.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_13",
+            "start": 0,
+            "end": 154,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_13@1",
+            "content": "The final head mesh of each participant consisted of a total number of approximately 3,200,000 tetrahedral elements, assigned to six tissue types ( Figure 1 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_13",
+            "start": 156,
+            "end": 314,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_13@2",
+            "content": "The initial segmentation included more than 6 tissue compartments (e.g., separate tissue types for cerebellar gray and white matter; available in the m2m_sub-* folders) but they were later combined into one of 6 tissue types: skin, skull, CSF, GM, WM and eyeballs in the final head models for simulation purposes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_13",
+            "start": 316,
+            "end": 628,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_13@3",
+            "content": "In addition, air cavities were modeled by not adding tetrahedra to these locations, similar to the air surrounding the head.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_13",
+            "start": 630,
+            "end": 753,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_13@4",
+            "content": "For comparability with other datasets, we also report measurements for head size: The distance between the nasion and inion (mean \u00b1 SD: 19.2 cm \u00b1 1.01 cm; range: 16.7 cm - 21.3 cm) and the distance between the right and left pre-auricular points (mean \u00b1 SD: 14.8 cm \u00b1 0.65 cm; range: 13.6 cm - 16.3 cm).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_13",
+            "start": 755,
+            "end": 1057,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_13@5",
+            "content": "The total volume of the brain was 1.22 dm 3 \u00b1 0.11 dm 3 (range: 1.02 dm 3 - 1.49 dm 3 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_13",
+            "start": 1059,
+            "end": 1146,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_13@6",
+            "content": "Individual measurements are found at our data repository <REF-36>",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_13",
+            "start": 1148,
+            "end": 1212,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_14@0",
+            "content": "Figure 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_14",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_16@0",
+            "content": "Tissue conductivities were set as follows: 0.465 S/m (skin), 0.01 S/m (skull), 0.5 S/m (eyeballs), 1.654 S/m (cerebrospinal fluid), 0.275 S/m (gray matter), 0.126 S/m (white matter).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_16",
+            "start": 0,
+            "end": 181,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_16@1",
+            "content": "Although our head models do not account for white matter anisotropy, this property has been shown to primarily influence current density in deeper structures, leaving superficial gray matter relatively unaffected <REF-37> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_16",
+            "start": 183,
+            "end": 405,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_16@2",
+            "content": "The accuracy of tissue segmentation and the good correspondence between anatomical scans and the resulting head models for 8 individuals are shown in Figure 2 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_16",
+            "start": 407,
+            "end": 566,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_17@0",
+            "content": "Figure 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_17",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_19@0",
+            "content": "Dataset validation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_19",
+            "start": 0,
+            "end": 17,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_20@0",
+            "content": "Except for two manual steps (removal of MRI markers from the forehead, manual correction of tissue segmentations), the process of head model creation was automated using a custom version of SimNIBS 2.1 that employed FreeSurfer 5.3.0 for brain segmentation (as described in <REF-38> and implemented in mri2mesh) and SPM12 for segmentation of the remaining tissues (similarly to <REF-39> and implemented in headreco).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_20",
+            "start": 0,
+            "end": 414,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_20@1",
+            "content": "This pipeline provides more accurate tissue segmentation relative to other protocols.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_20",
+            "start": 416,
+            "end": 500,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_20@2",
+            "content": "It was a custom pipeline developed before the official release of SimNIBS 2.1 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_20",
+            "start": 502,
+            "end": 580,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_20@3",
+            "content": "However, using headreco combined with the CAT12 toolbox (included with SimNIBS 2.1.1 ) for cortical reconstruction, the same accuracy can be achieved.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_20",
+            "start": 582,
+            "end": 731,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_20@4",
+            "content": "We provide scripts compatible with SimNIBS 2.1.1 for automated simulation of tDCS-induced electric fields for all head models available for download at our data repository <REF-36> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_20",
+            "start": 733,
+            "end": 914,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_21@0",
+            "content": "For validating the reliability of our head models, we compared the effects of two tDCS protocols targeting the lDLPFC (one conventional bipolar montage and one multi-electrode 4x1 setup) against the effects observed in the NY Head <REF-25> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_21",
+            "start": 0,
+            "end": 240,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_21@1",
+            "content": "The mesh for the NY Head (abaqus format; https://www.parralab.org/nyhead/ ) has been reformatted to be compatible with SimNIBS and is also available for download in our data repository <REF-36> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_21",
+            "start": 242,
+            "end": 436,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_22@0",
+            "content": "For each head model, tDCS electrodes of appropriate size (bipolar montage: 5 x 5 cm, circular connectors (diameter: 0.5 cm) at the middle of the electrode pads; 4x1 montage: diameter of 1.2 cm) and thickness (1 mm for all electrodes + a sponge pocket of 2.5 mm thickness for the bipolar montages and a gel layer of 2.5 mm thickness for the 4x1 montages) were placed at scalp locations corresponding to electrode positions of the International 10/10 system (bipolar montage: anode - F3, cathode - F4; 4x1 montage: anode: F3, cathodes: C3, FT7, Fp1, Fz).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_22",
+            "start": 0,
+            "end": 551,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_22@1",
+            "content": "Stimulation intensity for the anode was set to 2 mA, with equal distribution of return currents for the 4 cathodes (0.5 mA for each) in the 4x1 protocol.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_22",
+            "start": 553,
+            "end": 705,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_22@2",
+            "content": "Results of the simulations were visualized using Gmsh <REF-40> ( Figure 3 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_22",
+            "start": 707,
+            "end": 782,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_23@0",
+            "content": "Figure 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_23",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_25@0",
+            "content": "In our previous study <REF-14> , we reported stronger stimulation-induced E-fields in the lDLPFC for the bipolar montage used by Brunoni and colleagues (2013) <REF-17> than for the 4x1 protocol, albeit the bipolar montage was also associated with reduced focality (i.e., more intensive stimulation of other cortical areas).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_25",
+            "start": 0,
+            "end": 322,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_25@1",
+            "content": "Therefore, we extracted three measures for both tDCS protocols for our 38 head models: stimulation strength (the norm of the electric field vector, \u2019normfield\u2019) in the lDLPFC was assessed by extracting individual mean (calculated across all nodes in this region) and maximum (peak) E-field values, whereas spatial focality of the stimulation was analyzed by calculating the focality-index (FI), with the target region as reference.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_25",
+            "start": 324,
+            "end": 754,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_25@2",
+            "content": "FI was quantified as the proportion of highest-intensity nodes (nodes within the upper 1% percentile of all E-field values) in the lDLPFC relative to the whole cortex.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_25",
+            "start": 756,
+            "end": 922,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_25@3",
+            "content": "Mean and peak E-field values corresponding to both tDCS montages were extracted by reconstructing the two-dimensional cortical surface (more precisely, the middle of the cortical sheet) of each individual along with the corresponding E-field cortical map in FreeSurfer, and an automated atlas-based parcellation of the frontal lobe <REF-41> was applied to each individual brain to delineate the lDLPFC.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_25",
+            "start": 924,
+            "end": 1325,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_25@4",
+            "content": "As a result, we show that (1) both protocols induce strong E-fields in the DLPFC (with symmetrical effects for the bipolar montage and unilateral E-field distribution for the 4x1 protocol), (2) E-field magnitudes and distributions are similar for our head models and for the NY Head, (3) all E-field measures (peak and mean strength, FI) show great degree of variability, and (4) montage-specific effects are consistent with previous results reported in the literature regarding both the spatial distribution and the magnitude of E-fields <REF-35> , <REF-42> \u2013 <REF-45> ( Figure 3 , Figure 4 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_25",
+            "start": 1327,
+            "end": 1920,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_25@5",
+            "content": "Accessing group differences between MDD and healthy subjects was not the primary aim of the current data note, however, analysis of the spatial distribution of tDCS-induced E-fields in the bilateral DLPFC and medial prefrontal cortex showed subtle group differences between the healthy and MDD groups.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_25",
+            "start": 1922,
+            "end": 2222,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_25@6",
+            "content": "For detailed discussion of these results and that of Figure 4 we refer the reader to our accompanying paper <REF-14> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_25",
+            "start": 2224,
+            "end": 2341,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_26@0",
+            "content": "Figure 4.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_26",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_28@0",
+            "content": "Data availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_28",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_29@0",
+            "content": "Open Science Framework (OSF) : Dataset 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_29",
+            "start": 0,
+            "end": 40,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_29@1",
+            "content": "Head models of healthy and depressed adults for simulating the effects of non-invasive brain stimulation, http://doi.org/10.17605/OSF.IO/EXBD5 <REF-36>",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_29",
+            "start": 42,
+            "end": 192,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_30@0",
+            "content": "License: CC0 1.0 Universal",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_30",
+            "start": 0,
+            "end": 25,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_31@0",
+            "content": "At our data repository <REF-36> , the following data are available for download for all subjects (healthy adults: \u2019sub-control\u2019, patients: \u2019sub-mdd\u2019): T1-weighted anatomical scans registered to FreeSurfer conform space (\u2019nii.gz\u2019 files), the corresponding segmentation masks for the 7 (6 tissue types of the final meshes + a mask for major air cavities) tissue types (\u2019nii.gz\u2019 files), the final head models (\u2019msh\u2019 files), the files containing electrode coordinates (International 10/10 system) for all participants (\u2019txt\u2019 files can be used for performing new script-based simulations, whereas the \u2019geo\u2019 files can be used to plot electrode positions directly onto the mesh files in Gmsh <REF-40> ), and files organized in 2 folders (\u2019fs_*.tar.gz\u2019 and \u2019m2m_*.tar.gz\u2019) that enable creating simulation outputs in average FreeSurfer space (\u2019fsaverage\u2019).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_31",
+            "start": 0,
+            "end": 846,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_31@1",
+            "content": "We also included a README file with a detailed description of the data and scripts.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_31",
+            "start": 848,
+            "end": 930,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_32@0",
+            "content": "Usage notes",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_32",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_33@0",
+            "content": "Our head models are compatible with SimNIBS 2.1.1 ( http://simnibs.de/ ) for simulating the effects of tDCS and TMS protocols.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_33",
+            "start": 0,
+            "end": 125,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_33@1",
+            "content": "This software package has an easy-to-use graphical user interface (GUI) for setting all stimulation parameters (scalp location, intensity, etc.) for both NIBS techniques.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_33",
+            "start": 127,
+            "end": 296,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_33@2",
+            "content": "By using our custom-written script <REF-36> , it is also possible to run tDCS simulations for any given montage for all participants at once.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_33",
+            "start": 298,
+            "end": 438,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_33@3",
+            "content": "The script will also output data registered to an average surface (\u2019fsaverage\u2019) which allows creating group averaged data, as we have shown previously <REF-14> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_33",
+            "start": 440,
+            "end": 600,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_33@4",
+            "content": "In addition, researchers have the opportunity to extract E-field components that are either radial (normal) or tangential relative to the cortical surface, and have been associated with different cellular effects <REF-46> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_33",
+            "start": 602,
+            "end": 824,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_33@5",
+            "content": "At our data repository <REF-36> we also provide the manually corrected segmentations for the different tissue types for those who would like to create high-quality meshes of their own using open-source software such as iso2mesh <REF-47> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_33",
+            "start": 826,
+            "end": 1063,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_33@6",
+            "content": "Finally, our meshes can be used for improving the anatomic precision of EEG source localization, using open-source tools <REF-31> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_33",
+            "start": 1065,
+            "end": 1195,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_34@0",
+            "content": "<REF-1> Polan\u00eda R Nitsche MA Ruff CC : Studying and modifying brain function with non-invasive brain stimulation. Nat Neurosci. 2018 ; 21 ( 2 ): 174 \u2013 187 . 29311747 10.1038/s41593-017-0054-4",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_34",
+            "start": 0,
+            "end": 190,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_35@0",
+            "content": "<REF-2> Bestmann S de Berker AO Bonaiuto J : Understanding the behavioural consequences of noninvasive brain stimulation. Trends Cogn Sci. 2015 ; 19 ( 1 ): 13 \u2013 20 . 25467129 10.1016/j.tics.2014.10.003",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_35",
+            "start": 0,
+            "end": 200,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_36@0",
+            "content": "<REF-3> Stagg CJ Nitsche MA : Physiological basis of transcranial direct current stimulation. Neuroscientist. 2011 ; 17 ( 1 ): 37 \u2013 53 . 21343407 10.1177/1073858410386614",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_36",
+            "start": 0,
+            "end": 169,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_37@0",
+            "content": "<REF-4> Antal A Nitsche MA Kruse W : Direct current stimulation over v5 enhances visuomotor coordination by improving motion perception in humans. J Cogn Neurosci. 2004 ; 16 ( 4 ): 521 \u2013 527 . 15165345 10.1162/089892904323057263",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_37",
+            "start": 0,
+            "end": 227,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_38@0",
+            "content": "<REF-5> Fregni F Boggio PS Nitsche M : Anodal transcranial direct current stimulation of prefrontal cortex enhances working memory. Exp Brain Res. 2005 ; 166 ( 1 ): 23 \u2013 30 . 15999258 10.1007/s00221-005-2334-6",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_38",
+            "start": 0,
+            "end": 208,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_39@0",
+            "content": "<REF-6> Coffman BA Trumbo MC Clark VP : Enhancement of object detection with transcranial direct current stimulation is associated with increased attention. BMC Neurosci. 2012 ; 13 ( 1 ): 108 . 22963503 10.1186/1471-2202-13-108 3494452",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_39",
+            "start": 0,
+            "end": 234,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_40@0",
+            "content": "<REF-7> Boggio PS Campanh\u00e3 C Valasek CA : Modulation of decision-making in a gambling task in older adults with transcranial direct current stimulation. Eur J Neurosci. 2010 ; 31 ( 3 ): 593 \u2013 597 . 20105234 10.1111/j.1460-9568.2010.07080.x",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_40",
+            "start": 0,
+            "end": 238,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_41@0",
+            "content": "<REF-8> Feeser M Prehn K Kazzer P : Transcranial direct current stimulation enhances cognitive control during emotion regulation. Brain Stimul. 2014 ; 7 ( 1 ): 105 \u2013 112 . 24095257 10.1016/j.brs.2013.08.006",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_41",
+            "start": 0,
+            "end": 205,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_42@0",
+            "content": "<REF-9> Ridding MC Rothwell JC : Is there a future for therapeutic use of transcranial magnetic stimulation? Nat Rev Neurosci. 2007 ; 8 ( 7 ): 559 \u2013 67 . 17565358 10.1038/nrn2169",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_42",
+            "start": 0,
+            "end": 177,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_43@0",
+            "content": "<REF-12> Di Lazzaro V Profice P Pilato F : Motor cortex plasticity predicts recovery in acute stroke. Cereb Cortex. 2009 ; 20 ( 7 ): 1523 \u2013 1528 . 19805417 10.1093/cercor/bhp216",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_43",
+            "start": 0,
+            "end": 176,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_44@0",
+            "content": "<REF-13> Opitz A Paulus W Will S : Determinants of the electric field during transcranial direct current stimulation. NeuroImage. 2015 ; 109 : 140 \u2013 150 . 25613437 10.1016/j.neuroimage.2015.01.033",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_44",
+            "start": 0,
+            "end": 195,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_45@0",
+            "content": "<REF-14> Csifcs\u00e1k G Boayue NM Puonti O : Effects of transcranial direct current stimulation for treating depression: A modeling study. J Affect Disord. 2018 ; 234 : 164 \u2013 173 . 29529550 10.1016/j.jad.2018.02.077",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_45",
+            "start": 0,
+            "end": 210,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_46@0",
+            "content": "<REF-15> Brunoni AR Vanderhasselt MA : Working memory improvement with non-invasive brain stimulation of the dorsolateral prefrontal cortex: a systematic review and meta-analysis. Brain Cogn. 2014 ; 86 : 1 \u2013 9 . 24514153 10.1016/j.bandc.2014.01.008",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_46",
+            "start": 0,
+            "end": 247,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_47@0",
+            "content": "<REF-16> Hill AT Fitzgerald PB Hoy KE : Effects of anodal transcranial direct current stimulation on working memory: a systematic review and meta-analysis of findings from healthy and neuropsychiatric populations. Brain Stimul. 2016 ; 9 ( 2 ): 197 \u2013 208 . 26597929 10.1016/j.brs.2015.10.006",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_47",
+            "start": 0,
+            "end": 289,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_48@0",
+            "content": "<REF-17> Brunoni AR Valiengo L Baccaro A : The sertraline vs. electrical current therapy for treating depression clinical study: results from a factorial, randomized, controlled trial. JAMA Psychiatry. 2013 ; 70 ( 4 ): 383 \u2013 391 . 23389323 10.1001/2013.jamapsychiatry.32",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_48",
+            "start": 0,
+            "end": 269,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_49@0",
+            "content": "<REF-21> Loo CK Alonzo A Martin D : Transcranial direct current stimulation for depression: 3-week, randomised, sham-controlled trial. Br J Psychiatry. 2012 ; 200 ( 1 ): 52 \u2013 59 . 22215866 10.1192/bjp.bp.111.097634",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_49",
+            "start": 0,
+            "end": 213,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_50@0",
+            "content": "<REF-22> Miranda PC Lomarev M Hallett M : Modeling the current distribution during transcranial direct current stimulation. Clin Neurophysiol. 2006 ; 117 ( 7 ): 1623 \u2013 1629 . 16762592 10.1016/j.clinph.2006.04.009",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_50",
+            "start": 0,
+            "end": 211,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_51@0",
+            "content": "<REF-23> Thielscher A Antunes A Saturnino GB : Field modeling for transcranial magnetic stimulation: A useful tool to understand the physiological effects of TMS? Conf Proc IEEE Eng Med Biol Soc. 2015 ; 2015 : 222 \u2013 225 . 26736240 10.1109/EMBC.2015.7318340",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_51",
+            "start": 0,
+            "end": 255,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_52@0",
+            "content": "<REF-24> Huang Y Datta A Bikson M : Realistic volumetric-approach to simulate transcranial electric stimulation\u2013roast\u2013a fully automated open-source pipeline. bioRxiv. 2017 ; 217331. 10.1101/217331",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_52",
+            "start": 0,
+            "end": 195,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_53@0",
+            "content": "<REF-25> Huang Y Parra LC Haufe S : The New York Head-A precise standardized volume conductor model for EEG source localization and tES targeting. NeuroImage. 2016 ; 140 : 150 \u2013 162 . 26706450 10.1016/j.neuroimage.2015.12.019 5778879",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_53",
+            "start": 0,
+            "end": 232,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_54@0",
+            "content": "<REF-26> Fonov VS Evans AC McKinstry RC : Unbiased nonlinear average age-appropriate brain templates from birth to adulthood. NeuroImage. 2009 ; 47 ( Suppl 1 ): S102 . 10.1016/S1053-8119(09)70884-5",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_54",
+            "start": 0,
+            "end": 196,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_55@0",
+            "content": "<REF-27> Fonov V Evans AC Botteron K : Unbiased average age-appropriate atlases for pediatric studies. NeuroImage. 2011 ; 54 ( 1 ): 313 \u2013 327 . 20656036 10.1016/j.neuroimage.2010.07.033 2962759",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_55",
+            "start": 0,
+            "end": 192,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_56@0",
+            "content": "<REF-28> Grabner G Janke AL Budge MM : Symmetric atlasing and model based segmentation: an application to the hippocampus in older adults. Med Image Comput Comput Assist Interv. Springer, 2006 ; 9 ( Pt 2 ): 58 \u2013 66 . 17354756 10.1007/11866763_8",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_56",
+            "start": 0,
+            "end": 243,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_57@0",
+            "content": "<REF-29> Fitzgerald PB Maller JJ Hoy KE : Exploring the optimal site for the localization of dorsolateral prefrontal cortex in brain stimulation experiments. Brain Stimul. 2009 ; 2 ( 4 ): 234 \u2013 237 . 20633422 10.1016/j.brs.2009.03.002",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_57",
+            "start": 0,
+            "end": 233,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_58@0",
+            "content": "<REF-30> De Witte S Klooster D Dedoncker J : Left prefrontal neuronavigated electrode localization in tDCS: 10-20 EEG system versus MRI-guided neuronavigation. Psychiatry Res Neuroimaging. 2018 ; 274 : 1 \u2013 6 . 29429773 10.1016/j.pscychresns.2018.02.001",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_58",
+            "start": 0,
+            "end": 251,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_59@0",
+            "content": "<REF-31> Ziegler E Chellappa SL Gaggioni G : A finite-element reciprocity solution for EEG forward modeling with realistic individual head models. NeuroImage. 2014 ; 103 : 542 \u2013 551 . 25204867 10.1016/j.neuroimage.2014.08.056",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_59",
+            "start": 0,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_60@0",
+            "content": "<REF-32> Lepping RJ Atchley RA Chrysikou E : Neural Processing of Emotional Musical and Nonmusical Stimuli in Depression. PLoS One. 2016 ; 11 ( 6 ): e0156859 . 27284693 10.1371/journal.pone.0156859 4902194",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_60",
+            "start": 0,
+            "end": 204,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_61@0",
+            "content": "<REF-33> Fischl B Sereno MI Dale AM : Cortical surface-based analysis. II: Inflation, flattening, and a surface-based coordinate system. NeuroImage. 1999 ; 9 ( 2 ): 195 \u2013 207 . 9931269 10.1006/nimg.1998.0396",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_61",
+            "start": 0,
+            "end": 206,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_62@0",
+            "content": "<REF-34> Friston KJ Holmes AP Worsley KJ : Statistical parametric maps in functional imaging: a general linear approach. Hum Brain Mapp. 1994 ; 2 ( 4 ): 189 \u2013 210 . 10.1002/hbm.460020402",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_62",
+            "start": 0,
+            "end": 185,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_63@0",
+            "content": "<REF-35> Huang Y Liu AA Lafon B : Measurements and models of electric fields in the in vivo human brain during transcranial electric stimulation. eLife. 2017 ; 6 : pii: e18834. 28169833 10.7554/eLife.18834 5370189",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_63",
+            "start": 0,
+            "end": 212,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_64@0",
+            "content": "<REF-36> Boayue NM Csifcs\u00e1k G Puonti O : Dataset 1. Head models of healthy and depressed adults for simulating the effects of non-invasive brain stimulation . 2018 . http://www.doi.org/10.17605/OSF.IO/EXBD5",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_64",
+            "start": 0,
+            "end": 205,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_65@0",
+            "content": "<REF-37> Wagner S Rampersad SM Aydin \u00dc : Investigation of tDCS volume conduction effects in a highly realistic head model. J Neural Eng. 2014 ; 11 ( 1 ): 016002 . 24310982 10.1088/1741-2560/11/1/016002",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_65",
+            "start": 0,
+            "end": 200,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_66@0",
+            "content": "<REF-38> Windhoff M Opitz A Thielscher A : Electric field calculations in brain stimulation based on finite elements: an optimized processing pipeline for the generation and usage of accurate individual head models. Hum Brain Mapp. 2013 ; 34 ( 4 ): 923 \u2013 935 . 22109746 10.1002/hbm.21479",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_66",
+            "start": 0,
+            "end": 286,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_67@0",
+            "content": "<REF-39> Nielsen JD Madsen KH Puonti O : Automatic skull segmentation from MR images for realistic volume conductor models of the head: Assessment of the state-of-the-art. NeuroImage. 2018 ; 174 : 587 \u2013 598 . 29518567 10.1016/j.neuroimage.2018.03.001",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_67",
+            "start": 0,
+            "end": 249,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_68@0",
+            "content": "<REF-40> Geuzaine C Remacle JF : Gmsh: A 3-d finite element mesh generator with built-in pre- and post- processing facilities. Int J Numer Meth Eng. 2009 ; 79 ( 11 ): 1309 \u2013 1331 . 10.1002/nme.2579",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_68",
+            "start": 0,
+            "end": 196,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_69@0",
+            "content": "<REF-41> Ranta ME Chen M Crocetti D : Automated MRI parcellation of the frontal lobe. Hum Brain Mapp. 2014 ; 35 ( 5 ): 2009 \u2013 2026 . 23897577 10.1002/hbm.22309 4034317",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_69",
+            "start": 0,
+            "end": 166,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_70@0",
+            "content": "<REF-42> Bai S Dokos S Ho KA : A computational modelling study of transcranial direct current stimulation montages used in depression. NeuroImage. 2014 ; 87 : 332 \u2013 344 . 24246487 10.1016/j.neuroimage.2013.11.015",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_70",
+            "start": 0,
+            "end": 211,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_71@0",
+            "content": "<REF-45> Opitz A Falchier A Yan CG : Spatiotemporal structure of intracranial electric fields induced by transcranial electric stimulation in humans and nonhuman primates. Sci Rep. 2016 ; 6 : 31236. 27535462 10.1038/srep31236 4989141",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_71",
+            "start": 0,
+            "end": 232,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_72@0",
+            "content": "<REF-46> Rahman A Reato D Arlotti M : Cellular effects of acute direct current stimulation: somatic and synaptic terminal effects. J Physiol. 2013 ; 591 ( 10 ): 2563 \u2013 2578 . 23478132 10.1113/jphysiol.2012.247171 3678043",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_72",
+            "start": 0,
+            "end": 219,
+            "label": {}
+        },
+        {
+            "ix": "7-704_v2_73@0",
+            "content": "<REF-47> Fang Q Boas DA : Tetrahedral mesh generation from volumetric binary and grayscale images . In Biomedical Imaging: From Nano to Macro, 2009. ISBI\u201909. IEEE International Symposium on . Ieee, 2009 ; 1142 \u2013 1145 . 10.1109/ISBI.2009.5193259",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-704_v2_73",
+            "start": 0,
+            "end": 243,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "7-704_v2_0",
+            "tgt_ix": "7-704_v2_1",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_1",
+            "tgt_ix": "7-704_v2_2",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_0",
+            "tgt_ix": "7-704_v2_3",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_3",
+            "tgt_ix": "7-704_v2_4",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_3",
+            "tgt_ix": "7-704_v2_5",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_3",
+            "tgt_ix": "7-704_v2_6",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_3",
+            "tgt_ix": "7-704_v2_7",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_0",
+            "tgt_ix": "7-704_v2_8",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_8",
+            "tgt_ix": "7-704_v2_9",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_9",
+            "tgt_ix": "7-704_v2_10",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_8",
+            "tgt_ix": "7-704_v2_11",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_11",
+            "tgt_ix": "7-704_v2_12",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_11",
+            "tgt_ix": "7-704_v2_13",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_11",
+            "tgt_ix": "7-704_v2_14",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_14",
+            "tgt_ix": "7-704_v2_15",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_11",
+            "tgt_ix": "7-704_v2_16",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_11",
+            "tgt_ix": "7-704_v2_17",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_17",
+            "tgt_ix": "7-704_v2_18",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_0",
+            "tgt_ix": "7-704_v2_19",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_19",
+            "tgt_ix": "7-704_v2_20",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_19",
+            "tgt_ix": "7-704_v2_21",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_19",
+            "tgt_ix": "7-704_v2_22",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_19",
+            "tgt_ix": "7-704_v2_23",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_23",
+            "tgt_ix": "7-704_v2_24",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_19",
+            "tgt_ix": "7-704_v2_25",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_19",
+            "tgt_ix": "7-704_v2_26",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_26",
+            "tgt_ix": "7-704_v2_27",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_0",
+            "tgt_ix": "7-704_v2_28",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_28",
+            "tgt_ix": "7-704_v2_29",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_28",
+            "tgt_ix": "7-704_v2_30",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_28",
+            "tgt_ix": "7-704_v2_31",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_28",
+            "tgt_ix": "7-704_v2_32",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_32",
+            "tgt_ix": "7-704_v2_33",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_0",
+            "tgt_ix": "7-704_v2_1",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_1",
+            "tgt_ix": "7-704_v2_2",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_2",
+            "tgt_ix": "7-704_v2_3",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_3",
+            "tgt_ix": "7-704_v2_4",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_5",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_5",
+            "tgt_ix": "7-704_v2_6",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_6",
+            "tgt_ix": "7-704_v2_7",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_7",
+            "tgt_ix": "7-704_v2_8",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_8",
+            "tgt_ix": "7-704_v2_9",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_9",
+            "tgt_ix": "7-704_v2_10",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_10",
+            "tgt_ix": "7-704_v2_11",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_11",
+            "tgt_ix": "7-704_v2_12",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_12",
+            "tgt_ix": "7-704_v2_13",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_13",
+            "tgt_ix": "7-704_v2_14",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_14",
+            "tgt_ix": "7-704_v2_15",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_15",
+            "tgt_ix": "7-704_v2_16",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_16",
+            "tgt_ix": "7-704_v2_17",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_17",
+            "tgt_ix": "7-704_v2_18",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_18",
+            "tgt_ix": "7-704_v2_19",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_19",
+            "tgt_ix": "7-704_v2_20",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_20",
+            "tgt_ix": "7-704_v2_21",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_21",
+            "tgt_ix": "7-704_v2_22",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_22",
+            "tgt_ix": "7-704_v2_23",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_23",
+            "tgt_ix": "7-704_v2_24",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_24",
+            "tgt_ix": "7-704_v2_25",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_25",
+            "tgt_ix": "7-704_v2_26",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_26",
+            "tgt_ix": "7-704_v2_27",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_27",
+            "tgt_ix": "7-704_v2_28",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_28",
+            "tgt_ix": "7-704_v2_29",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_29",
+            "tgt_ix": "7-704_v2_30",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_30",
+            "tgt_ix": "7-704_v2_31",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_31",
+            "tgt_ix": "7-704_v2_32",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_32",
+            "tgt_ix": "7-704_v2_33",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_34",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_35",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_36",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_37",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_38",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_39",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_40",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_41",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_42",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_43",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_44",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_45",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_46",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_47",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_48",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_49",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_5",
+            "tgt_ix": "7-704_v2_50",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_5",
+            "tgt_ix": "7-704_v2_51",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_5",
+            "tgt_ix": "7-704_v2_52",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_6",
+            "tgt_ix": "7-704_v2_53",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_6",
+            "tgt_ix": "7-704_v2_54",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_6",
+            "tgt_ix": "7-704_v2_55",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_6",
+            "tgt_ix": "7-704_v2_56",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_7",
+            "tgt_ix": "7-704_v2_57",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_7",
+            "tgt_ix": "7-704_v2_58",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_7",
+            "tgt_ix": "7-704_v2_59",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_10",
+            "tgt_ix": "7-704_v2_60",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_12",
+            "tgt_ix": "7-704_v2_61",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_12",
+            "tgt_ix": "7-704_v2_62",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_12",
+            "tgt_ix": "7-704_v2_63",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_13",
+            "tgt_ix": "7-704_v2_64",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_16",
+            "tgt_ix": "7-704_v2_65",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_20",
+            "tgt_ix": "7-704_v2_66",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_20",
+            "tgt_ix": "7-704_v2_67",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_22",
+            "tgt_ix": "7-704_v2_68",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_25",
+            "tgt_ix": "7-704_v2_69",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_25",
+            "tgt_ix": "7-704_v2_70",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_25",
+            "tgt_ix": "7-704_v2_71",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_33",
+            "tgt_ix": "7-704_v2_72",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_33",
+            "tgt_ix": "7-704_v2_73",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_13",
+            "tgt_ix": "7-704_v2_15",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_16",
+            "tgt_ix": "7-704_v2_18",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_22",
+            "tgt_ix": "7-704_v2_24",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_25",
+            "tgt_ix": "7-704_v2_27",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_0",
+            "tgt_ix": "7-704_v2_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_1",
+            "tgt_ix": "7-704_v2_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_2",
+            "tgt_ix": "7-704_v2_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_2",
+            "tgt_ix": "7-704_v2_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_2",
+            "tgt_ix": "7-704_v2_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_2",
+            "tgt_ix": "7-704_v2_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_3",
+            "tgt_ix": "7-704_v2_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_4",
+            "tgt_ix": "7-704_v2_4@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_5",
+            "tgt_ix": "7-704_v2_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_5",
+            "tgt_ix": "7-704_v2_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_5",
+            "tgt_ix": "7-704_v2_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_5",
+            "tgt_ix": "7-704_v2_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_5",
+            "tgt_ix": "7-704_v2_5@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_5",
+            "tgt_ix": "7-704_v2_5@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_6",
+            "tgt_ix": "7-704_v2_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_6",
+            "tgt_ix": "7-704_v2_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_6",
+            "tgt_ix": "7-704_v2_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_6",
+            "tgt_ix": "7-704_v2_6@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_7",
+            "tgt_ix": "7-704_v2_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_7",
+            "tgt_ix": "7-704_v2_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_7",
+            "tgt_ix": "7-704_v2_7@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_7",
+            "tgt_ix": "7-704_v2_7@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_7",
+            "tgt_ix": "7-704_v2_7@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_7",
+            "tgt_ix": "7-704_v2_7@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_7",
+            "tgt_ix": "7-704_v2_7@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_7",
+            "tgt_ix": "7-704_v2_7@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_7",
+            "tgt_ix": "7-704_v2_7@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_7",
+            "tgt_ix": "7-704_v2_7@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_8",
+            "tgt_ix": "7-704_v2_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_9",
+            "tgt_ix": "7-704_v2_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_10",
+            "tgt_ix": "7-704_v2_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_10",
+            "tgt_ix": "7-704_v2_10@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_10",
+            "tgt_ix": "7-704_v2_10@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_10",
+            "tgt_ix": "7-704_v2_10@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_10",
+            "tgt_ix": "7-704_v2_10@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_10",
+            "tgt_ix": "7-704_v2_10@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_10",
+            "tgt_ix": "7-704_v2_10@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_11",
+            "tgt_ix": "7-704_v2_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_12",
+            "tgt_ix": "7-704_v2_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_12",
+            "tgt_ix": "7-704_v2_12@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_12",
+            "tgt_ix": "7-704_v2_12@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_12",
+            "tgt_ix": "7-704_v2_12@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_12",
+            "tgt_ix": "7-704_v2_12@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_12",
+            "tgt_ix": "7-704_v2_12@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_12",
+            "tgt_ix": "7-704_v2_12@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_12",
+            "tgt_ix": "7-704_v2_12@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_12",
+            "tgt_ix": "7-704_v2_12@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_12",
+            "tgt_ix": "7-704_v2_12@9",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_12",
+            "tgt_ix": "7-704_v2_12@10",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_13",
+            "tgt_ix": "7-704_v2_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_13",
+            "tgt_ix": "7-704_v2_13@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_13",
+            "tgt_ix": "7-704_v2_13@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_13",
+            "tgt_ix": "7-704_v2_13@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_13",
+            "tgt_ix": "7-704_v2_13@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_13",
+            "tgt_ix": "7-704_v2_13@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_13",
+            "tgt_ix": "7-704_v2_13@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_14",
+            "tgt_ix": "7-704_v2_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_16",
+            "tgt_ix": "7-704_v2_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_16",
+            "tgt_ix": "7-704_v2_16@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_16",
+            "tgt_ix": "7-704_v2_16@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_17",
+            "tgt_ix": "7-704_v2_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_19",
+            "tgt_ix": "7-704_v2_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_20",
+            "tgt_ix": "7-704_v2_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_20",
+            "tgt_ix": "7-704_v2_20@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_20",
+            "tgt_ix": "7-704_v2_20@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_20",
+            "tgt_ix": "7-704_v2_20@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_20",
+            "tgt_ix": "7-704_v2_20@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_21",
+            "tgt_ix": "7-704_v2_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_21",
+            "tgt_ix": "7-704_v2_21@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_22",
+            "tgt_ix": "7-704_v2_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_22",
+            "tgt_ix": "7-704_v2_22@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_22",
+            "tgt_ix": "7-704_v2_22@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_23",
+            "tgt_ix": "7-704_v2_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_25",
+            "tgt_ix": "7-704_v2_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_25",
+            "tgt_ix": "7-704_v2_25@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_25",
+            "tgt_ix": "7-704_v2_25@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_25",
+            "tgt_ix": "7-704_v2_25@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_25",
+            "tgt_ix": "7-704_v2_25@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_25",
+            "tgt_ix": "7-704_v2_25@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_25",
+            "tgt_ix": "7-704_v2_25@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_26",
+            "tgt_ix": "7-704_v2_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_28",
+            "tgt_ix": "7-704_v2_28@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_29",
+            "tgt_ix": "7-704_v2_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_29",
+            "tgt_ix": "7-704_v2_29@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_30",
+            "tgt_ix": "7-704_v2_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_31",
+            "tgt_ix": "7-704_v2_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_31",
+            "tgt_ix": "7-704_v2_31@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_32",
+            "tgt_ix": "7-704_v2_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_33",
+            "tgt_ix": "7-704_v2_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_33",
+            "tgt_ix": "7-704_v2_33@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_33",
+            "tgt_ix": "7-704_v2_33@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_33",
+            "tgt_ix": "7-704_v2_33@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_33",
+            "tgt_ix": "7-704_v2_33@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_33",
+            "tgt_ix": "7-704_v2_33@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_33",
+            "tgt_ix": "7-704_v2_33@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_34",
+            "tgt_ix": "7-704_v2_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_35",
+            "tgt_ix": "7-704_v2_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_36",
+            "tgt_ix": "7-704_v2_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_37",
+            "tgt_ix": "7-704_v2_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_38",
+            "tgt_ix": "7-704_v2_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_39",
+            "tgt_ix": "7-704_v2_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_40",
+            "tgt_ix": "7-704_v2_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_41",
+            "tgt_ix": "7-704_v2_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_42",
+            "tgt_ix": "7-704_v2_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_43",
+            "tgt_ix": "7-704_v2_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_44",
+            "tgt_ix": "7-704_v2_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_45",
+            "tgt_ix": "7-704_v2_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_46",
+            "tgt_ix": "7-704_v2_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_47",
+            "tgt_ix": "7-704_v2_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_48",
+            "tgt_ix": "7-704_v2_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_49",
+            "tgt_ix": "7-704_v2_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_50",
+            "tgt_ix": "7-704_v2_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_51",
+            "tgt_ix": "7-704_v2_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_52",
+            "tgt_ix": "7-704_v2_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_53",
+            "tgt_ix": "7-704_v2_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_54",
+            "tgt_ix": "7-704_v2_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_55",
+            "tgt_ix": "7-704_v2_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_56",
+            "tgt_ix": "7-704_v2_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_57",
+            "tgt_ix": "7-704_v2_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_58",
+            "tgt_ix": "7-704_v2_58@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_59",
+            "tgt_ix": "7-704_v2_59@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_60",
+            "tgt_ix": "7-704_v2_60@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_61",
+            "tgt_ix": "7-704_v2_61@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_62",
+            "tgt_ix": "7-704_v2_62@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_63",
+            "tgt_ix": "7-704_v2_63@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_64",
+            "tgt_ix": "7-704_v2_64@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_65",
+            "tgt_ix": "7-704_v2_65@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_66",
+            "tgt_ix": "7-704_v2_66@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_67",
+            "tgt_ix": "7-704_v2_67@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_68",
+            "tgt_ix": "7-704_v2_68@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_69",
+            "tgt_ix": "7-704_v2_69@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_70",
+            "tgt_ix": "7-704_v2_70@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_71",
+            "tgt_ix": "7-704_v2_71@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_72",
+            "tgt_ix": "7-704_v2_72@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-704_v2_73",
+            "tgt_ix": "7-704_v2_73@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "7-704_v2",
+    "meta": {
+        "parser": "F1000XMLParser",
+        "intertext-graph": "N/A",
+        "doi": "10.12688/f1000research.15125.2",
+        "atype": "data-note",
+        "license": "http://creativecommons.org/licenses/by/4.0/",
+        "title": "Head models of healthy and depressed adults for\u00a0simulating the electric fields of non-invasive electric brain stimulation",
+        "abstract": "During the past decade, it became clear that the electric field elicited by non-invasive brain stimulation (NIBS) techniques such as transcranial direct current stimulation (tDCS) and transcranial magnetic stimulation (TMS) are substantially influenced by variations in individual head and brain anatomy. In addition to structural variations in the healthy, several psychiatric disorders are characterized by anatomical alterations that are likely to further constrain the intracerebral effects of NIBS. Here, we present high-resolution realistic head models derived from structural magnetic resonance imaging data of 19 healthy adults and 19 patients diagnosed with major depressive disorder (MDD). By using a freely available software package for modelling the electric fields induced by different NIBS protocols, we show that our head models are well-suited for assessing inter-individual and between-group variability in the magnitude and focality of tDCS-induced electric fields for two protocols targeting the left dorsolateral prefrontal cortex.",
+        "contributors": [
+            {
+                "surname": "Boayue",
+                "given-names": "Nya Mehnwolo"
+            },
+            {
+                "surname": "Csifcs\u00e1k",
+                "given-names": "G\u00e1bor"
+            },
+            {
+                "surname": "Puonti",
+                "given-names": "Oula"
+            },
+            {
+                "surname": "Thielscher",
+                "given-names": "Axel"
+            },
+            {
+                "surname": "Mittner",
+                "given-names": "Matthias"
+            }
+        ],
+        "url": "https://f1000research.com/articles/7-704/v2/",
+        "doc_id": "7-704",
+        "version": 2,
+        "ix_counter": 287,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy"
+    }
+}

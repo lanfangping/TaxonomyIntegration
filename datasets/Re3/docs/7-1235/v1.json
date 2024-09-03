@@ -1,0 +1,2973 @@
+{
+    "nodes": [
+        {
+            "ix": "7-1235_v1_0",
+            "content": "TRGAted: A web tool for survival analysis using protein data in the Cancer Genome Atlas.",
+            "ntype": "article-title",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_2",
+            "content": "Reverse-phase protein arrays (RPPAs) are a highthroughput approach to protein quantification utilizing an antibody-based micro-to-nano scale dot blot. Within the Cancer Genome Atlas (TCGA), RPPAs were used to quantify over 200 proteins in 8,167 tumor or metastatic samples. This protein-level data has particular advantages in assessing putative prognostic or therapeutic targets in tumors. However, many of the available pipelines do not allow for the partitioning of clinical and RPPA information to make meaningful conclusions. We developed a cloud-based application, TRGAted to enable researchers to better examine survival based on single or multiple proteins across 31 cancer types in the TCGA. TRGAted contains up-to-date overall survival, disease-specific survival, disease-free interval and progression-free interval information. Furthermore, survival information for primary tumor samples can be stratified based on gender, age, tumor stage, histological type, and subtype, allowing for highly adaptive and intuitive user experience. The code and processed data is open sourced and available on github and with a tutorial built into the application for assisting users.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1",
+                "sec-type": "intro",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_4",
+            "content": "Improving prognostic predictions and the identification of potential therapeutic targets is of particular interest to clinicians. Quantification of messenger RNA levels at a genome-wide level has proven valuable in the discovery of gene expression profiles, which can serve as biomarkers for clinical outcomes in cancer <REF-1> . However, RNA quantification of tumor or patient cohorts is a proxy for protein level, with many cellular processes above transcription that ultimately regulate protein level. The availability of protein-level quantification for the TCGA cohorts allow for more relevant clinical outcome predictions compared to mRNA levels. Currently available applications provide entry-level analysis in correlational, differential, and survival modalities for the RPPA information. However, survival analysis in these applications rely on median- or mean-based survival data and do not allow for the use of clinical variables <REF-2> \u2013 <REF-4> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_5",
+            "content": "With these limitations in mind, we developed a new open-source web application, TRGAted ( Figure 1 ). Built on the R shiny framework, TRGAted is an intuitive data analysis tool for parsing survival information based on over 200 proteins in 31 cancer types. TRGAted is comprised of processed RPPA information, survival information, and code, allowing users to run instances locally or modify the code with ease.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_6",
+            "content": "Figure 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "f1",
+                "caption": "Diagram of the implementation of TRGAted. Each file communicates within the R Shiny framework. On the user side (left, blue), users select pertinent cancer type, protein of interest, and clinical variables into the CSS-enabled user interface. This information is received by the server file enabling the subsequent run in R. On the server side (right, orange), the specific cancer type from the database, R packages, and functions are retrieved and executed. After execution, the server file provides both tabular and graphical output (purple) to the user interface and is displayed.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17235/0854c6f4-b825-489a-a64e-8fdfb8ff5141_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_7",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f1\" position=\"float\"> <caption> <title>Diagram of the implementation of TRGAted.</title> <p>Each file communicates within the R Shiny framework. On the user side (left, blue), users select pertinent cancer type, protein of interest, and clinical variables into the CSS-enabled user interface. This information is received by the server file enabling the subsequent run in R. On the server side (right, orange), the specific cancer type from the database, R packages, and functions are retrieved and executed. After execution, the server file provides both tabular and graphical output (purple) to the user interface and is displayed.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/17235/0854c6f4-b825-489a-a64e-8fdfb8ff5141_figure1.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f1",
+                "caption": "Diagram of the implementation of TRGAted. Each file communicates within the R Shiny framework. On the user side (left, blue), users select pertinent cancer type, protein of interest, and clinical variables into the CSS-enabled user interface. This information is received by the server file enabling the subsequent run in R. On the server side (right, orange), the specific cancer type from the database, R packages, and functions are retrieved and executed. After execution, the server file provides both tabular and graphical output (purple) to the user interface and is displayed.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17235/0854c6f4-b825-489a-a64e-8fdfb8ff5141_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_8",
+            "content": "Methods",
+            "ntype": "title",
+            "meta": {
+                "section": "2",
+                "sec-type": "methods",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_9",
+            "content": "Protein and survival data",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_10",
+            "content": "Level 4 TCGA RPPA data for each cancer type was downloaded from the TCPA Portal developed by the MD Anderson Cancer Center <REF-4> . Across all proteins, individual values were scaled using Z-scores. A summary of information available for each cancer datasets is in Table 1 . Additionally, uveal melanoma (UVM) was excluded from the datasets due to a low number of samples with RPPA quantification (n=12). Clinical and survival information for each cancer data set were downloaded from recently updated TCGA clinical data <REF-5> . Overall survival, disease-specific survival, disease-free interval, and progression-free interval information was added to primary tumor RPPA quantifications for each cancer type. Unlike other cancer types, metastatic samples were kept in the skin cutaneous melanoma (SKCM) RPPA-based dataset due to the highly metastatic nature of the disease. SKCM in the TRGAted application consists of 96 primary tumor samples and 258 metastatic samples. Of the 8,167 samples available in the TCPA, overall survival (OS) data was available for 7,714 patients, disease-specific survival (DSS) data was available for 7,240 patients, disease-free interval (DFI) data was available for 3,887 patients, and progression-free interval (PFI) data was available for 7,315 patients ( Table 1 ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_11",
+            "content": "Table 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "T1",
+                "caption": "Survival information and protein summary available in TRGAted.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_12",
+            "content": "<table-wrap xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"T1\" position=\"anchor\"> <caption> <title>Survival information and protein summary available in TRGAted.</title> </caption> <table content-type=\"article-table\" frame=\"hsides\"> <thead> <tr> <th align=\"left\">Cancer Type</th> <th align=\"left\">Samples</th> <th align=\"left\">OS</th> <th align=\"left\">DSS</th> <th align=\"left\">DFI</th> <th align=\"left\">PFI</th> <th align=\"left\">Proteins</th> </tr> </thead> <tbody> <tr> <td align=\"left\">Adrenocortical carcinoma (ACC)</td> <td align=\"right\">46</td> <td align=\"right\">46</td> <td align=\"right\">46</td> <td align=\"right\">28</td> <td align=\"right\">46</td> <td align=\"right\">221</td> </tr> <tr> <td align=\"left\">Bladder Urothelial Carcinoma (BLCA)</td> <td align=\"right\">344</td> <td align=\"right\">344</td> <td align=\"right\">330</td> <td align=\"right\">153</td> <td align=\"right\">344</td> <td align=\"right\">223</td> </tr> <tr> <td align=\"left\">Breast invasive carcinoma (BRCA)</td> <td align=\"right\">901</td> <td align=\"right\">873</td> <td align=\"right\">855</td> <td align=\"right\">750</td> <td align=\"right\">873</td> <td align=\"right\">224</td> </tr> <tr> <td align=\"left\">Cervical squamous cell carcinoma <break/>and endocervical adenocarcinoma <break/>(CESC)</td> <td align=\"right\">171</td> <td align=\"right\">171</td> <td align=\"right\">168</td> <td align=\"right\">112</td> <td align=\"right\">171</td> <td align=\"right\">220</td> </tr> <tr> <td align=\"left\">Cholangiocarcinoma (CHOL)</td> <td align=\"right\">30</td> <td align=\"right\">30</td> <td align=\"right\">29</td> <td align=\"right\">21</td> <td align=\"right\">30</td> <td align=\"right\">219</td> </tr> <tr> <td align=\"left\">Colon adenocarcinoma (COAD)</td> <td align=\"right\">358</td> <td align=\"right\">325</td> <td align=\"right\">311</td> <td align=\"right\">126</td> <td align=\"right\">325</td> <td align=\"right\">223</td> </tr> <tr> <td align=\"left\">Diffuse Large B-cell Lymphoma <break/>(DLBCL)</td> <td align=\"right\">33</td> <td align=\"right\">33</td> <td align=\"right\">33</td> <td align=\"right\">19</td> <td align=\"right\">33</td> <td align=\"right\">219</td> </tr> <tr> <td align=\"left\">Esophageal carcinoma (ESCA)</td> <td align=\"right\">126</td> <td align=\"right\">126</td> <td align=\"right\">124</td> <td align=\"right\">76</td> <td align=\"right\">126</td> <td align=\"right\">220</td> </tr> <tr> <td align=\"left\">Glioblastoma multiforme (GBM)</td> <td align=\"right\">205</td> <td align=\"right\">136</td> <td align=\"right\">123</td> <td align=\"right\">0</td> <td align=\"right\">136</td> <td align=\"right\">223</td> </tr> <tr> <td align=\"left\">Head and Neck squamous cell <break/>carcinoma (HNSC)</td> <td align=\"right\">346</td> <td align=\"right\">346</td> <td align=\"right\">326</td> <td align=\"right\">85</td> <td align=\"right\">346</td> <td align=\"right\">239</td> </tr> <tr> <td align=\"left\">Kidney Chromophobe (KICH)</td> <td align=\"right\">63</td> <td align=\"right\">63</td> <td align=\"right\">63</td> <td align=\"right\">27</td> <td align=\"right\">63</td> <td align=\"right\">220</td> </tr> <tr> <td align=\"left\">Kidney renal clear cell carcinoma <break/>(KIRC)</td> <td align=\"right\">445</td> <td align=\"right\">444</td> <td align=\"right\">434</td> <td align=\"right\">72</td> <td align=\"right\">444</td> <td align=\"right\">233</td> </tr> <tr> <td align=\"left\">Kidney renal papillary cell carcinoma <break/>(KIRP)</td> <td align=\"right\">208</td> <td align=\"right\">207</td> <td align=\"right\">205</td> <td align=\"right\">127</td> <td align=\"right\">207</td> <td align=\"right\">221</td> </tr> <tr> <td align=\"left\">Lower Grade Glioma (LGG)</td> <td align=\"right\">427</td> <td align=\"right\">426</td> <td align=\"right\">420</td> <td align=\"right\">114</td> <td align=\"right\">426</td> <td align=\"right\">220</td> </tr> <tr> <td align=\"left\">Liver hepatocellular carcinoma (LIHC)</td> <td align=\"right\">184</td> <td align=\"right\">184</td> <td align=\"right\">177</td> <td align=\"right\">145</td> <td align=\"right\">184</td> <td align=\"right\">220</td> </tr> <tr> <td align=\"left\">Lung adenocarcinoma (LUAD)</td> <td align=\"right\">362</td> <td align=\"right\">361</td> <td align=\"right\">327</td> <td align=\"right\">203</td> <td align=\"right\">361</td> <td align=\"right\">239</td> </tr> <tr> <td align=\"left\">Lung squamous cell carcinoma <break/>(LUSC)</td> <td align=\"right\">325</td> <td align=\"right\">325</td> <td align=\"right\">295</td> <td align=\"right\">210</td> <td align=\"right\">325</td> <td align=\"right\">239</td> </tr> <tr> <td align=\"left\">Mesothelioma (MESO)</td> <td align=\"right\">61</td> <td align=\"right\">61</td> <td align=\"right\">45</td> <td align=\"right\">10</td> <td align=\"right\">61</td> <td align=\"right\">220</td> </tr> <tr> <td align=\"left\">Ovarian serous cystadenocarcinoma <break/>(OV)</td> <td align=\"right\">411</td> <td align=\"right\">405</td> <td align=\"right\">377</td> <td align=\"right\">199</td> <td align=\"right\">407</td> <td align=\"right\">224</td> </tr> <tr> <td align=\"left\">Pancreatic adenocarcinoma (PAAD)</td> <td align=\"right\">105</td> <td align=\"right\">105</td> <td align=\"right\">99</td> <td align=\"right\">40</td> <td align=\"right\">105</td> <td align=\"right\">221</td> </tr> <tr> <td align=\"left\">Pheochromocytoma and <break/>Paraganglioma (PCPG)</td> <td align=\"right\">81</td> <td align=\"right\">79</td> <td align=\"right\">79</td> <td align=\"right\">71</td> <td align=\"right\">79</td> <td align=\"right\">220</td> </tr> <tr> <td align=\"left\">Prostate adenocarcinoma (PRAD)</td> <td align=\"right\">351</td> <td align=\"right\">351</td> <td align=\"right\">350</td> <td align=\"right\">233</td> <td align=\"right\">351</td> <td align=\"right\">220</td> </tr> <tr> <td align=\"left\">Rectum adenocarcinoma (READ)</td> <td align=\"right\">130</td> <td align=\"right\">126</td> <td align=\"right\">120</td> <td align=\"right\">31</td> <td align=\"right\">126</td> <td align=\"right\">223</td> </tr> <tr> <td align=\"left\">Sarcoma (SARC)</td> <td align=\"right\">221</td> <td align=\"right\">221</td> <td align=\"right\">215</td> <td align=\"right\">125</td> <td align=\"right\">22</td> <td align=\"right\">220</td> </tr> <tr> <td align=\"left\">Skin Cutaneous Melanoma (SKCM)</td> <td align=\"right\">354</td> <td align=\"right\">349</td> <td align=\"right\">346</td> <td align=\"right\">0</td> <td align=\"right\">349</td> <td align=\"right\">223</td> </tr> <tr> <td align=\"left\">Stomach adenocarcinoma (STAD)</td> <td align=\"right\">392</td> <td align=\"right\">357</td> <td align=\"right\">334</td> <td align=\"right\">207</td> <td align=\"right\">357</td> <td align=\"right\">220</td> </tr> <tr> <td align=\"left\">Testicular Germ Cell Tumors (TGCT)</td> <td align=\"right\">118</td> <td align=\"right\">104</td> <td align=\"right\">104</td> <td align=\"right\">79</td> <td align=\"right\">104</td> <td align=\"right\">219</td> </tr> <tr> <td align=\"left\">Thyroid carcinoma (THCA)</td> <td align=\"right\">374</td> <td align=\"right\">372</td> <td align=\"right\">366</td> <td align=\"right\">268</td> <td align=\"right\">372</td> <td align=\"right\">219</td> </tr> <tr> <td align=\"left\">Thymoma (THYM)</td> <td align=\"right\">90</td> <td align=\"right\">90</td> <td align=\"right\">90</td> <td align=\"right\">9</td> <td align=\"right\">90</td> <td align=\"right\">219</td> </tr> <tr> <td align=\"left\">Uterine Corpus Endometrial <break/>Carcinoma (UCEC)</td> <td align=\"right\">404</td> <td align=\"right\">404</td> <td align=\"right\">403</td> <td align=\"right\">325</td> <td align=\"right\">404</td> <td align=\"right\">223</td> </tr> <tr> <td align=\"left\">Uterine Carcinosarcoma (UCS)</td> <td align=\"right\">48</td> <td align=\"right\">48</td> <td align=\"right\">46</td> <td align=\"right\">22</td> <td align=\"right\">48</td> <td align=\"right\">220</td> </tr> </tbody> </table> <table-wrap-foot> <fn> <p>OS, overall survival; DSS, disease-specific survival; DFI, disease-free interval; PFI, progression-free interval.</p> </fn> </table-wrap-foot> </table-wrap>",
+            "ntype": "table-wrap",
+            "meta": {
+                "id": "T1",
+                "caption": "Survival information and protein summary available in TRGAted.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_13",
+            "content": "Implementation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_14",
+            "content": "The TRGAted application was written and tested using R v3.5.1. The interactive plots are made using shiny (v1.1.0) and ggplots2 (3.0.0). Plots can be downloaded as .png, .pdf, or .svg files. Data used to generate the individual plots can be downloaded as .csv files.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_15",
+            "content": "Operation: Minimum system requirements for running TRGAted locally are modest and include an Intel-compatible CPU and 1 gigabyte of RAM. Running TRGAted from the shiny server requires a modern browser and an internet connection.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_16",
+            "content": "Kaplan-Meier survival curves can be generated by selecting the cancer type, survival type and protein(s) of interest ( Figure 2 ). Kaplan-Meier curves are generated using the survival (v2.41-3) and the survminer (0.4-1) R packages. Multi-protein survival analysis utilizes mean values of protein probes, similar to gene-expression-based survival analysis platforms <REF-6> . Hazard ratio for two-group comparisons, either median or optimal cut-off, utilize the Cox proportional hazards regression model in the survival R package; with the reported hazard ratio comparing high versus low protein groups. Optimal cut-off feature uses the surv_cutpoint function of the survminer package, calculating the minimal p-value based on the log-rank method. This function uses the maximally selected rank statistic ( maxstat , v0.7-25) R package, which finds the maximal standardized two-sample linear rank statistic <REF-7> . In order to find clinically or biologically meaningful biomarkers, the minimal proportion cutpoint, or the maximal disparity comparison, was set at 15% versus 85% of samples. Clinical variables dependent on the cancer type selected, can be used to filter patients into user-defined groupings. Clinical information available across all types include: subtype, tumor stage, histological type, gender, age, response to primary therapy.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_17",
+            "content": "Figure 2.",
+            "ntype": "label",
+            "meta": {
+                "id": "f2",
+                "caption": "Generating survival curves. The interface shows an example of an overall survival curve for the RAD50 protein in the basal subtype of breast cancer using the optimal cutpoint ( A ). Disease-specific survival, disease-free interval, and progression-free interval can also be selected ( B ). The cutpoint can be varied to separate samples based on protein level into quartiles, tertiles, medians or separating into two groups based on the lowest p-value ( C ).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17235/0854c6f4-b825-489a-a64e-8fdfb8ff5141_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_18",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f2\" position=\"float\"> <caption> <title>Generating survival curves.</title> <p>The interface shows an example of an overall survival curve for the RAD50 protein in the basal subtype of breast cancer using the optimal cutpoint ( <bold>A</bold>). Disease-specific survival, disease-free interval, and progression-free interval can also be selected ( <bold>B</bold>). The cutpoint can be varied to separate samples based on protein level into quartiles, tertiles, medians or separating into two groups based on the lowest p-value ( <bold>C</bold>).</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/17235/0854c6f4-b825-489a-a64e-8fdfb8ff5141_figure2.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f2",
+                "caption": "Generating survival curves. The interface shows an example of an overall survival curve for the RAD50 protein in the basal subtype of breast cancer using the optimal cutpoint ( A ). Disease-specific survival, disease-free interval, and progression-free interval can also be selected ( B ). The cutpoint can be varied to separate samples based on protein level into quartiles, tertiles, medians or separating into two groups based on the lowest p-value ( C ).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17235/0854c6f4-b825-489a-a64e-8fdfb8ff5141_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_19",
+            "content": "TRGAted also allows for Cox proportional hazard modeling across all proteins in each cancer type or for a single protein across all cancer types. Hazard ratios and P values are based on the Cox regression model. Values filtered from the volcano plots are proteins with \u2013log10(p-values) less than 0.1 and hazard ratios greater than 20. These filters were implemented to improve visualization and to reduce artifacts of the analysis pipeline, respectively. The volcano plot can be graphed as linear or natural-log transformed, to assist in the visualization of good prognostic indicators. Visualizing the proportional comparison for the volcano plots is also available.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_20",
+            "content": "Use case",
+            "ntype": "title",
+            "meta": {
+                "section": "2.3",
+                "sec-type": "cases",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_21",
+            "content": "In order to demonstrate the functionality of TRGAted, we present a basic survival analysis of examining the aggressive, highly-metastatic subtype of breast cancer, known as basal-like breast cancer. We found in this cancer, RAD50, involved in homologous recombination of DNA, as a novel poor prognostic marker.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_22",
+            "content": "Survival curves: Survival curves can be generated by selecting the cancer type, survival type, and protein or proteins of interest ( Figure 2A ). We also selected the subtype information to more closely examine basal-like breast cancer. Other survival types and clinical variables can be selected ( Figure 2B ). The division of samples is available into quartiles, tertiles, median or optimum based on the protein of interest ( Figure 2C ). Here we can see that the DNA repair protein, RAD50 is a poor prognostic marker for overall ( Figure 2A ) and disease-specific survival ( Figure 2B ) in basal-like breast cancer.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_23",
+            "content": "Across cancer: TRGAted can be used for biomarker discovery by examining the hazard ratios for all proteins available by cancer subtype, like basal-like breast cancer ( Figure 3A ). The volcano plot displays good prognostic markers on the left in blue and poor prognostic markers on the right in red. Having selected the optimal cutoff feature, a bar chart can also be generated to examine the proportion of samples in the high and low proportion groups ( Figure 3B ). Protein labeling is adaptive for both the volcano plot and bar chart and will only label significant proteins. Here we see the RAD50 is one of the most significant predictors of poor overall survival in basal-like breast cancer ( Figure 3A and B ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_24",
+            "content": "Figure 3.",
+            "ntype": "label",
+            "meta": {
+                "id": "f3",
+                "caption": "Visualizing all proteins across a single cancer type. The interface shows an example of the visualization of Cox hazard ratio of each protein across the basal subtype of breast cancer ( A ). Good prognostic markers appear on the left in blue, while poor prognostic markers are on the right in red. The natural log transformation allows the graph to be centered at 0 and makes the visualization of good prognostic markers easier. Labeling for proteins can be adjusted to include more or less protein. Proportional comparisons for protein using the optimal cutpoint function is available as well ( B ).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17235/0854c6f4-b825-489a-a64e-8fdfb8ff5141_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_25",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f3\" position=\"float\"> <caption> <title>Visualizing all proteins across a single cancer type.</title> <p>The interface shows an example of the visualization of Cox hazard ratio of each protein across the basal subtype of breast cancer ( <bold>A</bold>). Good prognostic markers appear on the left in blue, while poor prognostic markers are on the right in red. The natural log transformation allows the graph to be centered at 0 and makes the visualization of good prognostic markers easier. Labeling for proteins can be adjusted to include more or less protein. Proportional comparisons for protein using the optimal cutpoint function is available as well ( <bold>B</bold>).</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/17235/0854c6f4-b825-489a-a64e-8fdfb8ff5141_figure3.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f3",
+                "caption": "Visualizing all proteins across a single cancer type. The interface shows an example of the visualization of Cox hazard ratio of each protein across the basal subtype of breast cancer ( A ). Good prognostic markers appear on the left in blue, while poor prognostic markers are on the right in red. The natural log transformation allows the graph to be centered at 0 and makes the visualization of good prognostic markers easier. Labeling for proteins can be adjusted to include more or less protein. Proportional comparisons for protein using the optimal cutpoint function is available as well ( B ).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17235/0854c6f4-b825-489a-a64e-8fdfb8ff5141_figure3.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_26",
+            "content": "Across protein: TRGAted can also be used to examine the survival outcomes of a protein of interest across multiple cancers. Here, RAD50 predicts poor survival in only five cancer types, prostate, adrenocortical, breast cancer, low-grade glioma and head and neck cancers ( Figure 4A ). A summary of the hazard ratios can also be visualized by selecting for the barplot function ( Figure 4B ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_27",
+            "content": "Figure 4.",
+            "ntype": "label",
+            "meta": {
+                "id": "f4",
+                "caption": "Visualizing all proteins across a single cancer type. The interface shows an example of the visualization of Cox hazard ratio of for RAD50 across all 31 cancer types ( A ). This feature is similar to the Across Cancer tab with the ability to adjust labels and log-transform the Cox hazard ratios. Additionally, the hazard ratios for significant cancer types can be visualized using a bar chart ( B ).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17235/0854c6f4-b825-489a-a64e-8fdfb8ff5141_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_28",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f4\" position=\"float\"> <caption> <title> Visualizing all proteins across a single cancer type.</title> <p>The interface shows an example of the visualization of Cox hazard ratio of for RAD50 across all 31 cancer types ( <bold>A</bold>). This feature is similar to the Across Cancer tab with the ability to adjust labels and log-transform the Cox hazard ratios. Additionally, the hazard ratios for significant cancer types can be visualized using a bar chart ( <bold>B</bold>).</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/17235/0854c6f4-b825-489a-a64e-8fdfb8ff5141_figure4.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f4",
+                "caption": "Visualizing all proteins across a single cancer type. The interface shows an example of the visualization of Cox hazard ratio of for RAD50 across all 31 cancer types ( A ). This feature is similar to the Across Cancer tab with the ability to adjust labels and log-transform the Cox hazard ratios. Additionally, the hazard ratios for significant cancer types can be visualized using a bar chart ( B ).",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/17235/0854c6f4-b825-489a-a64e-8fdfb8ff5141_figure4.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_29",
+            "content": "Conclusions",
+            "ntype": "title",
+            "meta": {
+                "section": "3",
+                "sec-type": "conclusions",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_30",
+            "content": "TRGAted is an open-source survival analysis application designed to allow for quick and intuitive exploration of TCGA protein-level data. This survival analysis improves on current TCGA pipelines by providing greater diversity of clinical and survival options and relying on protein-level data. In addition to log-rank and Cox regression modeling, TRGAted allows users to download graphical displays and processed data for up to 7,714 samples across 31 cancer types. Built on the R Shiny framework, a literate code architecture, the code for TRGAted is annotated and easily modified from our GitHub repository. Under the GNU General Public License v3.0, we encourage interested groups to modify TRGAted for greater usability. Downloading and modifying TRGAted is streamlined by the relatively small size of TRGAted, totally 27.2 megabytes for the application, processed data, and built-in instructional guide.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_31",
+            "content": "Data availability",
+            "ntype": "title",
+            "meta": {
+                "section": "4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_32",
+            "content": "Release 4.2 of the TCGA replicate-based normalized (level 4) RPPA data is available for 32 cancer types from the TCPA Portal at http://tcpaportal.org/tcpa/download.html . Processed data is available at https://github.com/ncborcherding/TRGAted .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_33",
+            "content": "Software availability",
+            "ntype": "title",
+            "meta": {
+                "section": "5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_34",
+            "content": "Source code is available from GitHub: https://github.com/ncborcherding/TRGAted/tree/v1.0.0",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_35",
+            "content": "Archived source code at time of publication: http://doi.org/10.5281/zenodo.1323828 <REF-8>",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_36",
+            "content": "License: GNU General Public License v3.0",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_37",
+            "content": "<REF-1> Xi X Li T Huang Y : RNA Biomarkers: Frontier of Precision Medicine for Cancer. Noncoding RNA. 2017 ; 3 ( 1 ). pii: E9. 29657281 10.3390/ncrna3010009 5832009",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_38",
+            "content": "<REF-2> Cerami E Gao J Dogrusoz U : The cBio cancer genomics portal: an open platform for exploring multidimensional cancer genomics data. Cancer Discov. 2012 ; 2 ( 5 ): 401 \u2013 4 . 22588877 10.1158/2159-8290.CD-12-0095 3956037",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_39",
+            "content": "<REF-4> Li J Lu Y Akbani R : TCPA: a resource for cancer functional proteomics data. Nat Methods. 2013 ; 10 ( 11 ): 1046 \u2013 7 . 24037243 10.1038/nmeth.2650 4076789",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_40",
+            "content": "<REF-5> Liu J Lichtenberg T Hoadley KA : An Integrated TCGA Pan-Cancer Clinical Data Resource to Drive High-Quality Survival Outcome Analytics. Cell. 2018 ; 173 ( 2 ): 400 \u2013 416.e11 . 29625055 10.1016/j.cell.2018.02.052 6066282",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_41",
+            "content": "<REF-6> Gy\u00f6rffy B Lanczky A Eklund AC : An online survival analysis tool to rapidly assess the effect of 22,277 genes on breast cancer prognosis using microarray data of 1,809 patients. Breast Cancer Res Treat. 2010 ; 123 ( 3 ): 725 \u2013 31 . 20020197 10.1007/s10549-009-0674-9",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_42",
+            "content": "<REF-7> Wright MN Dankowski T Ziegler A : Unbiased split variable selection for random survival forests using maximally selected rank statistics. Stat Med. 2017 ; 36 ( 8 ): 1272 \u2013 84 . 28088842 10.1002/sim.7212",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-7",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "7-1235_v1_43",
+            "content": "<REF-8> theHumanBorch : ncborcherding/TRGAted: First Release TRGAted (Version v1.0.0). Zenodo. 2018 . http://www.doi.org/10.5281/zenodo.1323828",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-8",
+                "created_by": "F1000XMLParser"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "7-1235_v1_0@0",
+            "content": "TRGAted: A web tool for survival analysis using protein data in the Cancer Genome Atlas.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_0",
+            "start": 0,
+            "end": 87,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_2@0",
+            "content": "Reverse-phase protein arrays (RPPAs) are a highthroughput approach to protein quantification utilizing an antibody-based micro-to-nano scale dot blot.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_2",
+            "start": 0,
+            "end": 149,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_2@1",
+            "content": "Within the Cancer Genome Atlas (TCGA), RPPAs were used to quantify over 200 proteins in 8,167 tumor or metastatic samples.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_2",
+            "start": 151,
+            "end": 272,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_2@2",
+            "content": "This protein-level data has particular advantages in assessing putative prognostic or therapeutic targets in tumors.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_2",
+            "start": 274,
+            "end": 389,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_2@3",
+            "content": "However, many of the available pipelines do not allow for the partitioning of clinical and RPPA information to make meaningful conclusions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_2",
+            "start": 391,
+            "end": 529,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_2@4",
+            "content": "We developed a cloud-based application, TRGAted to enable researchers to better examine survival based on single or multiple proteins across 31 cancer types in the TCGA.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_2",
+            "start": 531,
+            "end": 699,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_2@5",
+            "content": "TRGAted contains up-to-date overall survival, disease-specific survival, disease-free interval and progression-free interval information.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_2",
+            "start": 701,
+            "end": 837,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_2@6",
+            "content": "Furthermore, survival information for primary tumor samples can be stratified based on gender, age, tumor stage, histological type, and subtype, allowing for highly adaptive and intuitive user experience.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_2",
+            "start": 839,
+            "end": 1042,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_2@7",
+            "content": "The code and processed data is open sourced and available on github and with a tutorial built into the application for assisting users.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_2",
+            "start": 1044,
+            "end": 1178,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_4@0",
+            "content": "Improving prognostic predictions and the identification of potential therapeutic targets is of particular interest to clinicians.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_4",
+            "start": 0,
+            "end": 128,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_4@1",
+            "content": "Quantification of messenger RNA levels at a genome-wide level has proven valuable in the discovery of gene expression profiles, which can serve as biomarkers for clinical outcomes in cancer <REF-1> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_4",
+            "start": 130,
+            "end": 328,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_4@2",
+            "content": "However, RNA quantification of tumor or patient cohorts is a proxy for protein level, with many cellular processes above transcription that ultimately regulate protein level.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_4",
+            "start": 330,
+            "end": 503,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_4@3",
+            "content": "The availability of protein-level quantification for the TCGA cohorts allow for more relevant clinical outcome predictions compared to mRNA levels.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_4",
+            "start": 505,
+            "end": 651,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_4@4",
+            "content": "Currently available applications provide entry-level analysis in correlational, differential, and survival modalities for the RPPA information.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_4",
+            "start": 653,
+            "end": 795,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_4@5",
+            "content": "However, survival analysis in these applications rely on median- or mean-based survival data and do not allow for the use of clinical variables <REF-2> \u2013 <REF-4> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_4",
+            "start": 797,
+            "end": 959,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_5@0",
+            "content": "With these limitations in mind, we developed a new open-source web application, TRGAted ( Figure 1 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_5",
+            "start": 0,
+            "end": 100,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_5@1",
+            "content": "Built on the R shiny framework, TRGAted is an intuitive data analysis tool for parsing survival information based on over 200 proteins in 31 cancer types.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_5",
+            "start": 102,
+            "end": 255,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_5@2",
+            "content": "TRGAted is comprised of processed RPPA information, survival information, and code, allowing users to run instances locally or modify the code with ease.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_5",
+            "start": 257,
+            "end": 409,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_6@0",
+            "content": "Figure 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_6",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_8@0",
+            "content": "Methods",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_8",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_9@0",
+            "content": "Protein and survival data",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_9",
+            "start": 0,
+            "end": 24,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_10@0",
+            "content": "Level 4 TCGA RPPA data for each cancer type was downloaded from the TCPA Portal developed by the MD Anderson Cancer Center <REF-4> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_10",
+            "start": 0,
+            "end": 131,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_10@1",
+            "content": "Across all proteins, individual values were scaled using Z-scores.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_10",
+            "start": 133,
+            "end": 198,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_10@2",
+            "content": "A summary of information available for each cancer datasets is in Table 1 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_10",
+            "start": 200,
+            "end": 274,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_10@3",
+            "content": "Additionally, uveal melanoma (UVM) was excluded from the datasets due to a low number of samples with RPPA quantification (n=12).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_10",
+            "start": 276,
+            "end": 404,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_10@4",
+            "content": "Clinical and survival information for each cancer data set were downloaded from recently updated TCGA clinical data <REF-5> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_10",
+            "start": 406,
+            "end": 530,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_10@5",
+            "content": "Overall survival, disease-specific survival, disease-free interval, and progression-free interval information was added to primary tumor RPPA quantifications for each cancer type.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_10",
+            "start": 532,
+            "end": 710,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_10@6",
+            "content": "Unlike other cancer types, metastatic samples were kept in the skin cutaneous melanoma (SKCM) RPPA-based dataset due to the highly metastatic nature of the disease.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_10",
+            "start": 712,
+            "end": 875,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_10@7",
+            "content": "SKCM in the TRGAted application consists of 96 primary tumor samples and 258 metastatic samples.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_10",
+            "start": 877,
+            "end": 972,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_10@8",
+            "content": "Of the 8,167 samples available in the TCPA, overall survival (OS) data was available for 7,714 patients, disease-specific survival (DSS) data was available for 7,240 patients, disease-free interval (DFI) data was available for 3,887 patients, and progression-free interval (PFI) data was available for 7,315 patients ( Table 1 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_10",
+            "start": 974,
+            "end": 1302,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_11@0",
+            "content": "Table 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_11",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_13@0",
+            "content": "Implementation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_13",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_14@0",
+            "content": "The TRGAted application was written and tested using R v3.5.1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_14",
+            "start": 0,
+            "end": 61,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_14@1",
+            "content": "The interactive plots are made using shiny (v1.1.0) and ggplots2 (3.0.0). Plots can be downloaded as .png, .pdf, or .svg files. Data used to generate the individual plots can be downloaded as .csv files.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_14",
+            "start": 63,
+            "end": 265,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_15@0",
+            "content": "Operation: Minimum system requirements for running TRGAted locally are modest and include an Intel-compatible CPU and 1 gigabyte of RAM.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_15",
+            "start": 0,
+            "end": 135,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_15@1",
+            "content": "Running TRGAted from the shiny server requires a modern browser and an internet connection.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_15",
+            "start": 137,
+            "end": 227,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_16@0",
+            "content": "Kaplan-Meier survival curves can be generated by selecting the cancer type, survival type and protein(s) of interest ( Figure 2 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_16",
+            "start": 0,
+            "end": 129,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_16@1",
+            "content": "Kaplan-Meier curves are generated using the survival (v2.41-3) and the survminer (0.4-1) R packages.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_16",
+            "start": 131,
+            "end": 230,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_16@2",
+            "content": "Multi-protein survival analysis utilizes mean values of protein probes, similar to gene-expression-based survival analysis platforms <REF-6> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_16",
+            "start": 232,
+            "end": 373,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_16@3",
+            "content": "Hazard ratio for two-group comparisons, either median or optimal cut-off, utilize the Cox proportional hazards regression model in the survival R package; with the reported hazard ratio comparing high versus low protein groups.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_16",
+            "start": 375,
+            "end": 601,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_16@4",
+            "content": "Optimal cut-off feature uses the surv_cutpoint function of the survminer package, calculating the minimal p-value based on the log-rank method.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_16",
+            "start": 603,
+            "end": 745,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_16@5",
+            "content": "This function uses the maximally selected rank statistic ( maxstat , v0.7-25) R package, which finds the maximal standardized two-sample linear rank statistic <REF-7> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_16",
+            "start": 747,
+            "end": 914,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_16@6",
+            "content": "In order to find clinically or biologically meaningful biomarkers, the minimal proportion cutpoint, or the maximal disparity comparison, was set at 15% versus 85% of samples.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_16",
+            "start": 916,
+            "end": 1089,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_16@7",
+            "content": "Clinical variables dependent on the cancer type selected, can be used to filter patients into user-defined groupings.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_16",
+            "start": 1091,
+            "end": 1207,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_16@8",
+            "content": "Clinical information available across all types include: subtype, tumor stage, histological type, gender, age, response to primary therapy.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_16",
+            "start": 1209,
+            "end": 1347,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_17@0",
+            "content": "Figure 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_17",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_19@0",
+            "content": "TRGAted also allows for Cox proportional hazard modeling across all proteins in each cancer type or for a single protein across all cancer types.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_19",
+            "start": 0,
+            "end": 144,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_19@1",
+            "content": "Hazard ratios and P values are based on the Cox regression model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_19",
+            "start": 146,
+            "end": 210,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_19@2",
+            "content": "Values filtered from the volcano plots are proteins with \u2013log10(p-values) less than 0.1 and hazard ratios greater than 20.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_19",
+            "start": 212,
+            "end": 333,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_19@3",
+            "content": "These filters were implemented to improve visualization and to reduce artifacts of the analysis pipeline, respectively.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_19",
+            "start": 335,
+            "end": 453,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_19@4",
+            "content": "The volcano plot can be graphed as linear or natural-log transformed, to assist in the visualization of good prognostic indicators.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_19",
+            "start": 455,
+            "end": 585,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_19@5",
+            "content": "Visualizing the proportional comparison for the volcano plots is also available.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_19",
+            "start": 587,
+            "end": 666,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_20@0",
+            "content": "Use case",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_20",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_21@0",
+            "content": "In order to demonstrate the functionality of TRGAted, we present a basic survival analysis of examining the aggressive, highly-metastatic subtype of breast cancer, known as basal-like breast cancer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_21",
+            "start": 0,
+            "end": 197,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_21@1",
+            "content": "We found in this cancer, RAD50, involved in homologous recombination of DNA, as a novel poor prognostic marker.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_21",
+            "start": 199,
+            "end": 309,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_22@0",
+            "content": "Survival curves: Survival curves can be generated by selecting the cancer type, survival type, and protein or proteins of interest ( Figure 2A ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_22",
+            "start": 0,
+            "end": 144,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_22@1",
+            "content": "We also selected the subtype information to more closely examine basal-like breast cancer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_22",
+            "start": 146,
+            "end": 235,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_22@2",
+            "content": "Other survival types and clinical variables can be selected ( Figure 2B ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_22",
+            "start": 237,
+            "end": 310,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_22@3",
+            "content": "The division of samples is available into quartiles, tertiles, median or optimum based on the protein of interest ( Figure 2C ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_22",
+            "start": 312,
+            "end": 439,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_22@4",
+            "content": "Here we can see that the DNA repair protein, RAD50 is a poor prognostic marker for overall ( Figure 2A ) and disease-specific survival ( Figure 2B ) in basal-like breast cancer.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_22",
+            "start": 441,
+            "end": 617,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_23@0",
+            "content": "Across cancer: TRGAted can be used for biomarker discovery by examining the hazard ratios for all proteins available by cancer subtype, like basal-like breast cancer ( Figure 3A ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_23",
+            "start": 0,
+            "end": 179,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_23@1",
+            "content": "The volcano plot displays good prognostic markers on the left in blue and poor prognostic markers on the right in red.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_23",
+            "start": 181,
+            "end": 298,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_23@2",
+            "content": "Having selected the optimal cutoff feature, a bar chart can also be generated to examine the proportion of samples in the high and low proportion groups ( Figure 3B ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_23",
+            "start": 300,
+            "end": 466,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_23@3",
+            "content": "Protein labeling is adaptive for both the volcano plot and bar chart and will only label significant proteins.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_23",
+            "start": 468,
+            "end": 577,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_23@4",
+            "content": "Here we see the RAD50 is one of the most significant predictors of poor overall survival in basal-like breast cancer ( Figure 3A and B ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_23",
+            "start": 579,
+            "end": 715,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_24@0",
+            "content": "Figure 3.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_24",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_26@0",
+            "content": "Across protein: TRGAted can also be used to examine the survival outcomes of a protein of interest across multiple cancers.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_26",
+            "start": 0,
+            "end": 122,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_26@1",
+            "content": "Here, RAD50 predicts poor survival in only five cancer types, prostate, adrenocortical, breast cancer, low-grade glioma and head and neck cancers ( Figure 4A ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_26",
+            "start": 124,
+            "end": 283,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_26@2",
+            "content": "A summary of the hazard ratios can also be visualized by selecting for the barplot function ( Figure 4B ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_26",
+            "start": 285,
+            "end": 390,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_27@0",
+            "content": "Figure 4.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_27",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_29@0",
+            "content": "Conclusions",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_29",
+            "start": 0,
+            "end": 10,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_30@0",
+            "content": "TRGAted is an open-source survival analysis application designed to allow for quick and intuitive exploration of TCGA protein-level data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_30",
+            "start": 0,
+            "end": 136,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_30@1",
+            "content": "This survival analysis improves on current TCGA pipelines by providing greater diversity of clinical and survival options and relying on protein-level data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_30",
+            "start": 138,
+            "end": 293,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_30@2",
+            "content": "In addition to log-rank and Cox regression modeling, TRGAted allows users to download graphical displays and processed data for up to 7,714 samples across 31 cancer types.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_30",
+            "start": 295,
+            "end": 465,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_30@3",
+            "content": "Built on the R Shiny framework, a literate code architecture, the code for TRGAted is annotated and easily modified from our GitHub repository.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_30",
+            "start": 467,
+            "end": 609,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_30@4",
+            "content": "Under the GNU General Public License v3.0, we encourage interested groups to modify TRGAted for greater usability.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_30",
+            "start": 611,
+            "end": 724,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_30@5",
+            "content": "Downloading and modifying TRGAted is streamlined by the relatively small size of TRGAted, totally 27.2 megabytes for the application, processed data, and built-in instructional guide.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_30",
+            "start": 726,
+            "end": 908,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_31@0",
+            "content": "Data availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_31",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_32@0",
+            "content": "Release 4.2 of the TCGA replicate-based normalized (level 4) RPPA data is available for 32 cancer types from the TCPA Portal at http://tcpaportal.org/tcpa/download.html .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_32",
+            "start": 0,
+            "end": 169,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_32@1",
+            "content": "Processed data is available at https://github.com/ncborcherding/TRGAted .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_32",
+            "start": 171,
+            "end": 243,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_33@0",
+            "content": "Software availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_33",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_34@0",
+            "content": "Source code is available from GitHub: https://github.com/ncborcherding/TRGAted/tree/v1.0.0",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_34",
+            "start": 0,
+            "end": 89,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_35@0",
+            "content": "Archived source code at time of publication: http://doi.org/10.5281/zenodo.1323828 <REF-8>",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_35",
+            "start": 0,
+            "end": 89,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_36@0",
+            "content": "License: GNU General Public License v3.0",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_36",
+            "start": 0,
+            "end": 39,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_37@0",
+            "content": "<REF-1> Xi X Li T Huang Y : RNA Biomarkers: Frontier of Precision Medicine for Cancer. Noncoding RNA. 2017 ; 3 ( 1 ). pii: E9. 29657281 10.3390/ncrna3010009 5832009",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_37",
+            "start": 0,
+            "end": 163,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_38@0",
+            "content": "<REF-2> Cerami E Gao J Dogrusoz U : The cBio cancer genomics portal: an open platform for exploring multidimensional cancer genomics data. Cancer Discov. 2012 ; 2 ( 5 ): 401 \u2013 4 . 22588877 10.1158/2159-8290.CD-12-0095 3956037",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_38",
+            "start": 0,
+            "end": 224,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_39@0",
+            "content": "<REF-4> Li J Lu Y Akbani R : TCPA: a resource for cancer functional proteomics data. Nat Methods. 2013 ; 10 ( 11 ): 1046 \u2013 7 . 24037243 10.1038/nmeth.2650 4076789",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_39",
+            "start": 0,
+            "end": 161,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_40@0",
+            "content": "<REF-5> Liu J Lichtenberg T Hoadley KA : An Integrated TCGA Pan-Cancer Clinical Data Resource to Drive High-Quality Survival Outcome Analytics. Cell. 2018 ; 173 ( 2 ): 400 \u2013 416.e11 . 29625055 10.1016/j.cell.2018.02.052 6066282",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_40",
+            "start": 0,
+            "end": 226,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_41@0",
+            "content": "<REF-6> Gy\u00f6rffy B Lanczky A Eklund AC : An online survival analysis tool to rapidly assess the effect of 22,277 genes on breast cancer prognosis using microarray data of 1,809 patients. Breast Cancer Res Treat. 2010 ; 123 ( 3 ): 725 \u2013 31 . 20020197 10.1007/s10549-009-0674-9",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_41",
+            "start": 0,
+            "end": 273,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_42@0",
+            "content": "<REF-7> Wright MN Dankowski T Ziegler A : Unbiased split variable selection for random survival forests using maximally selected rank statistics. Stat Med. 2017 ; 36 ( 8 ): 1272 \u2013 84 . 28088842 10.1002/sim.7212",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_42",
+            "start": 0,
+            "end": 209,
+            "label": {}
+        },
+        {
+            "ix": "7-1235_v1_43@0",
+            "content": "<REF-8> theHumanBorch : ncborcherding/TRGAted: First Release TRGAted (Version v1.0.0). Zenodo. 2018 . http://www.doi.org/10.5281/zenodo.1323828",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "7-1235_v1_43",
+            "start": 0,
+            "end": 142,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "7-1235_v1_0",
+            "tgt_ix": "7-1235_v1_1",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_1",
+            "tgt_ix": "7-1235_v1_2",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_0",
+            "tgt_ix": "7-1235_v1_3",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_3",
+            "tgt_ix": "7-1235_v1_4",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_3",
+            "tgt_ix": "7-1235_v1_5",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_3",
+            "tgt_ix": "7-1235_v1_6",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_6",
+            "tgt_ix": "7-1235_v1_7",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_0",
+            "tgt_ix": "7-1235_v1_8",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_8",
+            "tgt_ix": "7-1235_v1_9",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_9",
+            "tgt_ix": "7-1235_v1_10",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_9",
+            "tgt_ix": "7-1235_v1_11",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_11",
+            "tgt_ix": "7-1235_v1_12",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_8",
+            "tgt_ix": "7-1235_v1_13",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_13",
+            "tgt_ix": "7-1235_v1_14",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_13",
+            "tgt_ix": "7-1235_v1_15",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_13",
+            "tgt_ix": "7-1235_v1_16",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_13",
+            "tgt_ix": "7-1235_v1_17",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_17",
+            "tgt_ix": "7-1235_v1_18",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_13",
+            "tgt_ix": "7-1235_v1_19",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_8",
+            "tgt_ix": "7-1235_v1_20",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_20",
+            "tgt_ix": "7-1235_v1_21",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_20",
+            "tgt_ix": "7-1235_v1_22",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_20",
+            "tgt_ix": "7-1235_v1_23",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_20",
+            "tgt_ix": "7-1235_v1_24",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_24",
+            "tgt_ix": "7-1235_v1_25",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_20",
+            "tgt_ix": "7-1235_v1_26",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_20",
+            "tgt_ix": "7-1235_v1_27",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_27",
+            "tgt_ix": "7-1235_v1_28",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_0",
+            "tgt_ix": "7-1235_v1_29",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_29",
+            "tgt_ix": "7-1235_v1_30",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_0",
+            "tgt_ix": "7-1235_v1_31",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_31",
+            "tgt_ix": "7-1235_v1_32",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_0",
+            "tgt_ix": "7-1235_v1_33",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_33",
+            "tgt_ix": "7-1235_v1_34",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_33",
+            "tgt_ix": "7-1235_v1_35",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_33",
+            "tgt_ix": "7-1235_v1_36",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_0",
+            "tgt_ix": "7-1235_v1_1",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_1",
+            "tgt_ix": "7-1235_v1_2",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_2",
+            "tgt_ix": "7-1235_v1_3",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_3",
+            "tgt_ix": "7-1235_v1_4",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_4",
+            "tgt_ix": "7-1235_v1_5",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_5",
+            "tgt_ix": "7-1235_v1_6",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_6",
+            "tgt_ix": "7-1235_v1_7",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_7",
+            "tgt_ix": "7-1235_v1_8",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_8",
+            "tgt_ix": "7-1235_v1_9",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_9",
+            "tgt_ix": "7-1235_v1_10",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_10",
+            "tgt_ix": "7-1235_v1_11",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_11",
+            "tgt_ix": "7-1235_v1_12",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_12",
+            "tgt_ix": "7-1235_v1_13",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_13",
+            "tgt_ix": "7-1235_v1_14",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_14",
+            "tgt_ix": "7-1235_v1_15",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_15",
+            "tgt_ix": "7-1235_v1_16",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_16",
+            "tgt_ix": "7-1235_v1_17",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_17",
+            "tgt_ix": "7-1235_v1_18",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_18",
+            "tgt_ix": "7-1235_v1_19",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_19",
+            "tgt_ix": "7-1235_v1_20",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_20",
+            "tgt_ix": "7-1235_v1_21",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_21",
+            "tgt_ix": "7-1235_v1_22",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_22",
+            "tgt_ix": "7-1235_v1_23",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_23",
+            "tgt_ix": "7-1235_v1_24",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_24",
+            "tgt_ix": "7-1235_v1_25",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_25",
+            "tgt_ix": "7-1235_v1_26",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_26",
+            "tgt_ix": "7-1235_v1_27",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_27",
+            "tgt_ix": "7-1235_v1_28",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_28",
+            "tgt_ix": "7-1235_v1_29",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_29",
+            "tgt_ix": "7-1235_v1_30",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_30",
+            "tgt_ix": "7-1235_v1_31",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_31",
+            "tgt_ix": "7-1235_v1_32",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_32",
+            "tgt_ix": "7-1235_v1_33",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_33",
+            "tgt_ix": "7-1235_v1_34",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_34",
+            "tgt_ix": "7-1235_v1_35",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_35",
+            "tgt_ix": "7-1235_v1_36",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_4",
+            "tgt_ix": "7-1235_v1_37",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_4",
+            "tgt_ix": "7-1235_v1_38",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_4",
+            "tgt_ix": "7-1235_v1_39",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_10",
+            "tgt_ix": "7-1235_v1_40",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_16",
+            "tgt_ix": "7-1235_v1_41",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_16",
+            "tgt_ix": "7-1235_v1_42",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_35",
+            "tgt_ix": "7-1235_v1_43",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_5",
+            "tgt_ix": "7-1235_v1_7",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_10",
+            "tgt_ix": "7-1235_v1_12",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_16",
+            "tgt_ix": "7-1235_v1_18",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_23",
+            "tgt_ix": "7-1235_v1_25",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_26",
+            "tgt_ix": "7-1235_v1_28",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_0",
+            "tgt_ix": "7-1235_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_1",
+            "tgt_ix": "7-1235_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_2",
+            "tgt_ix": "7-1235_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_2",
+            "tgt_ix": "7-1235_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_2",
+            "tgt_ix": "7-1235_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_2",
+            "tgt_ix": "7-1235_v1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_2",
+            "tgt_ix": "7-1235_v1_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_2",
+            "tgt_ix": "7-1235_v1_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_2",
+            "tgt_ix": "7-1235_v1_2@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_2",
+            "tgt_ix": "7-1235_v1_2@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_3",
+            "tgt_ix": "7-1235_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_4",
+            "tgt_ix": "7-1235_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_4",
+            "tgt_ix": "7-1235_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_4",
+            "tgt_ix": "7-1235_v1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_4",
+            "tgt_ix": "7-1235_v1_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_4",
+            "tgt_ix": "7-1235_v1_4@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_4",
+            "tgt_ix": "7-1235_v1_4@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_5",
+            "tgt_ix": "7-1235_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_5",
+            "tgt_ix": "7-1235_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_5",
+            "tgt_ix": "7-1235_v1_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_6",
+            "tgt_ix": "7-1235_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_8",
+            "tgt_ix": "7-1235_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_9",
+            "tgt_ix": "7-1235_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_10",
+            "tgt_ix": "7-1235_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_10",
+            "tgt_ix": "7-1235_v1_10@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_10",
+            "tgt_ix": "7-1235_v1_10@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_10",
+            "tgt_ix": "7-1235_v1_10@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_10",
+            "tgt_ix": "7-1235_v1_10@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_10",
+            "tgt_ix": "7-1235_v1_10@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_10",
+            "tgt_ix": "7-1235_v1_10@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_10",
+            "tgt_ix": "7-1235_v1_10@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_10",
+            "tgt_ix": "7-1235_v1_10@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_11",
+            "tgt_ix": "7-1235_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_13",
+            "tgt_ix": "7-1235_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_14",
+            "tgt_ix": "7-1235_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_14",
+            "tgt_ix": "7-1235_v1_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_15",
+            "tgt_ix": "7-1235_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_15",
+            "tgt_ix": "7-1235_v1_15@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_16",
+            "tgt_ix": "7-1235_v1_16@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_16",
+            "tgt_ix": "7-1235_v1_16@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_16",
+            "tgt_ix": "7-1235_v1_16@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_16",
+            "tgt_ix": "7-1235_v1_16@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_16",
+            "tgt_ix": "7-1235_v1_16@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_16",
+            "tgt_ix": "7-1235_v1_16@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_16",
+            "tgt_ix": "7-1235_v1_16@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_16",
+            "tgt_ix": "7-1235_v1_16@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_16",
+            "tgt_ix": "7-1235_v1_16@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_17",
+            "tgt_ix": "7-1235_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_19",
+            "tgt_ix": "7-1235_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_19",
+            "tgt_ix": "7-1235_v1_19@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_19",
+            "tgt_ix": "7-1235_v1_19@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_19",
+            "tgt_ix": "7-1235_v1_19@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_19",
+            "tgt_ix": "7-1235_v1_19@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_19",
+            "tgt_ix": "7-1235_v1_19@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_20",
+            "tgt_ix": "7-1235_v1_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_21",
+            "tgt_ix": "7-1235_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_21",
+            "tgt_ix": "7-1235_v1_21@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_22",
+            "tgt_ix": "7-1235_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_22",
+            "tgt_ix": "7-1235_v1_22@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_22",
+            "tgt_ix": "7-1235_v1_22@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_22",
+            "tgt_ix": "7-1235_v1_22@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_22",
+            "tgt_ix": "7-1235_v1_22@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_23",
+            "tgt_ix": "7-1235_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_23",
+            "tgt_ix": "7-1235_v1_23@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_23",
+            "tgt_ix": "7-1235_v1_23@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_23",
+            "tgt_ix": "7-1235_v1_23@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_23",
+            "tgt_ix": "7-1235_v1_23@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_24",
+            "tgt_ix": "7-1235_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_26",
+            "tgt_ix": "7-1235_v1_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_26",
+            "tgt_ix": "7-1235_v1_26@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_26",
+            "tgt_ix": "7-1235_v1_26@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_27",
+            "tgt_ix": "7-1235_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_29",
+            "tgt_ix": "7-1235_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_30",
+            "tgt_ix": "7-1235_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_30",
+            "tgt_ix": "7-1235_v1_30@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_30",
+            "tgt_ix": "7-1235_v1_30@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_30",
+            "tgt_ix": "7-1235_v1_30@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_30",
+            "tgt_ix": "7-1235_v1_30@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_30",
+            "tgt_ix": "7-1235_v1_30@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_31",
+            "tgt_ix": "7-1235_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_32",
+            "tgt_ix": "7-1235_v1_32@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_32",
+            "tgt_ix": "7-1235_v1_32@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_33",
+            "tgt_ix": "7-1235_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_34",
+            "tgt_ix": "7-1235_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_35",
+            "tgt_ix": "7-1235_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_36",
+            "tgt_ix": "7-1235_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_37",
+            "tgt_ix": "7-1235_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_38",
+            "tgt_ix": "7-1235_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_39",
+            "tgt_ix": "7-1235_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_40",
+            "tgt_ix": "7-1235_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_41",
+            "tgt_ix": "7-1235_v1_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_42",
+            "tgt_ix": "7-1235_v1_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "7-1235_v1_43",
+            "tgt_ix": "7-1235_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "7-1235_v1",
+    "meta": {
+        "parser": "F1000XMLParser",
+        "intertext-graph": "N/A",
+        "doi": "10.12688/f1000research.15789.1",
+        "atype": "software-tool",
+        "license": "http://creativecommons.org/licenses/by/4.0/",
+        "title": "TRGAted: A web tool for survival analysis using protein data in the Cancer Genome Atlas.",
+        "abstract": "Reverse-phase protein arrays (RPPAs) are a highthroughput approach to protein quantification utilizing an antibody-based micro-to-nano scale dot blot. Within the Cancer Genome Atlas (TCGA), RPPAs were used to quantify over 200 proteins in 8,167 tumor or metastatic samples. This protein-level data has particular advantages in assessing putative prognostic or therapeutic targets in tumors. However, many of the available pipelines do not allow for the partitioning of clinical and RPPA information to make meaningful conclusions. We developed a cloud-based application, TRGAted to enable researchers to better examine survival based on single or multiple proteins across 31 cancer types in the TCGA. TRGAted contains up-to-date overall survival, disease-specific survival, disease-free interval and progression-free interval information. Furthermore, survival information for primary tumor samples can be stratified based on gender, age, tumor stage, histological type, and subtype, allowing for highly adaptive and intuitive user experience. The code and processed data is open sourced and available on github and with a tutorial built into the application for assisting users.",
+        "contributors": [
+            {
+                "surname": "Borcherding",
+                "given-names": "Nicholas"
+            },
+            {
+                "surname": "Bormann",
+                "given-names": "Nicholas L."
+            },
+            {
+                "surname": "Voigt",
+                "given-names": "Andrew P."
+            },
+            {
+                "surname": "Zhang",
+                "given-names": "Weizhou"
+            }
+        ],
+        "url": "https://f1000research.com/articles/7-1235/v1/",
+        "doc_id": "7-1235",
+        "version": 1,
+        "ix_counter": 180,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy"
+    }
+}

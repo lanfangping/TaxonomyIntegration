@@ -1,0 +1,4257 @@
+{
+    "nodes": [
+        {
+            "ix": "9-512_v1_0",
+            "content": "ExploreModelMatrix: Interactive exploration for improved understanding of design matrices and linear models in R",
+            "ntype": "article-title",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_1",
+            "content": "Abstract",
+            "ntype": "abstract",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_2",
+            "content": "Linear and generalized linear models are used extensively in many scienti\ufb01c \ufb01elds, to model observed data and as the basis for hypothesis tests. The use of such models requires speci\ufb01cation of a design matrix, and subsequent formulation of contrasts representing scienti\ufb01c hypotheses of interest. Proper execution of these steps requires a thorough understanding of the meaning of the individual coef\ufb01cients, and is a frequent source of uncertainty for end users. Here, we present an R/Bioconductor package, ExploreModelMatrix , which enables interactive exploration of design matrices and linear model diagnostics. Given a sample annotation table and a desired design formula, the package displays how the model coef\ufb01cients are combined to give the \ufb01tted values for each combination of predictor variables, which allows users to both extract the interpretation of each individual coef\ufb01cient, and formulate desired linear contrasts. In addition, the interactive interface displays informative characteristics for the regular linear model corresponding to the provided design, such as variance in\ufb02ation factors and the pseudoinverse of the design matrix.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_3",
+            "content": "Introduction",
+            "ntype": "title",
+            "meta": {
+                "section": "1",
+                "sec-type": "intro",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_4",
+            "content": "Linear and generalized linear models are ubiquitous tools in a wide variety of scientific disciplines, and encompass well-known special cases such as linear and logistic regression, ANOVA and Student\u2019s t-test. Of particular interest to us, they are also the basis for many of the most widely used tools for analysis of high-throughput biological data. This includes limma <REF-1> , <REF-2> for linear modeling of gene expression microarray and similar data, as well as edgeR <REF-3> , <REF-4> and DESeq2 <REF-5> for differential expression analysis of RNA-seq and other count data, missMethyl <REF-6> , DMRcate <REF-7> and minfi <REF-8> for differential methylation analysis, DiffBind <REF-9> for differential binding analysis, msmsTests <REF-10> for mass spectrometry, and many others. Since the linear model is a special case of the generalized linear model, and particularly as the aspects of defining the design matrix are shared between the two, we will generally refer to generalized linear models in the rest of this manuscript.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_5",
+            "content": "Fitting a generalized linear model requires observations of a response variable y (e.g., inferred abundance levels of a gene) as well as a set of continuous or categorical predictor variables or sample annotations (e.g. the sample genotype, age, or treatment condition). In addition, in the R statistical programming environment, the user provides a design formula , specifying which, and how, provided predictor variables should be used to model the expected value of the response. The design formula in R is a version of a syntax for model specification originally proposed in 1973 by Wilkinson and Rogers <REF-11> . This design formula and a specification of a type of contrast coding define a numeric N \u00d7 J design matrix X , where N is the number of observations and J the number of model coefficients. The expected response values are then modeled by E [ y ] = g \u2212 1 ( X \u03b2 ) ,",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_6",
+            "content": "where \u03b2 = ( \u03b2 1 , . . . , \u03b2 J ) are the regression coefficients for the respective columns of the design matrix, and g is a link function <REF-12> , <REF-13> . X \u03b2 is typically referred to as the linear predictor . After fitting the model, statistical tests can be performed to test the null hypothesis that a given combination of coefficients (referred to as a linear contrast ) is zero. In this manuscript, we will focus on reference cell coding, or \u201ctreatment\u201d coding for contrasts, though in general other schemes may also be considered. For more details on how R\u2019s design formula functionality is implemented, we refer to the reference for statistical modeling in S <REF-14> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_7",
+            "content": "The way that the model is specified, that is, the definition of the design matrix, naturally determines how the model coefficients should be interpreted. As an example, consider a situation with a linear model and a single categorical predictor with two levels. Defining a model including an intercept (a column of the design matrix with the value 1 for all observations) implies that the second regression coefficient represents the difference between the average response values for the two levels of the predictor, while without the intercept, the two regression coefficients directly represent the average response values for the two factor levels. Given the versatility of generalized linear models, determining the proper contrast to use for testing a specific biological hypothesis of interest requires an understanding of the interpretation of the individual regression coefficients, and can be challenging for users of generalized linear model-based tools.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_8",
+            "content": "Here, we present ExploreModelMatrix <REF-15> , an R package for interactive exploration of generalized linear model designs, coefficients, and contrasts. Given a table of predictor variables, the user can specify the desired design formula and explore the value of the linear predictor for each combination of predictor values, expressed in terms of the model coefficients. From this type of visualization, it is often straightforward to determine the contrast corresponding to a given comparison of interest. We envision that ExploreModelMatrix can be useful for both research and teaching purposes. Specifically for the latter, the application contains several built-in example data sets, corresponding to some of the most commonly used experimental design setups. The underlying function in ExploreModelMatrix that processes the input data and generates visualizations can also be directly called by the user, enabling the generation of static plots for inclusion in reports and educational material.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_9",
+            "content": "Methods",
+            "ntype": "title",
+            "meta": {
+                "section": "2",
+                "sec-type": "methods",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_10",
+            "content": "Operation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_11",
+            "content": "ExploreModelMatrix <REF-15> is implemented as an R package <REF-16> , using the Shiny framework <REF-17> . The package is available via Bioconductor <REF-18> , with the current development version accessible via GitHub . The package has been tested with R version 3.6 and later.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_12",
+            "content": "An instance of the interactive application is launched by calling the ExploreModelMatrix() function. This function accepts two optional arguments; a data.frame with one row per observation and each column corresponding to a measured predictor variable (below referred to as the sample information table ), and a design formula. If the ExploreModelMatrix() function is called without any arguments, the user can either explore one of the built-in designs, or load a sample information table from a tab-separated text file. The design formula can always be specified or modified interactively in the application. If the user wishes to generate the visualizations independently of the interactive interface, this can be achieved via the VisualizeDesign() function, which is also called internally by ExploreModelMatrix() .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_13",
+            "content": "Implementation",
+            "ntype": "title",
+            "meta": {
+                "section": "2.2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_14",
+            "content": "The user interface of ExploreModelMatrix consists of a side bar with control widgets and a main window containing a set of fixed, but collapsible, panels, each illustrating a different aspect of the design matrix or the associated standard linear model ( Figure 1 ). A more detailed explanation of each panel is accessible via the guided tour of the interface, implemented via the rintrojs package <REF-19> and accessible by clicking on the question mark icon in the top right corner (represented by the letter P in Figure 1 ).",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_15",
+            "content": "Figure 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "f1",
+                "caption": "Screenshot of the ExploreModelMatrix interface. This example shows a model with two predictors (genotype and treatment), each with two levels, and with the assumption that their effects are additive. Red circles with letters were added to be able to refer to specific parts of the interface in the text.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/26680/21310d92-168c-407d-8365-b10199563e64_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_16",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f1\" position=\"float\"> <caption> <title>Screenshot of the <italic>ExploreModelMatrix</italic> interface.</title> <p> This example shows a model with two predictors (genotype and treatment), each with two levels, and with the assumption that their effects are additive. Red circles with letters were added to be able to refer to specific parts of the interface in the text.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/26680/21310d92-168c-407d-8365-b10199563e64_figure1.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f1",
+                "caption": "Screenshot of the ExploreModelMatrix interface. This example shows a model with two predictors (genotype and treatment), each with two levels, and with the assumption that their effects are additive. Red circles with letters were added to be able to refer to specific parts of the interface in the text.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/26680/21310d92-168c-407d-8365-b10199563e64_figure1.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_17",
+            "content": "Given a sample information table and a design formula, either provided by the user or obtained via one of the built-in designs, ExploreModelMatrix will first check that the two objects are compatible, i.e., that the terms in the design formula use only variables that are present in the sample information table, and that the design formula is supported by the package. If no problems are detected, ExploreModelMatrix will create a design matrix using the model.matrix() R function. The full sample table, a summary of its columns, and the resulting design matrix are all displayed in the application interface for convenience (see H-J in Figure 1 ). In addition, the rank of the design matrix is calculated ( K ). If the design matrix is not full rank, ExploreModelMatrix will display a warning, together with an indication of the coefficients that are not estimable (using the nonEstimable() function from the limma R package <REF-1> , <REF-2> ). In addition, ExploreModelMatrix will inform the user if the number of rows (observations) in the design matrix is the same as its rank, in which case there are no residual degrees of freedom, and the variance or dispersion cannot be estimated.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_18",
+            "content": "Expressed in terms of the model coefficients, the panels in the first row of the application ( F - G ) illustrate, in graphical and tabular form, the value of the linear predictor in a generalized linear model, for each combination of levels for the predictors used in the design formula. This provides an intuitive understanding of the interpretation of each of the model coefficients, and can be helpful for specifying appropriate contrasts.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_19",
+            "content": "The panels in the lower part of the interface ( L , M , O ) should largely be interpreted in the context of standard linear models, where coefficient estimates are obtained using least squares fitting. The pseudoinverse ( X T X ) \u22121 X T <REF-20> \u2013 <REF-22> represents the way each observed response value would contribute to the coefficient estimates. More precisely, in such a linear model represented by y = X \u03b2 + \u03b5 ,",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_20",
+            "content": "the estimated regression coefficients are given by \u03b2 ^ = ( X T X ) \u2212 1 X T y .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_21",
+            "content": "ExploreModelMatrix also estimates variance inflation factors and correlations among the coefficient estimates. Finally, the co-occurrence plot in the bottom left panel ( N ) shows the number of observations in the data set for each combination of levels of the predictor variables.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_22",
+            "content": "The controls in the left-hand sidebar can be used to interactively modify the studied design as well as the display parameters of the panels. The text box in the top ( A ) allows the user to type in a design formula (starting with the ~ , or \u201ctilde\u201d character), and the displayed figures will be updated accordingly. The dropdown menu immediately below ( B ) contains the built-in example designs. To use the sample information table provided either as an argument to ExploreModelMatrix() or uploaded into the app at run time, select -- here. The next section of controls ( C ) lets the user control which level should be considered the \u201cbaseline\u201d or reference level for each categorical or factor variable in the model. ExploreModelMatrix will convert each character variable to a factor when a sample information table is loaded; by default the baseline level will be the first in alphabetical order.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_23",
+            "content": "In cases where the design matrix is not of full rank, it may be desirable to exclude a subset of the columns in the design matrix (for example, columns with all zero values or columns that are linear combinations of other columns). This can be done in the \"Drop columns\" section ( D ). As mentioned above, in the case of a non-full rank design matrix, ExploreModelMatrix will indicate which coefficients are not estimable and thus candidates for being dropped. The final group of controls ( E ) provide the ability to change the way the panels are displayed, e.g. by setting the height of the plot panels and changing the size and display mode of the text.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_24",
+            "content": "Use case",
+            "ntype": "title",
+            "meta": {
+                "section": "3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_25",
+            "content": "To illustrate how ExploreModelMatrix <REF-15> can be used to interpret the coefficients in a complex experimental design, we consider the example of differential allele-specific expression analysis with RNA-seq data. Generalized linear models for count data often use the log link function, and we assume this to be the case in some of the interpretations below. This type of experiment contains different groups of subjects (e.g., from different experimental conditions), where each subject contributes two columns in the read count matrix: one representing the read counts for the reference allele, and one representing those for the alternative allele, for each considered gene. Typical scientific questions of interest are whether there are differences between the expression of the two alleles within each condition, and whether there are differences in the allele-specific expression patterns between the conditions. Similar setups can be observed, for example, in differential methylation experiments (where the two columns for each sample would correspond to methylated and unmethylated read counts for a feature), or in situations where individuals from different groups are each given the same set of treatments.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_26",
+            "content": "The sample annotation table considered here is provided in Table 1 . In addition to the columns containing the subject identifier, the condition and the count type (reference or alternative allele), we include a column corresponding to a within-condition relabeling, or dummy encoding, of the subject identifier. Note that this dummy subject identifier has only three levels, compared to six for the original subject identifier. This design setup is available among the example designs provided within ExploreModelMatrix , denoted \u201cTwo crossed, one nested factor (manuscript example)\u201d. We will illustrate two equivalent ways of setting up the design formula, and show how ExploreModelMatrix can help in the interpretation of the model coefficients.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_27",
+            "content": "Table 1.",
+            "ntype": "label",
+            "meta": {
+                "id": "T1",
+                "caption": "Sample annotation table for the allele-specific differential expression use case.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_28",
+            "content": "<table-wrap xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" id=\"T1\" position=\"anchor\"> <caption> <title>Sample annotation table for the allele-specific differential expression use case.</title> </caption> <table content-type=\"article-table\" frame=\"hsides\"> <thead> <tr> <th align=\"center\">subject</th> <th align=\"center\">count</th> <th align=\"center\">condition</th> <th align=\"center\">subjectdummy</th> </tr> </thead> <tbody> <tr> <td align=\"center\">S1</td> <td align=\"center\">ref</td> <td align=\"center\">control</td> <td align=\"center\">D1</td> </tr> <tr> <td align=\"center\">S1</td> <td align=\"center\">alt</td> <td align=\"center\">control</td> <td align=\"center\">D1</td> </tr> <tr> <td align=\"center\">S2</td> <td align=\"center\">ref</td> <td align=\"center\">control</td> <td align=\"center\">D2</td> </tr> <tr> <td align=\"center\">S2</td> <td align=\"center\">alt</td> <td align=\"center\">control</td> <td align=\"center\">D2</td> </tr> <tr> <td align=\"center\">S3</td> <td align=\"center\">ref</td> <td align=\"center\">control</td> <td align=\"center\">D3</td> </tr> <tr> <td align=\"center\">S3</td> <td align=\"center\">alt</td> <td align=\"center\">control</td> <td align=\"center\">D3</td> </tr> <tr> <td align=\"center\">S4</td> <td align=\"center\">ref</td> <td align=\"center\">treated</td> <td align=\"center\">D1</td> </tr> <tr> <td align=\"center\">S4</td> <td align=\"center\">alt</td> <td align=\"center\">treated</td> <td align=\"center\">D1</td> </tr> <tr> <td align=\"center\">S5</td> <td align=\"center\">ref</td> <td align=\"center\">treated</td> <td align=\"center\">D2</td> </tr> <tr> <td align=\"center\">S5</td> <td align=\"center\">alt</td> <td align=\"center\">treated</td> <td align=\"center\">D2</td> </tr> <tr> <td align=\"center\">S6</td> <td align=\"center\">ref</td> <td align=\"center\">treated</td> <td align=\"center\">D3</td> </tr> <tr> <td align=\"center\">S6</td> <td align=\"center\">alt</td> <td align=\"center\">treated</td> <td align=\"center\">D3</td> </tr> </tbody> </table> </table-wrap>",
+            "ntype": "table-wrap",
+            "meta": {
+                "id": "T1",
+                "caption": "Sample annotation table for the allele-specific differential expression use case.",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_29",
+            "content": "First, we specify the design formula \u223c condition + condition : subjectdummy + condition : count ,",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_30",
+            "content": "including an overall condition effect, a term to account for sample-specific effects, and an interaction between the condition and count type columns to capture allele-specific expression within each condition. In R\u2019s design formula syntax, a \u201c:\u201d between two variable names indicates the addition of an interaction term between these two variables, which may have a different effect on columns of X depending on whether these are numeric or factor variables, and what other terms are in the design. Given this design formula together with the sample annotation table from Table 1 as the input arguments, the ExploreModelMatrix functions determine the composition of the linear predictor for each combination of predictor variables shown in Figure 2A (corresponds to panel ( F ) in Figure 1 , shown here separately for increased readability). The Rank panel in the application further indicates that the design matrix is of full rank and that the residual degrees of freedom is non-zero, allowing also estimation of variances or dispersions for use in statistical hypothesis tests involving the estimated coefficients. The illustration in Figure 2A can be used to extract appropriate contrasts for statistical testing. For example, comparing the values of the linear predictor for each sample in the control group, we can see that the conditioncontrol:countalt coefficient represents the allele-specific expression effect (alt/ref expression log-ratio) in this group. Similarly, the conditiontreated:countalt coefficient represents the allele-specific expression in the treated group. As a consequence, the condition-dependent allele-specific expression effect is obtained as the difference between the allele-specific effects within the respective conditions, that is, by conditiontreated:countalt - conditioncontrol:countalt .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_31",
+            "content": "Figure 2.",
+            "ntype": "label",
+            "meta": {
+                "id": "f2",
+                "caption": "Values of the linear predictor, in terms of the model parameters, for the allele-specific expression use case. A . Using the design formula ~ condition + condition:subjectdummy + condition:count. B . Using the design formula ~ condition*count + subject.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/26680/21310d92-168c-407d-8365-b10199563e64_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_32",
+            "content": "<fig xmlns:mml=\"http://www.w3.org/1998/Math/MathML\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" fig-type=\"figure\" id=\"f2\" position=\"float\"> <caption> <title>Values of the linear predictor, in terms of the model parameters, for the allele-specific expression use case.</title> <p> <bold>A</bold>. Using the design formula ~ condition + condition:subjectdummy + condition:count. <bold>B</bold>. Using the design formula ~ condition*count + subject.</p> </caption> <graphic xlink:href=\"https://f1000researchdata.s3.amazonaws.com/manuscripts/26680/21310d92-168c-407d-8365-b10199563e64_figure2.gif\"/> </fig>",
+            "ntype": "fig",
+            "meta": {
+                "id": "f2",
+                "caption": "Values of the linear predictor, in terms of the model parameters, for the allele-specific expression use case. A . Using the design formula ~ condition + condition:subjectdummy + condition:count. B . Using the design formula ~ condition*count + subject.",
+                "uri": "https://f1000researchdata.s3.amazonaws.com/manuscripts/26680/21310d92-168c-407d-8365-b10199563e64_figure2.gif",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_33",
+            "content": "Next, we illustrate an alternative way of setting up the design matrix, by specifying the design formula as \u223c condition * count + subject .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_34",
+            "content": "Here, we use the original subject ID (not the dummy encoded), and include main effects for condition and count type as well as an interaction between the condition and the count type. In R\u2019s design formula syntax, a \u201c*\u201d between two variable names indicates the addition of both main effects and an interaction term between these two variables. Upon changing the design formula in ExploreModelMatrix , we are notified that the design matrix is no longer full rank, as a consequence of having different subjects in the different conditions. Dropping the subjectS4 column results in a full-rank design matrix, and the composition of the linear predictor is shown in Figure 2B . The rank of the design matrix, as well as the residual degrees of freedom, are the same as with the previous formulation. However, the composition of the linear predictor for each combination of input variables is different. Comparing the alternative and reference allele groups for the control condition shows that with this formulation, the allele specificity in the control group is encoded by the countalt coefficient. Similarly, the allele specificity in the treated group is represented by the sum of the countalt and conditiontreated:countalt coefficients. Consequently, the difference in allele specificity between the treated and control group is now directly encoded in the conditiontreated:countalt coefficient.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_35",
+            "content": "This example stresses that knowing how to interpret a given coefficient in a generalized linear model is critical, that identically labelled coefficients can have different meanings depending on the chosen design formula, and that ExploreModelMatrix can help the user interpret the resulting coefficients for a given choice of design formula and set up an appropriate contrast.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_36",
+            "content": "Summary",
+            "ntype": "title",
+            "meta": {
+                "section": "4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_37",
+            "content": "We have described the ExploreModelMatrix R/Bioconductor package <REF-15> , which enables interactive exploration for increased understanding of model coefficients in linear and generalized linear models. To the best of our knowledge, this is the first package of its kind, and we envision applications for both research and educational purposes. The application requires minimal input and can be launched from a local R session, as well as be deployed on a Shiny server. An example instance of the latter is available at http://shiny.imbei.uni-mainz.de:3838/ExploreModelMatrix/ , and the process for deploying an instance of the application on a Shiny server is documented in one of the vignettes accompanying the software.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_38",
+            "content": "Data availability",
+            "ntype": "title",
+            "meta": {
+                "section": "5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_39",
+            "content": "All data underlying the results are available as part of the article and no additional source data are required.",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_40",
+            "content": "Software availability",
+            "ntype": "title",
+            "meta": {
+                "section": "6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_41",
+            "content": "ExploreModelMatrix is available at: http://www.bioconductor.org/packages/ExploreModelMatrix/",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_42",
+            "content": "Source code available at: https://github.com/csoneson/ExploreModelMatrix .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_43",
+            "content": "Source code at time of publication: https://doi.org/10.5281/zenodo.3837402 <REF-15> .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_44",
+            "content": "License: MIT License .",
+            "ntype": "p",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_45",
+            "content": "<REF-1> Smyth GK : Linear models and empirical Bayes methods for assessing differential expression in microarray experiments. Stat Appl Genet Mol Biol. 2004 ; 3 ( 1 ): Article 3. 16646809 10.2202/1544-6115.1027",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-1",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_46",
+            "content": "<REF-2> Ritchie ME Phipson B Wu D : limma powers differential expression analyses for RNA-sequencing and microarray studies. Nucleic Acids Res. 2015 ; 43 ( 7 ): e47 . 25605792 10.1093/nar/gkv007 4402510",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-2",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_47",
+            "content": "<REF-3> Robinson MD McCarthy DJ Smyth GK : edgeR: a Bioconductor package for differential expression analysis of digital gene expression data. Bioinformatics. 2010 ; 26 ( 1 ): 139 \u2013 140 . 19910308 10.1093/bioinformatics/btp616 2796818",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-3",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_48",
+            "content": "<REF-4> McCarthy DJ Chen Y Smyth GK : Differential expression analysis of multifactor RNA-Seq experiments with respect to biological variation. Nucleic Acids Res. 2012 ; 40 ( 10 ): 4288 \u2013 4297 . 22287627 10.1093/nar/gks042 3378882",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-4",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_49",
+            "content": "<REF-5> Love MI Huber W Anders S : Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2. Genome Biol. 2014 ; 15 ( 12 ): 550 . 25516281 10.1186/s13059-014-0550-8 4302049",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-5",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_50",
+            "content": "<REF-6> Phipson B Maksimovic J Oshlack A : missMethyl: an R package for analyzing data from Illumina\u2019s HumanMethylation450 platform. Bioinformatics. 2016 ; 32 ( 2 ): 286 \u2013 288 . 26424855 10.1093/bioinformatics/btv560",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-6",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_51",
+            "content": "<REF-7> Peters TJ Buckley MJ Statham AL : De novo identification of differentially methylated regions in the human genome. Epigenet Chromatin. 2015 ; 8 : 6 . 25972926 10.1186/1756-8935-8-6 4429355",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-7",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_52",
+            "content": "<REF-8> Aryee MJ Jaffe AE Corrada-Bravo H : Minfi: a flexible and comprehensive Bioconductor package for the analysis of Infinium DNA methylation microarrays. Bioinformatics. 2014 ; 30 ( 10 ): 1363 \u2013 1369 . 24478339 10.1093/bioinformatics/btu049 4016708",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-8",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_53",
+            "content": "<REF-9> Stark R Brown G : DiffBind: differential binding analysis of ChIP-Seq peak data. R package version 2.15.2. 2011 . 10.18129/B9.bioc.DiffBind",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-9",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_54",
+            "content": "<REF-10> Gregori J Sanchez A Villanueva J : msmsTests: LC-MS/MS Differential Expression Tests. R package version 1.25.0 . 2019 . 10.18129/B9.bioc.msmsTests",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-10",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_55",
+            "content": "<REF-11> Wilkinson GN Rogers CE : Symbolic description of factorial models for analysis of variance. J R Stat Soc Ser C (Applied Statistics). 1973 ; 22 ( 3 ): 392 \u2013 399 . 10.2307/2346786",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-11",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_56",
+            "content": "<REF-12> Nelder JA Wedderburn RWM : Generalized linear models. J R Stat Soc Ser A. 1972 ; 135 ( 3 ): 370 \u2013 384 . 10.2307/2344614",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-12",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_57",
+            "content": "<REF-13> McCullagh P Nelder JA : Generalized Linear Models . Second Edition. Chapman and Hall/CRC Monographs on Statistics and Applied Probability Series. Chapman & Hall, 1989 . ISBN 9780412317606. Reference Source",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-13",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_58",
+            "content": "<REF-14> Chambers JM Hastie T : Statistical Models in S . Wadsworth & Brooks/Cole computer science series . Wadsworth & Brooks/Cole Advanced Books & Software, 1992 . ISBN 9780534167646. Reference Source",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-14",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_59",
+            "content": "<REF-15> Soneson C Marini F Geier F : ExploreModelMatrix . May 2020 . http://www.doi.org/doi.org/10.5281/zenodo.3837403",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-15",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_60",
+            "content": "<REF-16> R Core Team : R: A language and environment for statistical computing . 2020 . Reference Source",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-16",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_61",
+            "content": "<REF-17> Chang W Cheng J Allaire JJ : shiny: Web Application Framework for R . R package version 1.4.0.2. 2020 . Reference Source",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-17",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_62",
+            "content": "<REF-18> Huber W Carey VJ Gentleman R : Orchestrating high-throughput genomic analysis with Bioconductor. Nat Methods. 2015 ; 12 ( 2 ): 115 \u2013 121 . 25633503 10.1038/nmeth.3252 4509590",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-18",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_63",
+            "content": "<REF-19> Ganz C : rintrojs: A wrapper for the intro.js library. J Open Source Softw. 2016 ; 1 . 10.21105/joss.00063",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-19",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_64",
+            "content": "<REF-20> Moore EH : On the reciprocal of the general algebraic matrix. B Am Math Soc. 1920 ; 26 : 394 \u2013 395 .",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-20",
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "ix": "9-512_v1_65",
+            "content": "<REF-22> Penrose R : A generalized inverse for matrices. Math Proc Cambridge. 1955 ; 51 ( 3 ): 406 \u2013 413 . 10.1017/S0305004100030401",
+            "ntype": "ref",
+            "meta": {
+                "id": "ref-22",
+                "created_by": "F1000XMLParser"
+            }
+        }
+    ],
+    "span_nodes": [
+        {
+            "ix": "9-512_v1_0@0",
+            "content": "ExploreModelMatrix: Interactive exploration for improved understanding of design matrices and linear models in R",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_0",
+            "start": 0,
+            "end": 111,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_1@0",
+            "content": "Abstract",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_1",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_2@0",
+            "content": "Linear and generalized linear models are used extensively in many scienti\ufb01c \ufb01elds, to model observed data and as the basis for hypothesis tests.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_2",
+            "start": 0,
+            "end": 143,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_2@1",
+            "content": "The use of such models requires speci\ufb01cation of a design matrix, and subsequent formulation of contrasts representing scienti\ufb01c hypotheses of interest.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_2",
+            "start": 145,
+            "end": 295,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_2@2",
+            "content": "Proper execution of these steps requires a thorough understanding of the meaning of the individual coef\ufb01cients, and is a frequent source of uncertainty for end users.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_2",
+            "start": 297,
+            "end": 462,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_2@3",
+            "content": "Here, we present an R/Bioconductor package, ExploreModelMatrix , which enables interactive exploration of design matrices and linear model diagnostics.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_2",
+            "start": 464,
+            "end": 614,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_2@4",
+            "content": "Given a sample annotation table and a desired design formula, the package displays how the model coef\ufb01cients are combined to give the \ufb01tted values for each combination of predictor variables, which allows users to both extract the interpretation of each individual coef\ufb01cient, and formulate desired linear contrasts.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_2",
+            "start": 616,
+            "end": 931,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_2@5",
+            "content": "In addition, the interactive interface displays informative characteristics for the regular linear model corresponding to the provided design, such as variance in\ufb02ation factors and the pseudoinverse of the design matrix.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_2",
+            "start": 933,
+            "end": 1152,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_3@0",
+            "content": "Introduction",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_3",
+            "start": 0,
+            "end": 11,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_4@0",
+            "content": "Linear and generalized linear models are ubiquitous tools in a wide variety of scientific disciplines, and encompass well-known special cases such as linear and logistic regression, ANOVA and Student\u2019s t-test.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_4",
+            "start": 0,
+            "end": 208,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_4@1",
+            "content": "Of particular interest to us, they are also the basis for many of the most widely used tools for analysis of high-throughput biological data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_4",
+            "start": 210,
+            "end": 350,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_4@2",
+            "content": "This includes limma <REF-1> , <REF-2> for linear modeling of gene expression microarray and similar data, as well as edgeR <REF-3> , <REF-4> and DESeq2 <REF-5> for differential expression analysis of RNA-seq and other count data, missMethyl <REF-6> , DMRcate <REF-7> and minfi <REF-8> for differential methylation analysis, DiffBind <REF-9> for differential binding analysis, msmsTests <REF-10> for mass spectrometry, and many others.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_4",
+            "start": 352,
+            "end": 785,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_4@3",
+            "content": "Since the linear model is a special case of the generalized linear model, and particularly as the aspects of defining the design matrix are shared between the two, we will generally refer to generalized linear models in the rest of this manuscript.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_4",
+            "start": 787,
+            "end": 1034,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_5@0",
+            "content": "Fitting a generalized linear model requires observations of a response variable y (e.g., inferred abundance levels of a gene) as well as a set of continuous or categorical predictor variables or sample annotations (e.g. the sample genotype, age, or treatment condition).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_5",
+            "start": 0,
+            "end": 269,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_5@1",
+            "content": "In addition, in the R statistical programming environment, the user provides a design formula , specifying which, and how, provided predictor variables should be used to model the expected value of the response.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_5",
+            "start": 271,
+            "end": 481,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_5@2",
+            "content": "The design formula in R is a version of a syntax for model specification originally proposed in 1973 by Wilkinson and Rogers <REF-11> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_5",
+            "start": 483,
+            "end": 617,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_5@3",
+            "content": "This design formula and a specification of a type of contrast coding define a numeric N \u00d7 J design matrix X , where N is the number of observations and J the number of model coefficients.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_5",
+            "start": 619,
+            "end": 805,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_5@4",
+            "content": "The expected response values are then modeled by E [ y ] = g \u2212 1 ( X \u03b2 ) ,",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_5",
+            "start": 807,
+            "end": 880,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_6@0",
+            "content": "where \u03b2 = ( \u03b2 1 , . . . , \u03b2 J ) are the regression coefficients for the respective columns of the design matrix, and g is a link function <REF-12> , <REF-13> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_6",
+            "start": 0,
+            "end": 158,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_6@1",
+            "content": "X \u03b2 is typically referred to as the linear predictor .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_6",
+            "start": 160,
+            "end": 213,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_6@2",
+            "content": "After fitting the model, statistical tests can be performed to test the null hypothesis that a given combination of coefficients (referred to as a linear contrast ) is zero.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_6",
+            "start": 215,
+            "end": 387,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_6@3",
+            "content": "In this manuscript, we will focus on reference cell coding, or \u201ctreatment\u201d coding for contrasts, though in general other schemes may also be considered.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_6",
+            "start": 389,
+            "end": 540,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_6@4",
+            "content": "For more details on how R\u2019s design formula functionality is implemented, we refer to the reference for statistical modeling in S <REF-14> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_6",
+            "start": 542,
+            "end": 680,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_7@0",
+            "content": "The way that the model is specified, that is, the definition of the design matrix, naturally determines how the model coefficients should be interpreted.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_7",
+            "start": 0,
+            "end": 152,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_7@1",
+            "content": "As an example, consider a situation with a linear model and a single categorical predictor with two levels.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_7",
+            "start": 154,
+            "end": 260,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_7@2",
+            "content": "Defining a model including an intercept (a column of the design matrix with the value 1 for all observations) implies that the second regression coefficient represents the difference between the average response values for the two levels of the predictor, while without the intercept, the two regression coefficients directly represent the average response values for the two factor levels.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_7",
+            "start": 262,
+            "end": 651,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_7@3",
+            "content": "Given the versatility of generalized linear models, determining the proper contrast to use for testing a specific biological hypothesis of interest requires an understanding of the interpretation of the individual regression coefficients, and can be challenging for users of generalized linear model-based tools.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_7",
+            "start": 653,
+            "end": 964,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_8@0",
+            "content": "Here, we present ExploreModelMatrix <REF-15> , an R package for interactive exploration of generalized linear model designs, coefficients, and contrasts.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_8",
+            "start": 0,
+            "end": 152,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_8@1",
+            "content": "Given a table of predictor variables, the user can specify the desired design formula and explore the value of the linear predictor for each combination of predictor values, expressed in terms of the model coefficients.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_8",
+            "start": 154,
+            "end": 372,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_8@2",
+            "content": "From this type of visualization, it is often straightforward to determine the contrast corresponding to a given comparison of interest.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_8",
+            "start": 374,
+            "end": 508,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_8@3",
+            "content": "We envision that ExploreModelMatrix can be useful for both research and teaching purposes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_8",
+            "start": 510,
+            "end": 599,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_8@4",
+            "content": "Specifically for the latter, the application contains several built-in example data sets, corresponding to some of the most commonly used experimental design setups.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_8",
+            "start": 601,
+            "end": 765,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_8@5",
+            "content": "The underlying function in ExploreModelMatrix that processes the input data and generates visualizations can also be directly called by the user, enabling the generation of static plots for inclusion in reports and educational material.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_8",
+            "start": 767,
+            "end": 1002,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_9@0",
+            "content": "Methods",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_9",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_10@0",
+            "content": "Operation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_10",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_11@0",
+            "content": "ExploreModelMatrix <REF-15> is implemented as an R package <REF-16> , using the Shiny framework <REF-17> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_11",
+            "start": 0,
+            "end": 105,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_11@1",
+            "content": "The package is available via Bioconductor <REF-18> , with the current development version accessible via GitHub .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_11",
+            "start": 107,
+            "end": 219,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_11@2",
+            "content": "The package has been tested with R version 3.6 and later.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_11",
+            "start": 221,
+            "end": 277,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_12@0",
+            "content": "An instance of the interactive application is launched by calling the ExploreModelMatrix() function.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_12",
+            "start": 0,
+            "end": 99,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_12@1",
+            "content": "This function accepts two optional arguments; a data.frame with one row per observation and each column corresponding to a measured predictor variable (below referred to as the sample information table ), and a design formula.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_12",
+            "start": 101,
+            "end": 326,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_12@2",
+            "content": "If the ExploreModelMatrix() function is called without any arguments, the user can either explore one of the built-in designs, or load a sample information table from a tab-separated text file.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_12",
+            "start": 328,
+            "end": 520,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_12@3",
+            "content": "The design formula can always be specified or modified interactively in the application.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_12",
+            "start": 522,
+            "end": 609,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_12@4",
+            "content": "If the user wishes to generate the visualizations independently of the interactive interface, this can be achieved via the VisualizeDesign() function, which is also called internally by ExploreModelMatrix() .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_12",
+            "start": 611,
+            "end": 818,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_13@0",
+            "content": "Implementation",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_13",
+            "start": 0,
+            "end": 13,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_14@0",
+            "content": "The user interface of ExploreModelMatrix consists of a side bar with control widgets and a main window containing a set of fixed, but collapsible, panels, each illustrating a different aspect of the design matrix or the associated standard linear model ( Figure 1 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_14",
+            "start": 0,
+            "end": 265,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_14@1",
+            "content": "A more detailed explanation of each panel is accessible via the guided tour of the interface, implemented via the rintrojs package <REF-19> and accessible by clicking on the question mark icon in the top right corner (represented by the letter P in Figure 1 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_14",
+            "start": 267,
+            "end": 526,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_15@0",
+            "content": "Figure 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_15",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_17@0",
+            "content": "Given a sample information table and a design formula, either provided by the user or obtained via one of the built-in designs, ExploreModelMatrix will first check that the two objects are compatible, i.e., that the terms in the design formula use only variables that are present in the sample information table, and that the design formula is supported by the package.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_17",
+            "start": 0,
+            "end": 368,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_17@1",
+            "content": "If no problems are detected, ExploreModelMatrix will create a design matrix using the model.matrix() R function.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_17",
+            "start": 370,
+            "end": 481,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_17@2",
+            "content": "The full sample table, a summary of its columns, and the resulting design matrix are all displayed in the application interface for convenience (see H-J in Figure 1 ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_17",
+            "start": 483,
+            "end": 649,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_17@3",
+            "content": "In addition, the rank of the design matrix is calculated ( K ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_17",
+            "start": 651,
+            "end": 713,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_17@4",
+            "content": "If the design matrix is not full rank, ExploreModelMatrix will display a warning, together with an indication of the coefficients that are not estimable (using the nonEstimable() function from the limma R package <REF-1> , <REF-2> ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_17",
+            "start": 715,
+            "end": 947,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_17@5",
+            "content": "In addition, ExploreModelMatrix will inform the user if the number of rows (observations) in the design matrix is the same as its rank, in which case there are no residual degrees of freedom, and the variance or dispersion cannot be estimated.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_17",
+            "start": 949,
+            "end": 1191,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_18@0",
+            "content": "Expressed in terms of the model coefficients, the panels in the first row of the application ( F - G ) illustrate, in graphical and tabular form, the value of the linear predictor in a generalized linear model, for each combination of levels for the predictors used in the design formula.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_18",
+            "start": 0,
+            "end": 287,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_18@1",
+            "content": "This provides an intuitive understanding of the interpretation of each of the model coefficients, and can be helpful for specifying appropriate contrasts.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_18",
+            "start": 289,
+            "end": 442,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_19@0",
+            "content": "The panels in the lower part of the interface ( L , M , O ) should largely be interpreted in the context of standard linear models, where coefficient estimates are obtained using least squares fitting.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_19",
+            "start": 0,
+            "end": 200,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_19@1",
+            "content": "The pseudoinverse ( X T X ) \u22121 X T <REF-20> \u2013 <REF-22> represents the way each observed response value would contribute to the coefficient estimates.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_19",
+            "start": 202,
+            "end": 350,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_19@2",
+            "content": "More precisely, in such a linear model represented by y = X \u03b2 + \u03b5 ,",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_19",
+            "start": 352,
+            "end": 418,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_20@0",
+            "content": "the estimated regression coefficients are given by \u03b2 ^ = ( X T X ) \u2212 1 X T y .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_20",
+            "start": 0,
+            "end": 77,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_21@0",
+            "content": "ExploreModelMatrix also estimates variance inflation factors and correlations among the coefficient estimates.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_21",
+            "start": 0,
+            "end": 109,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_21@1",
+            "content": "Finally, the co-occurrence plot in the bottom left panel ( N ) shows the number of observations in the data set for each combination of levels of the predictor variables.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_21",
+            "start": 111,
+            "end": 280,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_22@0",
+            "content": "The controls in the left-hand sidebar can be used to interactively modify the studied design as well as the display parameters of the panels.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_22",
+            "start": 0,
+            "end": 140,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_22@1",
+            "content": "The text box in the top ( A ) allows the user to type in a design formula (starting with the ~ , or \u201ctilde\u201d character), and the displayed figures will be updated accordingly.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_22",
+            "start": 142,
+            "end": 315,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_22@2",
+            "content": "The dropdown menu immediately below ( B ) contains the built-in example designs.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_22",
+            "start": 317,
+            "end": 396,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_22@3",
+            "content": "To use the sample information table provided either as an argument to ExploreModelMatrix() or uploaded into the app at run time, select -- here.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_22",
+            "start": 398,
+            "end": 541,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_22@4",
+            "content": "The next section of controls ( C ) lets the user control which level should be considered the \u201cbaseline\u201d or reference level for each categorical or factor variable in the model.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_22",
+            "start": 543,
+            "end": 719,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_22@5",
+            "content": "ExploreModelMatrix will convert each character variable to a factor when a sample information table is loaded; by default the baseline level will be the first in alphabetical order.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_22",
+            "start": 721,
+            "end": 901,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_23@0",
+            "content": "In cases where the design matrix is not of full rank, it may be desirable to exclude a subset of the columns in the design matrix (for example, columns with all zero values or columns that are linear combinations of other columns).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_23",
+            "start": 0,
+            "end": 230,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_23@1",
+            "content": "This can be done in the \"Drop columns\" section ( D ).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_23",
+            "start": 232,
+            "end": 284,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_23@2",
+            "content": "As mentioned above, in the case of a non-full rank design matrix, ExploreModelMatrix will indicate which coefficients are not estimable and thus candidates for being dropped.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_23",
+            "start": 286,
+            "end": 459,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_23@3",
+            "content": "The final group of controls ( E ) provide the ability to change the way the panels are displayed, e.g. by setting the height of the plot panels and changing the size and display mode of the text.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_23",
+            "start": 461,
+            "end": 655,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_24@0",
+            "content": "Use case",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_24",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_25@0",
+            "content": "To illustrate how ExploreModelMatrix <REF-15> can be used to interpret the coefficients in a complex experimental design, we consider the example of differential allele-specific expression analysis with RNA-seq data.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_25",
+            "start": 0,
+            "end": 215,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_25@1",
+            "content": "Generalized linear models for count data often use the log link function, and we assume this to be the case in some of the interpretations below.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_25",
+            "start": 217,
+            "end": 361,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_25@2",
+            "content": "This type of experiment contains different groups of subjects (e.g., from different experimental conditions), where each subject contributes two columns in the read count matrix: one representing the read counts for the reference allele, and one representing those for the alternative allele, for each considered gene.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_25",
+            "start": 363,
+            "end": 680,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_25@3",
+            "content": "Typical scientific questions of interest are whether there are differences between the expression of the two alleles within each condition, and whether there are differences in the allele-specific expression patterns between the conditions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_25",
+            "start": 682,
+            "end": 921,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_25@4",
+            "content": "Similar setups can be observed, for example, in differential methylation experiments (where the two columns for each sample would correspond to methylated and unmethylated read counts for a feature), or in situations where individuals from different groups are each given the same set of treatments.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_25",
+            "start": 923,
+            "end": 1221,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_26@0",
+            "content": "The sample annotation table considered here is provided in Table 1 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_26",
+            "start": 0,
+            "end": 67,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_26@1",
+            "content": "In addition to the columns containing the subject identifier, the condition and the count type (reference or alternative allele), we include a column corresponding to a within-condition relabeling, or dummy encoding, of the subject identifier.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_26",
+            "start": 69,
+            "end": 311,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_26@2",
+            "content": "Note that this dummy subject identifier has only three levels, compared to six for the original subject identifier.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_26",
+            "start": 313,
+            "end": 427,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_26@3",
+            "content": "This design setup is available among the example designs provided within ExploreModelMatrix , denoted \u201cTwo crossed, one nested factor (manuscript example)\u201d.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_26",
+            "start": 429,
+            "end": 584,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_26@4",
+            "content": "We will illustrate two equivalent ways of setting up the design formula, and show how ExploreModelMatrix can help in the interpretation of the model coefficients.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_26",
+            "start": 586,
+            "end": 747,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_27@0",
+            "content": "Table 1.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_27",
+            "start": 0,
+            "end": 7,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_29@0",
+            "content": "First, we specify the design formula \u223c condition + condition : subjectdummy + condition : count ,",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_29",
+            "start": 0,
+            "end": 96,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_30@0",
+            "content": "including an overall condition effect, a term to account for sample-specific effects, and an interaction between the condition and count type columns to capture allele-specific expression within each condition.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_30",
+            "start": 0,
+            "end": 209,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_30@1",
+            "content": "In R\u2019s design formula syntax, a \u201c:\u201d between two variable names indicates the addition of an interaction term between these two variables, which may have a different effect on columns of X depending on whether these are numeric or factor variables, and what other terms are in the design.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_30",
+            "start": 211,
+            "end": 497,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_30@2",
+            "content": "Given this design formula together with the sample annotation table from Table 1 as the input arguments, the ExploreModelMatrix functions determine the composition of the linear predictor for each combination of predictor variables shown in Figure 2A (corresponds to panel ( F ) in Figure 1 , shown here separately for increased readability).",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_30",
+            "start": 499,
+            "end": 840,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_30@3",
+            "content": "The Rank panel in the application further indicates that the design matrix is of full rank and that the residual degrees of freedom is non-zero, allowing also estimation of variances or dispersions for use in statistical hypothesis tests involving the estimated coefficients.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_30",
+            "start": 842,
+            "end": 1116,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_30@4",
+            "content": "The illustration in Figure 2A can be used to extract appropriate contrasts for statistical testing.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_30",
+            "start": 1118,
+            "end": 1216,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_30@5",
+            "content": "For example, comparing the values of the linear predictor for each sample in the control group, we can see that the conditioncontrol:countalt coefficient represents the allele-specific expression effect (alt/ref expression log-ratio) in this group.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_30",
+            "start": 1218,
+            "end": 1465,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_30@6",
+            "content": "Similarly, the conditiontreated:countalt coefficient represents the allele-specific expression in the treated group.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_30",
+            "start": 1467,
+            "end": 1582,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_30@7",
+            "content": "As a consequence, the condition-dependent allele-specific expression effect is obtained as the difference between the allele-specific effects within the respective conditions, that is, by conditiontreated:countalt - conditioncontrol:countalt .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_30",
+            "start": 1584,
+            "end": 1826,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_31@0",
+            "content": "Figure 2.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_31",
+            "start": 0,
+            "end": 8,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_33@0",
+            "content": "Next, we illustrate an alternative way of setting up the design matrix, by specifying the design formula as \u223c condition * count + subject .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_33",
+            "start": 0,
+            "end": 138,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_34@0",
+            "content": "Here, we use the original subject ID (not the dummy encoded), and include main effects for condition and count type as well as an interaction between the condition and the count type.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_34",
+            "start": 0,
+            "end": 182,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_34@1",
+            "content": "In R\u2019s design formula syntax, a \u201c*\u201d between two variable names indicates the addition of both main effects and an interaction term between these two variables.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_34",
+            "start": 184,
+            "end": 342,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_34@2",
+            "content": "Upon changing the design formula in ExploreModelMatrix , we are notified that the design matrix is no longer full rank, as a consequence of having different subjects in the different conditions.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_34",
+            "start": 344,
+            "end": 537,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_34@3",
+            "content": "Dropping the subjectS4 column results in a full-rank design matrix, and the composition of the linear predictor is shown in Figure 2B .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_34",
+            "start": 539,
+            "end": 673,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_34@4",
+            "content": "The rank of the design matrix, as well as the residual degrees of freedom, are the same as with the previous formulation.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_34",
+            "start": 675,
+            "end": 795,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_34@5",
+            "content": "However, the composition of the linear predictor for each combination of input variables is different.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_34",
+            "start": 797,
+            "end": 898,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_34@6",
+            "content": "Comparing the alternative and reference allele groups for the control condition shows that with this formulation, the allele specificity in the control group is encoded by the countalt coefficient.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_34",
+            "start": 900,
+            "end": 1096,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_34@7",
+            "content": "Similarly, the allele specificity in the treated group is represented by the sum of the countalt and conditiontreated:countalt coefficients.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_34",
+            "start": 1098,
+            "end": 1237,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_34@8",
+            "content": "Consequently, the difference in allele specificity between the treated and control group is now directly encoded in the conditiontreated:countalt coefficient.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_34",
+            "start": 1239,
+            "end": 1396,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_35@0",
+            "content": "This example stresses that knowing how to interpret a given coefficient in a generalized linear model is critical, that identically labelled coefficients can have different meanings depending on the chosen design formula, and that ExploreModelMatrix can help the user interpret the resulting coefficients for a given choice of design formula and set up an appropriate contrast.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_35",
+            "start": 0,
+            "end": 376,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_36@0",
+            "content": "Summary",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_36",
+            "start": 0,
+            "end": 6,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_37@0",
+            "content": "We have described the ExploreModelMatrix R/Bioconductor package <REF-15> , which enables interactive exploration for increased understanding of model coefficients in linear and generalized linear models.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_37",
+            "start": 0,
+            "end": 202,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_37@1",
+            "content": "To the best of our knowledge, this is the first package of its kind, and we envision applications for both research and educational purposes.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_37",
+            "start": 204,
+            "end": 344,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_37@2",
+            "content": "The application requires minimal input and can be launched from a local R session, as well as be deployed on a Shiny server.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_37",
+            "start": 346,
+            "end": 469,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_37@3",
+            "content": "An example instance of the latter is available at http://shiny.imbei.uni-mainz.de:3838/ExploreModelMatrix/ , and the process for deploying an instance of the application on a Shiny server is documented in one of the vignettes accompanying the software.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_37",
+            "start": 471,
+            "end": 722,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_38@0",
+            "content": "Data availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_38",
+            "start": 0,
+            "end": 16,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_39@0",
+            "content": "All data underlying the results are available as part of the article and no additional source data are required.",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_39",
+            "start": 0,
+            "end": 111,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_40@0",
+            "content": "Software availability",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_40",
+            "start": 0,
+            "end": 20,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_41@0",
+            "content": "ExploreModelMatrix is available at: http://www.bioconductor.org/packages/ExploreModelMatrix/",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_41",
+            "start": 0,
+            "end": 91,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_42@0",
+            "content": "Source code available at: https://github.com/csoneson/ExploreModelMatrix .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_42",
+            "start": 0,
+            "end": 73,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_43@0",
+            "content": "Source code at time of publication: https://doi.org/10.5281/zenodo.3837402 <REF-15> .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_43",
+            "start": 0,
+            "end": 84,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_44@0",
+            "content": "License: MIT License .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_44",
+            "start": 0,
+            "end": 21,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_45@0",
+            "content": "<REF-1> Smyth GK : Linear models and empirical Bayes methods for assessing differential expression in microarray experiments. Stat Appl Genet Mol Biol. 2004 ; 3 ( 1 ): Article 3. 16646809 10.2202/1544-6115.1027",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_45",
+            "start": 0,
+            "end": 209,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_46@0",
+            "content": "<REF-2> Ritchie ME Phipson B Wu D : limma powers differential expression analyses for RNA-sequencing and microarray studies. Nucleic Acids Res. 2015 ; 43 ( 7 ): e47 . 25605792 10.1093/nar/gkv007 4402510",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_46",
+            "start": 0,
+            "end": 201,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_47@0",
+            "content": "<REF-3> Robinson MD McCarthy DJ Smyth GK : edgeR: a Bioconductor package for differential expression analysis of digital gene expression data. Bioinformatics. 2010 ; 26 ( 1 ): 139 \u2013 140 . 19910308 10.1093/bioinformatics/btp616 2796818",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_47",
+            "start": 0,
+            "end": 233,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_48@0",
+            "content": "<REF-4> McCarthy DJ Chen Y Smyth GK : Differential expression analysis of multifactor RNA-Seq experiments with respect to biological variation. Nucleic Acids Res. 2012 ; 40 ( 10 ): 4288 \u2013 4297 . 22287627 10.1093/nar/gks042 3378882",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_48",
+            "start": 0,
+            "end": 229,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_49@0",
+            "content": "<REF-5> Love MI Huber W Anders S : Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2. Genome Biol. 2014 ; 15 ( 12 ): 550 . 25516281 10.1186/s13059-014-0550-8 4302049",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_49",
+            "start": 0,
+            "end": 194,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_50@0",
+            "content": "<REF-6> Phipson B Maksimovic J Oshlack A : missMethyl: an R package for analyzing data from Illumina\u2019s HumanMethylation450 platform. Bioinformatics. 2016 ; 32 ( 2 ): 286 \u2013 288 . 26424855 10.1093/bioinformatics/btv560",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_50",
+            "start": 0,
+            "end": 215,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_51@0",
+            "content": "<REF-7> Peters TJ Buckley MJ Statham AL : De novo identification of differentially methylated regions in the human genome. Epigenet Chromatin. 2015 ; 8 : 6 . 25972926 10.1186/1756-8935-8-6 4429355",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_51",
+            "start": 0,
+            "end": 195,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_52@0",
+            "content": "<REF-8> Aryee MJ Jaffe AE Corrada-Bravo H : Minfi: a flexible and comprehensive Bioconductor package for the analysis of Infinium DNA methylation microarrays. Bioinformatics. 2014 ; 30 ( 10 ): 1363 \u2013 1369 . 24478339 10.1093/bioinformatics/btu049 4016708",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_52",
+            "start": 0,
+            "end": 252,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_53@0",
+            "content": "<REF-9> Stark R Brown G : DiffBind: differential binding analysis of ChIP-Seq peak data. R package version 2.15.2. 2011 . 10.18129/B9.bioc.DiffBind",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_53",
+            "start": 0,
+            "end": 146,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_54@0",
+            "content": "<REF-10> Gregori J Sanchez A Villanueva J : msmsTests: LC-MS/MS Differential Expression Tests. R package version 1.25.0 . 2019 . 10.18129/B9.bioc.msmsTests",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_54",
+            "start": 0,
+            "end": 154,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_55@0",
+            "content": "<REF-11> Wilkinson GN Rogers CE : Symbolic description of factorial models for analysis of variance. J R Stat Soc Ser C (Applied Statistics). 1973 ; 22 ( 3 ): 392 \u2013 399 . 10.2307/2346786",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_55",
+            "start": 0,
+            "end": 185,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_56@0",
+            "content": "<REF-12> Nelder JA Wedderburn RWM : Generalized linear models. J R Stat Soc Ser A. 1972 ; 135 ( 3 ): 370 \u2013 384 . 10.2307/2344614",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_56",
+            "start": 0,
+            "end": 127,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_57@0",
+            "content": "<REF-13> McCullagh P Nelder JA : Generalized Linear Models . Second Edition. Chapman and Hall/CRC Monographs on Statistics and Applied Probability Series. Chapman & Hall, 1989 . ISBN 9780412317606. Reference Source",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_57",
+            "start": 0,
+            "end": 213,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_58@0",
+            "content": "<REF-14> Chambers JM Hastie T : Statistical Models in S . Wadsworth & Brooks/Cole computer science series . Wadsworth & Brooks/Cole Advanced Books & Software, 1992 . ISBN 9780534167646. Reference Source",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_58",
+            "start": 0,
+            "end": 201,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_59@0",
+            "content": "<REF-15> Soneson C Marini F Geier F : ExploreModelMatrix . May 2020 . http://www.doi.org/doi.org/10.5281/zenodo.3837403",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_59",
+            "start": 0,
+            "end": 118,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_60@0",
+            "content": "<REF-16> R Core Team : R: A language and environment for statistical computing . 2020 . Reference Source",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_60",
+            "start": 0,
+            "end": 103,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_61@0",
+            "content": "<REF-17> Chang W Cheng J Allaire JJ : shiny: Web Application Framework for R . R package version 1.4.0.2. 2020 . Reference Source",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_61",
+            "start": 0,
+            "end": 128,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_62@0",
+            "content": "<REF-18> Huber W Carey VJ Gentleman R : Orchestrating high-throughput genomic analysis with Bioconductor. Nat Methods. 2015 ; 12 ( 2 ): 115 \u2013 121 . 25633503 10.1038/nmeth.3252 4509590",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_62",
+            "start": 0,
+            "end": 182,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_63@0",
+            "content": "<REF-19> Ganz C : rintrojs: A wrapper for the intro.js library. J Open Source Softw. 2016 ; 1 . 10.21105/joss.00063",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_63",
+            "start": 0,
+            "end": 114,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_64@0",
+            "content": "<REF-20> Moore EH : On the reciprocal of the general algebraic matrix. B Am Math Soc. 1920 ; 26 : 394 \u2013 395 .",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_64",
+            "start": 0,
+            "end": 108,
+            "label": {}
+        },
+        {
+            "ix": "9-512_v1_65@0",
+            "content": "<REF-22> Penrose R : A generalized inverse for matrices. Math Proc Cambridge. 1955 ; 51 ( 3 ): 406 \u2013 413 . 10.1017/S0305004100030401",
+            "ntype": "s",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            },
+            "src_ix": "9-512_v1_65",
+            "start": 0,
+            "end": 131,
+            "label": {}
+        }
+    ],
+    "edges": [
+        {
+            "src_ix": "9-512_v1_0",
+            "tgt_ix": "9-512_v1_1",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_1",
+            "tgt_ix": "9-512_v1_2",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_0",
+            "tgt_ix": "9-512_v1_3",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_3",
+            "tgt_ix": "9-512_v1_4",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_3",
+            "tgt_ix": "9-512_v1_5",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_3",
+            "tgt_ix": "9-512_v1_6",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_3",
+            "tgt_ix": "9-512_v1_7",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_3",
+            "tgt_ix": "9-512_v1_8",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_0",
+            "tgt_ix": "9-512_v1_9",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_9",
+            "tgt_ix": "9-512_v1_10",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_10",
+            "tgt_ix": "9-512_v1_11",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_10",
+            "tgt_ix": "9-512_v1_12",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_9",
+            "tgt_ix": "9-512_v1_13",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_13",
+            "tgt_ix": "9-512_v1_14",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_13",
+            "tgt_ix": "9-512_v1_15",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_15",
+            "tgt_ix": "9-512_v1_16",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_13",
+            "tgt_ix": "9-512_v1_17",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_13",
+            "tgt_ix": "9-512_v1_18",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_13",
+            "tgt_ix": "9-512_v1_19",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_13",
+            "tgt_ix": "9-512_v1_20",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_13",
+            "tgt_ix": "9-512_v1_21",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_13",
+            "tgt_ix": "9-512_v1_22",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_13",
+            "tgt_ix": "9-512_v1_23",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_0",
+            "tgt_ix": "9-512_v1_24",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_24",
+            "tgt_ix": "9-512_v1_25",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_24",
+            "tgt_ix": "9-512_v1_26",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_24",
+            "tgt_ix": "9-512_v1_27",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_27",
+            "tgt_ix": "9-512_v1_28",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_24",
+            "tgt_ix": "9-512_v1_29",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_24",
+            "tgt_ix": "9-512_v1_30",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_24",
+            "tgt_ix": "9-512_v1_31",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_31",
+            "tgt_ix": "9-512_v1_32",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_24",
+            "tgt_ix": "9-512_v1_33",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_24",
+            "tgt_ix": "9-512_v1_34",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_24",
+            "tgt_ix": "9-512_v1_35",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_0",
+            "tgt_ix": "9-512_v1_36",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_36",
+            "tgt_ix": "9-512_v1_37",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_0",
+            "tgt_ix": "9-512_v1_38",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_38",
+            "tgt_ix": "9-512_v1_39",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_0",
+            "tgt_ix": "9-512_v1_40",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_40",
+            "tgt_ix": "9-512_v1_41",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_40",
+            "tgt_ix": "9-512_v1_42",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_40",
+            "tgt_ix": "9-512_v1_43",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_40",
+            "tgt_ix": "9-512_v1_44",
+            "etype": "parent",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_0",
+            "tgt_ix": "9-512_v1_1",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_1",
+            "tgt_ix": "9-512_v1_2",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_2",
+            "tgt_ix": "9-512_v1_3",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_3",
+            "tgt_ix": "9-512_v1_4",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_4",
+            "tgt_ix": "9-512_v1_5",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_5",
+            "tgt_ix": "9-512_v1_6",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_6",
+            "tgt_ix": "9-512_v1_7",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_7",
+            "tgt_ix": "9-512_v1_8",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_8",
+            "tgt_ix": "9-512_v1_9",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_9",
+            "tgt_ix": "9-512_v1_10",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_10",
+            "tgt_ix": "9-512_v1_11",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_11",
+            "tgt_ix": "9-512_v1_12",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_12",
+            "tgt_ix": "9-512_v1_13",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_13",
+            "tgt_ix": "9-512_v1_14",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_14",
+            "tgt_ix": "9-512_v1_15",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_15",
+            "tgt_ix": "9-512_v1_16",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_16",
+            "tgt_ix": "9-512_v1_17",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_17",
+            "tgt_ix": "9-512_v1_18",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_18",
+            "tgt_ix": "9-512_v1_19",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_19",
+            "tgt_ix": "9-512_v1_20",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_20",
+            "tgt_ix": "9-512_v1_21",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_21",
+            "tgt_ix": "9-512_v1_22",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_22",
+            "tgt_ix": "9-512_v1_23",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_23",
+            "tgt_ix": "9-512_v1_24",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_24",
+            "tgt_ix": "9-512_v1_25",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_25",
+            "tgt_ix": "9-512_v1_26",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_26",
+            "tgt_ix": "9-512_v1_27",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_27",
+            "tgt_ix": "9-512_v1_28",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_28",
+            "tgt_ix": "9-512_v1_29",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_29",
+            "tgt_ix": "9-512_v1_30",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_30",
+            "tgt_ix": "9-512_v1_31",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_31",
+            "tgt_ix": "9-512_v1_32",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_32",
+            "tgt_ix": "9-512_v1_33",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_33",
+            "tgt_ix": "9-512_v1_34",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_34",
+            "tgt_ix": "9-512_v1_35",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_35",
+            "tgt_ix": "9-512_v1_36",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_36",
+            "tgt_ix": "9-512_v1_37",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_37",
+            "tgt_ix": "9-512_v1_38",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_38",
+            "tgt_ix": "9-512_v1_39",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_39",
+            "tgt_ix": "9-512_v1_40",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_40",
+            "tgt_ix": "9-512_v1_41",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_41",
+            "tgt_ix": "9-512_v1_42",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_42",
+            "tgt_ix": "9-512_v1_43",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_43",
+            "tgt_ix": "9-512_v1_44",
+            "etype": "next",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_4",
+            "tgt_ix": "9-512_v1_45",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_4",
+            "tgt_ix": "9-512_v1_46",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_4",
+            "tgt_ix": "9-512_v1_47",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_4",
+            "tgt_ix": "9-512_v1_48",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_4",
+            "tgt_ix": "9-512_v1_49",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_4",
+            "tgt_ix": "9-512_v1_50",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_4",
+            "tgt_ix": "9-512_v1_51",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_4",
+            "tgt_ix": "9-512_v1_52",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_4",
+            "tgt_ix": "9-512_v1_53",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_4",
+            "tgt_ix": "9-512_v1_54",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_5",
+            "tgt_ix": "9-512_v1_55",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_6",
+            "tgt_ix": "9-512_v1_56",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_6",
+            "tgt_ix": "9-512_v1_57",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_6",
+            "tgt_ix": "9-512_v1_58",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_8",
+            "tgt_ix": "9-512_v1_59",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_11",
+            "tgt_ix": "9-512_v1_60",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_11",
+            "tgt_ix": "9-512_v1_61",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_11",
+            "tgt_ix": "9-512_v1_62",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_14",
+            "tgt_ix": "9-512_v1_63",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_19",
+            "tgt_ix": "9-512_v1_64",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_19",
+            "tgt_ix": "9-512_v1_65",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_14",
+            "tgt_ix": "9-512_v1_16",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_26",
+            "tgt_ix": "9-512_v1_28",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_30",
+            "tgt_ix": "9-512_v1_32",
+            "etype": "link",
+            "meta": {
+                "created_by": "F1000XMLParser"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_0",
+            "tgt_ix": "9-512_v1_0@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_1",
+            "tgt_ix": "9-512_v1_1@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_2",
+            "tgt_ix": "9-512_v1_2@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_2",
+            "tgt_ix": "9-512_v1_2@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_2",
+            "tgt_ix": "9-512_v1_2@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_2",
+            "tgt_ix": "9-512_v1_2@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_2",
+            "tgt_ix": "9-512_v1_2@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_2",
+            "tgt_ix": "9-512_v1_2@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_3",
+            "tgt_ix": "9-512_v1_3@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_4",
+            "tgt_ix": "9-512_v1_4@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_4",
+            "tgt_ix": "9-512_v1_4@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_4",
+            "tgt_ix": "9-512_v1_4@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_4",
+            "tgt_ix": "9-512_v1_4@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_5",
+            "tgt_ix": "9-512_v1_5@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_5",
+            "tgt_ix": "9-512_v1_5@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_5",
+            "tgt_ix": "9-512_v1_5@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_5",
+            "tgt_ix": "9-512_v1_5@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_5",
+            "tgt_ix": "9-512_v1_5@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_6",
+            "tgt_ix": "9-512_v1_6@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_6",
+            "tgt_ix": "9-512_v1_6@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_6",
+            "tgt_ix": "9-512_v1_6@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_6",
+            "tgt_ix": "9-512_v1_6@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_6",
+            "tgt_ix": "9-512_v1_6@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_7",
+            "tgt_ix": "9-512_v1_7@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_7",
+            "tgt_ix": "9-512_v1_7@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_7",
+            "tgt_ix": "9-512_v1_7@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_7",
+            "tgt_ix": "9-512_v1_7@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_8",
+            "tgt_ix": "9-512_v1_8@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_8",
+            "tgt_ix": "9-512_v1_8@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_8",
+            "tgt_ix": "9-512_v1_8@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_8",
+            "tgt_ix": "9-512_v1_8@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_8",
+            "tgt_ix": "9-512_v1_8@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_8",
+            "tgt_ix": "9-512_v1_8@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_9",
+            "tgt_ix": "9-512_v1_9@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_10",
+            "tgt_ix": "9-512_v1_10@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_11",
+            "tgt_ix": "9-512_v1_11@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_11",
+            "tgt_ix": "9-512_v1_11@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_11",
+            "tgt_ix": "9-512_v1_11@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_12",
+            "tgt_ix": "9-512_v1_12@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_12",
+            "tgt_ix": "9-512_v1_12@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_12",
+            "tgt_ix": "9-512_v1_12@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_12",
+            "tgt_ix": "9-512_v1_12@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_12",
+            "tgt_ix": "9-512_v1_12@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_13",
+            "tgt_ix": "9-512_v1_13@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_14",
+            "tgt_ix": "9-512_v1_14@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_14",
+            "tgt_ix": "9-512_v1_14@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_15",
+            "tgt_ix": "9-512_v1_15@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_17",
+            "tgt_ix": "9-512_v1_17@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_17",
+            "tgt_ix": "9-512_v1_17@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_17",
+            "tgt_ix": "9-512_v1_17@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_17",
+            "tgt_ix": "9-512_v1_17@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_17",
+            "tgt_ix": "9-512_v1_17@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_17",
+            "tgt_ix": "9-512_v1_17@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_18",
+            "tgt_ix": "9-512_v1_18@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_18",
+            "tgt_ix": "9-512_v1_18@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_19",
+            "tgt_ix": "9-512_v1_19@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_19",
+            "tgt_ix": "9-512_v1_19@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_19",
+            "tgt_ix": "9-512_v1_19@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_20",
+            "tgt_ix": "9-512_v1_20@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_21",
+            "tgt_ix": "9-512_v1_21@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_21",
+            "tgt_ix": "9-512_v1_21@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_22",
+            "tgt_ix": "9-512_v1_22@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_22",
+            "tgt_ix": "9-512_v1_22@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_22",
+            "tgt_ix": "9-512_v1_22@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_22",
+            "tgt_ix": "9-512_v1_22@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_22",
+            "tgt_ix": "9-512_v1_22@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_22",
+            "tgt_ix": "9-512_v1_22@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_23",
+            "tgt_ix": "9-512_v1_23@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_23",
+            "tgt_ix": "9-512_v1_23@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_23",
+            "tgt_ix": "9-512_v1_23@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_23",
+            "tgt_ix": "9-512_v1_23@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_24",
+            "tgt_ix": "9-512_v1_24@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_25",
+            "tgt_ix": "9-512_v1_25@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_25",
+            "tgt_ix": "9-512_v1_25@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_25",
+            "tgt_ix": "9-512_v1_25@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_25",
+            "tgt_ix": "9-512_v1_25@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_25",
+            "tgt_ix": "9-512_v1_25@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_26",
+            "tgt_ix": "9-512_v1_26@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_26",
+            "tgt_ix": "9-512_v1_26@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_26",
+            "tgt_ix": "9-512_v1_26@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_26",
+            "tgt_ix": "9-512_v1_26@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_26",
+            "tgt_ix": "9-512_v1_26@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_27",
+            "tgt_ix": "9-512_v1_27@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_29",
+            "tgt_ix": "9-512_v1_29@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_30",
+            "tgt_ix": "9-512_v1_30@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_30",
+            "tgt_ix": "9-512_v1_30@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_30",
+            "tgt_ix": "9-512_v1_30@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_30",
+            "tgt_ix": "9-512_v1_30@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_30",
+            "tgt_ix": "9-512_v1_30@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_30",
+            "tgt_ix": "9-512_v1_30@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_30",
+            "tgt_ix": "9-512_v1_30@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_30",
+            "tgt_ix": "9-512_v1_30@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_31",
+            "tgt_ix": "9-512_v1_31@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_33",
+            "tgt_ix": "9-512_v1_33@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_34",
+            "tgt_ix": "9-512_v1_34@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_34",
+            "tgt_ix": "9-512_v1_34@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_34",
+            "tgt_ix": "9-512_v1_34@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_34",
+            "tgt_ix": "9-512_v1_34@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_34",
+            "tgt_ix": "9-512_v1_34@4",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_34",
+            "tgt_ix": "9-512_v1_34@5",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_34",
+            "tgt_ix": "9-512_v1_34@6",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_34",
+            "tgt_ix": "9-512_v1_34@7",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_34",
+            "tgt_ix": "9-512_v1_34@8",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_35",
+            "tgt_ix": "9-512_v1_35@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_36",
+            "tgt_ix": "9-512_v1_36@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_37",
+            "tgt_ix": "9-512_v1_37@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_37",
+            "tgt_ix": "9-512_v1_37@1",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_37",
+            "tgt_ix": "9-512_v1_37@2",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_37",
+            "tgt_ix": "9-512_v1_37@3",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_38",
+            "tgt_ix": "9-512_v1_38@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_39",
+            "tgt_ix": "9-512_v1_39@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_40",
+            "tgt_ix": "9-512_v1_40@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_41",
+            "tgt_ix": "9-512_v1_41@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_42",
+            "tgt_ix": "9-512_v1_42@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_43",
+            "tgt_ix": "9-512_v1_43@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_44",
+            "tgt_ix": "9-512_v1_44@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_45",
+            "tgt_ix": "9-512_v1_45@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_46",
+            "tgt_ix": "9-512_v1_46@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_47",
+            "tgt_ix": "9-512_v1_47@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_48",
+            "tgt_ix": "9-512_v1_48@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_49",
+            "tgt_ix": "9-512_v1_49@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_50",
+            "tgt_ix": "9-512_v1_50@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_51",
+            "tgt_ix": "9-512_v1_51@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_52",
+            "tgt_ix": "9-512_v1_52@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_53",
+            "tgt_ix": "9-512_v1_53@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_54",
+            "tgt_ix": "9-512_v1_54@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_55",
+            "tgt_ix": "9-512_v1_55@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_56",
+            "tgt_ix": "9-512_v1_56@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_57",
+            "tgt_ix": "9-512_v1_57@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_58",
+            "tgt_ix": "9-512_v1_58@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_59",
+            "tgt_ix": "9-512_v1_59@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_60",
+            "tgt_ix": "9-512_v1_60@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_61",
+            "tgt_ix": "9-512_v1_61@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_62",
+            "tgt_ix": "9-512_v1_62@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_63",
+            "tgt_ix": "9-512_v1_63@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_64",
+            "tgt_ix": "9-512_v1_64@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        },
+        {
+            "src_ix": "9-512_v1_65",
+            "tgt_ix": "9-512_v1_65@0",
+            "etype": "link",
+            "meta": {
+                "created_by": "IntertextSentenceSplitter_all"
+            }
+        }
+    ],
+    "prefix": "9-512_v1",
+    "meta": {
+        "parser": "F1000XMLParser",
+        "intertext-graph": "N/A",
+        "doi": "10.12688/f1000research.24187.1",
+        "atype": "software-tool",
+        "license": "http://creativecommons.org/licenses/by/4.0/",
+        "title": "ExploreModelMatrix: Interactive exploration for improved understanding of design matrices and linear models in R",
+        "abstract": "Linear and generalized linear models are used extensively in many scienti\ufb01c \ufb01elds, to model observed data and as the basis for hypothesis tests. The use of such models requires speci\ufb01cation of a design matrix, and subsequent formulation of contrasts representing scienti\ufb01c hypotheses of interest. Proper execution of these steps requires a thorough understanding of the meaning of the individual coef\ufb01cients, and is a frequent source of uncertainty for end users. Here, we present an R/Bioconductor package, ExploreModelMatrix , which enables interactive exploration of design matrices and linear model diagnostics. Given a sample annotation table and a desired design formula, the package displays how the model coef\ufb01cients are combined to give the \ufb01tted values for each combination of predictor variables, which allows users to both extract the interpretation of each individual coef\ufb01cient, and formulate desired linear contrasts. In addition, the interactive interface displays informative characteristics for the regular linear model corresponding to the provided design, such as variance in\ufb02ation factors and the pseudoinverse of the design matrix.",
+        "contributors": [
+            {
+                "surname": "Soneson",
+                "given-names": "Charlotte"
+            },
+            {
+                "surname": "Marini",
+                "given-names": "Federico"
+            },
+            {
+                "surname": "Geier",
+                "given-names": "Florian"
+            },
+            {
+                "surname": "Love",
+                "given-names": "Michael I."
+            },
+            {
+                "surname": "Stadler",
+                "given-names": "Michael B."
+            }
+        ],
+        "url": "https://f1000research.com/articles/9-512/v1/",
+        "doc_id": "9-512",
+        "version": 1,
+        "ix_counter": 268,
+        "sentence_split_type": "HybridSplitterLessAndLong",
+        "sentence_split_model": "HybridSplitterLessAndLong_SciSpacy+Spacy"
+    }
+}
