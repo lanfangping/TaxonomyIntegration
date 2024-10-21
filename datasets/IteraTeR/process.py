@@ -82,6 +82,8 @@ def process_sent(data):
                 "domain": domain,
                 "before_edit": before_edit,
                 "after_edit": after_edit,
+                "start_sent_pos": start_sent_pos,
+                "end_sent_pos": end_sent_pos,
                 "label": edit["major_intent"],
                 "raw_intents": edit["raw_intents"]
             })
