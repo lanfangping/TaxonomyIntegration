@@ -101,16 +101,16 @@ if __name__ == '__main__':
 
     #     sampling(df, "arXivEdits", 5, [1, 2, 2], n_samples_comparing_group=)
 
-    # file_path = "./IteraTeR/remaining_iterater.json"
-    # x_labels = ['context', 'domain', 'before_edit', 'after_edit', 'raw_intents']
-    # y_label = 'label'
-    # n_small = 1000
-    # repo='IteraTeR'
-
-    file_path = "./arXivEdits/remaining_arxivedits.json"
-    x_labels = ['before', 'after']
+    file_path = "./IteraTeR/remaining_iterater.json"
+    x_labels = ['doc_id', 'context', 'domain', 'before_edit', 'after_edit', 'start_sent_pos', 'end_sent_pos', 'raw_intents']
     y_label = 'label'
     n_small = 1000
-    repo='arXivEdits'
+    repo='IteraTeR'
+
+    # file_path = "./arXivEdits/remaining_arxivedits.json"
+    # x_labels = ['before', 'after']
+    # y_label = 'label'
+    # n_small = 1000
+    # repo='arXivEdits'
     data = pd.read_json(file_path, lines=True)
     straified_sampling(data, x_labels, y_label, n_small, repo)
