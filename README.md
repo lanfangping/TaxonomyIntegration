@@ -19,7 +19,7 @@ The contributions of this paper are as follows:
 ![paper_list](figures/paper_list.png)
 
 2. Integration procedure
-    - Analyze and find lineage relationships between EITs
+    - Analyze and find lineage relationships between EITs, see [Lineage Relationship](#lineage-relationship)
     - Grouping
         - Reuse-based Grouping
         - Merge-based Grouping
