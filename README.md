@@ -15,7 +15,7 @@ The contributions of this paper are as follows:
 ![workflow](figures/workflow.png)
 
 ### Challenges
-1. literature coverage to find all proposed EITs.
+1. literature coverage to find all proposed EITs. The details can be found in [LiteratureReview.xlsx](./LiteratureReview.xlsx).
 ![paper_list](figures/paper_list.png)
 
 2. Integration procedure
