@@ -67,6 +67,3 @@ See [annotation_instructions_examples.pdf](./annotation_instructions_examples.pd
 ```
 
 ```
-
-## Miscellaneous
-Please send any questions about the code and/or the **UniT** to fangping.lan@temple.edu
