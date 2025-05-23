@@ -58,7 +58,7 @@ cd datasets/sampling
 python sampling.py
 ```
 
-### Annotation Instruction and Inteface
+### Annotation Instruction and Interface
 
 See [annotation_instructions_examples.pdf](./annotation_instructions_examples.pdf) and [annotation_interface.pdf](./annotation_interface.pdf)
 
@@ -67,3 +67,6 @@ See [annotation_instructions_examples.pdf](./annotation_instructions_examples.pd
 ```
 
 ```
+
+## Miscellaneous
+Please send any questions about the code and/or the **UniT** to fangping.lan@temple.edu
